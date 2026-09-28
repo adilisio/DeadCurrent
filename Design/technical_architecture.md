@@ -18,7 +18,43 @@ Living document. Update it whenever a foundational system lands or a convention 
    ```
 
    Or right-click `DeadCurrent.uproject` > Generate Visual Studio project files, then build `DeadCurrentEditor` from the IDE.
-3. Open `DeadCurrent.uproject`. The editor starts in `/Game/FirstPerson/Lvl_FirstPerson`.
+3. Open `DeadCurrent.uproject`. The editor and game start in `/Game/Maps/Lvl_TestGym`.
+
+## Editor scripts
+
+`Tools/EditorScripts/` holds Python scripts that create or regenerate assets, so generated content can be rebuilt instead of hand-edited. They need the editor-only `PythonScriptPlugin` and `EditorScriptingUtilities` plugins, which the project enables. Run one headless with:
+
+```
+"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "<repo>\DeadCurrent.uproject" -run=pythonscript -script="<repo>\Tools\EditorScripts\<script>.py" -unattended -nullrhi
+```
+
+| Script | Does |
+| --- | --- |
+| `fp02_setup_input.py` | Creates `IA_Sprint` and `IA_Crouch`, maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run. |
+| `fp02_build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
+| `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
+
+## Player controls
+
+| Action | Keyboard / mouse | Gamepad |
+| --- | --- | --- |
+| Move | WASD, arrow keys | Left stick |
+| Look | Mouse | Right stick |
+| Jump | Space | A / Cross |
+| Sprint (hold, forward only) | Left Shift | Left stick click |
+| Crouch (toggle) | Left Ctrl, C | B / Circle |
+
+Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
+
+## Test gym
+
+`Lvl_TestGym` is a greybox movement test map (not World Partition). From the spawn, facing forward:
+
+- center: sprint lane with a floor marker every 5 m
+- left: stairs up to 1.8 m platforms with 2 m, 3.5 m and 5 m gaps (5 m should need a sprint)
+- right: a 30 degree walkable ramp and a 50 degree ramp that should not be climbable
+- far right: ledges at 20, 40, 60, 80 and 110 cm (20 and 40 step up, 60 and 80 need a jump, 110 is out of reach)
+- far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway into a 1 m corridor
 
 ## C++ vs Blueprint / data
 
