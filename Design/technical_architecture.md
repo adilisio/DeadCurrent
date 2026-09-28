@@ -18,7 +18,7 @@ Living document. Update it whenever a foundational system lands or a convention 
    ```
 
    Or right-click `DeadCurrent.uproject` > Generate Visual Studio project files, then build `DeadCurrentEditor` from the IDE.
-3. Open `DeadCurrent.uproject`. The editor and game start in `/Game/Maps/Lvl_TestGym`.
+3. Open `DeadCurrent.uproject`. The editor and game start in `/Game/Maps/Lvl_Boathouse`. The systems test gym remains at `/Game/Maps/Lvl_TestGym`.
 
 ## Playtesting
 
@@ -36,7 +36,9 @@ Living document. Update it whenever a foundational system lands or a convention 
 | --- | --- |
 | `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact, inventory, fire, reload, holster), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
 | `create_items.py` | Creates or updates the item definitions in `/Game/Items`. Safe to re-run; edits made in the editor to those items are overwritten. |
+| `create_dialogue.py` | Creates or updates dialogue Data Assets in `/Game/Dialogue`. Safe to re-run. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
+| `build_boathouse.py` | Regenerates `/Game/Maps/Lvl_Boathouse`, the first-playable scenario. Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
 ## Player controls
@@ -70,6 +72,10 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - right of spawn: a chemical-spill pad that damages the player
 - past the 20 m plates: a scavenger on a patrol loop
 - right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**
+
+## First playable map
+
+`Lvl_Boathouse` is the first-playable scenario (not World Partition). Greybox, same prototype materials as the gym. The player wakes inside the boathouse, takes the pistol from the workbench, goes out the door, meets a scavenger on the shore path, then finds Mara behind a ridge out of the scavenger's sight. Persistent IDs use the `boat.` prefix.
 
 ## Interaction
 
@@ -177,7 +183,9 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`.
 
-`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve.
+Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`.
+
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. The first F9 after a process start can hitch while item assets resolve; polish that in FP-15.
 
 Automation tests `DeadCurrent.Save.PersistentId` and `DeadCurrent.Save.InventoryRestore` cover lookup and inventory snapshot restore.
 

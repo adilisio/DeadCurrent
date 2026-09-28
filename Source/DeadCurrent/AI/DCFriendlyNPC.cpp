@@ -53,7 +53,7 @@ ADCFriendlyNPC::ADCFriendlyNPC()
 
 	DisplayName = LOCTEXT("DefaultName", "Mara");
 	Greeting = LOCTEXT("DefaultGreeting",
-		"Keep your voice down. There's a scavenger past those plates.");
+		"Keep your voice down. That scavenger still works this stretch of shore.");
 	Dialogue = TSoftObjectPtr<UDCDialogueAsset>(
 		FSoftObjectPath(TEXT("/Game/Dialogue/DA_Dialogue_MaraIntro.DA_Dialogue_MaraIntro")));
 }

@@ -16,7 +16,7 @@ MARA_INTRO = dict(
         dict(
             id="greeting",
             speaker="Mara",
-            line="Keep your voice down. There's a scavenger past those plates.",
+            line="Keep your voice down. That scavenger still works this stretch of shore.",
             choices=[
                 ("Who are you?", "who"),
                 ("What is this place?", "place"),
@@ -35,7 +35,7 @@ MARA_INTRO = dict(
         dict(
             id="place",
             speaker="Mara",
-            line="Old Great Lakes Maritime ground. Boathouse behind you, scavengers ahead. Pick a side carefully.",
+            line="Old Great Lakes Maritime ground. The boathouse still stands. The shore doesn't stay empty for long.",
             choices=[
                 ("Who are you?", "who"),
                 ("Goodbye", None),
