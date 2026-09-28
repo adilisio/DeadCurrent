@@ -51,6 +51,8 @@ private:
 
 	void DrawWeapon();
 
+	void DrawHealth();
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
 	FText CurrentMessage;

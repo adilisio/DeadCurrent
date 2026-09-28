@@ -1,5 +1,6 @@
 #include "Combat/DCFirearm.h"
 #include "Combat/DCDamageable.h"
+#include "Combat/DCHealthComponent.h"
 #include "Combat/DCImpactMark.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -230,16 +231,13 @@ bool ADCFirearm::Fire()
 
 		if (AActor* HitActor = Hit.GetActor())
 		{
-			if (HitActor->Implements<UDCDamageable>())
-			{
-				FDCDamageInfo Damage;
-				Damage.Amount = Definition->Damage;
-				Damage.DamageType = DCTags::Damage_Ballistic;
-				Damage.Instigator = Shooter;
-				Damage.Causer = this;
-				Damage.Hit = Hit;
-				IDCDamageable::Execute_ApplyDamage(HitActor, Damage);
-			}
+			FDCDamageInfo Damage;
+			Damage.Amount = Definition->Damage;
+			Damage.DamageType = DCTags::Damage_Ballistic;
+			Damage.Instigator = Shooter;
+			Damage.Causer = this;
+			Damage.Hit = Hit;
+			UDCHealthComponent::ApplyDamageToActor(HitActor, Damage);
 		}
 	}
 

@@ -1,6 +1,7 @@
 #include "Character/DCPlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/DCFirearm.h"
+#include "Combat/DCHealthComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DeadCurrent.h"
@@ -12,6 +13,9 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "GameFramework/PlayerStart.h"
+#include "TimerManager.h"
 #include "UI/DCHUD.h"
 
 ADCPlayerCharacter::ADCPlayerCharacter()
@@ -36,6 +40,7 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 
 	InteractorComponent = CreateDefaultSubobject<UDCInteractorComponent>(TEXT("Interactor"));
 	InventoryComponent = CreateDefaultSubobject<UDCInventoryComponent>(TEXT("Inventory"));
+	HealthComponent = CreateDefaultSubobject<UDCHealthComponent>(TEXT("Health"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -59,6 +64,7 @@ void ADCPlayerCharacter::BeginPlay()
 	BaseFirstPersonMeshLocation = FirstPersonMesh->GetRelativeLocation();
 
 	InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADCPlayerCharacter::HandleInventoryChanged);
+	HealthComponent->OnDied.AddDynamic(this, &ADCPlayerCharacter::HandleDied);
 }
 
 void ADCPlayerCharacter::Tick(float DeltaSeconds)
@@ -186,7 +192,7 @@ void ADCPlayerCharacter::DoToggleInventory()
 
 void ADCPlayerCharacter::DoFire()
 {
-	if (!EquippedFirearm || EquippedFirearm->IsHolstered())
+	if (HealthComponent->IsDead() || !EquippedFirearm || EquippedFirearm->IsHolstered())
 	{
 		return;
 	}
@@ -263,6 +269,34 @@ void ADCPlayerCharacter::HandleInventoryChanged(UDCInventoryComponent* Inventory
 		&& EquippedFirearm->CanReload())
 	{
 		EquippedFirearm->StartReload();
+	}
+}
+
+void ADCPlayerCharacter::HandleDied(UDCHealthComponent* Health, const FDCDamageInfo& Damage)
+{
+	DisableInput(Cast<APlayerController>(GetController()));
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+
+	ADCHUD::ShowMessageFor(this, NSLOCTEXT("DCPlayerCharacter", "Died", "You died."), 4.0f);
+
+	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ADCPlayerCharacter::Respawn, 4.0f, false);
+}
+
+void ADCPlayerCharacter::Respawn()
+{
+	HealthComponent->ResetHealth();
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	EnableInput(Cast<APlayerController>(GetController()));
+
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		SetActorLocationAndRotation(It->GetActorLocation(), It->GetActorRotation());
+		if (AController* PC = GetController())
+		{
+			PC->SetControlRotation(It->GetActorRotation());
+		}
+		break;
 	}
 }
 

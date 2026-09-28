@@ -10,6 +10,7 @@ Layout (X is forward from the spawn point, Z is up, units are cm):
   Far right    (Y = +2600)  ledges at 20, 40, 60, 80 and 110 cm
   Far left     (Y = -2600)  1.4 m crouch tunnel, then a 1 x 2.1 m doorway with a door into a 1 m corridor
   Shooting     (Y = 0 / +450)  plates at 8 m (right) and 20 m (sprint lane), with a backstop
+  Hazard       (Y = +500)     damage volume pad right of spawn
 """
 import math
 import unreal
@@ -72,6 +73,13 @@ def inspectable(label, folder, center, size, display_name, description):
 def shootable(label, folder, center, size, display_name):
     actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCShootableTarget)
     actor.set_editor_property("display_name", unreal.Text(display_name))
+    return actor
+
+
+def hazard(label, folder, center, size, display_name, dps):
+    actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCDamageVolume)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
+    actor.set_editor_property("damage_per_second", dps)
     return actor
 
 
@@ -259,7 +267,14 @@ def build_shooting_range():
         shootable(f"Target_20m_{name}", folder, (2000, y, 90), (8, 70, 120), f"{name} Target")
     block("Range_Backstop", folder, 2180, 2220, -400, 400, 0, 250)
     inspectable("RangeSign", folder, (650, 620, 80), (10, 100, 140), "Shooting Range",
-                "Take the pistol and the 9mm from the table. Close plate on the right, three plates at 20 m down the lane.")
+                "Take the pistol and the 9mm from the table. Close plate on the right, three plates at 20 m. Four hits drop a plate.")
+
+
+def build_hazard():
+    folder = "Hazard"
+    hazard("Spill", folder, (200, 520, 8), (180, 180, 16), "Chemical spill", 25.0)
+    inspectable("SpillSign", folder, (200, 640, 80), (8, 90, 120), "Hazard",
+                "The pad is a chemical spill. Stand on it to take damage. You will respawn at the start.")
 
 
 def main():
@@ -280,6 +295,7 @@ def main():
     build_crouch_and_door_lane()
     build_spawn_props()
     build_shooting_range()
+    build_hazard()
 
     if not levels.save_current_level():
         raise RuntimeError(f"Could not save {MAP_PATH} (is the file read-only?)")

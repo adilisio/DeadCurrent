@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Combat/DCDamageable.h"
 #include "GameFramework/Character.h"
 #include "DCPlayerCharacter.generated.h"
 
@@ -9,6 +10,7 @@ class ADCFirearm;
 class UDCItemDefinition;
 class UDCInteractorComponent;
 class UDCInventoryComponent;
+class UDCHealthComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -35,6 +37,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UDCInventoryComponent* InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCHealthComponent* HealthComponent;
 
 protected:
 
@@ -152,6 +157,9 @@ protected:
 	UFUNCTION()
 	void HandleInventoryChanged(UDCInventoryComponent* Inventory);
 
+	UFUNCTION()
+	void HandleDied(UDCHealthComponent* Health, const FDCDamageInfo& Damage);
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -165,6 +173,8 @@ public:
 	UDCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	ADCFirearm* GetEquippedFirearm() const { return EquippedFirearm; }
+
+	UDCHealthComponent* GetHealthComponent() const { return HealthComponent; }
 
 	const UInputAction* GetInteractAction() const { return InteractAction; }
 
@@ -181,6 +191,8 @@ private:
 	const UDCItemDefinition* FindFirearmInInventory() const;
 
 	void SpawnAndEquip(const UDCItemDefinition* Definition);
+
+	void Respawn();
 
 	/** MaxWalkSpeed as authored on the movement component */
 	float BaseWalkSpeed = 0.0f;
@@ -203,4 +215,6 @@ private:
 	float RecoilToRecover = 0.0f;
 
 	float RecoilRecoverySpeed = 12.0f;
+
+	FTimerHandle RespawnTimer;
 };

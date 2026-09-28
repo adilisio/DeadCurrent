@@ -67,6 +67,7 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - far right: ledges at 20, 40, 60, 80 and 110 cm (20 and 40 step up, 60 and 80 need a jump, 110 is out of reach)
 - far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
 - shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
+- right of spawn: a chemical-spill pad that damages the player
 
 ## Interaction
 
@@ -106,7 +107,17 @@ The editor's data validation flags definitions missing an ID, name or category.
 
 `ADCFirearm` (`Combat/`) is the equipped gun. The player auto-equips the first firearm that enters inventory, and **1** holsters or draws it. Firing is hitscan from the view point (Visibility channel, 100 m). Magazine rounds are separate from inventory; **R** moves ammo from inventory into the magazine after `ReloadDuration`. Dry-fire shows "Reload" or "No ammo".
 
-Recoil kicks the view up (with a little random yaw) and recovers over a few frames. Hits spawn a short-lived impact mark. If the actor implements `IDCDamageable`, the shot applies `FDCDamageInfo` (`Damage.Ballistic`, amount from the definition). `ADCShootableTarget` is the gym's range plate: it flashes, counts hits, and shows `Hit Target (n)`. Player and enemy health come in FP-07 and will use the same interface.
+Recoil kicks the view up (with a little random yaw) and recovers over a few frames. Hits spawn a short-lived impact mark, then `UDCHealthComponent::ApplyDamageToActor` applies `FDCDamageInfo`. Actors may also implement `IDCDamageable` for hit reactions (flashes, messages).
+
+## Health
+
+`UDCHealthComponent` (`Combat/`) is the reusable hit-point pool. The player has one; range plates have one; enemies will in FP-08. `ApplyDamage` / `Heal` / `ResetHealth`, `OnHealthChanged`, `OnDied`. Dead actors ignore further damage until `ResetHealth`.
+
+The pistol does 25, default max health is 100, so four hits drop a plate. `ADCShootableTarget` flashes and shows remaining health, then falls over on death. The player shows a health bar (bottom left); on death, movement is disabled and they respawn at the PlayerStart after 4 seconds with full health (inventory is kept).
+
+`ADCDamageVolume` (`World/`) is an overlap pad that applies `Damage.Environmental` each second. The gym has a "chemical spill" at 25/s, so standing on it kills in about 4 seconds.
+
+Automation test `DeadCurrent.Combat.Health` covers damage, death, ignored extra hits, heal and reset.
 
 The HUD shows `magazine | reserve` in the bottom right while a gun is drawn, `Reloading` during reload, and `[R] Reload` when the mag is empty and reserve remains.
 
@@ -131,7 +142,7 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 ## HUD
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel (item, quantity, weight, total), and the weapon ammo readout. It will be replaced by UMG widgets when the HUD grows.
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, and a health bar. It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 
@@ -211,7 +222,7 @@ Roots and their meaning:
 
 | Root | Meaning |
 | --- | --- |
-| `Damage.` | Damage types (`Damage.Ballistic`) |
+| `Damage.` | Damage types (`Damage.Ballistic`, `Damage.Environmental`) |
 | `Item.` | Item classification (`Item.Weapon.Firearm`, `Item.Ammo`) |
 | `Actor.` | Actor disposition (`Actor.Hostile`, `Actor.Friendly`) |
 | `State.` | Transient actor state (`State.Dead`) |

@@ -1,6 +1,7 @@
 #include "UI/DCHUD.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCFirearm.h"
+#include "Combat/DCHealthComponent.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
@@ -31,6 +32,7 @@ void ADCHUD::DrawHUD()
 	}
 
 	DrawWeapon();
+	DrawHealth();
 }
 
 void ADCHUD::ShowMessage(const FText& Message, float Duration)
@@ -215,6 +217,39 @@ void ADCHUD::DrawWeapon()
 		float HintHeight = 0.0f;
 		GetTextSize(ReloadHint, HintWidth, HintHeight, Font);
 		DrawText(ReloadHint, TextColor, Canvas->ClipX - HintWidth - 40.0f, Y - HintHeight - 6.0f, Font);
+	}
+}
+
+void ADCHUD::DrawHealth()
+{
+	const APawn* Pawn = GetOwningPawn();
+	const UDCHealthComponent* Health = Pawn ? Pawn->FindComponentByClass<UDCHealthComponent>() : nullptr;
+	if (!Health)
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float BarWidth = 180.0f;
+	const float BarHeight = 12.0f;
+	const float X = 40.0f;
+	const float Y = Canvas->ClipY - 48.0f;
+
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.55f), X, Y, BarWidth, BarHeight);
+
+	const float Pct = FMath::Clamp(Health->GetHealthPercent(), 0.0f, 1.0f);
+	const FLinearColor Fill = Health->IsDead()
+		? FLinearColor(0.4f, 0.05f, 0.05f, 0.9f)
+		: FLinearColor(0.75f, 0.12f, 0.12f, 0.9f);
+	DrawRect(Fill, X, Y, BarWidth * Pct, BarHeight);
+
+	const FString Label = FString::Printf(TEXT("%d"), FMath::RoundToInt(Health->GetHealth()));
+	DrawText(Label, FLinearColor(0.0f, 0.0f, 0.0f, 0.7f), X + 1.0f, Y - 20.0f, Font);
+	DrawText(Label, TextColor, X, Y - 20.0f, Font);
+
+	if (Health->IsDead())
+	{
+		DrawCenteredText(TEXT("YOU DIED"), Canvas->ClipY * 0.42f, GEngine->GetLargeFont(), FLinearColor(0.85f, 0.1f, 0.1f, 1.0f));
 	}
 }
 
