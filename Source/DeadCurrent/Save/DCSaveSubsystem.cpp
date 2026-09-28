@@ -16,7 +16,7 @@
 #include "UI/DCHUD.h"
 #include "World/DCWorldStateSubsystem.h"
 
-const FString UDCSaveSubsystem::SlotName = TEXT("DeadCurrent");
+const FString UDCSaveSubsystem::DefaultSlotName = TEXT("DeadCurrent");
 
 /** Map package without the PIE prefix, e.g. /Game/Maps/Lvl_Boathouse. */
 static FString DCMapPackage(const UWorld* World)

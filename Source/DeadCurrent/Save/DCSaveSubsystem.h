@@ -21,7 +21,12 @@ class DEADCURRENT_API UDCSaveSubsystem : public UGameInstanceSubsystem
 
 public:
 
-	static const FString SlotName;
+	static const FString DefaultSlotName;
+
+	/** Slot F5/F9 use. Tests point this at a scratch slot so they never touch the player's save. */
+	void SetSlotName(const FString& InSlotName) { SlotName = InSlotName; }
+
+	const FString& GetSlotName() const { return SlotName; }
 
 	UFUNCTION(BlueprintCallable, Category="Save")
 	bool SaveCurrentGame();
@@ -34,8 +39,6 @@ public:
 	void ApplyPendingLoad(UWorld* World);
 
 	bool HasPendingLoad() const { return PendingLoad != nullptr; }
-
-	static FString MakeSlotName() { return SlotName; }
 
 	/** Quest log and world flags. Split out from the player so tests can round-trip them. */
 	static void CaptureProgress(UDCSaveGame* Save, const UDCQuestComponent* Quests, const UDCWorldStateSubsystem* WorldState);
@@ -56,4 +59,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UDCSaveGame> PendingLoad;
+
+	FString SlotName = DefaultSlotName;
 };
