@@ -103,15 +103,21 @@ EDCQuestStatus UDCQuestComponent::GetQuestStatus(FName QuestId) const
 
 FText UDCQuestComponent::GetObjectiveText() const
 {
+	const FName QuestId = GetTrackedQuestId();
+	return QuestId.IsNone() ? FText::GetEmpty() : GetStageText(QuestId);
+}
+
+FName UDCQuestComponent::GetTrackedQuestId() const
+{
 	for (const FDCQuestProgress& Progress : Quests)
 	{
 		const FDCQuestStage* Stage = FindCurrentStage(Progress);
 		if (Stage && !Stage->bCompletesQuest && !Stage->ObjectiveText.IsEmpty())
 		{
-			return Stage->ObjectiveText;
+			return Progress.QuestId;
 		}
 	}
-	return FText::GetEmpty();
+	return NAME_None;
 }
 
 FText UDCQuestComponent::GetStageText(FName QuestId) const

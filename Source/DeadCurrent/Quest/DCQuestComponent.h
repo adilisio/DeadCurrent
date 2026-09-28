@@ -72,6 +72,10 @@ public:
 	UFUNCTION(BlueprintPure, Category="Quest")
 	FText GetObjectiveText() const;
 
+	/** The quest the HUD tracks: the first active quest that has objective text. */
+	UFUNCTION(BlueprintPure, Category="Quest")
+	FName GetTrackedQuestId() const;
+
 	/** Objective (or outcome summary, once complete) of one quest's current stage. */
 	UFUNCTION(BlueprintPure, Category="Quest")
 	FText GetStageText(FName QuestId) const;

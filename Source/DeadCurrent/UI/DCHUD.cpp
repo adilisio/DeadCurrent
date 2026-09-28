@@ -15,6 +15,7 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestComponent.h"
+#include "Quest/DCQuestDefinition.h"
 
 void ADCHUD::DrawHUD()
 {
@@ -183,6 +184,59 @@ void ADCHUD::DrawInventory()
 	Y += LineHeight * 0.5f;
 	DrawText(TEXT("Total"), TextColor, Left, Y, Font);
 	DrawRightAligned(FString::Printf(TEXT("%.2f kg"), Inventory->GetTotalWeight()), Right, Y);
+
+	DrawQuestLog(X + PanelWidth + 20.0f, 60.0f);
+}
+
+void ADCHUD::DrawQuestLog(float X, float Top)
+{
+	const APawn* Pawn = GetOwningPawn();
+	const UDCQuestComponent* Quests = Pawn ? Pawn->FindComponentByClass<UDCQuestComponent>() : nullptr;
+	if (!Quests)
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	const float Padding = 12.0f;
+	const float PanelWidth = FMath::Clamp(Canvas->ClipX - X - 40.0f, 240.0f, 460.0f);
+	const float TextWidth = PanelWidth - Padding * 2.0f;
+
+	// Lay out first so the panel fits its text.
+	struct FRow { FString Text; FLinearColor Color; };
+	TArray<FRow> Rows;
+	for (const FDCQuestProgress& Progress : Quests->GetQuestLog())
+	{
+		const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(Progress.QuestId);
+		const FString Name = Definition ? Definition->DisplayName.ToString() : Progress.QuestId.ToString();
+		const bool bComplete = Quests->IsComplete(Progress.QuestId);
+		Rows.Add({ FString::Printf(TEXT("%s  (%s)"), *Name, bComplete ? TEXT("complete") : TEXT("active")),
+			bComplete ? TextColor * 0.8f : FLinearColor(0.85f, 0.75f, 0.45f, 1.0f) });
+
+		TArray<FString> Lines;
+		WrapTextToWidth(Quests->GetStageText(Progress.QuestId).ToString(), Font, TextWidth, Lines);
+		for (const FString& Line : Lines)
+		{
+			Rows.Add({ Line, TextColor * 0.75f });
+		}
+	}
+	if (Rows.IsEmpty())
+	{
+		Rows.Add({ TEXT("(none)"), TextColor * 0.7f });
+	}
+
+	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 1.5f);
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.65f), X, Top, PanelWidth, PanelHeight);
+
+	float Y = Top + Padding;
+	DrawText(TEXT("QUESTS"), TextColor, X + Padding, Y, Font);
+	Y += LineHeight * 1.5f;
+	for (const FRow& Row : Rows)
+	{
+		DrawText(Row.Text, Row.Color, X + Padding, Y, Font);
+		Y += LineHeight;
+	}
 }
 
 void ADCHUD::DrawWeapon()
@@ -286,16 +340,21 @@ void ADCHUD::DrawObjective()
 		return;
 	}
 
-	const FText Objective = Character->GetQuestComponent()->GetObjectiveText();
-	if (Objective.IsEmpty())
+	const UDCQuestComponent* Quests = Character->GetQuestComponent();
+	const FName QuestId = Quests->GetTrackedQuestId();
+	if (QuestId.IsNone())
 	{
 		return;
 	}
 
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(QuestId);
+	const FString Name = Definition ? Definition->DisplayName.ToString() : QuestId.ToString();
+	const FString Objective = FString::Printf(TEXT("%s: %s"), *Name, *Quests->GetStageText(QuestId).ToString());
+
 	UFont* Font = GEngine->GetMediumFont();
 	const float MaxWidth = FMath::Max(120.0f, Canvas->ClipX - 80.0f);
 	TArray<FString> Lines;
-	WrapTextToWidth(Objective.ToString(), Font, MaxWidth, Lines);
+	WrapTextToWidth(Objective, Font, MaxWidth, Lines);
 	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
 	float Y = 28.0f;
 	for (const FString& Line : Lines)

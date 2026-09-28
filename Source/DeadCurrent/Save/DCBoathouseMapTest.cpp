@@ -13,6 +13,8 @@
 #include "Save/DCPersistentRegistry.h"
 #include "Save/DCSaveSubsystem.h"
 #include "Tests/AutomationCommon.h"
+#include "UI/DCHUD.h"
+#include "UnrealClient.h"
 #include "World/DCInspectableActor.h"
 #include "World/DCWorldStateSubsystem.h"
 #include "Misc/AutomationTest.h"
@@ -215,8 +217,26 @@ bool FDCBoathouseCoilRouteTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Coil in inventory"), Count(TEXT("radio_coil")), 1);
 		TestEqual(TEXT("Quest advanced by pickup"), Stage(), FName(TEXT("return_coil")));
 
-		TestTrue(TEXT("Save (ready to turn in)"), Saves()->SaveCurrentGame());
+		// With rendering (not -nullrhi), capture the objective line and quest journal for review:
+		// Saved/Screenshots/<platform>/DC_QuestHUD.png
+		if (FApp::CanEverRender())
+		{
+			const APlayerController* PC = Cast<APlayerController>(Player()->GetController());
+			if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
+			{
+				HUD->ToggleInventory();
+			}
+			FScreenshotRequest::RequestScreenshot(TEXT("DC_QuestHUD"), true, false);
+		}
 
+		TestTrue(TEXT("Save (ready to turn in)"), Saves()->SaveCurrentGame());
+		return true;
+	}));
+
+	// Give a rendered run time to draw the HUD before the screenshot frame.
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.0f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
 		// Diverge after the save: hand the coil over.
 		TestEqual(TEXT("Turn-in node"), TalkToMara(), FName(TEXT("turnin_coil")));
 		TestTrue(TEXT("Hand over"), Say(TEXT("Here. It's yours.")));

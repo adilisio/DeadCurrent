@@ -57,6 +57,9 @@ private:
 
 	void DrawObjective();
 
+	/** Quest journal beside the inventory panel: each quest, its status, and its objective or outcome. */
+	void DrawQuestLog(float X, float Top);
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
 	void WrapTextToWidth(const FString& Text, UFont* Font, float MaxWidth, TArray<FString>& OutLines);
