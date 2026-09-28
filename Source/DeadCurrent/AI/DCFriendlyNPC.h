@@ -5,8 +5,10 @@
 #include "Interaction/DCInteractable.h"
 #include "DCFriendlyNPC.generated.h"
 
+class UDCDialogueAsset;
+
 /**
- *  Idle friendly character. Talk starts a conversation; branching dialogue is FP-11.
+ *  Idle friendly character. Talk starts a dialogue asset (FP-11).
  */
 UCLASS()
 class DEADCURRENT_API ADCFriendlyNPC : public ACharacter, public IDCInteractable
@@ -28,7 +30,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC")
 	FText DisplayName;
 
-	/** Spoken when the player starts a conversation */
+	/** Conversation started by Talk. Required for FP-11. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC")
+	TSoftObjectPtr<UDCDialogueAsset> Dialogue;
+
+	/** Fallback line if Dialogue is unset (editor / early setup). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC", meta=(MultiLine="true"))
 	FText Greeting;
 

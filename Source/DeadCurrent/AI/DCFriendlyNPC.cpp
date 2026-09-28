@@ -1,8 +1,11 @@
 #include "AI/DCFriendlyNPC.h"
 #include "Animation/AnimInstance.h"
+#include "Character/DCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/DCGameplayTags.h"
+#include "Dialogue/DCDialogueAsset.h"
+#include "Dialogue/DCDialogueComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/DCHUD.h"
@@ -47,7 +50,9 @@ ADCFriendlyNPC::ADCFriendlyNPC()
 
 	DisplayName = LOCTEXT("DefaultName", "Mara");
 	Greeting = LOCTEXT("DefaultGreeting",
-		"Keep your voice down. There's a scavenger past those plates. Come talk when you want a real conversation.");
+		"Keep your voice down. There's a scavenger past those plates.");
+	Dialogue = TSoftObjectPtr<UDCDialogueAsset>(
+		FSoftObjectPath(TEXT("/Game/Dialogue/DA_Dialogue_MaraIntro.DA_Dialogue_MaraIntro")));
 }
 
 void ADCFriendlyNPC::Tick(float DeltaSeconds)
@@ -89,7 +94,20 @@ void ADCFriendlyNPC::FaceActor(const AActor* Target, float DeltaSeconds)
 
 bool ADCFriendlyNPC::CanInteract_Implementation(AActor* Interactor) const
 {
-	return Interactor != nullptr && !Greeting.IsEmpty();
+	if (!Interactor)
+	{
+		return false;
+	}
+
+	if (const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(Interactor))
+	{
+		if (Character->GetDialogueComponent() && Character->GetDialogueComponent()->IsInDialogue())
+		{
+			return false;
+		}
+	}
+
+	return Dialogue.ToSoftObjectPath().IsValid() || !Greeting.IsEmpty();
 }
 
 FDCInteractionPrompt ADCFriendlyNPC::GetInteractionPrompt_Implementation(AActor* Interactor) const
@@ -105,7 +123,25 @@ FGameplayTag ADCFriendlyNPC::GetInteractionType_Implementation() const
 void ADCFriendlyNPC::Interact_Implementation(AActor* Interactor)
 {
 	FaceActor(Interactor, 1.0f);
-	ADCHUD::ShowMessageFor(Interactor, Greeting, GreetingDuration);
+
+	UDCDialogueComponent* DialogueComp = Interactor
+		? Interactor->FindComponentByClass<UDCDialogueComponent>()
+		: nullptr;
+	if (DialogueComp)
+	{
+		if (const UDCDialogueAsset* Asset = Dialogue.LoadSynchronous())
+		{
+			if (DialogueComp->StartDialogue(Asset, this))
+			{
+				return;
+			}
+		}
+	}
+
+	if (!Greeting.IsEmpty())
+	{
+		ADCHUD::ShowMessageFor(Interactor, Greeting, GreetingDuration);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

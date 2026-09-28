@@ -12,6 +12,7 @@ class UDCItemDefinition;
 class UDCInteractorComponent;
 class UDCInventoryComponent;
 class UDCHealthComponent;
+class UDCDialogueComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -44,6 +45,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UAIPerceptionStimuliSourceComponent* StimuliSource;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCDialogueComponent* DialogueComponent;
 
 protected:
 
@@ -179,6 +183,8 @@ public:
 	ADCFirearm* GetEquippedFirearm() const { return EquippedFirearm; }
 
 	UDCHealthComponent* GetHealthComponent() const { return HealthComponent; }
+
+	UDCDialogueComponent* GetDialogueComponent() const { return DialogueComponent; }
 
 	const UInputAction* GetInteractAction() const { return InteractAction; }
 

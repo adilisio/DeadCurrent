@@ -2,6 +2,8 @@
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCFirearm.h"
 #include "Combat/DCHealthComponent.h"
+#include "Dialogue/DCDialogueComponent.h"
+#include "Dialogue/DCDialogueTypes.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
@@ -25,6 +27,7 @@ void ADCHUD::DrawHUD()
 	DrawCrosshair();
 	DrawInteractionPrompt();
 	DrawMessage();
+	DrawDialogue();
 
 	if (bShowInventory)
 	{
@@ -60,6 +63,12 @@ void ADCHUD::DrawCrosshair()
 void ADCHUD::DrawInteractionPrompt()
 {
 	const APawn* Pawn = GetOwningPawn();
+	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(Pawn);
+	if (Character && Character->GetDialogueComponent() && Character->GetDialogueComponent()->IsInDialogue())
+	{
+		return;
+	}
+
 	const UDCInteractorComponent* Interactor = Pawn ? Pawn->FindComponentByClass<UDCInteractorComponent>() : nullptr;
 
 	FDCInteractionPrompt Prompt;
@@ -69,7 +78,6 @@ void ADCHUD::DrawInteractionPrompt()
 	}
 
 	FString KeyLabel;
-	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(Pawn);
 	const ULocalPlayer* LocalPlayer = GetOwningPlayerController() ? GetOwningPlayerController()->GetLocalPlayer() : nullptr;
 	if (const UEnhancedInputLocalPlayerSubsystem* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
 	{
@@ -250,6 +258,45 @@ void ADCHUD::DrawHealth()
 	if (Health->IsDead())
 	{
 		DrawCenteredText(TEXT("YOU DIED"), Canvas->ClipY * 0.42f, GEngine->GetLargeFont(), FLinearColor(0.85f, 0.1f, 0.1f, 1.0f));
+	}
+}
+
+void ADCHUD::DrawDialogue()
+{
+	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(GetOwningPawn());
+	const UDCDialogueComponent* Dialogue = Character ? Character->GetDialogueComponent() : nullptr;
+	const FDCDialogueNode* Node = Dialogue ? Dialogue->GetCurrentNode() : nullptr;
+	if (!Node)
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	const float Padding = 16.0f;
+	const float PanelWidth = FMath::Min(720.0f, Canvas->ClipX - 80.0f);
+	const int32 ChoiceRows = FMath::Max(1, Node->Choices.Num());
+	const float PanelHeight = Padding * 2.0f + LineHeight * (4 + ChoiceRows);
+	const float X = (Canvas->ClipX - PanelWidth) * 0.5f;
+	float Y = Canvas->ClipY * 0.58f;
+
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.72f), X, Y, PanelWidth, PanelHeight);
+
+	const float Left = X + Padding;
+	Y += Padding;
+
+	const FString Speaker = Node->Speaker.IsEmpty() ? TEXT("???") : Node->Speaker.ToString();
+	DrawText(Speaker, FLinearColor(0.85f, 0.75f, 0.45f, 1.0f), Left, Y, Font);
+	Y += LineHeight * 1.25f;
+
+	DrawText(Node->Line.ToString(), TextColor, Left, Y, Font);
+	Y += LineHeight * 1.5f;
+
+	for (int32 Index = 0; Index < Node->Choices.Num(); ++Index)
+	{
+		const FString Choice = FString::Printf(TEXT("[%d]  %s"), Index + 1, *Node->Choices[Index].Text.ToString());
+		DrawText(Choice, TextColor, Left, Y, Font);
+		Y += LineHeight;
 	}
 }
 

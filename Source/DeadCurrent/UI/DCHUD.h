@@ -53,6 +53,8 @@ private:
 
 	void DrawHealth();
 
+	void DrawDialogue();
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
 	FText CurrentMessage;

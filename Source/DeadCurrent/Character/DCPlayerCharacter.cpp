@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DeadCurrent.h"
+#include "Dialogue/DCDialogueComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "EnhancedInputComponent.h"
@@ -44,6 +45,7 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 	InventoryComponent = CreateDefaultSubobject<UDCInventoryComponent>(TEXT("Inventory"));
 	HealthComponent = CreateDefaultSubobject<UDCHealthComponent>(TEXT("Health"));
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	DialogueComponent = CreateDefaultSubobject<UDCDialogueComponent>(TEXT("Dialogue"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -186,11 +188,20 @@ void ADCPlayerCharacter::DoCrouchToggle()
 
 void ADCPlayerCharacter::DoInteract()
 {
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		return;
+	}
 	InteractorComponent->TryInteract();
 }
 
 void ADCPlayerCharacter::DoToggleInventory()
 {
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		return;
+	}
+
 	const APlayerController* PC = Cast<APlayerController>(GetController());
 	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
 	{
@@ -200,6 +211,11 @@ void ADCPlayerCharacter::DoToggleInventory()
 
 void ADCPlayerCharacter::DoFire()
 {
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		return;
+	}
+
 	if (HealthComponent->IsDead() || !EquippedFirearm || EquippedFirearm->IsHolstered())
 	{
 		return;

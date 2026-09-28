@@ -365,7 +365,7 @@ def build_npc():
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
     )
     inspectable("NPCSign", folder, (420, 1280, 80), (8, 100, 140), "Shore watcher",
-                "Mara waits here, out of the scavenger's sight. Look at her and press E to talk. Real branching dialogue comes next.")
+                "Mara waits here, out of the scavenger's sight. Press E to talk, then 1/2/3 to choose replies.")
 
 
 def main():

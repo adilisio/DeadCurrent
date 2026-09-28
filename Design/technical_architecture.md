@@ -141,7 +141,15 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 
 ## NPCs
 
-`ADCFriendlyNPC` (`AI/`) is an idle character (no combat brain). She blocks Visibility so **E** can talk (`Interaction.Talk`), turns to face the player within 6 m, and shows an authored greeting. Branching dialogue is FP-11. The gym places Mara at (350, 1100), out of the scavenger's sight.
+`ADCFriendlyNPC` (`AI/`) is an idle character (no combat brain). She blocks Visibility so **E** can talk (`Interaction.Talk`), turns to face the player within 6 m, and starts `DA_Dialogue_MaraIntro` on the player's dialogue component. The gym places Mara at (350, 1100), upright (spawn uses named Rotator pitch/yaw/roll — positional Rotator was pitching her over).
+
+## Dialogue
+
+`UDCDialogueAsset` (`Dialogue/`) is a node graph Data Asset under `/Game/Dialogue`. Each node has a speaker, line, and choices. A choice's `NextNodeId` is empty to end the conversation. Conditions and consequences can hang on choices later without changing the walker.
+
+`UDCDialogueComponent` on the player runs the active conversation: `StartDialogue` / `SelectChoice` / `EndDialogue`. Digit keys **1–9** pick choices. The canvas HUD draws the current line and numbered replies. Fire, inventory and interact are blocked while talking.
+
+Automation test `DeadCurrent.Dialogue.Branching` covers start, branch, and goodbye.
 
 ## Inventory
 
