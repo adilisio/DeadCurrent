@@ -317,4 +317,62 @@ bool FDCQuestPersistenceTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCQuestCrossQuestTest, "DeadCurrent.Quest.CrossQuest",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCQuestCrossQuestTest::RunTest(const FString& Parameters)
+{
+	using namespace DCQuestTest;
+
+	// Quest A's outcome closes quest B and sets the flag B's *old* stage was waiting for.
+	// B must stay closed: transitions are read from its current stage, not a stale copy.
+	UDCItemDefinition* Token = MakeItem(TEXT("test.cross_token"));
+
+	UDCQuestDefinition* B = NewObject<UDCQuestDefinition>();
+	B->QuestId = TEXT("test.cross_b");
+	FDCQuestStage B1;
+	B1.StageId = TEXT("b1");
+	FDCQuestTransition B1Next;
+	B1Next.Conditions = { Cond(EDCConditionType::WorldFlag, TEXT("test.cross_flag")) };
+	B1Next.NextStage = TEXT("b2");
+	B1.Transitions = { B1Next };
+	FDCQuestStage B2;
+	B2.StageId = TEXT("b2");
+	FDCQuestStage BClosed;
+	BClosed.StageId = TEXT("closed");
+	BClosed.bCompletesQuest = true;
+	B->Stages = { B1, B2, BClosed };
+
+	UDCQuestDefinition* A = NewObject<UDCQuestDefinition>();
+	A->QuestId = TEXT("test.cross_a");
+	FDCQuestStage A1;
+	A1.StageId = TEXT("a1");
+	FDCQuestTransition A1Next;
+	A1Next.Conditions = { Cond(EDCConditionType::HasItem, Token->ItemId) };
+	A1Next.NextStage = TEXT("a2");
+	A1.Transitions = { A1Next };
+	FDCQuestStage A2;
+	A2.StageId = TEXT("a2");
+	A2.bCompletesQuest = true;
+	FDCGameplayConsequence CloseB;
+	CloseB.Type = EDCConsequenceType::SetQuestStage;
+	CloseB.Id = B->QuestId;
+	CloseB.Stage = TEXT("closed");
+	A2.OnEnter = { CloseB, Cons(EDCConsequenceType::SetWorldFlag, TEXT("test.cross_flag")) };
+	A->Stages = { A1, A2 };
+
+	FDCTestWorld World;
+	FQuestScene Scene(World);
+	Scene.Quests->StartQuest(A->QuestId);
+	Scene.Quests->StartQuest(B->QuestId);
+	Scene.Inventory->AddItem(Token, 1);
+	TestTrue(TEXT("A complete"), Scene.Quests->IsComplete(A->QuestId));
+	TestEqual(TEXT("B closed by A, not moved by its old stage"), Scene.Quests->GetStage(B->QuestId), FName(TEXT("closed")));
+
+	A->QuestId = NAME_None;
+	B->QuestId = NAME_None;
+	Token->ItemId = NAME_None;
+	return true;
+}
+
 #endif

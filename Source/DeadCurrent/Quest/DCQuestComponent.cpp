@@ -142,11 +142,18 @@ void UDCQuestComponent::EvaluateQuests()
 		bool bMoved = false;
 		const FDCRuleContext Context = MakeRuleContext();
 
-		// Copy: entering a stage can start other quests and grow the log.
-		const TArray<FDCQuestProgress> Snapshot = Quests;
-		for (const FDCQuestProgress& Progress : Snapshot)
+		// Iterate ids, not entries: entering a stage can start quests (growing the log) or move
+		// other quests, so each quest's stage is re-read when its turn comes.
+		TArray<FName> QuestIds;
+		for (const FDCQuestProgress& Progress : Quests)
 		{
-			const FDCQuestStage* Stage = FindCurrentStage(Progress);
+			QuestIds.Add(Progress.QuestId);
+		}
+
+		for (const FName QuestId : QuestIds)
+		{
+			const FDCQuestProgress* Progress = FindProgress(QuestId);
+			const FDCQuestStage* Stage = Progress ? FindCurrentStage(*Progress) : nullptr;
 			if (!Stage || Stage->bCompletesQuest)
 			{
 				continue;
@@ -156,7 +163,7 @@ void UDCQuestComponent::EvaluateQuests()
 			{
 				if (UDCGameplayRules::CheckConditions(Transition.Conditions, Context))
 				{
-					EnterStage(Progress.QuestId, Transition.NextStage);
+					EnterStage(QuestId, Transition.NextStage);
 					bMoved = true;
 					break;
 				}
