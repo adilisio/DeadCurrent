@@ -2,6 +2,8 @@
 #include "Core/DCContentSubsystem.h"
 #include "Core/DCGameplayRules.h"
 #include "Dialogue/DCDialogueAsset.h"
+#include "Engine/AssetManager.h"
+#include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestDefinition.h"
 #include "Misc/AutomationTest.h"
 
@@ -112,6 +114,19 @@ bool FDCContentValidationTest::RunTest(const FString& Parameters)
 	}
 
 	TestTrue(TEXT("Found quest definitions"), QuestCount > 0);
+
+	// Quests, items and dialogue are found by id at runtime, so only the Asset Manager rules in
+	// DefaultGame.ini get them cooked into packaged builds. Every asset must be registered there.
+	auto CountRegistered = [](const TCHAR* Type)
+	{
+		TArray<FPrimaryAssetId> Ids;
+		UAssetManager::Get().GetPrimaryAssetIdList(FPrimaryAssetType(Type), Ids);
+		return Ids.Num();
+	};
+	const int32 ItemCount = Definitions.FilterByPredicate([](const UObject* O) { return O->IsA<UDCItemDefinition>(); }).Num();
+	TestEqual(TEXT("Asset Manager registers every quest"), CountRegistered(TEXT("DCQuestDefinition")), QuestCount);
+	TestEqual(TEXT("Asset Manager registers every item"), CountRegistered(TEXT("DCItemDefinition")), ItemCount);
+	TestEqual(TEXT("Asset Manager registers every dialogue"), CountRegistered(TEXT("DCDialogueAsset")), DialogueAssets.Num());
 	TestTrue(TEXT("Found dialogue assets"), DialogueAssets.Num() > 0);
 	AddInfo(FString::Printf(TEXT("Validated %d quests and %d dialogues"), QuestCount, DialogueAssets.Num()));
 	return true;
