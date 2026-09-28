@@ -22,7 +22,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 ## Playtesting
 
-`Tools/PlayTest.bat` launches the game standalone (no editor) in a 1280x720 window on the discrete GPU, with reduced graphics for low-end machines: Medium scalability, no Lumen, screen space reflections, no virtual shadow maps, no volumetric clouds, 60 FPS cap. The project's own rendering settings are unchanged. It uses the compiled editor build, so rebuild `DeadCurrentEditor` after C++ changes. The first launch compiles shaders and takes several minutes.
+`Tools/PlayTest.bat` launches the game standalone (no editor) in a 1280x720 window on the discrete GPU. It forces DX11, Low scalability, 70% resolution, no Lumen / ray tracing / virtual shadows / volumetric clouds / fog / SSAO / bloom / motion blur, a 400 MB texture pool, no vsync, and a 60 FPS cap. Those overrides apply from the first frame (`-dpcvars`); the project's own rendering settings are unchanged. It uses the compiled editor build, so rebuild `DeadCurrentEditor` after C++ changes. The first launch (and the first launch after switching graphics APIs) compiles shaders and takes several minutes.
 
 ## Editor scripts
 
@@ -34,7 +34,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 | Script | Does |
 | --- | --- |
-| `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
+| `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact, inventory, fire, reload, holster), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
 | `create_items.py` | Creates or updates the item definitions in `/Game/Items`. Safe to re-run; edits made in the editor to those items are overwritten. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
@@ -50,6 +50,9 @@ Living document. Update it whenever a foundational system lands or a convention 
 | Crouch (toggle) | Left Ctrl, C | B / Circle |
 | Interact | E | X / Square |
 | Inventory (toggle) | Tab, I | View / Back |
+| Fire | Left mouse | Right trigger |
+| Reload | R | Y / Triangle |
+| Holster / draw | 1 | D-pad up |
 
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 
@@ -63,6 +66,7 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - right: a 30 degree walkable ramp and a 50 degree ramp that should not be climbable
 - far right: ledges at 20, 40, 60, 80 and 110 cm (20 and 40 step up, 60 and 80 need a jump, 110 is out of reach)
 - far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
+- shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
 
 ## Interaction
 
@@ -75,7 +79,7 @@ Anything the player can use implements `IDCInteractable` (`Interaction/DCInterac
 
 `UDCInteractorComponent` on the player sweeps from the view point each frame (2.5 m range, 8 cm radius, Visibility channel), keeps the usable interactable in focus, and broadcasts `OnFocusChanged`. The interact input calls `TryInteract()`. `ADCHUD` draws the prompt from the focused actor, so new interactable types need no UI or player changes.
 
-Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user). Pickups, containers, corpses and NPCs will implement the same interface.
+Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory). Containers, corpses and NPCs will implement the same interface.
 
 ## Items
 
@@ -96,6 +100,18 @@ The editor's data validation flags definitions missing an ID, name or category.
 | `DA_Item_FieldDressing` | `field_dressing` | `Item.Consumable.Medical` | 10 |
 | `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
 
+`DA_Item_Pistol` is a firearm item: same `UDCItemDefinition` as other items, with magazine, ammo, damage, recoil and equipped-view fields. `IsFirearm()` is true when `Category` is `Item.Weapon.Firearm`. Other guns are more of these assets, not new C++ classes.
+
+## Weapons
+
+`ADCFirearm` (`Combat/`) is the equipped gun. The player auto-equips the first firearm that enters inventory, and **1** holsters or draws it. Firing is hitscan from the view point (Visibility channel, 100 m). Magazine rounds are separate from inventory; **R** moves ammo from inventory into the magazine after `ReloadDuration`. Dry-fire shows "Reload" or "No ammo".
+
+Recoil kicks the view up (with a little random yaw) and recovers over a few frames. Hits spawn a short-lived impact mark. If the actor implements `IDCDamageable`, the shot applies `FDCDamageInfo` (`Damage.Ballistic`, amount from the definition). `ADCShootableTarget` is the gym's range plate: it flashes, counts hits, and shows `Hit Target (n)`. Player and enemy health come in FP-07 and will use the same interface.
+
+The HUD shows `magazine | reserve` in the bottom right while a gun is drawn, `Reloading` during reload, and `[R] Reload` when the mag is empty and reserve remains.
+
+Automation test `DeadCurrent.Combat.FirearmAmmo` covers magazine fill, consumption and partial reload.
+
 ## Inventory
 
 `UDCInventoryComponent` (`Inventory/`) holds a list of `FDCItemStack` (definition + quantity). The player has one; corpses and containers will use the same component, with starting contents set on the placed actor's `Stacks`.
@@ -115,7 +131,7 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 ## HUD
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, and the inventory panel (item, quantity, weight, total). It will be replaced by UMG widgets when the HUD grows.
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel (item, quantity, weight, total), and the weapon ammo readout. It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 

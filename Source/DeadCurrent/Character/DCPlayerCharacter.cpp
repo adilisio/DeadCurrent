@@ -1,5 +1,6 @@
 #include "Character/DCPlayerCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Combat/DCFirearm.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DeadCurrent.h"
@@ -9,6 +10,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Interaction/DCInteractorComponent.h"
 #include "Inventory/DCInventoryComponent.h"
+#include "Items/DCItemDefinition.h"
+#include "Engine/World.h"
 #include "UI/DCHUD.h"
 
 ADCPlayerCharacter::ADCPlayerCharacter()
@@ -54,6 +57,8 @@ void ADCPlayerCharacter::BeginPlay()
 
 	BaseWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	BaseFirstPersonMeshLocation = FirstPersonMesh->GetRelativeLocation();
+
+	InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADCPlayerCharacter::HandleInventoryChanged);
 }
 
 void ADCPlayerCharacter::Tick(float DeltaSeconds)
@@ -62,6 +67,7 @@ void ADCPlayerCharacter::Tick(float DeltaSeconds)
 
 	UpdateSprint();
 	UpdateCrouchEyeHeight(DeltaSeconds);
+	UpdateRecoilRecovery(DeltaSeconds);
 }
 
 void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -84,6 +90,10 @@ void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoInteract);
 
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoToggleInventory);
+
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoFire);
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoReload);
+		EnhancedInputComponent->BindAction(EquipWeaponAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoToggleWeapon);
 	}
 	else
 	{
@@ -172,6 +182,143 @@ void ADCPlayerCharacter::DoToggleInventory()
 	{
 		HUD->ToggleInventory();
 	}
+}
+
+void ADCPlayerCharacter::DoFire()
+{
+	if (!EquippedFirearm || EquippedFirearm->IsHolstered())
+	{
+		return;
+	}
+
+	if (!EquippedFirearm->Fire())
+	{
+		return;
+	}
+
+	const UDCItemDefinition* Def = EquippedFirearm->GetDefinition();
+	if (!Def)
+	{
+		return;
+	}
+
+	const float Yaw = FMath::FRandRange(-Def->RecoilYawVariance, Def->RecoilYawVariance);
+	AddControllerPitchInput(-Def->RecoilPitch);
+	AddControllerYawInput(Yaw);
+	RecoilToRecover += Def->RecoilPitch;
+	RecoilRecoverySpeed = Def->RecoilRecoverySpeed;
+}
+
+void ADCPlayerCharacter::DoReload()
+{
+	if (!EquippedFirearm || EquippedFirearm->IsHolstered())
+	{
+		return;
+	}
+
+	if (EquippedFirearm->StartReload())
+	{
+		return;
+	}
+
+	if (EquippedFirearm->GetReserveAmmo() <= 0
+		&& EquippedFirearm->GetRoundsInMagazine() < EquippedFirearm->GetMagazineSize())
+	{
+		ADCHUD::ShowMessageFor(this, NSLOCTEXT("DCPlayerCharacter", "NoAmmo", "No ammo"), 1.2f);
+	}
+}
+
+void ADCPlayerCharacter::DoToggleWeapon()
+{
+	if (EquippedFirearm)
+	{
+		EquippedFirearm->SetHolstered(!EquippedFirearm->IsHolstered());
+		return;
+	}
+
+	if (const UDCItemDefinition* Def = FindFirearmInInventory())
+	{
+		SpawnAndEquip(Def);
+	}
+}
+
+void ADCPlayerCharacter::HandleInventoryChanged(UDCInventoryComponent* Inventory)
+{
+	if (!Inventory)
+	{
+		return;
+	}
+
+	if (!EquippedFirearm)
+	{
+		if (const UDCItemDefinition* Def = FindFirearmInInventory())
+		{
+			SpawnAndEquip(Def);
+		}
+		return;
+	}
+
+	if (!EquippedFirearm->IsHolstered()
+		&& EquippedFirearm->GetRoundsInMagazine() == 0
+		&& EquippedFirearm->CanReload())
+	{
+		EquippedFirearm->StartReload();
+	}
+}
+
+const UDCItemDefinition* ADCPlayerCharacter::FindFirearmInInventory() const
+{
+	for (const FDCItemStack& Stack : InventoryComponent->GetStacks())
+	{
+		if (Stack.Item && Stack.Item->IsFirearm())
+		{
+			return Stack.Item;
+		}
+	}
+	return nullptr;
+}
+
+void ADCPlayerCharacter::SpawnAndEquip(const UDCItemDefinition* Definition)
+{
+	if (!Definition || !GetWorld())
+	{
+		return;
+	}
+
+	if (EquippedFirearm)
+	{
+		EquippedFirearm->Destroy();
+		EquippedFirearm = nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	EquippedFirearm = GetWorld()->SpawnActor<ADCFirearm>(Params);
+	if (!EquippedFirearm)
+	{
+		return;
+	}
+
+	EquippedFirearm->AttachToComponent(FirstPersonCameraComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	EquippedFirearm->SetDefinition(Definition);
+	EquippedFirearm->SetHolstered(false);
+	EquippedFirearm->StartReload();
+}
+
+void ADCPlayerCharacter::UpdateRecoilRecovery(float DeltaSeconds)
+{
+	if (RecoilToRecover <= KINDA_SMALL_NUMBER)
+	{
+		RecoilToRecover = 0.0f;
+		return;
+	}
+
+	const float Step = FMath::Min(RecoilToRecover, RecoilRecoverySpeed * DeltaSeconds);
+	AddControllerPitchInput(Step);
+	RecoilToRecover -= Step;
 }
 
 void ADCPlayerCharacter::UpdateSprint()

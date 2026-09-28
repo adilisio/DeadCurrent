@@ -9,7 +9,7 @@ Layout (X is forward from the spawn point, Z is up, units are cm):
   Right lane   (Y = +1200)  30 degree walkable ramp and 50 degree unwalkable ramp
   Far right    (Y = +2600)  ledges at 20, 40, 60, 80 and 110 cm
   Far left     (Y = -2600)  1.4 m crouch tunnel, then a 1 x 2.1 m doorway with a door into a 1 m corridor
-  Spawn                     an inspectable crate and sign just ahead of the player start
+  Shooting     (Y = 0 / +450)  plates at 8 m (right) and 20 m (sprint lane), with a backstop
 """
 import math
 import unreal
@@ -66,6 +66,12 @@ def inspectable(label, folder, center, size, display_name, description):
     actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCInspectableActor)
     actor.set_editor_property("display_name", unreal.Text(display_name))
     actor.set_editor_property("description", unreal.Text(description))
+    return actor
+
+
+def shootable(label, folder, center, size, display_name):
+    actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCShootableTarget)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
     return actor
 
 
@@ -243,7 +249,17 @@ def build_spawn_props():
     inspectable("Crate", folder, (350, 250, 30), (60, 60, 60), "Weathered Crate",
                 "Stenciled letters, mostly flaked away: GREAT LAKES MARITIME SUPPLY. The lid is nailed shut.")
     inspectable("Sign", folder, (350, -250, 80), (10, 120, 160), "Test Gym Sign",
-                "Left: jumps. Right: ramps. Far right: ledges. Far left: crouch tunnel and door.")
+                "Left: jumps. Right: ramps. Far right: ledges. Far left: crouch tunnel and door. Ahead: shooting range.")
+
+
+def build_shooting_range():
+    folder = "ShootingRange"
+    shootable("Target_8m", folder, (800, 450, 90), (8, 70, 120), "Close Target")
+    for y, name in ((-200, "Left"), (0, "Center"), (200, "Right")):
+        shootable(f"Target_20m_{name}", folder, (2000, y, 90), (8, 70, 120), f"{name} Target")
+    block("Range_Backstop", folder, 2180, 2220, -400, 400, 0, 250)
+    inspectable("RangeSign", folder, (650, 620, 80), (10, 100, 140), "Shooting Range",
+                "Take the pistol and the 9mm from the table. Close plate on the right, three plates at 20 m down the lane.")
 
 
 def main():
@@ -263,6 +279,7 @@ def main():
     build_ledge_lane()
     build_crouch_and_door_lane()
     build_spawn_props()
+    build_shooting_range()
 
     if not levels.save_current_level():
         raise RuntimeError(f"Could not save {MAP_PATH} (is the file read-only?)")

@@ -14,6 +14,9 @@ ACTION_KEYS = {
     "IA_Crouch": ["LeftControl", "C", "Gamepad_FaceButton_Right"],
     "IA_Interact": ["E", "Gamepad_FaceButton_Left"],
     "IA_Inventory": ["Tab", "I", "Gamepad_Special_Left"],
+    "IA_Fire": ["LeftMouseButton", "Gamepad_RightTrigger"],
+    "IA_Reload": ["R", "Gamepad_FaceButton_Top"],
+    "IA_EquipWeapon": ["One", "Gamepad_DPad_Up"],
 }
 
 BP_PROPERTIES = {
@@ -21,6 +24,9 @@ BP_PROPERTIES = {
     "IA_Crouch": "crouch_action",
     "IA_Interact": "interact_action",
     "IA_Inventory": "inventory_action",
+    "IA_Fire": "fire_action",
+    "IA_Reload": "reload_action",
+    "IA_EquipWeapon": "equip_weapon_action",
 }
 
 

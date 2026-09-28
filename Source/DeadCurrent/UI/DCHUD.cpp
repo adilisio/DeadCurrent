@@ -1,5 +1,6 @@
 #include "UI/DCHUD.h"
 #include "Character/DCPlayerCharacter.h"
+#include "Combat/DCFirearm.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
@@ -28,6 +29,8 @@ void ADCHUD::DrawHUD()
 	{
 		DrawInventory();
 	}
+
+	DrawWeapon();
 }
 
 void ADCHUD::ShowMessage(const FText& Message, float Duration)
@@ -158,6 +161,61 @@ void ADCHUD::DrawInventory()
 	Y += LineHeight * 0.5f;
 	DrawText(TEXT("Total"), TextColor, Left, Y, Font);
 	DrawRightAligned(FString::Printf(TEXT("%.2f kg"), Inventory->GetTotalWeight()), Right, Y);
+}
+
+void ADCHUD::DrawWeapon()
+{
+	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(GetOwningPawn());
+	const ADCFirearm* Firearm = Character ? Character->GetEquippedFirearm() : nullptr;
+	if (!Firearm || Firearm->IsHolstered())
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	FString AmmoText;
+	if (Firearm->IsReloading())
+	{
+		AmmoText = TEXT("Reloading");
+	}
+	else
+	{
+		AmmoText = FString::Printf(TEXT("%d  |  %d"), Firearm->GetRoundsInMagazine(), Firearm->GetReserveAmmo());
+	}
+
+	float Width = 0.0f;
+	float Height = 0.0f;
+	GetTextSize(AmmoText, Width, Height, Font);
+	const float X = Canvas->ClipX - Width - 40.0f;
+	const float Y = Canvas->ClipY - Height - 36.0f;
+	DrawText(AmmoText, FLinearColor(0.0f, 0.0f, 0.0f, 0.7f), X + 1.0f, Y + 1.0f, Font);
+	DrawText(AmmoText, TextColor, X, Y, Font);
+
+	if (Firearm->GetRoundsInMagazine() == 0 && Firearm->GetReserveAmmo() > 0 && !Firearm->IsReloading())
+	{
+		FString ReloadHint;
+		const ULocalPlayer* LocalPlayer = GetOwningPlayerController() ? GetOwningPlayerController()->GetLocalPlayer() : nullptr;
+		if (const UEnhancedInputLocalPlayerSubsystem* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
+		{
+			if (Character->GetReloadAction())
+			{
+				const TArray<FKey> Keys = Input->QueryKeysMappedToAction(Character->GetReloadAction());
+				if (Keys.Num() > 0)
+				{
+					ReloadHint = FString::Printf(TEXT("[%s] Reload"), *Keys[0].GetDisplayName().ToString());
+				}
+			}
+		}
+		if (ReloadHint.IsEmpty())
+		{
+			ReloadHint = TEXT("Reload");
+		}
+
+		float HintWidth = 0.0f;
+		float HintHeight = 0.0f;
+		GetTextSize(ReloadHint, HintWidth, HintHeight, Font);
+		DrawText(ReloadHint, TextColor, Canvas->ClipX - HintWidth - 40.0f, Y - HintHeight - 6.0f, Font);
+	}
 }
 
 void ADCHUD::DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color)

@@ -49,6 +49,8 @@ private:
 
 	void DrawInventory();
 
+	void DrawWeapon();
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
 	FText CurrentMessage;

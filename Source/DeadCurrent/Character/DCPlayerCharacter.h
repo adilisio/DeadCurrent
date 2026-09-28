@@ -5,6 +5,8 @@
 #include "DCPlayerCharacter.generated.h"
 
 class UCameraComponent;
+class ADCFirearm;
+class UDCItemDefinition;
 class UDCInteractorComponent;
 class UDCInventoryComponent;
 class UInputAction;
@@ -64,6 +66,18 @@ protected:
 	/** Pressed to show or hide the inventory */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* InventoryAction;
+
+	/** Pressed to fire the equipped weapon */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* FireAction;
+
+	/** Pressed to reload the equipped weapon */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* ReloadAction;
+
+	/** Pressed to holster or draw the carried firearm */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* EquipWeaponAction;
 
 	/** Ground speed while sprinting. Normal speed is the movement component's MaxWalkSpeed. */
 	UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="0", Units="cm/s"))
@@ -126,6 +140,18 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoToggleInventory();
 
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoFire();
+
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoReload();
+
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoToggleWeapon();
+
+	UFUNCTION()
+	void HandleInventoryChanged(UDCInventoryComponent* Inventory);
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -138,13 +164,23 @@ public:
 
 	UDCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
+	ADCFirearm* GetEquippedFirearm() const { return EquippedFirearm; }
+
 	const UInputAction* GetInteractAction() const { return InteractAction; }
+
+	const UInputAction* GetReloadAction() const { return ReloadAction; }
 
 private:
 
 	void UpdateSprint();
 
 	void UpdateCrouchEyeHeight(float DeltaSeconds);
+
+	void UpdateRecoilRecovery(float DeltaSeconds);
+
+	const UDCItemDefinition* FindFirearmInInventory() const;
+
+	void SpawnAndEquip(const UDCItemDefinition* Definition);
 
 	/** MaxWalkSpeed as authored on the movement component */
 	float BaseWalkSpeed = 0.0f;
@@ -160,4 +196,11 @@ private:
 	bool bSprintHeld = false;
 
 	bool bIsSprinting = false;
+
+	UPROPERTY()
+	TObjectPtr<ADCFirearm> EquippedFirearm;
+
+	float RecoilToRecover = 0.0f;
+
+	float RecoilRecoverySpeed = 12.0f;
 };

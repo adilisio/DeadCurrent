@@ -1,6 +1,7 @@
 #include "Items/DCItemPickup.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
+#include "Engine/CollisionProfile.h"
 #include "Engine/StaticMesh.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"

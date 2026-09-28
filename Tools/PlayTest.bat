@@ -12,7 +12,9 @@ if not exist "%UE_EXE%" (
 	exit /b 1
 )
 
-rem Medium scalability, plus the expensive features Medium leaves on: Lumen GI and reflections
-rem (replaced by screen space reflections), virtual shadow maps, and volumetric clouds.
-start "" "%UE_EXE%" "%~dp0..\DeadCurrent.uproject" -game -windowed -ResX=1280 -ResY=720 -prefernvidia ^
-	"-ExecCmds=scalability 1, sg.ResolutionQuality 100, r.DynamicGlobalIlluminationMethod 0, r.ReflectionMethod 2, r.Shadow.Virtual.Enable 0, r.VolumetricCloud 0, t.MaxFPS 60"
+rem Low scalability on DX11 (the 1060 handles this much better than DX12).
+rem -dpcvars applies before the first frame, so we never start up in Lumen / VSM.
+rem Project defaults in DefaultEngine.ini are unchanged.
+set "CVARS=r.DynamicGlobalIlluminationMethod=0,r.ReflectionMethod=0,r.Shadow.Virtual.Enable=0,r.VolumetricCloud=0,r.VolumetricFog=0,r.RayTracing=0,r.Lumen.DiffuseIndirect.Allow=0,r.AntiAliasingMethod=0,r.BloomQuality=0,r.MotionBlurQuality=0,r.DepthOfFieldQuality=0,r.LensFlareQuality=0,r.AmbientOcclusionLevels=0,r.DefaultFeature.Bloom=0,r.DefaultFeature.MotionBlur=0,r.DefaultFeature.AutoExposure=0,r.ShadowQuality=0,r.Streaming.PoolSize=400,r.ScreenPercentage=70"
+start "" "%UE_EXE%" "%~dp0..\DeadCurrent.uproject" -game -windowed -ResX=1280 -ResY=720 -prefernvidia -dx11 -nosplash -novsync -dpcvars="%CVARS%" ^
+	"-ExecCmds=scalability 0, sg.ResolutionQuality 70, t.MaxFPS 60"

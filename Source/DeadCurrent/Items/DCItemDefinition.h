@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "DCItemDefinition.generated.h"
 
+class USoundBase;
 class UStaticMesh;
 class UTexture2D;
 
@@ -54,6 +55,53 @@ public:
 	/** Scale applied to WorldMesh, so generic meshes can stand in for items without their own art */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
 	FVector WorldMeshScale = FVector::OneVector;
+
+	/** Item consumed from inventory when reloading. Required on Item.Weapon.Firearm. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm")
+	TSoftObjectPtr<UDCItemDefinition> AmmoItem;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="1"))
+	int32 MagazineSize = 15;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0"))
+	float Damage = 25.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0", Units="cm"))
+	float Range = 10000.0f;
+
+	/** Minimum seconds between shots. Semi-auto still respects this when the trigger is mashed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0", Units="s"))
+	float FireInterval = 0.18f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0", Units="s"))
+	float ReloadDuration = 1.3f;
+
+	/** View kick up, in degrees */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0", Units="deg"))
+	float RecoilPitch = 1.4f;
+
+	/** Random yaw kick each shot, in degrees */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0", Units="deg"))
+	float RecoilYawVariance = 0.4f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm", meta=(ClampMin="0"))
+	float RecoilRecoverySpeed = 12.0f;
+
+	/** Camera-space location of the equipped mesh (X forward, Y right, Z up), in cm */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm")
+	FVector EquippedOffset = FVector(38.0f, 12.0f, -20.0f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm")
+	FRotator EquippedRotation = FRotator(6.0f, -90.0f, 4.0f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm")
+	TSoftObjectPtr<USoundBase> FireSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Firearm")
+	TSoftObjectPtr<USoundBase> DryFireSound;
+
+	UFUNCTION(BlueprintPure, Category="Item")
+	bool IsFirearm() const;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

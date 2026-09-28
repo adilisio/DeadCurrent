@@ -10,14 +10,19 @@ ITEMS_PATH = "/Game/Items"
 # size_cm: for placeholder meshes, the item's real-world size; the mesh is scaled to fit.
 # None keeps the mesh at its authored scale.
 ITEMS = [
-    dict(asset="DA_Item_Pistol", item_id="pistol_service", name="Service Pistol",
-         description="A pre-collapse sidearm. Worn, but it still cycles.",
-         category="Item.Weapon.Firearm", weight=1.2, value=120, stack=1,
-         mesh="/Game/Weapons/Pistol/Meshes/SM_Pistol", size_cm=None),
     dict(asset="DA_Item_Ammo9mm", item_id="ammo_9mm", name="9mm Rounds",
          description="Loose pistol rounds, some hand-reloaded.",
          category="Item.Ammo", weight=0.01, value=1, stack=999,
          mesh="/Game/LevelPrototyping/Meshes/SM_ChamferCube", size_cm=(12, 8, 5)),
+    dict(asset="DA_Item_Pistol", item_id="pistol_service", name="Service Pistol",
+         description="A pre-collapse sidearm. Worn, but it still cycles.",
+         category="Item.Weapon.Firearm", weight=1.2, value=120, stack=1,
+         mesh="/Game/Weapons/Pistol/Meshes/SM_Pistol", size_cm=None,
+         firearm=dict(ammo="/Game/Items/DA_Item_Ammo9mm", mag=15, damage=25.0,
+                      range=10000.0, fire_interval=0.18, reload=1.3,
+                      recoil_pitch=1.4, recoil_yaw=0.4, recoil_recovery=12.0,
+                      equip_offset=(38.0, 12.0, -20.0), equip_rot=(6.0, -90.0, 4.0),
+                      fire_sound="/Game/Weapons/GrenadeLauncher/Audio/FirstPersonTemplateWeaponFire02")),
     dict(asset="DA_Item_FieldDressing", item_id="field_dressing", name="Field Dressing",
          description="Boiled cloth and a strip of tape. Stops bleeding, mostly.",
          category="Item.Consumable.Medical", weight=0.1, value=15, stack=10,
@@ -51,11 +56,16 @@ def mesh_scale(mesh, size_cm):
 
 def get_or_create(asset_name):
     path = f"{ITEMS_PATH}/{asset_name}"
+    leftover = f"{ITEMS_PATH}/{asset_name}__reclass"
+    if unreal.EditorAssetLibrary.does_asset_exist(leftover):
+        unreal.EditorAssetLibrary.delete_asset(leftover)
     if unreal.EditorAssetLibrary.does_asset_exist(path):
         return unreal.load_asset(path)
     factory = unreal.DataAssetFactory()
     factory.set_editor_property("data_asset_class", unreal.DCItemDefinition)
     asset = unreal.AssetToolsHelpers.get_asset_tools().create_asset(asset_name, ITEMS_PATH, unreal.DCItemDefinition, factory)
+    if not asset:
+        raise RuntimeError(f"Could not create {path}")
     log(f"created {path}")
     return asset
 
@@ -73,6 +83,21 @@ def main():
         item.set_editor_property("max_stack_size", spec["stack"])
         item.set_editor_property("world_mesh", mesh)
         item.set_editor_property("world_mesh_scale", mesh_scale(mesh, spec["size_cm"]))
+        if "firearm" in spec:
+            gun = spec["firearm"]
+            item.set_editor_property("ammo_item", unreal.load_asset(gun["ammo"]))
+            item.set_editor_property("magazine_size", gun["mag"])
+            item.set_editor_property("damage", gun["damage"])
+            item.set_editor_property("range", gun["range"])
+            item.set_editor_property("fire_interval", gun["fire_interval"])
+            item.set_editor_property("reload_duration", gun["reload"])
+            item.set_editor_property("recoil_pitch", gun["recoil_pitch"])
+            item.set_editor_property("recoil_yaw_variance", gun["recoil_yaw"])
+            item.set_editor_property("recoil_recovery_speed", gun["recoil_recovery"])
+            item.set_editor_property("equipped_offset", unreal.Vector(*gun["equip_offset"]))
+            item.set_editor_property("equipped_rotation", unreal.Rotator(
+                pitch=gun["equip_rot"][0], yaw=gun["equip_rot"][1], roll=gun["equip_rot"][2]))
+            item.set_editor_property("fire_sound", unreal.load_asset(gun["fire_sound"]))
         if not unreal.EditorAssetLibrary.save_loaded_asset(item, only_if_is_dirty=False):
             raise RuntimeError(f"Could not save {spec['asset']} (is the file read-only?)")
         log(f"{spec['asset']}: {spec['item_id']} '{spec['name']}' {spec['category']}")
