@@ -14,7 +14,10 @@ public class DeadCurrent : ModuleRules
 			"EnhancedInput",
 			"GameplayTags",
 			"UMG",
-			"Slate"
+			"Slate",
+			"AIModule",
+			"NavigationSystem",
+			"GameplayTasks"
 		});
 
 		// Module root is public so systems include each other as "Folder/File.h".

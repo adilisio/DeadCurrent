@@ -2,6 +2,7 @@
 #include "Combat/DCDamageable.h"
 #include "Combat/DCHealthComponent.h"
 #include "Combat/DCImpactMark.h"
+#include "CollisionQueryParams.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
@@ -222,8 +223,13 @@ bool ADCFirearm::Fire()
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(DCFirearm), false, Shooter);
 	Params.AddIgnoredActor(this);
 
+	FCollisionObjectQueryParams Objects;
+	Objects.AddObjectTypesToQuery(ECC_WorldStatic);
+	Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
+	Objects.AddObjectTypesToQuery(ECC_Pawn);
+
 	FHitResult Hit;
-	if (World->LineTraceSingleByChannel(Hit, ViewLocation, TraceEnd, ECC_Visibility, Params))
+	if (World->LineTraceSingleByObjectType(Hit, ViewLocation, TraceEnd, Objects, Params))
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

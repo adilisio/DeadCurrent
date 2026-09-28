@@ -11,6 +11,7 @@ Layout (X is forward from the spawn point, Z is up, units are cm):
   Far left     (Y = -2600)  1.4 m crouch tunnel, then a 1 x 2.1 m doorway with a door into a 1 m corridor
   Shooting     (Y = 0 / +450)  plates at 8 m (right) and 20 m (sprint lane), with a backstop
   Hazard       (Y = +500)     damage volume pad right of spawn
+  Scavenger    (X = 2600)     patrols a square past the 20 m plates
 """
 import math
 import unreal
@@ -277,6 +278,75 @@ def build_hazard():
                 "The pad is a chemical spill. Stand on it to take damage. You will respawn at the start.")
 
 
+def first_existing(*paths):
+    for path in paths:
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            return path
+    return None
+
+
+def first_of_class(asset_class, *paths):
+    for path in paths:
+        if not unreal.EditorAssetLibrary.does_asset_exist(path):
+            continue
+        asset = unreal.load_asset(path)
+        if isinstance(asset, asset_class):
+            return path, asset
+        log(f"skip {path} type={asset.get_class().get_name() if asset else 'None'}")
+    return None, None
+
+
+def build_nav():
+    folder = "Ground"
+    vol = actors.spawn_actor_from_class(unreal.NavMeshBoundsVolume, unreal.Vector(2000.0, 0.0, 0.0))
+    vol.set_actor_label("NavBounds")
+    vol.set_folder_path(folder)
+    vol.set_actor_scale3d(unreal.Vector(40.0, 45.0, 8.0))
+
+    world = unreal.EditorLevelLibrary.get_editor_world()
+    unreal.SystemLibrary.execute_console_command(world, "RebuildNavigation")
+    log("nav mesh rebuild requested")
+
+
+def build_scavenger():
+    folder = "Combat"
+    scav = actors.spawn_actor_from_class(
+        unreal.DCScavengerCharacter, unreal.Vector(2600.0, 0.0, 96.0), unreal.Rotator(0.0, 180.0, 0.0))
+    scav.set_actor_label("Scavenger")
+    scav.set_folder_path(folder)
+    scav.set_editor_property("patrol_points", [
+        unreal.Vector(2300.0, -450.0, 0.0),
+        unreal.Vector(3100.0, -450.0, 0.0),
+        unreal.Vector(3100.0, 450.0, 0.0),
+        unreal.Vector(2300.0, 450.0, 0.0),
+    ])
+
+    mesh_path, mesh_asset = first_of_class(
+        unreal.SkeletalMesh,
+        "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+    )
+    abp_path = first_existing(
+        "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+        "/Game/Characters/Mannequins/Anims/Manny/ABP_Manny",
+        "/Game/Characters/Mannequins/Rigs/ABP_Manny",
+    )
+    mesh_comp = scav.get_editor_property("mesh")
+    if mesh_asset:
+        mesh_comp.set_skeletal_mesh_asset(mesh_asset)
+        log(f"scavenger mesh {mesh_path}")
+    else:
+        log("no mannequin skeletal mesh found (C++ constructor may still assign one)")
+    if abp_path:
+        abp_class = unreal.EditorAssetLibrary.load_blueprint_class(abp_path)
+        mesh_comp.set_animation_mode(unreal.AnimationMode.ANIMATION_BLUEPRINT)
+        mesh_comp.set_anim_class(abp_class)
+        log(f"scavenger anim {abp_path}")
+
+    inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
+                "A scavenger patrols past the 20 m plates. He will chase if he sees you, melee in close, and give up if you break line of sight.")
+
+
 def main():
     if unreal.EditorAssetLibrary.does_asset_exist(MAP_PATH):
         levels.load_level(MAP_PATH)
@@ -296,6 +366,8 @@ def main():
     build_spawn_props()
     build_shooting_range()
     build_hazard()
+    build_nav()
+    build_scavenger()
 
     if not levels.save_current_level():
         raise RuntimeError(f"Could not save {MAP_PATH} (is the file read-only?)")

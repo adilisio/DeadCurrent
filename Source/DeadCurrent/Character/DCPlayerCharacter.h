@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "DCPlayerCharacter.generated.h"
 
+class UAIPerceptionStimuliSourceComponent;
 class UCameraComponent;
 class ADCFirearm;
 class UDCItemDefinition;
@@ -40,6 +41,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UDCHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UAIPerceptionStimuliSourceComponent* StimuliSource;
 
 protected:
 

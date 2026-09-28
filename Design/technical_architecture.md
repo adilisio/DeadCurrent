@@ -68,6 +68,7 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
 - shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
 - right of spawn: a chemical-spill pad that damages the player
+- past the 20 m plates: a scavenger on a patrol loop
 
 ## Interaction
 
@@ -105,13 +106,13 @@ The editor's data validation flags definitions missing an ID, name or category.
 
 ## Weapons
 
-`ADCFirearm` (`Combat/`) is the equipped gun. The player auto-equips the first firearm that enters inventory, and **1** holsters or draws it. Firing is hitscan from the view point (Visibility channel, 100 m). Magazine rounds are separate from inventory; **R** moves ammo from inventory into the magazine after `ReloadDuration`. Dry-fire shows "Reload" or "No ammo".
+`ADCFirearm` (`Combat/`) is the equipped gun. The player auto-equips the first firearm that enters inventory, and **1** holsters or draws it. Firing is hitscan from the view point (WorldStatic, WorldDynamic and Pawn, 100 m). Pawn capsules ignore the Visibility channel, so the gun does not use it. Magazine rounds are separate from inventory; **R** moves ammo from inventory into the magazine after `ReloadDuration`. Dry-fire shows "Reload" or "No ammo".
 
 Recoil kicks the view up (with a little random yaw) and recovers over a few frames. Hits spawn a short-lived impact mark, then `UDCHealthComponent::ApplyDamageToActor` applies `FDCDamageInfo`. Actors may also implement `IDCDamageable` for hit reactions (flashes, messages).
 
 ## Health
 
-`UDCHealthComponent` (`Combat/`) is the reusable hit-point pool. The player has one; range plates have one; enemies will in FP-08. `ApplyDamage` / `Heal` / `ResetHealth`, `OnHealthChanged`, `OnDied`. Dead actors ignore further damage until `ResetHealth`.
+`UDCHealthComponent` (`Combat/`) is the reusable hit-point pool. The player, range plates and the scavenger all have one. `ApplyDamage` / `Heal` / `ResetHealth`, `OnHealthChanged`, `OnDied`. Dead actors ignore further damage until `ResetHealth`.
 
 The pistol does 25, default max health is 100, so four hits drop a plate. `ADCShootableTarget` flashes and shows remaining health, then falls over on death. The player shows a health bar (bottom left); on death, movement is disabled and they respawn at the PlayerStart after 4 seconds with full health (inventory is kept).
 
@@ -122,6 +123,20 @@ Automation test `DeadCurrent.Combat.Health` covers damage, death, ignored extra 
 The HUD shows `magazine | reserve` in the bottom right while a gun is drawn, `Reloading` during reload, and `[R] Reload` when the mag is empty and reserve remains.
 
 Automation test `DeadCurrent.Combat.FirearmAmmo` covers magazine fill, consumption and partial reload.
+
+## AI
+
+`ADCScavengerCharacter` (`AI/`) is a mannequin pawn with health and an inventory (loot is FP-09). `ADCScavengerController` runs a small state machine:
+
+- **Patrol** between authored world points
+- **Chase** when sight (18 m, 75° cone) picks up the player, or when shot
+- **Attack** melee (15 damage, 1.3 s cooldown, 1.7 m range) using `ApplyDamageToActor` with `Damage.Melee`
+- **Investigate** last seen location after 4 s without sight, then back to patrol
+- **Dead** on `OnDied`: movement off, ragdoll, controller detached
+
+The gym scavenger patrols a square past the 20 m plates. A floating state label (`Patrol` / `Chase` / …) is drawn above their head for playtests (`bDrawState`). The player registers as a sight stimulus so perception can see them.
+
+The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds at runtime if the saved mesh is empty. Rebuild the gym script after C++ AI changes so the scavenger is placed on the nav mesh.
 
 ## Inventory
 
@@ -222,7 +237,7 @@ Roots and their meaning:
 
 | Root | Meaning |
 | --- | --- |
-| `Damage.` | Damage types (`Damage.Ballistic`, `Damage.Environmental`) |
+| `Damage.` | Damage types (`Damage.Ballistic`, `Damage.Environmental`, `Damage.Melee`) |
 | `Item.` | Item classification (`Item.Weapon.Firearm`, `Item.Ammo`) |
 | `Actor.` | Actor disposition (`Actor.Hostile`, `Actor.Friendly`) |
 | `State.` | Transient actor state (`State.Dead`) |

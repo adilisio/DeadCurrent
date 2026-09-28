@@ -4,6 +4,7 @@ namespace DCTags
 {
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Damage_Ballistic, "Damage.Ballistic", "Damage from bullets and other projectiles");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Damage_Environmental, "Damage.Environmental", "Damage from hazards such as spills, fire or cold");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Damage_Melee, "Damage.Melee", "Damage from melee attacks");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Weapon_Firearm, "Item.Weapon.Firearm", "Item is a firearm");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Ammo, "Item.Ammo", "Item is ammunition");
