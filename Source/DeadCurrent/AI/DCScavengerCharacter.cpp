@@ -7,6 +7,7 @@
 #include "Core/DCGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/DCInventoryComponent.h"
+#include "Items/DCItemDefinition.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -59,6 +60,7 @@ void ADCScavengerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	HealthComponent->OnDied.AddDynamic(this, &ADCScavengerCharacter::HandleDied);
+	GrantStartingLoot();
 }
 
 void ADCScavengerCharacter::ApplyDamage_Implementation(const FDCDamageInfo& Damage)
@@ -129,12 +131,100 @@ void ADCScavengerCharacter::Die()
 {
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Capsule->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Capsule->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 
 	DetachFromControllerPendingDestroy();
+}
+
+void ADCScavengerCharacter::GrantStartingLoot()
+{
+	if (bStartingLootGranted || !InventoryComponent)
+	{
+		return;
+	}
+
+	bStartingLootGranted = true;
+	if (!InventoryComponent->IsEmpty())
+	{
+		return;
+	}
+
+	auto AddLoot = [this](const TCHAR* Path, int32 Quantity)
+	{
+		if (UDCItemDefinition* Item = LoadObject<UDCItemDefinition>(nullptr, Path))
+		{
+			InventoryComponent->AddItem(Item, Quantity);
+		}
+	};
+
+	AddLoot(TEXT("/Game/Items/DA_Item_Ammo9mm.DA_Item_Ammo9mm"), 12);
+	AddLoot(TEXT("/Game/Items/DA_Item_FieldDressing.DA_Item_FieldDressing"), 1);
+	AddLoot(TEXT("/Game/Items/DA_Item_SalvagedWiring.DA_Item_SalvagedWiring"), 2);
+}
+
+bool ADCScavengerCharacter::CanInteract_Implementation(AActor* Interactor) const
+{
+	return HealthComponent && HealthComponent->IsDead()
+		&& InventoryComponent && !InventoryComponent->IsEmpty()
+		&& Interactor && Interactor->FindComponentByClass<UDCInventoryComponent>();
+}
+
+FDCInteractionPrompt ADCScavengerCharacter::GetInteractionPrompt_Implementation(AActor* Interactor) const
+{
+	return { LOCTEXT("LootAction", "Loot"), DisplayName };
+}
+
+FGameplayTag ADCScavengerCharacter::GetInteractionType_Implementation() const
+{
+	return DCTags::Interaction_Loot;
+}
+
+void ADCScavengerCharacter::Interact_Implementation(AActor* Interactor)
+{
+	UDCInventoryComponent* Destination = Interactor
+		? Interactor->FindComponentByClass<UDCInventoryComponent>()
+		: nullptr;
+	if (!Destination || !InventoryComponent)
+	{
+		return;
+	}
+
+	TArray<FString> Parts;
+	for (const FDCItemStack& Stack : InventoryComponent->GetStacks())
+	{
+		if (!Stack.Item)
+		{
+			continue;
+		}
+
+		if (Stack.Quantity > 1)
+		{
+			Parts.Add(FString::Printf(TEXT("%s (%d)"), *Stack.Item->DisplayName.ToString(), Stack.Quantity));
+		}
+		else
+		{
+			Parts.Add(Stack.Item->DisplayName.ToString());
+		}
+	}
+
+	const int32 Moved = InventoryComponent->TransferAllTo(Destination);
+	if (Moved <= 0)
+	{
+		return;
+	}
+
+	const FText Message = Parts.Num() > 0
+		? FText::Format(LOCTEXT("LootedItems", "Took {0}"), FText::FromString(FString::Join(Parts, TEXT(", "))))
+		: LOCTEXT("Looted", "Looted the scavenger.");
+	ADCHUD::ShowMessageFor(Interactor, Message, 2.5f);
 }
 
 #undef LOCTEXT_NAMESPACE

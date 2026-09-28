@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Combat/DCDamageable.h"
 #include "GameFramework/Character.h"
+#include "Interaction/DCInteractable.h"
 #include "DCScavengerCharacter.generated.h"
 
 class UDCHealthComponent;
@@ -10,9 +11,10 @@ class UDCInventoryComponent;
 
 /**
  *  Hostile scavenger. Combat brain lives on ADCScavengerController.
+ *  After death the body is a loot container using the same inventory component.
  */
 UCLASS()
-class DEADCURRENT_API ADCScavengerCharacter : public ACharacter, public IDCDamageable
+class DEADCURRENT_API ADCScavengerCharacter : public ACharacter, public IDCDamageable, public IDCInteractable
 {
 	GENERATED_BODY()
 
@@ -21,11 +23,18 @@ public:
 
 	virtual void ApplyDamage_Implementation(const FDCDamageInfo& Damage) override;
 
+	virtual bool CanInteract_Implementation(AActor* Interactor) const override;
+	virtual FDCInteractionPrompt GetInteractionPrompt_Implementation(AActor* Interactor) const override;
+	virtual FGameplayTag GetInteractionType_Implementation() const override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
+
 	/** Swing at Target if in range and off cooldown. Returns true if damage was applied. */
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool TryMelee(AActor* Target);
 
 	UDCHealthComponent* GetHealthComponent() const { return HealthComponent; }
+
+	UDCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	const TArray<FVector>& GetPatrolPoints() const { return PatrolPoints; }
 
@@ -64,5 +73,9 @@ private:
 
 	void Die();
 
+	void GrantStartingLoot();
+
 	double NextMeleeTime = 0.0;
+
+	bool bStartingLootGranted = false;
 };

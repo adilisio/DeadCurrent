@@ -84,6 +84,32 @@ int32 UDCInventoryComponent::GetQuantity(const UDCItemDefinition* Item) const
 	return Total;
 }
 
+int32 UDCInventoryComponent::TransferAllTo(UDCInventoryComponent* Destination)
+{
+	if (!Destination || Destination == this || Stacks.IsEmpty())
+	{
+		return 0;
+	}
+
+	int32 Moved = 0;
+	const TArray<FDCItemStack> Remaining = Stacks;
+	for (const FDCItemStack& Stack : Remaining)
+	{
+		if (!Stack.Item)
+		{
+			continue;
+		}
+
+		const int32 Added = Destination->AddItem(Stack.Item, Stack.Quantity);
+		if (Added > 0)
+		{
+			RemoveItem(Stack.Item, Added);
+			Moved += Added;
+		}
+	}
+	return Moved;
+}
+
 float UDCInventoryComponent::GetTotalWeight() const
 {
 	float Total = 0.0f;

@@ -11,7 +11,7 @@ Layout (X is forward from the spawn point, Z is up, units are cm):
   Far left     (Y = -2600)  1.4 m crouch tunnel, then a 1 x 2.1 m doorway with a door into a 1 m corridor
   Shooting     (Y = 0 / +450)  plates at 8 m (right) and 20 m (sprint lane), with a backstop
   Hazard       (Y = +500)     damage volume pad right of spawn
-  Scavenger    (X = 2600)     patrols a square past the 20 m plates
+  Scavenger    (X = 2600)     patrols a square past the 20 m plates; loot the body after death
 """
 import math
 import unreal
@@ -344,7 +344,7 @@ def build_scavenger():
         log(f"scavenger anim {abp_path}")
 
     inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
-                "A scavenger patrols past the 20 m plates. He will chase if he sees you, melee in close, and give up if you break line of sight.")
+                "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage.")
 
 
 def main():

@@ -126,7 +126,7 @@ Automation test `DeadCurrent.Combat.FirearmAmmo` covers magazine fill, consumpti
 
 ## AI
 
-`ADCScavengerCharacter` (`AI/`) is a mannequin pawn with health and an inventory (loot is FP-09). `ADCScavengerController` runs a small state machine:
+`ADCScavengerCharacter` (`AI/`) is a mannequin pawn with health and an inventory. After death the corpse implements `IDCInteractable` (`Interaction.Loot`): **E** transfers every stack into the player's inventory and the prompt goes away when empty. Starting loot (12× 9mm, a field dressing, 2× salvaged wiring) is granted on first BeginPlay if the inventory was authored empty. `ADCScavengerController` runs a small state machine:
 
 - **Patrol** between authored world points
 - **Chase** when sight (18 m, 75° cone) picks up the player, or when shot
@@ -144,7 +144,8 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 
 - `AddItem(Item, Quantity)` tops up existing stacks, then starts new ones, never exceeding `MaxStackSize`. Returns the amount added. There is no capacity or weight limit yet.
 - `RemoveItem(Item, Quantity)` takes from the newest stacks first and drops empty stacks. Returns the amount removed.
-- `GetQuantity(Item)`, `GetTotalWeight()`, `GetStacks()`
+- `TransferAllTo(Destination)` moves every stack into another inventory (corpses, later containers).
+- `GetQuantity(Item)`, `GetTotalWeight()`, `GetStacks()`, `IsEmpty()`
 - `OnInventoryChanged` fires after every change (for UI, and later saving)
 
 Saves will store each stack as `ItemId` + quantity.

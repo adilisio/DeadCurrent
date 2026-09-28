@@ -37,6 +37,17 @@ bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Invalid add is rejected"), Inventory->AddItem(nullptr, 3), 0);
 	TestEqual(TEXT("Zero add is rejected"), Inventory->AddItem(Ammo, 0), 0);
 
+	UDCInventoryComponent* Source = NewObject<UDCInventoryComponent>();
+	UDCInventoryComponent* Other = NewObject<UDCInventoryComponent>();
+	Source->AddItem(Ammo, 4);
+	Source->AddItem(Pistol, 1);
+	TestEqual(TEXT("Transfer moves every item"), Source->TransferAllTo(Other), 5);
+	TestTrue(TEXT("Source is empty after transfer"), Source->IsEmpty());
+	TestEqual(TEXT("Destination received ammo"), Other->GetQuantity(Ammo), 4);
+	TestEqual(TEXT("Destination received pistol"), Other->GetQuantity(Pistol), 1);
+	TestEqual(TEXT("Transfer to self is rejected"), Other->TransferAllTo(Other), 0);
+	TestEqual(TEXT("Transfer to null is rejected"), Other->TransferAllTo(nullptr), 0);
+
 	return true;
 }
 

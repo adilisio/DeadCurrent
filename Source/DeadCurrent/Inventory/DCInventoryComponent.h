@@ -49,6 +49,13 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	bool IsEmpty() const { return Stacks.IsEmpty(); }
 
+	/**
+	 *  Moves every stack into Destination. Returns how many items were transferred.
+	 *  Used by corpses and containers.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	int32 TransferAllTo(UDCInventoryComponent* Destination);
+
 	const TArray<FDCItemStack>& GetStacks() const { return Stacks; }
 
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
