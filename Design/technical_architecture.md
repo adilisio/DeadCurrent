@@ -24,6 +24,32 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 First Playable (FirstPhasePlan §18 / §20) is accepted: boathouse loop, per-stack corpse loot, and F5/F9 world restore including remaining corpse stacks.
 
+Micro RPG (LongTermPlan Phase 2) is implemented and awaiting a human playtest: the Shore Watch quest in `Lvl_Boathouse` with a combat route and a coil (stealth) route, different outcomes, and save/load at every stage. See `Design/CLAUDE_SESSION_REPORT.md` for the playtest checklist.
+
+## Automated tests
+
+```
+Tools\RunTests.bat              every test: editor-context suite, then the in-map suite
+Tools\RunTests.bat Quest        only DeadCurrent.Quest.*
+Tools\RunTests.bat Map          only the in-map suite
+Tools\RunTests.bat -nomap       skip the in-map suite
+Tools\RunTests.bat -build       build DeadCurrentEditor first
+```
+
+Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context suite runs in about 25 s, the in-map suite in about 25 s.
+
+| Group | Covers |
+| --- | --- |
+| `DeadCurrent.Rules.*` | Every condition and consequence type, lists, empty contexts, reference validation |
+| `DeadCurrent.Quest.*` | Stages, start stage, outcomes, event-driven transitions (death, item), branch order, save/restore of progress, stale stages |
+| `DeadCurrent.Dialogue.*` | Graph walking, conditional entries, hidden choices, choice consequences (quest, items, flags) |
+| `DeadCurrent.Content.Validate` | Every quest and dialogue asset: graph checks and references to real quests, stages and items; Asset Manager registration |
+| `DeadCurrent.Content.ShoreWatch.*` | The shipped quest and dialogue assets through both routes, pre-quest shortcuts, the clue line and epilogues, with save/restore at each stage |
+| `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). Scratch save slot |
+| `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants and the first-playable systems |
+
+`Core/DCTestHelpers.h` has `FDCTestWorld`, a throwaway game world with subsystems and BeginPlay, for tests that need a registry, world state or component events. In-map tests (`EAutomationTestFlags::ClientContext` only) run under `-game`; with rendering enabled the coil-route test also saves `Saved/Screenshots/<platform>/DC_QuestHUD.png`.
+
 `Tools/PlayTest.bat` launches the game standalone (no editor) in a 1280x720 window on the discrete GPU. It forces DX11, Low scalability, 70% resolution, no Lumen / ray tracing / virtual shadows / volumetric clouds / fog / SSAO / bloom / motion blur, a 400 MB texture pool, no vsync, and a 60 FPS cap. Those overrides apply from the first frame (`-dpcvars`); the project's own rendering settings are unchanged. It uses the compiled editor build, so rebuild `DeadCurrentEditor` after C++ changes. The first launch (and the first launch after switching graphics APIs) compiles shaders and takes several minutes.
 
 ## Editor scripts
@@ -39,10 +65,12 @@ First Playable (FirstPhasePlan §18 / §20) is accepted: boathouse loop, per-sta
 | `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact, inventory, fire, reload, holster), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
 | `create_items.py` | Creates or updates the item definitions in `/Game/Items`. Safe to re-run; edits made in the editor to those items are overwritten. |
 | `create_dialogue.py` | Creates or updates dialogue Data Assets in `/Game/Dialogue`. Safe to re-run. |
-| `create_quest.py` | Creates or updates quest Data Assets in `/Game/Quests`. Safe to re-run. |
+| `create_quest.py` | Creates or updates quest Data Assets in `/Game/Quests` (Shore Watch). Safe to re-run. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
 | `build_boathouse.py` | Regenerates `/Game/Maps/Lvl_Boathouse`, the first-playable scenario. Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
+
+`Tools\RebuildContent.bat` runs `create_items`, `create_quest`, `create_dialogue`, `build_test_gym` and `build_boathouse` in that order (dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`.
 
 ## Player controls
 
@@ -73,12 +101,24 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
 - shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
 - right of spawn: a chemical-spill pad that damages the player
-- past the 20 m plates: a scavenger on a patrol loop, with a radio coil pickup at his camp
-- right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**. She offers Shore Watch (kill the scavenger or bring the coil).
+- past the 20 m plates: a scavenger on a patrol loop (`gym.scavenger`), with a relay coil pickup at his camp
+- right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**. She uses the same dialogue as the boathouse. Shore Watch's kill route checks `boat.scavenger`, so in the gym only the coil route completes it.
 
 ## First playable map
 
-`Lvl_Boathouse` is the first-playable scenario (not World Partition). Greybox, same prototype materials as the gym. The player wakes inside the boathouse, takes the pistol from the workbench, goes out the door, meets a scavenger on the shore path, then finds Mara behind a ridge out of the scavenger's sight. Mara offers **Shore Watch**: kill the scavenger or sneak the radio coil from his camp, then return for 24× 9mm. Completing it sets world flag `shore.cleared` (Mara's greeting changes; the lookout crate text changes). Persistent IDs use the `boat.` prefix.
+`Lvl_Boathouse` is the first-playable scenario (not World Partition). Greybox, same prototype materials as the gym. The player wakes inside the boathouse, takes the pistol from the workbench, goes out the door, meets a scavenger on the shore path, then finds Mara behind a ridge out of the scavenger's sight. Persistent IDs use the `boat.` prefix.
+
+**Shore Watch** (`shore.watch`, `DA_Quest_ShoreWatch`, `DA_Dialogue_MaraIntro`): the scavenger has wired an old Maritime Authority relay at his camp and it has started transmitting. Mara wants it quiet.
+
+| Stage | Objective / meaning | Leaves when |
+| --- | --- | --- |
+| `accepted` | Kill him, or pull the coil from his rig | `ActorDead(boat.scavenger)` → `return_killed`; `HasItem(radio_coil)` → `return_coil` (first listed wins) |
+| `return_killed` | Tell Mara | Mara's turn-in reply → `done_killed` (+24× 9mm) |
+| `return_coil` | Bring Mara the coil | Mara's turn-in reply → `done_coil` (coil taken, +2 field dressings) |
+| `done_killed` (outcome) | OnEnter: flag `shore.path_cleared` | |
+| `done_coil` (outcome) | OnEnter: flag `shore.relay_recovered`; the scavenger is still alive | |
+
+The relay rig (`RelayRig`, at the camp) is an inspectable with variants: inspecting it while it is live sets `shore.relay_inspected`, which opens a line with Mara (`shore.voice_discussed` once told). Mara's greeting depends on the stage, handles the scavenger already dead (`already_dead`) or the coil already taken before meeting her, takes a coil handed in after the kill route (sets `shore.relay_recovered`), and remarks once if he is killed after the coil route (`shore.mara_heard_kill`). The lookout crate by Mara reads differently for each outcome flag.
 
 ## Interaction
 
@@ -91,7 +131,7 @@ Anything the player can use implements `IDCInteractable` (`Interaction/DCInterac
 
 `UDCInteractorComponent` on the player sweeps from the view point each frame (2.5 m range, 8 cm radius, Visibility channel), keeps the usable interactable in focus, and broadcasts `OnFocusChanged`. The interact input calls `TryInteract()`. `ADCHUD` draws the prompt from the focused actor, so new interactable types need no UI or player changes.
 
-Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory), `ADCScavengerCharacter` (loot after death), `ADCFriendlyNPC` (talk).
+Current implementations: `ADCInspectableActor` (shows a description; `Variants` pick the text by condition and can run consequences, e.g. a clue flag on first inspection), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory), `ADCScavengerCharacter` (loot after death), `ADCFriendlyNPC` (talk).
 
 ## Items
 
@@ -113,6 +153,10 @@ The editor's data validation flags definitions missing an ID, name or category.
 | `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
 | `DA_Item_RadioCoil` | `radio_coil` | `Item.Quest` | 1 |
 
+(`DA_Item_RadioCoil` displays as "Relay Coil"; its id stays `radio_coil`.)
+
+Items, quests and dialogue are registered as Asset Manager primary asset types in `Config/DefaultGame.ini` (`DCItemDefinition`, `DCQuestDefinition`, `DCDialogueAsset`, cook rule AlwaysCook) because gameplay finds them by id, not by hard reference. `UDCContentSubsystem` (`Core/`, game instance) loads every item and quest definition under `/Game/Items` and `/Game/Quests` at startup and keeps them loaded, so `FindByItemId` / `FindByQuestId` work anywhere (including corpse loot after a load) with no hard-coded paths. New definitions in those folders need no code.
+
 `DA_Item_Pistol` is a firearm item: same `UDCItemDefinition` as other items, with magazine, ammo, damage, recoil and equipped-view fields. `IsFirearm()` is true when `Category` is `Item.Weapon.Firearm`. Other guns are more of these assets, not new C++ classes.
 
 ## Weapons
@@ -123,7 +167,7 @@ Recoil kicks the view up (with a little random yaw) and recovers over a few fram
 
 ## Health
 
-`UDCHealthComponent` (`Combat/`) is the reusable hit-point pool. The player, range plates and the scavenger all have one. `ApplyDamage` / `Heal` / `ResetHealth`, `OnHealthChanged`, `OnDied`. Dead actors ignore further damage until `ResetHealth`.
+`UDCHealthComponent` (`Combat/`) is the reusable hit-point pool. The player, range plates and the scavenger all have one. `ApplyDamage` / `Heal` / `ResetHealth`, `OnHealthChanged`, `OnDied`. Dead actors ignore further damage until `ResetHealth`. A death also calls `UDCWorldStateSubsystem::NotifyChanged`, so quests waiting on `ActorDead` advance without the dying actor knowing about quests.
 
 The pistol does 25, default max health is 100, so four hits drop a plate. `ADCShootableTarget` flashes and shows remaining health, then falls over on death. The player shows a health bar (bottom left); on death, movement is disabled and they respawn at the PlayerStart after 4 seconds with full health (inventory is kept).
 
@@ -155,25 +199,57 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 
 ## Dialogue
 
-`UDCDialogueAsset` (`Dialogue/`) is a node graph Data Asset under `/Game/Dialogue`. Each node has a speaker, line, and choices. A choice's `NextNodeId` is empty to end the conversation. `Entries` pick the opening node: first entry whose conditions pass wins, otherwise `EntryNodeId`. Choices can hide behind `FDCGameplayCondition`s and fire `FDCGameplayConsequence`s (start/complete quest, give/remove items, set a world flag). Digit keys **1–9** pick **visible** choices.
+`UDCDialogueAsset` (`Dialogue/`) is a node graph Data Asset under `/Game/Dialogue`. Each node has a speaker, line, and choices. A choice's `NextNodeId` is empty to end the conversation. `Entries` pick the opening node: first entry whose conditions pass wins, otherwise `EntryNodeId`. Choices hide behind conditions and fire consequences, both from the shared rule language (see Rules). Consequences run before the next node shows. Digit keys **1–9** pick **visible** choices. Editor data validation flags missing entry/next nodes, duplicate ids, and nodes with no unconditional choice (the player could get stuck).
 
-`UDCDialogueComponent` on the player runs the active conversation: `StartDialogue` / `SelectChoice` / `EndDialogue`. The canvas HUD draws the current line and numbered replies. Fire, inventory and interact are blocked while talking.
+`UDCDialogueComponent` on the player runs the active conversation: `StartDialogue` / `SelectChoice` / `EndDialogue`. It evaluates everything through `FDCRuleContext::ForActor(owner)`. The canvas HUD draws the current line and numbered replies. Fire, inventory and interact are blocked while talking.
 
-`DA_Dialogue_MaraIntro` is Mara's Shore Watch conversation (offer, in-progress, kill/coil turn-in, already-dead, done).
+`DA_Dialogue_MaraIntro` is Mara's conversation, including all of Shore Watch (see First playable map).
 
-Automation tests `DeadCurrent.Dialogue.Branching` and `DeadCurrent.Dialogue.Conditions` cover walking the graph and conditional entries.
+## Rules: conditions and consequences
+
+`Core/DCGameplayTypes.h` + `Core/DCGameplayRules.h` are the one rule language shared by dialogue, quests and inspectables (and later terminals and world events). Content authors lists of them; C++ evaluates them in one place.
+
+| Condition | Passes when |
+| --- | --- |
+| `HasItem(Id, Quantity)` | the instigator carries at least Quantity of item Id |
+| `QuestNotStarted(Id)` / `QuestActive(Id)` / `QuestComplete(Id)` | quest status (complete = any outcome stage) |
+| `QuestStage(Id, Stage)` | quest is at that exact stage (use it to tell outcomes apart) |
+| `WorldFlag(Id)` | world flag set |
+| `ActorDead(Id)` | the actor registered under persistent id Id has a dead health component |
+
+Every condition has `bNegate`. A list passes when every entry passes; an empty list passes.
+
+| Consequence | Does |
+| --- | --- |
+| `GiveItem` / `RemoveItem(Id or Item, Quantity)` | instigator's inventory |
+| `StartQuest(Id, Stage?)` | start at Stage, or at the quest's start stage |
+| `SetQuestStage(Id, Stage)` | move stage (to an outcome stage = complete) |
+| `SetWorldFlag` / `ClearWorldFlag(Id)` | world state |
+
+`FDCRuleContext` carries what rules read and write: instigator, its inventory and quest log, the world's `UDCWorldStateSubsystem` and `UDCPersistentRegistry`. Missing pieces fail conditions and skip consequences safely. `UDCGameplayRules::CheckConditionsFor` / `ApplyConsequencesFor` are the Blueprint entry points. `ValidateReferences` reports unknown quests, stages and items (used by `DeadCurrent.Content.Validate`).
+
+**Adding a condition or consequence type** (skill check, reputation, companion present, discovered info): add the enum value and any field to `DCGameplayTypes.h` (use `EditCondition` so the editor shows only relevant fields), a case in `CheckCondition` / `ApplyConsequence` and in `ValidateReferences`, any new data the rule needs to `FDCRuleContext::ForActor`, and a test in `DCGameplayRulesTest.cpp`. Dialogue, quests and inspectables pick it up with no changes.
+
+## World state
+
+`UDCWorldStateSubsystem` (`World/`, world subsystem) owns named world flags (`shore.path_cleared`) and the `OnChanged` signal. Flags are set by consequences and read by conditions. `NotifyChanged` fires on flag changes and on any health-component death; quests re-check their transitions on it. Flags are saved and restored with the game. Name flags `<area>.<fact>`.
 
 ## Quests
 
-`UDCQuestDefinition` (`Quest/`) is a Data Asset under `/Game/Quests`. Stages hold objective text and an optional "advance when a scavenger dies" hook. `UDCQuestComponent` on the player stores quest id → stage and a list of world flags. Dialogue and inspectables read those through `Meets` / `HasFlag`.
+`UDCQuestDefinition` (`Quest/`) is a Data Asset under `/Game/Quests`: `QuestId`, `DisplayName`, `StartStage` (empty = first stage), and `Stages`. Each stage has:
 
-`FDCGameplayCondition` / `FDCGameplayConsequence` (`Core/DCGameplayTypes.h`) are shared by dialogue and quests.
+- `StageId` and `ObjectiveText` (for an outcome stage, the journal summary of that outcome)
+- `bCompletesQuest`: an outcome. A quest can have several; `QuestStage` conditions tell them apart
+- `OnEnter` consequences, applied once when the stage is entered (never on save restore)
+- `Transitions`: ordered `{Conditions, NextStage}`; the first whose conditions pass moves the quest on
 
-`DA_Quest_ShoreWatch` (`shore.watch`): accept from Mara → kill the scavenger (stage advances to `return`) or bring `radio_coil` → return → 24× 9mm and flag `shore.cleared`.
+`UDCQuestComponent` on the player is the quest log (`QuestId` → current stage, in start order): `StartQuest`, `SetStage`, `GetStage`, `GetQuestStatus`, `GetStageText`, `GetTrackedQuestId`. It re-checks transitions whenever its owner's inventory changes, the world state changes (flags, deaths), or a stage changes, chaining until nothing moves (loops are cut after 16 passes with a warning). So a quest can resolve by combat, by picking something up, or by any future condition type with no quest-specific code in actors. Starting a quest whose objective is already met jumps straight through. Editor data validation flags missing ids, bad start/next stages, and quests with no outcome.
 
-The HUD shows the current objective at the top of the screen. F5/F9 persist quest stages and world flags.
+Dialogue usually hands out rewards and moves return stages to outcomes; `OnEnter` sets the outcome's world flags so they hold however the stage was reached.
 
-Automation tests `DeadCurrent.Quest.Stages` and `DeadCurrent.Quest.Consequences` cover start/advance/complete, flags, save restore, and consequence application.
+The HUD shows `<Quest>: <objective>` for the tracked quest at the top of the screen, and the Tab panel has a QUESTS journal (status, objective or outcome). The player shows a message when a quest changes stage or completes.
+
+To add a quest: add a spec to `create_quest.py` (stages, transitions, OnEnter), add dialogue to `create_dialogue.py`, place any actors or inspectable variants in the map script, run `Tools\RebuildContent.bat`, then `Tools\RunTests.bat` (Content.Validate catches broken references).
 
 ## Inventory
 
@@ -187,11 +263,7 @@ Automation tests `DeadCurrent.Quest.Stages` and `DeadCurrent.Quest.Consequences`
 
 Saves will store each stack as `ItemId` + quantity.
 
-Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Run it from the Session Frontend, or headless:
-
-```
-UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCmds=Automation RunTests DeadCurrent; Quit" -TestExit="Automation Test Queue Empty"
-```
+Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Run tests with `Tools\RunTests.bat` (see Automated tests) or from the Session Frontend.
 
 ## Save
 
@@ -203,11 +275,15 @@ Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pick
 
 Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`.
 
-`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, quest stages, world flags, and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`. F5 saves, F9 loads. Load refuses a save whose map name does not match the current level, then applies world actors first (destroy pickups missing from the save, restore scavenger death, then overlay corpse inventory from the flat arrays), then replaces player inventory without triggering a magazine refill from reserve. Item and quest data assets are loaded when the subsystem starts so F9 does not hitch on first resolve. The subsystem keeps those item objects so corpse loot can resolve by `ItemId` after load.
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0; tests switch to a scratch slot with `UDCSaveSubsystem::SetSlotName`). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, the quest log (quest id + stage), world flags (from `UDCWorldStateSubsystem`), and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`.
 
-Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, and `DeadCurrent.Save.WorldInventorySlot` cover lookup, inventory snapshot restore, and USaveGame round-trip of corpse loot.
+F5 saves. Saving while dead is refused ("You can't save now."). F9 reads the slot, **reopens the saved map** (`MapPackage`, else `MapName`), and `ADCGameMode::StartPlay` calls `ApplyPendingLoad` once every actor has begun play. Loading therefore always starts from a fresh map (taken pickups come back, dead enemies are alive) and then applies the save, so a load inside a running session behaves exactly like a load after relaunching, loading while dead or mid-dialogue is clean, and loading an earlier save can never lose an item the world already destroyed. Apply order: world actors (destroy pickups missing from the save, restore deaths, which marks the health component dead so corpses stay lootable and `ActorDead` holds; then corpse inventory from the flat arrays), then the player (transform, health, inventory without a magazine refill), then world flags and the quest log. Restoring never re-runs stage `OnEnter` consequences.
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, the dialogue panel, and the active quest objective. It will be replaced by UMG widgets when the HUD grows.
+Save format version (`UDCSaveGame::SaveVersion`, current 2): 0/1 = first playable; 2 adds `MapPackage`, world flags owned by the world-state subsystem, and data-driven quest stages. Older saves still load (map reopened by short name); a saved quest stage that no longer exists in the quest data is dropped with a warning so the quest can be taken again. `MapName`/`MapPackage` route the load to the right map; there is still only one production map.
+
+Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, and `DeadCurrent.Save.WorldInventorySlot` cover lookup, inventory snapshot restore, and USaveGame round-trip of corpse loot. `DeadCurrent.Quest.Persistence` covers the quest log and flags, and `DeadCurrent.Map.Boathouse.*` covers full F9 loads in the real map.
+
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel with the quest journal beside it, the weapon ammo readout, a health bar, the dialogue panel, and the tracked quest objective. It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 
@@ -222,7 +298,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 
 | Folder | Owns |
 | --- | --- |
-| `Core/` | Game mode, Gameplay Tag declarations, project-wide framework |
+| `Core/` | Game mode, Gameplay Tag declarations, the shared rule language (conditions/consequences), content loading, test helpers |
 | `Character/` | Player character, player controller, camera manager |
 | `Interaction/` | Interaction interface, detection, prompts |
 | `Items/` | Item definitions |
@@ -230,10 +306,10 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `Combat/` | Weapons, damage processing, health |
 | `AI/` | Enemy controllers, perception, behavior |
 | `Dialogue/` | Dialogue data and runtime |
-| `Quest/` | Quest definitions, player quest log, conditions/consequences |
+| `Quest/` | Quest definitions and the player quest log (conditions/consequences live in `Core/`) |
 | `Save/` | Save game, persistent IDs, persistence interfaces |
 | `UI/` | HUD and widget base classes |
-| `World/` | Persistent world objects and world state |
+| `World/` | Persistent world objects, inspectables, and `UDCWorldStateSubsystem` (world flags) |
 
 Split into more modules only when a boundary is proven (for example an editor-only tools module).
 
