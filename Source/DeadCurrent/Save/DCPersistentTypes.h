@@ -3,9 +3,7 @@
 #include "CoreMinimal.h"
 #include "DCPersistentTypes.generated.h"
 
-class UDCItemDefinition;
-
-/** One inventory stack in a save. Item is resolved by ItemId, with a soft path fallback. */
+/** One inventory stack in a save. Item is resolved by ItemId, then ItemPath. */
 USTRUCT(BlueprintType)
 struct DEADCURRENT_API FDCSavedItemStack
 {
@@ -15,10 +13,24 @@ struct DEADCURRENT_API FDCSavedItemStack
 	FName ItemId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
-	TSoftObjectPtr<UDCItemDefinition> Item;
+	int32 Quantity = 1;
+
+	/** Package path, e.g. /Game/Items/DA_Item_Ammo9mm.DA_Item_Ammo9mm */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
+	FString ItemPath;
+};
+
+/** World-actor inventory stored at save-game root so it survives USaveGame serialization. */
+USTRUCT(BlueprintType)
+struct DEADCURRENT_API FDCSavedActorInventory
+{
+	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
-	int32 Quantity = 1;
+	FName PersistentId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
+	TArray<FDCSavedItemStack> Stacks;
 };
 
 /** One quest's current stage in a save. */

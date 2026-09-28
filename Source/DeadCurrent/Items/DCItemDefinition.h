@@ -105,6 +105,9 @@ public:
 
 	static const UDCItemDefinition* FindByItemId(FName ItemId);
 
+	/** Resolve a saved stack: ItemId first, then a package path. */
+	static const UDCItemDefinition* ResolveSaved(FName ItemId, const FString& ItemPath);
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif

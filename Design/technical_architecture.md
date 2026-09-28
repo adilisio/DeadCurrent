@@ -22,6 +22,8 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 ## Playtesting
 
+First Playable (FirstPhasePlan §18 / §20) is accepted: boathouse loop, per-stack corpse loot, and F5/F9 world restore including remaining corpse stacks.
+
 `Tools/PlayTest.bat` launches the game standalone (no editor) in a 1280x720 window on the discrete GPU. It forces DX11, Low scalability, 70% resolution, no Lumen / ray tracing / virtual shadows / volumetric clouds / fog / SSAO / bloom / motion blur, a 400 MB texture pool, no vsync, and a 60 FPS cap. Those overrides apply from the first frame (`-dpcvars`); the project's own rendering settings are unchanged. It uses the compiled editor build, so rebuild `DeadCurrentEditor` after C++ changes. The first launch (and the first launch after switching graphics APIs) compiles shaders and takes several minutes.
 
 ## Editor scripts
@@ -135,7 +137,7 @@ Automation test `DeadCurrent.Combat.FirearmAmmo` covers magazine fill, consumpti
 
 ## AI
 
-`ADCScavengerCharacter` (`AI/`) is a mannequin pawn with health and an inventory. After death the corpse implements `IDCInteractable` (`Interaction.Loot`): **E** transfers every stack into the player's inventory and the prompt goes away when empty. Starting loot (12× 9mm, a field dressing, 2× salvaged wiring) is granted on first BeginPlay if the inventory was authored empty. `ADCScavengerController` runs a small state machine:
+`ADCScavengerCharacter` (`AI/`) is a mannequin pawn with health and an inventory. After death the corpse implements `IDCInteractable` (`Interaction.Loot`): **E** transfers the oldest stack into the player's inventory; repeat until empty. The prompt goes away when empty. Starting loot (12× 9mm, a field dressing, 2× salvaged wiring) is granted on first BeginPlay if the inventory was authored empty. `ADCScavengerController` runs a small state machine:
 
 - **Patrol** between authored world points
 - **Chase** when sight (18 m, 75° cone) picks up the player, or when shot
@@ -201,9 +203,9 @@ Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pick
 
 Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`.
 
-`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, quest stages, world flags, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. Item and quest data assets are loaded when the subsystem starts so F9 does not hitch on first resolve.
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, quest stages, world flags, and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`. F5 saves, F9 loads. Load refuses a save whose map name does not match the current level, then applies world actors first (destroy pickups missing from the save, restore scavenger death, then overlay corpse inventory from the flat arrays), then replaces player inventory without triggering a magazine refill from reserve. Item and quest data assets are loaded when the subsystem starts so F9 does not hitch on first resolve. The subsystem keeps those item objects so corpse loot can resolve by `ItemId` after load.
 
-Automation tests `DeadCurrent.Save.PersistentId` and `DeadCurrent.Save.InventoryRestore` cover lookup and inventory snapshot restore.
+Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, and `DeadCurrent.Save.WorldInventorySlot` cover lookup, inventory snapshot restore, and USaveGame round-trip of corpse loot.
 
 `ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, the dialogue panel, and the active quest objective. It will be replaced by UMG widgets when the HUD grows.
 

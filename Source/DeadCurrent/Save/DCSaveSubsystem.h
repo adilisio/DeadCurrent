@@ -5,6 +5,7 @@
 #include "DCSaveSubsystem.generated.h"
 
 class ADCPlayerCharacter;
+class UDCItemDefinition;
 class UDCSaveGame;
 
 /**
@@ -38,4 +39,7 @@ private:
 	void CaptureWorld(UDCSaveGame* Save, UWorld* World) const;
 
 	void ApplyWorld(UDCSaveGame* Save, UWorld* World) const;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UDCItemDefinition>> PreloadedItems;
 };

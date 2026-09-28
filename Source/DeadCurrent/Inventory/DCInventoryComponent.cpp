@@ -1,4 +1,5 @@
 #include "Inventory/DCInventoryComponent.h"
+#include "DeadCurrent.h"
 #include "Items/DCItemDefinition.h"
 #include "Save/DCPersistentTypes.h"
 
@@ -129,6 +130,34 @@ int32 UDCInventoryComponent::TransferAllTo(UDCInventoryComponent* Destination)
 	return Moved;
 }
 
+int32 UDCInventoryComponent::TransferFirstStackTo(UDCInventoryComponent* Destination)
+{
+	if (!Destination || Destination == this || Stacks.IsEmpty() || !Stacks[0].Item)
+	{
+		return 0;
+	}
+
+	const UDCItemDefinition* Item = Stacks[0].Item;
+	const int32 Quantity = Stacks[0].Quantity;
+	const int32 Added = Destination->AddItem(Item, Quantity);
+	if (Added <= 0)
+	{
+		return 0;
+	}
+
+	if (Added >= Quantity)
+	{
+		Stacks.RemoveAt(0);
+	}
+	else
+	{
+		Stacks[0].Quantity -= Added;
+	}
+
+	OnInventoryChanged.Broadcast(this);
+	return Added;
+}
+
 float UDCInventoryComponent::GetTotalWeight() const
 {
 	float Total = 0.0f;
@@ -154,8 +183,8 @@ void UDCInventoryComponent::CaptureStacks(TArray<FDCSavedItemStack>& OutStacks) 
 
 		FDCSavedItemStack Saved;
 		Saved.ItemId = Stack.Item->ItemId;
-		Saved.Item = const_cast<UDCItemDefinition*>(Stack.Item.Get());
 		Saved.Quantity = Stack.Quantity;
+		Saved.ItemPath = FSoftObjectPath(Stack.Item.Get()).ToString();
 		OutStacks.Add(Saved);
 	}
 }
@@ -165,14 +194,15 @@ void UDCInventoryComponent::ReplaceFromSaved(const TArray<FDCSavedItemStack>& Sa
 	Stacks.Empty();
 	for (const FDCSavedItemStack& Saved : SavedStacks)
 	{
-		const UDCItemDefinition* Item = Saved.Item.LoadSynchronous();
-		if (!Item)
-		{
-			Item = UDCItemDefinition::FindByItemId(Saved.ItemId);
-		}
+		const UDCItemDefinition* Item = UDCItemDefinition::ResolveSaved(Saved.ItemId, Saved.ItemPath);
 		if (Item && Saved.Quantity > 0)
 		{
 			AddItem(Item, Saved.Quantity);
+		}
+		else if (Saved.Quantity > 0)
+		{
+			UE_LOG(LogDeadCurrent, Warning, TEXT("[DCINV] unresolved item '%s' path '%s' qty=%d"),
+				*Saved.ItemId.ToString(), *Saved.ItemPath, Saved.Quantity);
 		}
 	}
 

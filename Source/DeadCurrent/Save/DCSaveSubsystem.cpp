@@ -8,6 +8,7 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/PackageName.h"
 #include "Quest/DCQuestComponent.h"
 #include "Quest/DCQuestDefinition.h"
 #include "Save/DCPersistent.h"
@@ -16,6 +17,64 @@
 #include "UI/DCHUD.h"
 
 const FString UDCSaveSubsystem::SlotName = TEXT("DeadCurrent");
+
+static FString DCShortMapName(const UWorld* World)
+{
+	if (!World)
+	{
+		return FString();
+	}
+
+	const FString FromPackage = FPackageName::GetShortName(World->GetOutermost()->GetName());
+	return FromPackage.IsEmpty() ? World->GetMapName() : FromPackage;
+}
+
+static bool DCMapsMatch(const FString& Saved, const UWorld* World)
+{
+	if (Saved.IsEmpty() || !World)
+	{
+		return true;
+	}
+
+	const FString Current = DCShortMapName(World);
+	return Saved.Equals(Current, ESearchCase::IgnoreCase)
+		|| Saved.Equals(World->GetMapName(), ESearchCase::IgnoreCase);
+}
+
+static void DCAppendFlatInventory(UDCSaveGame* Save, FName Id, const TArray<FDCSavedItemStack>& Stacks)
+{
+	Save->WorldInvActorIds.Add(Id);
+	for (const FDCSavedItemStack& Stack : Stacks)
+	{
+		Save->WorldInvStackActorIds.Add(Id);
+		Save->WorldInvItemIds.Add(Stack.ItemId);
+		Save->WorldInvQuantities.Add(Stack.Quantity);
+		Save->WorldInvItemPaths.Add(Stack.ItemPath);
+	}
+}
+
+static bool DCTakeFlatInventory(const UDCSaveGame* Save, FName Id, TArray<FDCSavedItemStack>& OutStacks)
+{
+	OutStacks.Reset();
+	const int32 Num = FMath::Min(Save->WorldInvStackActorIds.Num(),
+		FMath::Min(Save->WorldInvItemIds.Num(),
+			FMath::Min(Save->WorldInvQuantities.Num(), Save->WorldInvItemPaths.Num())));
+	for (int32 Index = 0; Index < Num; ++Index)
+	{
+		if (Save->WorldInvStackActorIds[Index] != Id)
+		{
+			continue;
+		}
+
+		FDCSavedItemStack Stack;
+		Stack.ItemId = Save->WorldInvItemIds[Index];
+		Stack.Quantity = Save->WorldInvQuantities[Index];
+		Stack.ItemPath = Save->WorldInvItemPaths[Index];
+		OutStacks.Add(Stack);
+	}
+
+	return Save->WorldInvActorIds.Contains(Id);
+}
 
 void UDCSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,7 +89,10 @@ void UDCSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	};
 	for (const TCHAR* Path : ItemPaths)
 	{
-		LoadObject<UDCItemDefinition>(nullptr, Path);
+		if (UDCItemDefinition* Item = LoadObject<UDCItemDefinition>(nullptr, Path))
+		{
+			PreloadedItems.Add(Item);
+		}
 	}
 
 	LoadObject<UDCQuestDefinition>(nullptr, TEXT("/Game/Quests/DA_Quest_ShoreWatch.DA_Quest_ShoreWatch"));
@@ -48,7 +110,7 @@ bool UDCSaveSubsystem::SaveCurrentGame()
 	}
 
 	UDCSaveGame* Save = Cast<UDCSaveGame>(UGameplayStatics::CreateSaveGameObject(UDCSaveGame::StaticClass()));
-	Save->MapName = World->GetMapName();
+	Save->MapName = DCShortMapName(World);
 	CapturePlayer(Save, Player);
 	CaptureWorld(Save, World);
 
@@ -75,6 +137,14 @@ bool UDCSaveSubsystem::LoadCurrentGame()
 	if (!Save)
 	{
 		ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "NoSave", "No save."), 2.0f);
+		return false;
+	}
+
+	if (!DCMapsMatch(Save->MapName, World))
+	{
+		ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "WrongMap", "Save is for a different map."), 3.0f);
+		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCSAVE] LoadCurrentGame skipped: save map %s, current %s"),
+			*Save->MapName, *DCShortMapName(World));
 		return false;
 	}
 
@@ -176,6 +246,20 @@ void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World) const
 		IDCPersistent::Execute_CapturePersistentState(Actor, State);
 		State.PersistentId = Id;
 		Save->WorldActors.Add(State);
+
+		TArray<FDCSavedItemStack> Stacks;
+		if (const UDCInventoryComponent* Inventory = Actor->FindComponentByClass<UDCInventoryComponent>())
+		{
+			Inventory->CaptureStacks(Stacks);
+			DCAppendFlatInventory(Save, Id, Stacks);
+		}
+
+		FDCSavedActorInventory ActorInventory;
+		ActorInventory.PersistentId = Id;
+		ActorInventory.Stacks = Stacks;
+		Save->ActorInventories.Add(ActorInventory);
+		UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] capture %s alive=%d stacks=%d"),
+			*Id.ToString(), State.bAlive ? 1 : 0, Stacks.Num());
 	}
 }
 
@@ -187,16 +271,48 @@ void UDCSaveSubsystem::ApplyWorld(UDCSaveGame* Save, UWorld* World) const
 		return;
 	}
 
+	TMap<FName, int32> InventoryIndex;
+	for (int32 Index = 0; Index < Save->ActorInventories.Num(); ++Index)
+	{
+		const FName Id = Save->ActorInventories[Index].PersistentId;
+		if (!Id.IsNone())
+		{
+			InventoryIndex.Add(Id, Index);
+		}
+	}
+
 	TSet<FName> SavedIds;
 	for (const FDCPersistentActorState& State : Save->WorldActors)
 	{
 		SavedIds.Add(State.PersistentId);
+		FDCPersistentActorState ToApply = State;
+		ToApply.Inventory.Reset();
+
 		if (AActor* Actor = Registry->FindActor(State.PersistentId))
 		{
 			if (Actor->Implements<UDCPersistent>())
 			{
-				IDCPersistent::Execute_ApplyPersistentState(Actor, State);
+				IDCPersistent::Execute_ApplyPersistentState(Actor, ToApply);
 			}
+
+			UDCInventoryComponent* Inventory = Actor->FindComponentByClass<UDCInventoryComponent>();
+			if (!Inventory)
+			{
+				continue;
+			}
+
+			TArray<FDCSavedItemStack> Stacks;
+			if (DCTakeFlatInventory(Save, State.PersistentId, Stacks))
+			{
+				Inventory->ReplaceFromSaved(Stacks);
+			}
+			else if (const int32* InvIndex = InventoryIndex.Find(State.PersistentId))
+			{
+				Inventory->ReplaceFromSaved(Save->ActorInventories[*InvIndex].Stacks);
+			}
+
+			UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] apply %s alive=%d stacks=%d"),
+				*State.PersistentId.ToString(), ToApply.bAlive ? 1 : 0, Inventory->GetStacks().Num());
 		}
 	}
 

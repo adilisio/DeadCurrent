@@ -60,6 +60,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	int32 TransferAllTo(UDCInventoryComponent* Destination);
 
+	/** Moves the oldest stack into Destination. Returns how many items were transferred. */
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	int32 TransferFirstStackTo(UDCInventoryComponent* Destination);
+
 	void CaptureStacks(TArray<FDCSavedItemStack>& OutStacks) const;
 
 	void ReplaceFromSaved(const TArray<FDCSavedItemStack>& SavedStacks);

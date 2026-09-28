@@ -208,38 +208,23 @@ void ADCScavengerCharacter::Interact_Implementation(AActor* Interactor)
 	UDCInventoryComponent* Destination = Interactor
 		? Interactor->FindComponentByClass<UDCInventoryComponent>()
 		: nullptr;
-	if (!Destination || !InventoryComponent)
+	if (!Destination || !InventoryComponent || InventoryComponent->IsEmpty())
 	{
 		return;
 	}
 
-	TArray<FString> Parts;
-	for (const FDCItemStack& Stack : InventoryComponent->GetStacks())
-	{
-		if (!Stack.Item)
-		{
-			continue;
-		}
-
-		if (Stack.Quantity > 1)
-		{
-			Parts.Add(FString::Printf(TEXT("%s (%d)"), *Stack.Item->DisplayName.ToString(), Stack.Quantity));
-		}
-		else
-		{
-			Parts.Add(Stack.Item->DisplayName.ToString());
-		}
-	}
-
-	const int32 Moved = InventoryComponent->TransferAllTo(Destination);
+	const FDCItemStack& Stack = InventoryComponent->GetStacks()[0];
+	const FText TakenName = Stack.Item ? Stack.Item->DisplayName : DisplayName;
+	const int32 TakenQty = Stack.Quantity;
+	const int32 Moved = InventoryComponent->TransferFirstStackTo(Destination);
 	if (Moved <= 0)
 	{
 		return;
 	}
 
-	const FText Message = Parts.Num() > 0
-		? FText::Format(LOCTEXT("LootedItems", "Took {0}"), FText::FromString(FString::Join(Parts, TEXT(", "))))
-		: LOCTEXT("Looted", "Looted the scavenger.");
+	const FText Message = TakenQty > 1
+		? FText::Format(LOCTEXT("LootedQty", "Took {0} ({1})"), TakenName, TakenQty)
+		: FText::Format(LOCTEXT("LootedOne", "Took {0}"), TakenName);
 	ADCHUD::ShowMessageFor(Interactor, Message, 2.5f);
 }
 
@@ -261,15 +246,18 @@ void ADCScavengerCharacter::CapturePersistentState_Implementation(FDCPersistentA
 
 void ADCScavengerCharacter::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
 {
+	if (!State.bExists)
+	{
+		return;
+	}
+
 	if (!State.bAlive && HealthComponent && !HealthComponent->IsDead())
 	{
 		Die();
 	}
 
-	if (InventoryComponent)
-	{
-		InventoryComponent->ReplaceFromSaved(State.Inventory);
-	}
+	// Inventory is restored by UDCSaveSubsystem from flattened save arrays.
+	// Nested State.Inventory does not round-trip through USaveGame.
 }
 
 #undef LOCTEXT_NAMESPACE

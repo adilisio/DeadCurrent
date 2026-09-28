@@ -52,6 +52,18 @@ bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Transfer to self is rejected"), Other->TransferAllTo(Other), 0);
 	TestEqual(TEXT("Transfer to null is rejected"), Other->TransferAllTo(nullptr), 0);
 
+	UDCInventoryComponent* PartialSource = NewObject<UDCInventoryComponent>();
+	UDCInventoryComponent* PartialDest = NewObject<UDCInventoryComponent>();
+	PartialSource->AddItem(Ammo, 4);
+	PartialSource->AddItem(Pistol, 1);
+	TestEqual(TEXT("First stack is ammo"), PartialSource->TransferFirstStackTo(PartialDest), 4);
+	TestEqual(TEXT("Ammo left the corpse"), PartialSource->GetQuantity(Ammo), 0);
+	TestEqual(TEXT("Pistol remains on corpse"), PartialSource->GetQuantity(Pistol), 1);
+	TestEqual(TEXT("Player received ammo"), PartialDest->GetQuantity(Ammo), 4);
+	TestEqual(TEXT("Second stack is pistol"), PartialSource->TransferFirstStackTo(PartialDest), 1);
+	TestTrue(TEXT("Corpse empty after both stacks"), PartialSource->IsEmpty());
+	TestEqual(TEXT("First stack to self is rejected"), PartialDest->TransferFirstStackTo(PartialDest), 0);
+
 	UDCInventoryComponent* Snapshot = NewObject<UDCInventoryComponent>();
 	Snapshot->AddItem(Ammo, 9);
 	Snapshot->AddItem(Pistol, 1);

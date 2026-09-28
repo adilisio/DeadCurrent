@@ -22,11 +22,30 @@ const UDCItemDefinition* UDCItemDefinition::FindByItemId(FName ItemId)
 
 	for (TObjectIterator<UDCItemDefinition> It; It; ++It)
 	{
-		if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->ItemId == ItemId)
+		if (It->HasAnyFlags(RF_ClassDefaultObject | RF_BeginDestroyed | RF_FinishDestroyed))
+		{
+			continue;
+		}
+		if (It->ItemId == ItemId)
 		{
 			return *It;
 		}
 	}
+	return nullptr;
+}
+
+const UDCItemDefinition* UDCItemDefinition::ResolveSaved(FName ItemId, const FString& ItemPath)
+{
+	if (const UDCItemDefinition* Found = FindByItemId(ItemId))
+	{
+		return Found;
+	}
+
+	if (!ItemPath.IsEmpty())
+	{
+		return LoadObject<UDCItemDefinition>(nullptr, *ItemPath);
+	}
+
 	return nullptr;
 }
 
