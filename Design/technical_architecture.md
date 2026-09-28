@@ -41,7 +41,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context 
 | Group | Covers |
 | --- | --- |
 | `DeadCurrent.Rules.*` | Every condition and consequence type, lists, empty contexts, reference validation |
-| `DeadCurrent.Quest.*` | Stages, start stage, outcomes, event-driven transitions (death, item), branch order, save/restore of progress, stale stages |
+| `DeadCurrent.Quest.*` | Stages, start stage, outcomes, event-driven transitions (death, item), branch order, one quest moving another, save/restore of progress, stale stages |
 | `DeadCurrent.Dialogue.*` | Graph walking, conditional entries, hidden choices, choice consequences (quest, items, flags) |
 | `DeadCurrent.Content.Validate` | Every quest and dialogue asset: graph checks and references to real quests, stages and items; Asset Manager registration |
 | `DeadCurrent.Content.ShoreWatch.*` | The shipped quest and dialogue assets through both routes, pre-quest shortcuts, the clue line and epilogues, with save/restore at each stage |
@@ -85,7 +85,9 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context 
 | Inventory (toggle) | Tab, I | View / Back |
 | Fire | Left mouse | Right trigger |
 | Reload | R | Y / Triangle |
-| Holster / draw | 1 | D-pad up |
+| Holster / draw (not while talking) | 1 | D-pad up |
+| Dialogue reply | 1-9 | |
+| Save / load | F5 / F9 | |
 
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 

@@ -264,6 +264,12 @@ void ADCPlayerCharacter::DoReload()
 
 void ADCPlayerCharacter::DoToggleWeapon()
 {
+	// 1 also picks the first dialogue reply.
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		return;
+	}
+
 	if (EquippedFirearm)
 	{
 		EquippedFirearm->SetHolstered(!EquippedFirearm->IsHolstered());
