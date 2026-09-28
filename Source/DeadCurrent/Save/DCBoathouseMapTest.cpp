@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Quest/DCQuestComponent.h"
 #include "Save/DCPersistentRegistry.h"
+#include "Save/DCSaveGame.h"
 #include "Save/DCSaveSubsystem.h"
 #include "Tests/AutomationCommon.h"
 #include "UI/DCHUD.h"
@@ -374,6 +375,60 @@ bool FDCBoathouseCombatRouteTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Reload: epilogue"), TalkToMara(), FName(TEXT("done_killed")));
 		const ADCScavengerCharacter* Scav = Cast<ADCScavengerCharacter>(Find(TEXT("boat.scavenger")));
 		TestTrue(TEXT("Reload: scavenger still dead"), Scav && Scav->GetHealthComponent()->IsDead());
+		return true;
+	}));
+
+	QueueCleanup();
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseLegacySaveTest, "DeadCurrent.Map.Boathouse.LegacySave",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
+{
+	using namespace DCBoathouseTest;
+	QueueFreshMap();
+
+	// A first-playable (version 0/1) save: short map name only, the old Shore Watch stage ids,
+	// the old completion flag, and the coil already taken.
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		UDCSaveGame* Legacy = NewObject<UDCSaveGame>();
+		Legacy->MapName = TEXT("Lvl_Boathouse");
+		Legacy->PlayerLocation = FVector(3000.0, 1100.0, 100.0);
+		Legacy->PlayerHealth = 80.0f;
+		Legacy->PlayerInventory.Add({ TEXT("radio_coil"), 1, FString() });
+		Legacy->Quests.Add({ Quest, TEXT("return") });
+		Legacy->WorldFlags.Add(TEXT("shore.cleared"));
+		for (const TCHAR* Id : { TEXT("boat.scavenger"), TEXT("boat.mara"), TEXT("boat.door"), TEXT("boat.pickup_pistol"),
+			TEXT("boat.pickup_ammo"), TEXT("boat.pickup_dressing") })
+		{
+			FDCPersistentActorState State;
+			State.PersistentId = Id;
+			Legacy->WorldActors.Add(State);
+		}
+		TestTrue(TEXT("Wrote legacy save"), UGameplayStatics::SaveGameToSlot(Legacy, TestSlot, 0));
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		if (!TestNotNull(TEXT("Player after legacy load"), Player()))
+		{
+			return true;
+		}
+		TestTrue(TEXT("Legacy: player moved to saved spot"), Player()->GetActorLocation().Equals(FVector(3000.0, 1100.0, 100.0), 150.0));
+		TestEqual(TEXT("Legacy: coil restored"), Count(TEXT("radio_coil")), 1);
+		TestNull(TEXT("Legacy: coil pickup gone"), Find(TEXT("boat.pickup_coil")));
+		TestFalse(TEXT("Legacy: unknown stage dropped"), Player()->GetQuestComponent()->HasQuest(Quest));
+
+		// The quest can be picked up again, and the coil shortcut applies.
+		TestEqual(TEXT("Legacy: greeting"), TalkToMara(), FName(TEXT("greeting")));
+		Say(TEXT("You keep looking toward his camp."));
+		TestTrue(TEXT("Legacy: coil shortcut"), Say(TEXT("This coil? I already pulled it.")));
+		TestEqual(TEXT("Legacy: straight to turn-in"), Stage(), FName(TEXT("return_coil")));
 		return true;
 	}));
 
