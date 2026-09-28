@@ -49,6 +49,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 | Sprint (hold, forward only) | Left Shift | Left stick click |
 | Crouch (toggle) | Left Ctrl, C | B / Circle |
 | Interact | E | X / Square |
+| Inventory (toggle) | Tab, I | View / Back |
 
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 
@@ -86,7 +87,7 @@ Each kind of item is a `UDCItemDefinition` Data Asset in `/Game/Items`, named `D
 
 The editor's data validation flags definitions missing an ID, name or category.
 
-`ADCItemPickup` is an item lying in the world. It references a definition and a quantity, and takes its mesh and prompt text (`[E] Take 9mm Rounds (24)`) from the definition.
+`ADCItemPickup` is an item lying in the world. It references a definition and a quantity, and takes its mesh and prompt text (`[E] Take 9mm Rounds (24)`) from the definition. Taking it adds it to the interactor's inventory; it is only usable by actors that have one.
 
 | Asset | ItemId | Category | Stack |
 | --- | --- | --- | --- |
@@ -95,7 +96,26 @@ The editor's data validation flags definitions missing an ID, name or category.
 | `DA_Item_FieldDressing` | `field_dressing` | `Item.Consumable.Medical` | 10 |
 | `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
 
-`ADCHUD` is a temporary canvas HUD (crosshair dot, prompt, timed messages via `ADCHUD::ShowMessageFor`). It will be replaced by UMG widgets when the HUD grows.
+## Inventory
+
+`UDCInventoryComponent` (`Inventory/`) holds a list of `FDCItemStack` (definition + quantity). The player has one; corpses and containers will use the same component, with starting contents set on the placed actor's `Stacks`.
+
+- `AddItem(Item, Quantity)` tops up existing stacks, then starts new ones, never exceeding `MaxStackSize`. Returns the amount added. There is no capacity or weight limit yet.
+- `RemoveItem(Item, Quantity)` takes from the newest stacks first and drops empty stacks. Returns the amount removed.
+- `GetQuantity(Item)`, `GetTotalWeight()`, `GetStacks()`
+- `OnInventoryChanged` fires after every change (for UI, and later saving)
+
+Saves will store each stack as `ItemId` + quantity.
+
+Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Run it from the Session Frontend, or headless:
+
+```
+UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCmds=Automation RunTests DeadCurrent; Quit" -TestExit="Automation Test Queue Empty"
+```
+
+## HUD
+
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, and the inventory panel (item, quantity, weight, total). It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 

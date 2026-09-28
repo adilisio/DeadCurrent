@@ -6,6 +6,7 @@
 
 class UCameraComponent;
 class UDCInteractorComponent;
+class UDCInventoryComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -29,6 +30,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UDCInteractorComponent* InteractorComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCInventoryComponent* InventoryComponent;
 
 protected:
 
@@ -56,6 +60,10 @@ protected:
 	/** Pressed to use the focused interactable */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* InteractAction;
+
+	/** Pressed to show or hide the inventory */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* InventoryAction;
 
 	/** Ground speed while sprinting. Normal speed is the movement component's MaxWalkSpeed. */
 	UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="0", Units="cm/s"))
@@ -115,6 +123,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
 
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoToggleInventory();
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -124,6 +135,8 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 	UDCInteractorComponent* GetInteractorComponent() const { return InteractorComponent; }
+
+	UDCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	const UInputAction* GetInteractAction() const { return InteractAction; }
 

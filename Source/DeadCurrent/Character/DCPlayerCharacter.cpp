@@ -6,7 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
+#include "GameFramework/PlayerController.h"
 #include "Interaction/DCInteractorComponent.h"
+#include "Inventory/DCInventoryComponent.h"
+#include "UI/DCHUD.h"
 
 ADCPlayerCharacter::ADCPlayerCharacter()
 {
@@ -29,6 +32,7 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
 
 	InteractorComponent = CreateDefaultSubobject<UDCInteractorComponent>(TEXT("Interactor"));
+	InventoryComponent = CreateDefaultSubobject<UDCInventoryComponent>(TEXT("Inventory"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -78,6 +82,8 @@ void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoCrouchToggle);
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoInteract);
+
+		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoToggleInventory);
 	}
 	else
 	{
@@ -157,6 +163,15 @@ void ADCPlayerCharacter::DoCrouchToggle()
 void ADCPlayerCharacter::DoInteract()
 {
 	InteractorComponent->TryInteract();
+}
+
+void ADCPlayerCharacter::DoToggleInventory()
+{
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
+	{
+		HUD->ToggleInventory();
+	}
 }
 
 void ADCPlayerCharacter::UpdateSprint()

@@ -13,12 +13,14 @@ ACTION_KEYS = {
     "IA_Sprint": ["LeftShift", "Gamepad_LeftThumbstick"],
     "IA_Crouch": ["LeftControl", "C", "Gamepad_FaceButton_Right"],
     "IA_Interact": ["E", "Gamepad_FaceButton_Left"],
+    "IA_Inventory": ["Tab", "I", "Gamepad_Special_Left"],
 }
 
 BP_PROPERTIES = {
     "IA_Sprint": "sprint_action",
     "IA_Crouch": "crouch_action",
     "IA_Interact": "interact_action",
+    "IA_Inventory": "inventory_action",
 }
 
 

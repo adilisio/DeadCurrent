@@ -8,6 +8,8 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Interaction/DCInteractorComponent.h"
+#include "Inventory/DCInventoryComponent.h"
+#include "Items/DCItemDefinition.h"
 
 void ADCHUD::DrawHUD()
 {
@@ -21,6 +23,11 @@ void ADCHUD::DrawHUD()
 	DrawCrosshair();
 	DrawInteractionPrompt();
 	DrawMessage();
+
+	if (bShowInventory)
+	{
+		DrawInventory();
+	}
 }
 
 void ADCHUD::ShowMessage(const FText& Message, float Duration)
@@ -88,6 +95,69 @@ void ADCHUD::DrawMessage()
 	}
 
 	DrawCenteredText(CurrentMessage.ToString(), Canvas->ClipY * 0.75f, GEngine->GetMediumFont(), TextColor);
+}
+
+void ADCHUD::DrawInventory()
+{
+	const APawn* Pawn = GetOwningPawn();
+	const UDCInventoryComponent* Inventory = Pawn ? Pawn->FindComponentByClass<UDCInventoryComponent>() : nullptr;
+	if (!Inventory)
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	const float Padding = 12.0f;
+	const float PanelWidth = 340.0f;
+	const TArray<FDCItemStack>& Stacks = Inventory->GetStacks();
+	const int32 Rows = FMath::Max(1, Stacks.Num());
+	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows + 3);
+	const float X = 40.0f;
+	float Y = 60.0f;
+
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.65f), X, Y, PanelWidth, PanelHeight);
+
+	const float Left = X + Padding;
+	const float Right = X + PanelWidth - Padding;
+	Y += Padding;
+
+	DrawText(TEXT("INVENTORY"), TextColor, Left, Y, Font);
+	Y += LineHeight * 1.5f;
+
+	auto DrawRightAligned = [this, Font](const FString& Text, float RightEdge, float RowY)
+	{
+		float Width, Height;
+		GetTextSize(Text, Width, Height, Font);
+		DrawText(Text, TextColor, RightEdge - Width, RowY, Font);
+	};
+
+	if (Stacks.IsEmpty())
+	{
+		DrawText(TEXT("(empty)"), TextColor * 0.7f, Left, Y, Font);
+		Y += LineHeight;
+	}
+
+	for (const FDCItemStack& Stack : Stacks)
+	{
+		if (!Stack.Item)
+		{
+			continue;
+		}
+
+		FString Name = Stack.Item->DisplayName.ToString();
+		if (Stack.Quantity > 1)
+		{
+			Name += FString::Printf(TEXT("  x%d"), Stack.Quantity);
+		}
+		DrawText(Name, TextColor, Left, Y, Font);
+		DrawRightAligned(FString::Printf(TEXT("%.2f kg"), Stack.Item->Weight * Stack.Quantity), Right, Y);
+		Y += LineHeight;
+	}
+
+	Y += LineHeight * 0.5f;
+	DrawText(TEXT("Total"), TextColor, Left, Y, Font);
+	DrawRightAligned(FString::Printf(TEXT("%.2f kg"), Inventory->GetTotalWeight()), Right, Y);
 }
 
 void ADCHUD::DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color)

@@ -2,6 +2,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
 #include "Engine/StaticMesh.h"
+#include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "UI/DCHUD.h"
 
@@ -35,7 +36,7 @@ void ADCItemPickup::ApplyItemMesh()
 
 bool ADCItemPickup::CanInteract_Implementation(AActor* Interactor) const
 {
-	return Item != nullptr && Quantity > 0;
+	return Item != nullptr && Quantity > 0 && Interactor && Interactor->FindComponentByClass<UDCInventoryComponent>();
 }
 
 FDCInteractionPrompt ADCItemPickup::GetInteractionPrompt_Implementation(AActor* Interactor) const
@@ -56,13 +57,28 @@ FGameplayTag ADCItemPickup::GetInteractionType_Implementation() const
 
 void ADCItemPickup::Interact_Implementation(AActor* Interactor)
 {
-	// TODO(FP-05): add to the interactor's inventory instead of only reporting it.
-	const FText Message = Quantity > 1
-		? FText::Format(LOCTEXT("TakenQuantity", "Took {0} ({1})"), Item->DisplayName, Quantity)
+	UDCInventoryComponent* Inventory = Interactor ? Interactor->FindComponentByClass<UDCInventoryComponent>() : nullptr;
+	if (!Inventory || !Item)
+	{
+		return;
+	}
+
+	const int32 Taken = Inventory->AddItem(Item, Quantity);
+	if (Taken <= 0)
+	{
+		return;
+	}
+
+	const FText Message = Taken > 1
+		? FText::Format(LOCTEXT("TakenQuantity", "Took {0} ({1})"), Item->DisplayName, Taken)
 		: FText::Format(LOCTEXT("Taken", "Took {0}"), Item->DisplayName);
 	ADCHUD::ShowMessageFor(Interactor, Message, 2.0f);
 
-	Destroy();
+	Quantity -= Taken;
+	if (Quantity <= 0)
+	{
+		Destroy();
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

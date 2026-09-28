@@ -25,6 +25,12 @@ public:
 	/** Convenience for gameplay code: shows a message on the HUD of the player controlling Actor, if any */
 	static void ShowMessageFor(const AActor* Actor, const FText& Message, float Duration = 4.0f);
 
+	UFUNCTION(BlueprintCallable, Category="HUD")
+	void ToggleInventory() { bShowInventory = !bShowInventory; }
+
+	UFUNCTION(BlueprintPure, Category="HUD")
+	bool IsInventoryShown() const { return bShowInventory; }
+
 protected:
 
 	UPROPERTY(EditAnywhere, Category="HUD")
@@ -41,9 +47,13 @@ private:
 
 	void DrawMessage();
 
+	void DrawInventory();
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
 	FText CurrentMessage;
+
+	bool bShowInventory = false;
 
 	double MessageExpireTime = 0.0;
 };
