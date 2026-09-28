@@ -1,5 +1,6 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Save/DCPersistentTypes.h"
 
 int32 UDCInventoryComponent::AddItem(const UDCItemDefinition* Item, int32 Quantity)
 {
@@ -121,4 +122,44 @@ float UDCInventoryComponent::GetTotalWeight() const
 		}
 	}
 	return Total;
+}
+
+void UDCInventoryComponent::CaptureStacks(TArray<FDCSavedItemStack>& OutStacks) const
+{
+	OutStacks.Reset();
+	for (const FDCItemStack& Stack : Stacks)
+	{
+		if (!Stack.Item)
+		{
+			continue;
+		}
+
+		FDCSavedItemStack Saved;
+		Saved.ItemId = Stack.Item->ItemId;
+		Saved.Item = const_cast<UDCItemDefinition*>(Stack.Item.Get());
+		Saved.Quantity = Stack.Quantity;
+		OutStacks.Add(Saved);
+	}
+}
+
+void UDCInventoryComponent::ReplaceFromSaved(const TArray<FDCSavedItemStack>& SavedStacks)
+{
+	Stacks.Empty();
+	for (const FDCSavedItemStack& Saved : SavedStacks)
+	{
+		const UDCItemDefinition* Item = Saved.Item.LoadSynchronous();
+		if (!Item)
+		{
+			Item = UDCItemDefinition::FindByItemId(Saved.ItemId);
+		}
+		if (Item && Saved.Quantity > 0)
+		{
+			AddItem(Item, Saved.Quantity);
+		}
+	}
+
+	if (SavedStacks.IsEmpty())
+	{
+		OnInventoryChanged.Broadcast(this);
+	}
 }

@@ -173,13 +173,13 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 `UDCPersistentIdComponent` (`Save/`) holds an authored `FName` unique within the map (e.g. `gym.scavenger`, `gym.mara`). `UDCPersistentRegistry` is a world subsystem that registers those IDs at BeginPlay and can `FindActor` by id. Duplicate ids log an error and are rejected.
 
-`IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture currently stores id, whether the actor still exists, and alive/dead for characters. Cyan debug labels draw the id above those actors (`bDrawId`).
+`IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture stores id, existence, alive/dead, door yaw, and inventory stacks. Cyan debug labels draw the id above those actors (`bDrawId`).
 
 Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`.
 
-Automation test `DeadCurrent.Save.PersistentId` covers lookup, duplicate rejection and unregister.
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve.
 
-FP-13 will write these records into a save game.
+Automation tests `DeadCurrent.Save.PersistentId` and `DeadCurrent.Save.InventoryRestore` cover lookup and inventory snapshot restore.
 
 `ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, and the dialogue panel. It will be replaced by UMG widgets when the HUD grows.
 

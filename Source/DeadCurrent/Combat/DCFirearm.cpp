@@ -139,6 +139,12 @@ int32 ADCFirearm::ConsumeRound()
 	return 1;
 }
 
+void ADCFirearm::RestoreMagazine(int32 Rounds)
+{
+	RoundsInMagazine = FMath::Clamp(Rounds, 0, GetMagazineSize());
+	NotifyStateChanged();
+}
+
 int32 ADCFirearm::LoadRoundsFromInventory(UDCInventoryComponent* Inventory)
 {
 	if (!Definition || !Inventory)

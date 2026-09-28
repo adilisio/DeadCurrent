@@ -36,6 +36,13 @@ bool FDCHealthDamageTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Partial heal"), Health->Heal(10.0f), 10.0f);
 	TestEqual(TEXT("Health after heal"), Health->GetHealth(), 85.0f);
 
+	Health->ApplyLoadedState(40.0f, false);
+	TestEqual(TEXT("Loaded health"), Health->GetHealth(), 40.0f);
+	TestFalse(TEXT("Loaded alive"), Health->IsDead());
+	Health->ApplyLoadedState(0.0f, true);
+	TestTrue(TEXT("Loaded dead without Reset"), Health->IsDead());
+	TestEqual(TEXT("Loaded dead health"), Health->GetHealth(), 0.0f);
+
 	AActor* Nobody = nullptr;
 	TestEqual(TEXT("Null target is rejected"), UDCHealthComponent::ApplyDamageToActor(Nobody, Hit), 0.0f);
 

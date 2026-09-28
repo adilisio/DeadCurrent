@@ -59,6 +59,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	int32 ConsumeRound();
 
+	/** Sets magazine contents without taking from inventory. Used by save/load. */
+	void RestoreMagazine(int32 Rounds);
+
 	UFUNCTION(BlueprintPure, Category="Weapon")
 	bool CanFire() const;
 

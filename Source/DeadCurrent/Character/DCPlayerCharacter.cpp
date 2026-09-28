@@ -283,12 +283,13 @@ void ADCPlayerCharacter::HandleInventoryChanged(UDCInventoryComponent* Inventory
 	{
 		if (const UDCItemDefinition* Def = FindFirearmInInventory())
 		{
-			SpawnAndEquip(Def);
+			SpawnAndEquip(Def, !bRestoringSave);
 		}
 		return;
 	}
 
-	if (!EquippedFirearm->IsHolstered()
+	if (!bRestoringSave
+		&& !EquippedFirearm->IsHolstered()
 		&& EquippedFirearm->GetRoundsInMagazine() == 0
 		&& EquippedFirearm->CanReload())
 	{
@@ -336,18 +337,23 @@ const UDCItemDefinition* ADCPlayerCharacter::FindFirearmInInventory() const
 	return nullptr;
 }
 
-void ADCPlayerCharacter::SpawnAndEquip(const UDCItemDefinition* Definition)
+void ADCPlayerCharacter::ClearEquippedFirearm()
+{
+	if (EquippedFirearm)
+	{
+		EquippedFirearm->Destroy();
+		EquippedFirearm = nullptr;
+	}
+}
+
+void ADCPlayerCharacter::SpawnAndEquip(const UDCItemDefinition* Definition, bool bAutoReload)
 {
 	if (!Definition || !GetWorld())
 	{
 		return;
 	}
 
-	if (EquippedFirearm)
-	{
-		EquippedFirearm->Destroy();
-		EquippedFirearm = nullptr;
-	}
+	ClearEquippedFirearm();
 
 	FActorSpawnParameters Params;
 	Params.Owner = this;
@@ -363,7 +369,10 @@ void ADCPlayerCharacter::SpawnAndEquip(const UDCItemDefinition* Definition)
 	EquippedFirearm->AttachToComponent(FirstPersonCameraComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	EquippedFirearm->SetDefinition(Definition);
 	EquippedFirearm->SetHolstered(false);
-	EquippedFirearm->StartReload();
+	if (bAutoReload)
+	{
+		EquippedFirearm->StartReload();
+	}
 }
 
 void ADCPlayerCharacter::UpdateRecoilRecovery(float DeltaSeconds)

@@ -186,6 +186,12 @@ public:
 
 	UDCDialogueComponent* GetDialogueComponent() const { return DialogueComponent; }
 
+	void BeginSaveRestore() { bRestoringSave = true; }
+
+	void EndSaveRestore() { bRestoringSave = false; }
+
+	void ClearEquippedFirearm();
+
 	const UInputAction* GetInteractAction() const { return InteractAction; }
 
 	const UInputAction* GetReloadAction() const { return ReloadAction; }
@@ -200,7 +206,7 @@ private:
 
 	const UDCItemDefinition* FindFirearmInInventory() const;
 
-	void SpawnAndEquip(const UDCItemDefinition* Definition);
+	void SpawnAndEquip(const UDCItemDefinition* Definition, bool bAutoReload = true);
 
 	void Respawn();
 
@@ -227,4 +233,6 @@ private:
 	float RecoilRecoverySpeed = 12.0f;
 
 	FTimerHandle RespawnTimer;
+
+	bool bRestoringSave = false;
 };

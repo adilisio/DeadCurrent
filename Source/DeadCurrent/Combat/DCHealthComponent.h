@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void ResetHealth();
 
+	/** Restores health from a save without firing OnDied (so load does not start a respawn). */
+	void ApplyLoadedState(float NewHealth, bool bIsDead);
+
 	UFUNCTION(BlueprintPure, Category="Health")
 	float GetHealth() const { return CurrentHealth; }
 

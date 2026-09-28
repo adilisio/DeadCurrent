@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Save/DCPersistentTypes.h"
 #include "DCInventoryComponent.generated.h"
 
 class UDCItemDefinition;
@@ -55,6 +56,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	int32 TransferAllTo(UDCInventoryComponent* Destination);
+
+	void CaptureStacks(TArray<FDCSavedItemStack>& OutStacks) const;
+
+	void ReplaceFromSaved(const TArray<FDCSavedItemStack>& SavedStacks);
 
 	const TArray<FDCItemStack>& GetStacks() const { return Stacks; }
 

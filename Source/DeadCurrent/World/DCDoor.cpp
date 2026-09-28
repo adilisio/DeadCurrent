@@ -90,11 +90,20 @@ void ADCDoor::CapturePersistentState_Implementation(FDCPersistentActorState& Out
 	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
 	OutState.bExists = true;
 	OutState.bAlive = true;
+	OutState.bIsOpen = bIsOpen;
+	OutState.DoorYaw = CurrentYaw;
 }
 
 void ADCDoor::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
 {
-	(void)State;
+	bIsOpen = State.bIsOpen;
+	CurrentYaw = State.DoorYaw;
+	TargetYaw = State.DoorYaw;
+
+	FRotator Rotation = DoorMesh->GetRelativeRotation();
+	Rotation.Yaw = CurrentYaw;
+	DoorMesh->SetRelativeRotation(Rotation);
+	SetActorTickEnabled(false);
 }
 
 #undef LOCTEXT_NAMESPACE

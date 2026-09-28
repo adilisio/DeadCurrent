@@ -43,7 +43,13 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaSeconds) override;
+
 	virtual void SetupInputComponent() override;
+
+	void HandleSave();
+
+	void HandleLoad();
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;

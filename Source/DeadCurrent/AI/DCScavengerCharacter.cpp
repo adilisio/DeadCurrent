@@ -239,6 +239,10 @@ void ADCScavengerCharacter::CapturePersistentState_Implementation(FDCPersistentA
 	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
 	OutState.bExists = true;
 	OutState.bAlive = !(HealthComponent && HealthComponent->IsDead());
+	if (InventoryComponent)
+	{
+		InventoryComponent->CaptureStacks(OutState.Inventory);
+	}
 }
 
 void ADCScavengerCharacter::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
@@ -246,6 +250,11 @@ void ADCScavengerCharacter::ApplyPersistentState_Implementation(const FDCPersist
 	if (!State.bAlive && HealthComponent && !HealthComponent->IsDead())
 	{
 		Die();
+	}
+
+	if (InventoryComponent)
+	{
+		InventoryComponent->ReplaceFromSaved(State.Inventory);
 	}
 }
 

@@ -1,5 +1,6 @@
 #include "Items/DCItemDefinition.h"
 #include "Core/DCGameplayTags.h"
+#include "UObject/UObjectIterator.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -10,6 +11,23 @@
 bool UDCItemDefinition::IsFirearm() const
 {
 	return Category.MatchesTag(DCTags::Item_Weapon_Firearm);
+}
+
+const UDCItemDefinition* UDCItemDefinition::FindByItemId(FName ItemId)
+{
+	if (ItemId.IsNone())
+	{
+		return nullptr;
+	}
+
+	for (TObjectIterator<UDCItemDefinition> It; It; ++It)
+	{
+		if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->ItemId == ItemId)
+		{
+			return *It;
+		}
+	}
+	return nullptr;
 }
 
 #if WITH_EDITOR

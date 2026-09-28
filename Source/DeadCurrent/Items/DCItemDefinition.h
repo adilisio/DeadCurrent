@@ -103,6 +103,8 @@ public:
 	UFUNCTION(BlueprintPure, Category="Item")
 	bool IsFirearm() const;
 
+	static const UDCItemDefinition* FindByItemId(FName ItemId);
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif

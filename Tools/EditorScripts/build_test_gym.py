@@ -275,7 +275,7 @@ def build_spawn_props():
     inspectable("Crate", folder, (350, 250, 30), (60, 60, 60), "Weathered Crate",
                 "Stenciled letters, mostly flaked away: GREAT LAKES MARITIME SUPPLY. The lid is nailed shut.")
     inspectable("Sign", folder, (350, -250, 80), (10, 120, 160), "Test Gym Sign",
-                "Left: jumps. Right: ramps. Far right: ledges. Far left: crouch tunnel and door. Ahead: shooting range.")
+                "Left: jumps. Right: ramps. Far right: ledges. Far left: crouch tunnel and door. Ahead: shooting range. F5 saves. F9 loads after a restart.")
 
 
 def build_shooting_range():
@@ -366,7 +366,7 @@ def build_scavenger():
     set_persistent_id(scav, "gym.scavenger")
 
     inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
-                "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage.")
+                "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage. F5 saves. F9 loads after you quit.")
 
 
 def build_npc():

@@ -59,6 +59,13 @@ void UDCHealthComponent::ResetHealth()
 	OnHealthChanged.Broadcast(this, CurrentHealth, Delta);
 }
 
+void UDCHealthComponent::ApplyLoadedState(float NewHealth, bool bIsDead)
+{
+	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+	bDead = bIsDead;
+	OnHealthChanged.Broadcast(this, CurrentHealth, 0.0f);
+}
+
 float UDCHealthComponent::ApplyDamageToActor(AActor* Target, const FDCDamageInfo& Damage)
 {
 	if (!Target || Damage.Amount <= 0.0f)

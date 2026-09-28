@@ -1,5 +1,6 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Save/DCPersistentTypes.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -47,6 +48,24 @@ bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Destination received pistol"), Other->GetQuantity(Pistol), 1);
 	TestEqual(TEXT("Transfer to self is rejected"), Other->TransferAllTo(Other), 0);
 	TestEqual(TEXT("Transfer to null is rejected"), Other->TransferAllTo(nullptr), 0);
+
+	Ammo->ItemId = TEXT("ammo.9mm");
+	Pistol->ItemId = TEXT("weapon.pistol");
+	UDCInventoryComponent* Snapshot = NewObject<UDCInventoryComponent>();
+	Snapshot->AddItem(Ammo, 9);
+	Snapshot->AddItem(Pistol, 1);
+	TArray<FDCSavedItemStack> Saved;
+	Snapshot->CaptureStacks(Saved);
+	TestEqual(TEXT("Capture writes two stacks"), Saved.Num(), 2);
+
+	UDCInventoryComponent* Restored = NewObject<UDCInventoryComponent>();
+	Restored->AddItem(Ammo, 99);
+	Restored->ReplaceFromSaved(Saved);
+	TestEqual(TEXT("Restore replaces rather than adding"), Restored->GetQuantity(Ammo), 9);
+	TestEqual(TEXT("Restore keeps the pistol"), Restored->GetQuantity(Pistol), 1);
+
+	Restored->ReplaceFromSaved(TArray<FDCSavedItemStack>());
+	TestTrue(TEXT("Empty save clears inventory"), Restored->IsEmpty());
 
 	return true;
 }

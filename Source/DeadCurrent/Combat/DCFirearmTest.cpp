@@ -45,6 +45,10 @@ bool FDCFirearmAmmoTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Reserve empty"), Inventory->GetQuantity(Ammo), 0);
 	TestEqual(TEXT("Cannot fire interval without a world"), Firearm->CanFire(), false);
 
+	Firearm->RestoreMagazine(2);
+	TestEqual(TEXT("RestoreMagazine sets rounds without taking ammo"), Firearm->GetRoundsInMagazine(), 2);
+	TestEqual(TEXT("RestoreMagazine leaves reserve alone"), Inventory->GetQuantity(Ammo), 0);
+
 	return true;
 }
 
