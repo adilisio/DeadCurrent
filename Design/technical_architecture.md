@@ -69,6 +69,7 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
 - right of spawn: a chemical-spill pad that damages the player
 - past the 20 m plates: a scavenger on a patrol loop
+- right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**
 
 ## Interaction
 
@@ -81,7 +82,7 @@ Anything the player can use implements `IDCInteractable` (`Interaction/DCInterac
 
 `UDCInteractorComponent` on the player sweeps from the view point each frame (2.5 m range, 8 cm radius, Visibility channel), keeps the usable interactable in focus, and broadcasts `OnFocusChanged`. The interact input calls `TryInteract()`. `ADCHUD` draws the prompt from the focused actor, so new interactable types need no UI or player changes.
 
-Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory). Containers, corpses and NPCs will implement the same interface.
+Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory), `ADCScavengerCharacter` (loot after death), `ADCFriendlyNPC` (talk).
 
 ## Items
 
@@ -137,6 +138,10 @@ Automation test `DeadCurrent.Combat.FirearmAmmo` covers magazine fill, consumpti
 The gym scavenger patrols a square past the 20 m plates. A floating state label (`Patrol` / `Chase` / …) is drawn above their head for playtests (`bDrawState`). The player registers as a sight stimulus so perception can see them.
 
 The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds at runtime if the saved mesh is empty. Rebuild the gym script after C++ AI changes so the scavenger is placed on the nav mesh.
+
+## NPCs
+
+`ADCFriendlyNPC` (`AI/`) is an idle character (no combat brain). She blocks Visibility so **E** can talk (`Interaction.Talk`), turns to face the player within 6 m, and shows an authored greeting. Branching dialogue is FP-11. The gym places Mara at (350, 1100), out of the scavenger's sight.
 
 ## Inventory
 

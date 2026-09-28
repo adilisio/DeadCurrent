@@ -12,6 +12,7 @@ Layout (X is forward from the spawn point, Z is up, units are cm):
   Shooting     (Y = 0 / +450)  plates at 8 m (right) and 20 m (sprint lane), with a backstop
   Hazard       (Y = +500)     damage volume pad right of spawn
   Scavenger    (X = 2600)     patrols a square past the 20 m plates; loot the body after death
+  NPC          (X = 350, Y = +1100)  Mara, idle, talk with E
 """
 import math
 import unreal
@@ -296,6 +297,26 @@ def first_of_class(asset_class, *paths):
     return None, None
 
 
+def assign_mannequin(actor, *mesh_paths):
+    mesh_path, mesh_asset = first_of_class(unreal.SkeletalMesh, *mesh_paths)
+    abp_path = first_existing(
+        "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+        "/Game/Characters/Mannequins/Anims/Manny/ABP_Manny",
+        "/Game/Characters/Mannequins/Rigs/ABP_Manny",
+    )
+    mesh_comp = actor.get_editor_property("mesh")
+    if mesh_asset:
+        mesh_comp.set_skeletal_mesh_asset(mesh_asset)
+        log(f"{actor.get_actor_label()} mesh {mesh_path}")
+    else:
+        log(f"{actor.get_actor_label()} no mannequin skeletal mesh found")
+    if abp_path:
+        abp_class = unreal.EditorAssetLibrary.load_blueprint_class(abp_path)
+        mesh_comp.set_animation_mode(unreal.AnimationMode.ANIMATION_BLUEPRINT)
+        mesh_comp.set_anim_class(abp_class)
+        log(f"{actor.get_actor_label()} anim {abp_path}")
+
+
 def build_nav():
     folder = "Ground"
     vol = actors.spawn_actor_from_class(unreal.NavMeshBoundsVolume, unreal.Vector(2000.0, 0.0, 0.0))
@@ -311,7 +332,8 @@ def build_nav():
 def build_scavenger():
     folder = "Combat"
     scav = actors.spawn_actor_from_class(
-        unreal.DCScavengerCharacter, unreal.Vector(2600.0, 0.0, 96.0), unreal.Rotator(0.0, 180.0, 0.0))
+        unreal.DCScavengerCharacter, unreal.Vector(2600.0, 0.0, 96.0),
+        unreal.Rotator(pitch=0.0, yaw=180.0, roll=0.0))
     scav.set_actor_label("Scavenger")
     scav.set_folder_path(folder)
     scav.set_editor_property("patrol_points", [
@@ -320,31 +342,30 @@ def build_scavenger():
         unreal.Vector(3100.0, 450.0, 0.0),
         unreal.Vector(2300.0, 450.0, 0.0),
     ])
-
-    mesh_path, mesh_asset = first_of_class(
-        unreal.SkeletalMesh,
+    assign_mannequin(
+        scav,
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
     )
-    abp_path = first_existing(
-        "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
-        "/Game/Characters/Mannequins/Anims/Manny/ABP_Manny",
-        "/Game/Characters/Mannequins/Rigs/ABP_Manny",
-    )
-    mesh_comp = scav.get_editor_property("mesh")
-    if mesh_asset:
-        mesh_comp.set_skeletal_mesh_asset(mesh_asset)
-        log(f"scavenger mesh {mesh_path}")
-    else:
-        log("no mannequin skeletal mesh found (C++ constructor may still assign one)")
-    if abp_path:
-        abp_class = unreal.EditorAssetLibrary.load_blueprint_class(abp_path)
-        mesh_comp.set_animation_mode(unreal.AnimationMode.ANIMATION_BLUEPRINT)
-        mesh_comp.set_anim_class(abp_class)
-        log(f"scavenger anim {abp_path}")
 
     inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
                 "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage.")
+
+
+def build_npc():
+    folder = "NPC"
+    npc = actors.spawn_actor_from_class(
+        unreal.DCFriendlyNPC, unreal.Vector(350.0, 1100.0, 96.0),
+        unreal.Rotator(pitch=0.0, yaw=-120.0, roll=0.0))
+    npc.set_actor_label("Mara")
+    npc.set_folder_path(folder)
+    assign_mannequin(
+        npc,
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+    )
+    inspectable("NPCSign", folder, (420, 1280, 80), (8, 100, 140), "Shore watcher",
+                "Mara waits here, out of the scavenger's sight. Look at her and press E to talk. Real branching dialogue comes next.")
 
 
 def main():
@@ -368,6 +389,7 @@ def main():
     build_hazard()
     build_nav()
     build_scavenger()
+    build_npc()
 
     if not levels.save_current_level():
         raise RuntimeError(f"Could not save {MAP_PATH} (is the file read-only?)")
