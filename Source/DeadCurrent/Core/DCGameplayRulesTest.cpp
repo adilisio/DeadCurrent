@@ -196,4 +196,35 @@ bool FDCRulesConsequencesTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCRulesValidationTest, "DeadCurrent.Rules.Validation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCRulesValidationTest::RunTest(const FString& Parameters)
+{
+	using namespace DCRulesTest;
+
+	UDCQuestDefinition* Quest = MakeQuest(TEXT("test.valid_quest"));
+	UDCItemDefinition* Item = NewObject<UDCItemDefinition>();
+	Item->ItemId = TEXT("test.valid_item");
+
+	auto ProblemsFor = [](const FDCGameplayCondition& C) { TArray<FString> P; UDCGameplayRules::ValidateReferences(C, P); return P.Num(); };
+	auto ProblemsForCons = [](const FDCGameplayConsequence& C) { TArray<FString> P; UDCGameplayRules::ValidateReferences(C, P); return P.Num(); };
+
+	TestEqual(TEXT("Good quest stage"), ProblemsFor(Cond(EDCConditionType::QuestStage, Quest->QuestId, TEXT("open"))), 0);
+	TestEqual(TEXT("Typo in stage"), ProblemsFor(Cond(EDCConditionType::QuestStage, Quest->QuestId, TEXT("opne"))), 1);
+	TestEqual(TEXT("Unknown quest"), ProblemsFor(Cond(EDCConditionType::QuestActive, TEXT("test.no_quest"))), 1);
+	TestEqual(TEXT("Good item"), ProblemsFor(Cond(EDCConditionType::HasItem, Item->ItemId)), 0);
+	TestEqual(TEXT("Unknown item"), ProblemsFor(Cond(EDCConditionType::HasItem, TEXT("test.no_item"))), 1);
+	TestEqual(TEXT("Flag needs an id"), ProblemsFor(Cond(EDCConditionType::WorldFlag, NAME_None)), 1);
+	TestEqual(TEXT("None type flagged"), ProblemsFor(FDCGameplayCondition()), 1);
+	TestEqual(TEXT("SetQuestStage bad stage"), ProblemsForCons(Cons(EDCConsequenceType::SetQuestStage, Quest->QuestId, TEXT("nope"))), 1);
+	TestEqual(TEXT("SetQuestStage without stage"), ProblemsForCons(Cons(EDCConsequenceType::SetQuestStage, Quest->QuestId)), 1);
+	TestEqual(TEXT("StartQuest default stage ok"), ProblemsForCons(Cons(EDCConsequenceType::StartQuest, Quest->QuestId)), 0);
+	TestEqual(TEXT("GiveItem unknown"), ProblemsForCons(Cons(EDCConsequenceType::GiveItem, TEXT("test.no_item"))), 1);
+
+	Quest->QuestId = NAME_None;
+	Item->ItemId = NAME_None;
+	return true;
+}
+
 #endif

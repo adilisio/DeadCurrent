@@ -33,4 +33,9 @@ public:
 
 	/** First entry whose conditions pass for Context, otherwise EntryNodeId. */
 	FName ResolveEntry(const struct FDCRuleContext& Context) const;
+
+#if WITH_EDITOR
+	/** Graph checks: entry and next nodes exist, node ids are unique, every node can be left. */
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
 };

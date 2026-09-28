@@ -5,6 +5,7 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestComponent.h"
+#include "Quest/DCQuestDefinition.h"
 #include "Save/DCPersistentRegistry.h"
 #include "World/DCWorldStateSubsystem.h"
 
@@ -201,4 +202,84 @@ FString UDCGameplayRules::Describe(const FDCGameplayConsequence& Consequence)
 		Text += FString::Printf(TEXT(", %d"), Consequence.Quantity);
 	}
 	return Text + TEXT(")");
+}
+
+static void DCValidateQuestRef(FName QuestId, FName Stage, const FString& What, TArray<FString>& OutProblems)
+{
+	const UDCQuestDefinition* Quest = UDCQuestDefinition::FindByQuestId(QuestId);
+	if (!Quest)
+	{
+		OutProblems.Add(FString::Printf(TEXT("%s: unknown quest '%s'"), *What, *QuestId.ToString()));
+	}
+	else if (!Stage.IsNone() && !Quest->FindStage(Stage))
+	{
+		OutProblems.Add(FString::Printf(TEXT("%s: quest '%s' has no stage '%s'"), *What, *QuestId.ToString(), *Stage.ToString()));
+	}
+}
+
+void UDCGameplayRules::ValidateReferences(const FDCGameplayCondition& Condition, TArray<FString>& OutProblems)
+{
+	switch (Condition.Type)
+	{
+	case EDCConditionType::None:
+		OutProblems.Add(TEXT("condition with type None"));
+		break;
+	case EDCConditionType::HasItem:
+		if (!UDCItemDefinition::FindByItemId(Condition.Id))
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: unknown item"), *Describe(Condition)));
+		}
+		break;
+	case EDCConditionType::QuestNotStarted:
+	case EDCConditionType::QuestActive:
+	case EDCConditionType::QuestComplete:
+		DCValidateQuestRef(Condition.Id, NAME_None, Describe(Condition), OutProblems);
+		break;
+	case EDCConditionType::QuestStage:
+		if (Condition.Stage.IsNone())
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: no stage"), *Describe(Condition)));
+		}
+		DCValidateQuestRef(Condition.Id, Condition.Stage, Describe(Condition), OutProblems);
+		break;
+	default:
+		if (Condition.Id.IsNone())
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: no id"), *Describe(Condition)));
+		}
+		break;
+	}
+}
+
+void UDCGameplayRules::ValidateReferences(const FDCGameplayConsequence& Consequence, TArray<FString>& OutProblems)
+{
+	switch (Consequence.Type)
+	{
+	case EDCConsequenceType::None:
+		OutProblems.Add(TEXT("consequence with type None"));
+		break;
+	case EDCConsequenceType::GiveItem:
+	case EDCConsequenceType::RemoveItem:
+		if (!DCResolveItem(Consequence))
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: unknown item"), *Describe(Consequence)));
+		}
+		break;
+	case EDCConsequenceType::StartQuest:
+		DCValidateQuestRef(Consequence.Id, Consequence.Stage, Describe(Consequence), OutProblems);
+		break;
+	case EDCConsequenceType::SetQuestStage:
+		if (Consequence.Stage.IsNone())
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: no stage"), *Describe(Consequence)));
+		}
+		DCValidateQuestRef(Consequence.Id, Consequence.Stage, Describe(Consequence), OutProblems);
+		break;
+	default:
+		if (Consequence.Id.IsNone())
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: no id"), *Describe(Consequence)));
+		}
+		break;
+	}
 }

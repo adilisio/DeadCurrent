@@ -14,6 +14,14 @@ void UDCContentSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
+	TArray<UObject*> Definitions;
+	LoadAllDefinitions(Definitions);
+	LoadedDefinitions.Append(Definitions);
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCCONTENT] loaded %d item and quest definitions"), LoadedDefinitions.Num());
+}
+
+void UDCContentSubsystem::LoadAllDefinitions(TArray<UObject*>& OutDefinitions)
+{
 	IAssetRegistry& Registry = IAssetRegistry::GetChecked();
 #if WITH_EDITOR
 	// Uncooked runs (editor, -game from the editor build) may still be scanning in the background.
@@ -36,9 +44,7 @@ void UDCContentSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		if (UObject* Loaded = Asset.GetAsset())
 		{
-			LoadedDefinitions.Add(Loaded);
+			OutDefinitions.Add(Loaded);
 		}
 	}
-
-	UE_LOG(LogDeadCurrent, Log, TEXT("[DCCONTENT] loaded %d item and quest definitions"), LoadedDefinitions.Num());
 }

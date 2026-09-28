@@ -59,4 +59,12 @@ public:
 	static FString Describe(const FDCGameplayCondition& Condition);
 
 	static FString Describe(const FDCGameplayConsequence& Consequence);
+
+	/**
+	 *  Appends a problem for each reference that does not resolve against loaded content:
+	 *  unknown quest ids or stages, unknown item ids. Flags and actor ids are free-form and not checked.
+	 */
+	static void ValidateReferences(const FDCGameplayCondition& Condition, TArray<FString>& OutProblems);
+
+	static void ValidateReferences(const FDCGameplayConsequence& Consequence, TArray<FString>& OutProblems);
 };

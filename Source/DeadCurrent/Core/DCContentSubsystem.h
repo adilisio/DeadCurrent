@@ -22,6 +22,9 @@ public:
 	/** Content folders scanned for definitions. */
 	static const TArray<FString>& GetContentPaths();
 
+	/** Loads every item and quest definition under GetContentPaths(). Also used by content tests. */
+	static void LoadAllDefinitions(TArray<UObject*>& OutDefinitions);
+
 private:
 
 	UPROPERTY()
