@@ -6,9 +6,9 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> 
 Layout (X is out the door, Z is up, units are cm):
   Boathouse  X 0..720, Y -320..320     wake, inspect, pistol on the workbench, door out
   Path       X 720..1800               shoreline walk to the scavenger
-  Scavenger  X 2000..2700, Y -350..350 patrols the path; loot after death
+  Scavenger  X 2000..2700, Y -350..350 patrols the path; loot after death; relay rig + coil at his camp
   Cover      Y 550..650                wall so Mara is out of the scavenger's sight
-  Mara       X 3100, Y 1300            talk, then F5 / quit / F9
+  Mara       X 3100, Y 1300            Shore Watch quest giver; lookout crate reacts to the outcome
 """
 import math
 import unreal
@@ -57,13 +57,37 @@ def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unrea
     return actor
 
 
-def inspectable(label, folder, center, size, display_name, description, world_flag=None, flag_description=None):
+def cond(type_name, id=None, stage=None, negate=False):
+    c = unreal.DCGameplayCondition()
+    c.set_editor_property("type", getattr(unreal.DCConditionType, type_name))
+    c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
+    c.set_editor_property("stage", unreal.Name(stage) if stage else unreal.Name())
+    c.set_editor_property("negate", negate)
+    return c
+
+
+def cons(type_name, id=None):
+    c = unreal.DCGameplayConsequence()
+    c.set_editor_property("type", getattr(unreal.DCConsequenceType, type_name))
+    c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
+    return c
+
+
+def variant(description, conditions=(), consequences=()):
+    """One conditional reading of an inspectable (first match wins)."""
+    v = unreal.DCInspectVariant()
+    v.set_editor_property("description", unreal.Text(description))
+    v.set_editor_property("conditions", list(conditions))
+    v.set_editor_property("consequences", list(consequences))
+    return v
+
+
+def inspectable(label, folder, center, size, display_name, description, variants=()):
     actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCInspectableActor)
     actor.set_editor_property("display_name", unreal.Text(display_name))
     actor.set_editor_property("description", unreal.Text(description))
-    if world_flag:
-        actor.set_editor_property("world_flag", unreal.Name(world_flag))
-        actor.set_editor_property("flag_description", unreal.Text(flag_description or ""))
+    if variants:
+        actor.set_editor_property("variants", list(variants))
     return actor
 
 
@@ -306,8 +330,21 @@ def build_scavenger():
     )
     set_persistent_id(scav, "boat.scavenger")
 
-    inspectable("CampJunk", folder, (2480, -220, 20), (50, 40, 40), "Scavenger kit",
-                "A torn pack, empty cans, a radio housing with one coil still seated. Whoever walks this loop has been here a while.")
+    # Shore Watch: the relay Mara wants silenced. Inspecting it while it is live is a clue
+    # (shore.relay_inspected) that opens an extra line with Mara.
+    empty = "The relay housing sits open and empty. Without the coil it is a box of cold wire."
+    inspectable("RelayRig", folder, (2480, -220, 20), (50, 40, 40), "Relay rig",
+                "The relay still hums. You would rather not listen to it again.",
+                variants=[
+                    variant(empty, [cond("HAS_ITEM", id="radio_coil")]),
+                    variant(empty, [cond("WORLD_FLAG", id="shore.relay_recovered")]),
+                    variant("The battery leads have been kicked loose in the struggle. The relay is silent, its coil gone cold.",
+                            [cond("ACTOR_DEAD", id="boat.scavenger")]),
+                    variant("A Maritime Authority relay housing, wired to a truck battery beside a torn pack. "
+                            "The coil hums against your fingers, and under the hum, almost, words.",
+                            [cond("WORLD_FLAG", id="shore.relay_inspected", negate=True)],
+                            [cons("SET_WORLD_FLAG", id="shore.relay_inspected")]),
+                ])
     pickup("Pickup_RadioCoil", folder, "/Game/Items/DA_Item_RadioCoil", 1, 2520, -280, 20,
            persistent_id="boat.pickup_coil")
 
@@ -336,9 +373,13 @@ def build_cover_and_npc():
     set_persistent_id(npc, "boat.mara")
 
     inspectable("Lookout", folder, (3160, 1220, 40), (40, 30, 80), "Lookout crate",
-                "Someone has been watching the path from here. F5 saves. F9 loads after you quit.",
-                world_flag="shore.cleared",
-                flag_description="The radio on this shore is quieter. Mara was right it wouldn't last.")
+                "Someone has been watching the path from here. F5 saves. F9 loads.",
+                variants=[
+                    variant("Mara's notebook lies open on the crate: the same six words in pencil, over and over. You don't read them twice.",
+                            [cond("WORLD_FLAG", id="shore.relay_recovered")]),
+                    variant("A pencil tally on the lid: one walker, crossed out. Under it: RELAY COLD.",
+                            [cond("WORLD_FLAG", id="shore.path_cleared")]),
+                ])
 
 
 def build_nav():

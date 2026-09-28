@@ -2,15 +2,28 @@
 
 Safe to re-run. Run with:
 UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> -unattended -nullrhi
+
+Conditions and consequences are the shared rule language (FDCGameplayCondition /
+FDCGameplayConsequence), the same one quests and inspectables use.
 """
 import unreal
 
 DIALOGUE_PATH = "/Game/Dialogue"
 QUEST = "shore.watch"
+SCAV = "boat.scavenger"
 COIL = "radio_coil"
-FLAG = "shore.cleared"
-AMMO = "/Game/Items/DA_Item_Ammo9mm"
-COIL_ITEM = "/Game/Items/DA_Item_RadioCoil"
+AMMO = "ammo_9mm"
+DRESSING = "field_dressing"
+ITEM_PATHS = {
+    COIL: "/Game/Items/DA_Item_RadioCoil",
+    AMMO: "/Game/Items/DA_Item_Ammo9mm",
+    DRESSING: "/Game/Items/DA_Item_FieldDressing",
+}
+# World flags this conversation reads or writes.
+RELAY_INSPECTED = "shore.relay_inspected"    # player inspected the live relay (set by the relay rig)
+VOICE_DISCUSSED = "shore.voice_discussed"    # player told Mara the relay speaks
+RELAY_RECOVERED = "shore.relay_recovered"    # Mara has the coil (quest outcome, or handed over later)
+HEARD_KILL = "shore.mara_heard_kill"         # Mara commented on a kill after the coil route
 
 COND = unreal.DCConditionType
 CONS = unreal.DCConsequenceType
@@ -26,159 +39,134 @@ def cond(type_name, id=None, stage=None, quantity=1, negate=False):
     return c
 
 
-def cons(type_name, id=None, stage=None, quantity=1, item_path=None):
+def cons(type_name, id=None, stage=None, quantity=1):
     c = unreal.DCGameplayConsequence()
     c.set_editor_property("type", getattr(CONS, type_name))
     c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
     c.set_editor_property("stage", unreal.Name(stage) if stage else unreal.Name())
     c.set_editor_property("quantity", quantity)
-    if item_path:
-        c.set_editor_property("item", unreal.load_asset(item_path))
+    if id in ITEM_PATHS and type_name in ("GIVE_ITEM", "REMOVE_ITEM"):
+        c.set_editor_property("item", unreal.load_asset(ITEM_PATHS[id]))
     return c
 
 
-REWARD_KILL = [
-    cons("GIVE_ITEM", id="ammo_9mm", quantity=24, item_path=AMMO),
-    cons("COMPLETE_QUEST", id=QUEST),
-    cons("SET_WORLD_FLAG", id=FLAG),
-]
-REWARD_COIL = [
-    cons("REMOVE_ITEM", id=COIL, quantity=1, item_path=COIL_ITEM),
-    cons("GIVE_ITEM", id="ammo_9mm", quantity=24, item_path=AMMO),
-    cons("COMPLETE_QUEST", id=QUEST),
-    cons("SET_WORLD_FLAG", id=FLAG),
-]
-ACCEPT = [cons("START_QUEST", id=QUEST, stage="accepted")]
-SCAV_TALK = [
-    cond("QUEST_NOT_STARTED", id=QUEST),
-    cond("HOSTILE_DEAD", negate=True),
-]
+def stage_is(stage):
+    return cond("QUEST_STAGE", id=QUEST, stage=stage)
+
+
+NOT_STARTED = cond("QUEST_NOT_STARTED", id=QUEST)
+START = cons("START_QUEST", id=QUEST)
+BYE = ("Goodbye.", None)
+ASK_WHO = ("Who are you?", "who")
+ASK_PLACE = ("What is this place?", "place")
+ASK_OFFER = dict(text="You keep looking toward his camp.", next="offer", conditions=[NOT_STARTED])
+TELL_VOICE = dict(text="I looked at his relay. It's saying words.", next="voice",
+                  conditions=[cond("WORLD_FLAG", id=RELAY_INSPECTED), cond("WORLD_FLAG", id=VOICE_DISCUSSED, negate=True)])
 
 MARA_INTRO = dict(
     asset="DA_Dialogue_MaraIntro",
     dialogue_id="mara_intro",
     entry="greeting",
+    # First match wins.
     entries=[
-        dict(id="done", conditions=[cond("QUEST_COMPLETE", id=QUEST)]),
-        dict(id="turnin_kill", conditions=[cond("QUEST_ACTIVE", id=QUEST), cond("HOSTILE_DEAD")]),
-        dict(id="turnin_coil", conditions=[cond("QUEST_ACTIVE", id=QUEST), cond("HAS_ITEM", id=COIL)]),
-        dict(id="inprogress", conditions=[cond("QUEST_ACTIVE", id=QUEST)]),
-        dict(id="already_dead", conditions=[cond("QUEST_NOT_STARTED", id=QUEST), cond("HOSTILE_DEAD")]),
+        dict(id="done_killed", conditions=[stage_is("done_killed")]),
+        dict(id="done_coil", conditions=[stage_is("done_coil")]),
+        dict(id="turnin_kill", conditions=[stage_is("return_killed")]),
+        dict(id="turnin_coil", conditions=[stage_is("return_coil")]),
+        dict(id="inprogress", conditions=[stage_is("accepted")]),
+        dict(id="already_dead", conditions=[NOT_STARTED, cond("ACTOR_DEAD", id=SCAV)]),
         dict(id="greeting"),
     ],
     nodes=[
-        dict(
-            id="greeting",
-            speaker="Mara",
-            line="Keep your voice down. That scavenger still works this stretch of shore.",
-            choices=[
-                ("Who are you?", "who"),
-                ("What is this place?", "place"),
-                dict(text="About that scavenger...", next="offer", conditions=SCAV_TALK),
-                ("Goodbye", None),
-            ],
-        ),
-        dict(
-            id="who",
-            speaker="Mara",
-            line="Name's Mara. I watch the shore for people who still listen before they shoot.",
-            choices=[
-                ("What is this place?", "place"),
-                dict(text="About that scavenger...", next="offer", conditions=SCAV_TALK),
-                ("Goodbye", None),
-            ],
-        ),
-        dict(
-            id="place",
-            speaker="Mara",
-            line="Old Great Lakes Maritime ground. The boathouse still stands. The shore doesn't stay empty for long.",
-            choices=[
-                ("Who are you?", "who"),
-                dict(text="About that scavenger...", next="offer", conditions=SCAV_TALK),
-                ("Goodbye", None),
-            ],
-        ),
-        dict(
-            id="offer",
-            speaker="Mara",
-            line="He walks the same loop every day. Put him down and the path stays quieter. If you'd rather not shoot, he keeps a radio coil at that camp. Bring me that and he loses his friends.",
-            choices=[
-                dict(text="I'll deal with him.", next="accept", consequences=ACCEPT),
-                dict(text="I'll look for the coil.", next="accept_sneak", consequences=ACCEPT),
-                ("Not now.", None),
-            ],
-        ),
-        dict(
-            id="accept",
-            speaker="Mara",
-            line="Then do it quiet if you can. Come back when the path is clear.",
-            choices=[("Goodbye", None)],
-        ),
-        dict(
-            id="accept_sneak",
-            speaker="Mara",
-            line="Camp's on his loop. Don't let him see you take it. Come back with the coil.",
-            choices=[("Goodbye", None)],
-        ),
-        dict(
-            id="inprogress",
-            speaker="Mara",
-            line="He's still working that stretch. I can hear him.",
-            choices=[
-                ("I'll get it done.", None),
-                ("Remind me about the coil.", "coil_hint"),
-                ("Goodbye", None),
-            ],
-        ),
-        dict(
-            id="coil_hint",
-            speaker="Mara",
-            line="Small copper piece in his kit at the camp. He won't miss it until he tries to call someone.",
-            choices=[("Goodbye", None)],
-        ),
-        dict(
-            id="turnin_kill",
-            speaker="Mara",
-            line="I heard it stop. The path is quieter. Don't get comfortable — something else will smell the gap.",
-            choices=[
-                dict(text="I took care of it.", next="reward", consequences=REWARD_KILL),
-            ],
-        ),
-        dict(
-            id="turnin_coil",
-            speaker="Mara",
-            line="That's the coil off his radio. He'll have a harder time calling friends. The path won't stay empty, but it's quieter tonight.",
-            choices=[
-                dict(text="Here.", next="reward", consequences=REWARD_COIL),
-            ],
-        ),
-        dict(
-            id="already_dead",
-            speaker="Mara",
-            line="The path is already quiet. That was you?",
-            choices=[
-                dict(text="It was.", next="reward", consequences=REWARD_KILL),
-                ("Wasn't me.", None),
-            ],
-        ),
-        dict(
-            id="reward",
-            speaker="Mara",
-            line="Twenty-four rounds. Don't waste them.",
-            choices=[("Goodbye", None)],
-        ),
-        dict(
-            id="done",
-            speaker="Mara",
-            line="The path is quieter now. Don't get comfortable.",
-            choices=[
-                ("Who are you?", "who"),
-                ("What is this place?", "place"),
-                ("Goodbye", None),
-            ],
-        ),
+        dict(id="greeting", line="Keep your voice down. That scavenger still works this stretch of shore.",
+             choices=[ASK_WHO, ASK_PLACE, ASK_OFFER, BYE]),
+        dict(id="who", line="Name's Mara. I watch the shore for people who still listen before they shoot.",
+             choices=[ASK_PLACE, ASK_OFFER, BYE]),
+        dict(id="place", line="Great Lakes Maritime ground, once. The boathouse still stands. The shore doesn't stay empty for long.",
+             choices=[ASK_WHO, ASK_OFFER, BYE]),
+
+        # Offer. The route is not locked by the reply; what the player does in the world decides it.
+        dict(id="offer",
+             line="Listen. Under the wind. He's wired an old Maritime Authority relay at his camp. "
+                  "Dead sixty years, and three nights now it's been talking. Things come to a signal like that. I want it quiet.",
+             choices=[
+                 dict(text="I'll put him down.", next="accept_kill", consequences=[START]),
+                 dict(text="I'll pull the coil out of his rig. No shooting.", next="accept_sneak", consequences=[START]),
+                 dict(text="This coil? I already pulled it.", next="turnin_coil",
+                      conditions=[cond("HAS_ITEM", id=COIL)], consequences=[START]),
+                 ("Not my problem.", None),
+             ]),
+        dict(id="accept_kill", line="Then do it clean. He walks a square past the beached hull. Come back when he's down.",
+             choices=[BYE]),
+        dict(id="accept_sneak",
+             line="The coil sits in the relay housing by his pack, right on his loop. Stay low, time his walk, and don't let him see you take it.",
+             choices=[BYE]),
+
+        # In progress.
+        dict(id="inprogress", line="Still hear it? Every night it comes in a little clearer.",
+             choices=[("Remind me what you need.", "recap"), TELL_VOICE, BYE]),
+        dict(id="recap", line="His relay goes quiet. Kill him, or pull the coil from the rig at his camp. Your choice. Just make it quiet.",
+             choices=[BYE]),
+        dict(id="voice", line="...Yeah. I've heard them too. Don't say them out loud, and don't repeat them on the boats.",
+             choices=[dict(text="I won't.", next=None, consequences=[cons("SET_WORLD_FLAG", id=VOICE_DISCUSSED)])]),
+
+        # Turn-ins. The reply moves the quest to its outcome stage and pays out.
+        dict(id="turnin_kill", line="It stopped. I heard it stop, right about when the shooting did.",
+             choices=[
+                 dict(text="He's dead. His relay has no one to tend it.", next="reward_kill", consequences=[
+                     cons("GIVE_ITEM", id=AMMO, quantity=24),
+                     cons("SET_QUEST_STAGE", id=QUEST, stage="done_killed"),
+                 ]),
+                 TELL_VOICE,
+             ]),
+        dict(id="turnin_coil", line="That's the coil. Still warm. Give it here.",
+             choices=[
+                 dict(text="Here. It's yours.", next="reward_coil", consequences=[
+                     cons("REMOVE_ITEM", id=COIL, quantity=1),
+                     cons("GIVE_ITEM", id=DRESSING, quantity=2),
+                     cons("SET_QUEST_STAGE", id=QUEST, stage="done_coil"),
+                 ]),
+                 TELL_VOICE,
+             ]),
+        dict(id="reward_kill", line="Twenty-four rounds. He won't need them. You will.", choices=[BYE]),
+        dict(id="reward_coil",
+             line="Two dressings. All I can spare. He's still out there, so don't get careless. I'm going to sit up with this coil tonight and listen.",
+             choices=[BYE]),
+
+        # After the quest: what Mara says depends on how it ended.
+        dict(id="done_killed", line="Path's quiet. His relay went cold with him. Don't get comfortable.",
+             choices=[
+                 dict(text="I pulled the coil from his relay, too.", next="coil_after_kill",
+                      conditions=[cond("HAS_ITEM", id=COIL)],
+                      consequences=[cons("REMOVE_ITEM", id=COIL, quantity=1), cons("SET_WORLD_FLAG", id=RELAY_RECOVERED)]),
+                 ASK_WHO, ASK_PLACE, BYE,
+             ]),
+        dict(id="coil_after_kill", line="Better in my hands than rusting on his shore. I'll see what it has left to say.",
+             choices=[BYE]),
+        dict(id="done_coil",
+             line="The coil talked all night. I'm writing down what I can. He's still walking the shore. Keep clear of him.",
+             choices=[
+                 dict(text="He won't be walking anywhere now.", next="went_back",
+                      conditions=[cond("ACTOR_DEAD", id=SCAV), cond("WORLD_FLAG", id=HEARD_KILL, negate=True)],
+                      consequences=[cons("SET_WORLD_FLAG", id=HEARD_KILL)]),
+                 ASK_WHO, ASK_PLACE, BYE,
+             ]),
+        dict(id="went_back", line="You went back for him anyway. ...I suppose that's one way to keep a shore quiet.",
+             choices=[BYE]),
+
+        # The scavenger died before Mara asked.
+        dict(id="already_dead", line="The walker on the path went quiet. That you?",
+             choices=[
+                 dict(text="It was me.", next="turnin_kill", consequences=[START]),
+                 ("Wasn't me.", "already_dead_denied"),
+             ]),
+        dict(id="already_dead_denied",
+             line="Hm. Somebody did. He'd rigged an old relay at his camp. If it's still humming, that's somebody else's business now.",
+             choices=[BYE]),
     ],
 )
+
+DIALOGUES = [MARA_INTRO]
 
 
 def log(msg):
@@ -221,7 +209,7 @@ def make_choice(spec):
 def make_node(spec):
     node = unreal.DCDialogueNode()
     node.set_editor_property("node_id", spec["id"])
-    node.set_editor_property("speaker", unreal.Text(spec["speaker"]))
+    node.set_editor_property("speaker", unreal.Text(spec.get("speaker", "Mara")))
     node.set_editor_property("line", unreal.Text(spec["line"]))
     node.set_editor_property("choices", [make_choice(c) for c in spec["choices"]])
     return node
@@ -246,7 +234,8 @@ def write_dialogue(spec):
 
 
 def main():
-    write_dialogue(MARA_INTRO)
+    for dialogue in DIALOGUES:
+        write_dialogue(dialogue)
 
 
 main()
