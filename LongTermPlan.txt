@@ -1,0 +1,762 @@
+# DEAD CURRENT — Long-Term Game Plan
+
+## 1. Vision
+
+**DEAD CURRENT** is a first-person open-world action RPG set in a post-collapse Great Lakes archipelago.
+
+The game should capture the qualities that make games like *Fallout 4: Far Harbor* compelling:
+
+- dense exploration
+- strong atmosphere
+- environmental storytelling
+- meaningful RPG progression
+- firearms and melee combat
+- character builds that affect how problems can be solved
+- quests with multiple solutions
+- factions with defensible but conflicting goals
+- companions with opinions and personal stories
+- player decisions that visibly alter the world
+
+The goal is **not** to recreate Fallout.
+
+The goal is to create an original RPG whose underlying design language feels immediately comfortable to someone who enjoys Bethesda-style exploration RPGs.
+
+The project should favor **depth, density, and consequence over sheer map size**.
+
+---
+
+# 2. Core Fantasy
+
+The player explores the remains of a once-connected Great Lakes region approximately sixty years after a cascading infrastructure disaster destroyed long-distance power, shipping, communications, and centralized government.
+
+The world is defined by:
+
+- abandoned shipyards
+- grounded freighters
+- flooded resorts
+- isolated settlements
+- marinas
+- forests
+- mines
+- bunkers
+- hydroelectric facilities
+- military installations
+- decaying industrial infrastructure
+
+The signature environmental phenomenon is known as **the Current**.
+
+The Current produces violent electromagnetic storms, unusual electrical activity, disrupted machinery, altered wildlife behavior, and intermittent transmissions from infrastructure that should have been dead for decades.
+
+Some of those transmissions appear to contain voices.
+
+Understanding what the Current is becomes one of the central mysteries of the game.
+
+---
+
+# 3. Narrative Premise
+
+The player arrives aboard a trading vessel while searching for someone who disappeared while investigating one of the mysterious transmissions.
+
+That personal investigation gradually reveals the existence of a massive pre-collapse emergency-management and infrastructure network buried throughout the region.
+
+Several major groups want control of it.
+
+Broadly:
+
+- one faction wants to use it to restore regional civilization and trade
+- one sees the transmissions as evidence that something new has emerged inside the abandoned network
+- one controls surviving industrial infrastructure and believes restoring the network would give whoever controls it unacceptable power
+
+No faction should exist simply to be the obviously correct choice.
+
+The player should gradually learn enough about each group that major decisions become increasingly difficult rather than increasingly obvious.
+
+---
+
+# 4. Design Pillars
+
+Every major feature should strengthen at least one of these pillars.
+
+## Exploration
+
+The world constantly rewards curiosity.
+
+Approximately every 30–60 seconds of deliberate exploration should have the possibility of revealing something interesting:
+
+- strange landmarks
+- environmental stories
+- hidden locations
+- abandoned camps
+- distress signals
+- unusual NPC encounters
+- wildlife behavior
+- locked structures
+- old terminals
+- distant lights
+- radio transmissions
+- scavenging opportunities
+- small mysteries
+
+Exploration does not always lead to combat.
+
+Discovery itself should be rewarding.
+
+## RPG Agency
+
+The player's build should change what they can do.
+
+Skills, attributes, background, reputation, equipment, companions, prior discoveries, and quest decisions should regularly unlock different approaches.
+
+A problem might be solved through:
+
+- combat
+- stealth
+- persuasion
+- intimidation
+- engineering
+- medicine
+- exploration knowledge
+- faction reputation
+- finding a hidden route
+- possession of a specific item
+- prior quest decisions
+
+## Consequence
+
+The world remembers what the player does.
+
+Choices should affect:
+
+- quests
+- NPC availability
+- faction relationships
+- dialogue
+- merchants
+- locations
+- encounters
+- companion opinions
+- infrastructure
+- local safety
+- future quest opportunities
+
+Consequences do not always need to be dramatic.
+
+Small persistent changes make the world feel reactive.
+
+## Atmosphere
+
+The emotional target is:
+
+**isolation + curiosity + danger + mystery**
+
+The Great Lakes setting should feel beautiful, threatening, melancholy, and strange.
+
+## Systemic Consistency
+
+Different parts of the game should operate through shared underlying systems rather than one-off scripted solutions.
+
+Quests, dialogue, terminals, NPCs, factions, combat, perks, world objects, and exploration should be able to interact through common state and condition systems.
+
+---
+
+# 5. World Structure
+
+The final game should be a **dense regional open world**, not an enormous procedural continent.
+
+Interesting locations are hand-authored.
+
+Procedural tools may help place:
+
+- vegetation
+- debris
+- rocks
+- shoreline dressing
+- background environmental detail
+
+But the important content is intentionally designed.
+
+That includes:
+
+- towns
+- dungeons
+- quest spaces
+- landmarks
+- ambushes
+- discoveries
+- environmental stories
+- faction locations
+
+The rule is simple:
+
+**Someone should have deliberately placed the interesting thing behind the hill.**
+
+---
+
+# 6. Core Gameplay Loop
+
+The primary gameplay loop is:
+
+**Explore → Discover → Investigate → Fight / Negotiate / Avoid → Loot → Learn → Decide → Change World → Improve Character → Explore**
+
+The game should continuously move the player between:
+
+- wilderness exploration
+- interior locations
+- combat
+- dialogue
+- scavenging
+- character progression
+- faction decisions
+- environmental storytelling
+
+No one subsystem should dominate the entire experience.
+
+---
+
+# 7. Combat
+
+Combat combines firearms, melee weapons, enemies, environmental hazards, consumables, equipment, and character progression.
+
+Quality matters more than quantity.
+
+Weapons should feel distinct through:
+
+- recoil
+- handling
+- sound
+- animation
+- impact
+- damage behavior
+- ammunition
+- attachments
+- situational strengths
+
+Enemy behavior should support states such as:
+
+- idle
+- patrol
+- suspicious
+- investigate
+- combat
+- search
+- flee
+- return
+
+Enemies should make believable tactical decisions rather than simply running directly toward the player.
+
+---
+
+# 8. Focus System
+
+The Fallout-style tactical combat role is filled by an original mechanic called **Focus**.
+
+Focus does not completely stop the world.
+
+Instead, activating Focus temporarily sharpens the player's perception.
+
+Possible effects include:
+
+- heightened enemy readability
+- easier tracking
+- reduced sensory noise
+- identification of vulnerable components
+- contextual combat information
+
+Character skills can improve what Focus reveals.
+
+Examples might include:
+
+- damaged respirator
+- exposed battery
+- cracked armor
+- vulnerable leg
+- weapon hand
+- fuel container
+
+The player still aims and fires manually.
+
+Focus therefore reinforces character progression without replacing first-person combat.
+
+---
+
+# 9. Character Progression
+
+The game uses an original:
+
+**Attributes → Skills → Perks**
+
+structure.
+
+Skills should matter outside numerical damage bonuses.
+
+They should affect:
+
+- conversations
+- Focus information
+- crafting
+- terminals
+- environmental interactions
+- medical treatment
+- exploration
+- quest solutions
+
+Perks should create meaningful build identities rather than simply producing small percentage increases.
+
+---
+
+# 10. Inventory, Equipment, and Scavenging
+
+The player scavenges physical objects throughout the world.
+
+Loot should support:
+
+- survival
+- combat
+- crafting
+- trade
+- exploration
+- story discovery
+
+The game should avoid becoming a constant junk-management simulator.
+
+Items need clear reasons to exist.
+
+Equipment eventually includes:
+
+- firearms
+- melee weapons
+- ammunition
+- armor
+- medicine
+- stimulants
+- field compounds
+- tools
+- quest items
+- salvage
+- specialized exploration equipment
+
+Heavy industrial or exploration rigs fill a role conceptually similar to heavy protective equipment without copying Fallout's power armor.
+
+---
+
+# 11. Crafting
+
+Crafting should support player decisions rather than become a separate game.
+
+Potential crafting categories include:
+
+- weapon modifications
+- ammunition
+- medicine
+- field supplies
+- equipment repair
+- exploration tools
+- outpost improvements
+
+The system should remain intentionally constrained.
+
+Hundreds of recipes are not required.
+
+---
+
+# 12. Dialogue
+
+Dialogue is a major gameplay system.
+
+Conversation options can depend on:
+
+- attributes
+- skills
+- reputation
+- quest state
+- discovered information
+- inventory
+- player background
+- companion presence
+- world state
+
+Dialogue and quests use the same underlying condition system.
+
+Dialogue outcomes can therefore directly modify the world.
+
+---
+
+# 13. Quest Architecture
+
+Quests are data-driven structures composed of:
+
+- stages
+- objectives
+- conditions
+- events
+- rewards
+- consequences
+
+Quest logic should not become enormous interconnected Blueprint graphs.
+
+The same consequence system should support actions such as:
+
+- advance quest stage
+- grant or remove items
+- change reputation
+- change world state
+- start combat
+- unlock locations
+- modify companion affinity
+
+This makes quests easier to build and test as the game grows.
+
+---
+
+# 14. Factions and Reputation
+
+Faction relationships are persistent.
+
+Reputation should influence:
+
+- dialogue
+- quests
+- prices
+- hostility
+- access
+- information
+- world encounters
+- endings
+
+The game should focus on a relatively small number of meaningful factions instead of dozens of shallow groups.
+
+Faction conflict should grow organically from competing interests.
+
+---
+
+# 15. Companions
+
+Companions are characters rather than equipment slots.
+
+Each important companion should have:
+
+- personal beliefs
+- faction opinions
+- affinity
+- reactions to player choices
+- personal dialogue
+- a personal quest
+- potential conflict with the player
+
+Companions can also unlock unique knowledge or solutions.
+
+---
+
+# 16. World State
+
+The game world must persist.
+
+Important persistent state includes:
+
+- quest progress
+- NPC state
+- inventory
+- faction reputation
+- containers
+- doors
+- destroyed objects
+- activated machinery
+- discovered locations
+- companions
+- world infrastructure
+- outposts
+
+Persistent actors should use stable identifiers.
+
+Save/load is considered a foundational system, not a feature to bolt on at the end.
+
+---
+
+# 17. Outposts
+
+The project may eventually contain a small-scale restoration/outpost system.
+
+This is intentionally smaller than Fallout 4 settlement building.
+
+The player may restore strategically important locations and infrastructure rather than construct entire towns piece by piece.
+
+Possible examples:
+
+- lighthouse
+- relay station
+- dock
+- safehouse
+- workshop
+- power station
+
+Outposts should strengthen exploration and world consequence rather than become a completely separate building game.
+
+---
+
+# 18. Art Direction
+
+The visual target is **grounded stylization**, not maximum photorealism.
+
+Important visual elements include:
+
+- cold freshwater
+- black rock
+- oxidized ship hulls
+- white birch
+- dark pine
+- faded maritime paint
+- industrial lighting
+- violent blue-white electrical storms
+- decaying industrial structures
+
+Strong silhouettes and consistent visual language matter more than asset complexity.
+
+The environment needs a recognizable identity even when third-party assets are used.
+
+---
+
+# 19. Technology
+
+Primary technology:
+
+**Unreal Engine 5.8**
+
+Development model:
+
+**C++ + Blueprints + data-driven content**
+
+Broad division of responsibility:
+
+### C++
+
+Use C++ for foundational systems:
+
+- interaction framework
+- inventory runtime
+- combat infrastructure
+- damage processing
+- quests
+- dialogue runtime
+- save system
+- persistent world state
+- AI interfaces
+- gameplay rules
+
+### Blueprints / Data Assets
+
+Use Blueprints and data for content creation:
+
+- weapons
+- NPCs
+- encounters
+- quests
+- dialogue
+- perks
+- items
+- locations
+- effects
+
+A designer should be able to create new content without modifying foundational engine code.
+
+---
+
+# 20. Shared Gameplay Language
+
+Gameplay Tags should serve as a shared vocabulary across systems.
+
+Examples:
+
+Faction.DockUnion  
+Damage.Electrical  
+Status.Bleeding  
+Skill.Engineering  
+Quest.Main.Signal01  
+WorldPower.Lighthouse
+
+Systems should communicate through common state rather than tightly coupling themselves directly to one another.
+
+---
+
+# 21. RPG Systems Framework
+
+Unreal's Gameplay Ability System is a strong candidate for systems involving:
+
+- attributes
+- damage
+- temporary effects
+- status conditions
+- abilities
+- perk effects
+
+Potential shared concepts include:
+
+- Health
+- Stamina
+- Focus
+- Armor
+- Exposure
+- Bleeding
+- Electrified
+- Stimulated
+
+The goal is to avoid creating unrelated frameworks for every type of gameplay effect.
+
+---
+
+# 22. Development Philosophy
+
+Development follows:
+
+**vertical-slice-first + systems-first**
+
+We do not:
+
+- build the entire map first
+- create hundreds of weapons first
+- build huge content libraries before proving the systems
+- implement features simply because Fallout has them
+
+The development ladder is:
+
+### Phase 1 — Walking Skeleton
+Spawn → move → interact → shoot → enemy dies → loot → save → load
+
+### Phase 2 — Micro RPG
+NPC → conversation → quest → combat → return → reward
+
+### Phase 3 — Exploration Loop
+Wilderness → POI → discovery → loot → story
+
+### Phase 4 — RPG Layer
+Attributes → skills → perks → dialogue checks
+
+### Phase 5 — World State
+Choices visibly alter locations and NPC behavior.
+
+### Phase 6 — Vertical Slice
+A polished 60–90 minute miniature of the complete game.
+
+### Phase 7 — Production
+Expand the world using proven systems.
+
+### Phase 8 — Alpha
+The complete game is playable from beginning to end.
+
+### Phase 9 — Beta
+Content is locked.
+
+Focus becomes:
+
+- optimization
+- bugs
+- balance
+- accessibility
+- usability
+- polish
+
+### Phase 10 — Release
+Final QA, packaging, distribution, and launch.
+
+---
+
+# 23. Vertical Slice Vision
+
+The vertical slice begins during an electrical storm.
+
+The player reaches a small settlement whose lighthouse is malfunctioning.
+
+The player can:
+
+- meet residents
+- trade
+- receive quests
+- explore wilderness
+- fight enemies
+- discover environmental stories
+- enter a dungeon beneath the lighthouse
+- investigate why the lighthouse failed
+
+Eventually the player discovers that the apparent malfunction may have been intentional.
+
+Possible resolutions include:
+
+- restore the lighthouse
+- redirect its power
+- sabotage it
+- expose what actually happened
+
+The outcome changes elements such as:
+
+- nighttime safety
+- NPC survival
+- faction reputation
+- merchant inventory
+- dialogue
+- future encounters
+
+This slice should demonstrate the entire intended game in miniature.
+
+---
+
+# 24. Initial Production Scope
+
+Before attempting a massive RPG, target approximately:
+
+- 1–2 km² of dense terrain
+- one settlement
+- three substantial wilderness locations
+- two dungeons
+- two factions
+- one companion
+- roughly five enemy archetypes
+- three firearm families
+- one melee family
+- one armor system
+- approximately six substantial quests
+- approximately fifteen smaller encounters
+
+This is enough to prove whether the game works.
+
+Expansion happens only after these systems are stable and enjoyable.
+
+---
+
+# 25. Scope Protection Rule
+
+A feature is not added because another RPG has it.
+
+A feature is added because DEAD CURRENT needs it.
+
+Features that should not become early priorities include:
+
+- enormous settlement construction
+- hundreds of perks
+- hundreds of NPC schedules
+- radiant quest systems
+- dozens of weapon modification slots
+- hundreds of crafting recipes
+- full economic simulation
+- elaborate limb simulation
+- massive crowds
+
+The project needs the **illusion of a larger simulation**, not necessarily the cost of actually simulating everything.
+
+---
+
+# 26. Long-Term Success Condition
+
+DEAD CURRENT succeeds when a player finishes the game remembering:
+
+- places they discovered
+- people they cared about
+- strange things they found
+- decisions they struggled with
+- consequences they did not expect
+- character builds that opened different possibilities
+- the feeling of traveling alone through a beautiful and dangerous Great Lakes wilderness
+
+The game should make players wonder:
+
+**"What's over there?"**
+
+And regularly reward them for finding out.

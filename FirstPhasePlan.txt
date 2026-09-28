@@ -1,0 +1,736 @@
+# DEAD CURRENT — Immediate First Playable Plan
+
+## Mission
+
+Build the smallest version of DEAD CURRENT that proves we can create the full game.
+
+The first playable is:
+
+**Wake up → Explore → Pick up weapon → Encounter enemy → Fight or avoid → Loot → Meet NPC → Save → Quit → Reload → World persists**
+
+Nothing outside that loop is required yet.
+
+The purpose is not to impress players with content volume.
+
+The purpose is to prove the architecture and core interaction loop.
+
+---
+
+# 1. First Playable Scenario
+
+The player wakes inside an abandoned boathouse near the shoreline.
+
+The environment immediately teaches basic movement and interaction.
+
+Inside or immediately outside the boathouse, the player can inspect a few objects.
+
+The player discovers a pistol.
+
+Leaving the boathouse leads into a small exterior area.
+
+One hostile scavenger occupies or patrols the area.
+
+The player may:
+
+- attack
+- avoid
+- sneak around the enemy
+
+If the enemy dies, the body can be looted.
+
+A short distance away is one friendly NPC.
+
+The player can speak to that NPC through the game's actual dialogue framework.
+
+The player can save.
+
+The player can quit.
+
+When the save is loaded:
+
+- the player's inventory is preserved
+- the enemy remains dead if killed
+- the enemy's inventory remains looted if previously looted
+- relevant world interactions retain their state
+- the player returns to the correct location
+
+That is the first playable.
+
+---
+
+# 2. Scope Lock
+
+The first playable contains only what is required to exercise the loop.
+
+## Player
+
+Required:
+
+- spawn
+- walk
+- run
+- look
+- jump
+- crouch if easy to support cleanly
+- basic interaction
+- health
+- death
+
+Not required yet:
+
+- full character creation
+- perks
+- skills
+- companions
+- survival mechanics
+- advanced status effects
+
+---
+
+# 3. Interaction System
+
+Create the foundational interaction interface first.
+
+The player needs to be able to look at something and interact with it.
+
+Initial interactable categories:
+
+- pickup
+- lootable actor
+- inspectable object
+- NPC
+
+The interaction architecture should already be reusable.
+
+Avoid making special-case interaction code for the pistol, enemy, and NPC.
+
+This becomes the interaction foundation for the entire game.
+
+---
+
+# 4. Item Foundation
+
+Create a minimal data-driven item definition.
+
+Initial fields should support concepts such as:
+
+- item ID
+- display name
+- item category
+- weight
+- value
+- icon reference
+- world representation
+
+Only a handful of test items are necessary.
+
+Examples:
+
+- pistol
+- ammunition
+- healing item
+- scrap item
+
+The architecture matters more than the content.
+
+---
+
+# 5. Inventory
+
+Implement the smallest viable inventory.
+
+Required behavior:
+
+- add item
+- remove item
+- query quantity
+- inspect inventory
+- persist inventory through save/load
+
+Do not build the complete final inventory UI yet.
+
+A simple functional interface is enough.
+
+---
+
+# 6. Weapon Prototype
+
+Create **one good pistol**.
+
+Required:
+
+- equip
+- aim
+- fire
+- ammunition
+- reload
+- recoil
+- hit detection
+- damage
+- muzzle feedback
+- firing audio
+- hit reaction
+
+There is no need for weapon modification systems yet.
+
+The pistol establishes the weapon architecture that later firearms will reuse.
+
+---
+
+# 7. Damage and Health
+
+Create the first reusable damage path.
+
+The flow should conceptually be:
+
+**weapon → hit → damage system → target health → reaction → death**
+
+Required:
+
+- player health
+- enemy health
+- damage application
+- death state
+
+Avoid embedding pistol-specific damage logic directly in the enemy.
+
+The damage system should eventually be usable by:
+
+- firearms
+- melee
+- environmental hazards
+- status effects
+
+---
+
+# 8. Enemy Prototype
+
+Create one hostile scavenger.
+
+The enemy only needs enough AI to prove the combat loop.
+
+Initial states:
+
+- idle / patrol
+- detect player
+- investigate
+- attack
+- pursue
+- lose player
+- die
+
+Sophisticated tactics can wait.
+
+The enemy needs:
+
+- perception
+- navigation
+- weapon or melee attack
+- damage reception
+- death
+- loot inventory
+
+---
+
+# 9. Looting
+
+The enemy becomes lootable after death.
+
+Required:
+
+- enemy inventory
+- interact with corpse
+- transfer items
+- remove transferred items
+- persist corpse/loot state
+
+This proves the connection between:
+
+combat → inventory → persistence.
+
+---
+
+# 10. Friendly NPC
+
+Create one friendly NPC.
+
+The NPC does not need a complex schedule.
+
+They need:
+
+- idle state
+- interaction
+- dialogue
+- persistent identity
+
+Their purpose is to prove that world actors can interact with the dialogue system.
+
+---
+
+# 11. Dialogue Foundation
+
+Create a minimal version of the actual dialogue architecture rather than a temporary prototype that must later be discarded.
+
+The first conversation may contain only a few nodes.
+
+Example flow:
+
+Greeting
+
+→ Who are you?  
+→ What is this place?  
+→ Goodbye
+
+The system should already be capable of later supporting:
+
+- conditions
+- checks
+- branching
+- consequences
+
+Those advanced functions do not all need to be exposed in the first conversation.
+
+---
+
+# 12. Persistent Actor Identity
+
+Introduce stable persistent identifiers immediately.
+
+Actors whose state matters after reload receive stable IDs.
+
+For the first playable this includes at minimum:
+
+- hostile scavenger
+- friendly NPC
+- meaningful containers/interactables
+
+This lays the foundation for saving a much larger world later.
+
+---
+
+# 13. Save System
+
+The save system is a first-playable requirement.
+
+Do not postpone it.
+
+Initial save data should include:
+
+## Player
+
+- transform
+- health
+- inventory
+- equipped weapon
+- ammunition
+
+## World
+
+- dead/alive state of enemy
+- enemy loot state
+- persistent object state
+
+Additional systems can later register their own state.
+
+The save architecture should be extensible rather than hard-coded specifically for the boathouse.
+
+---
+
+# 14. Test Environment
+
+Build a tiny test map rather than a real region of the final open world.
+
+Required spaces:
+
+### Boathouse
+
+Contains:
+
+- player spawn
+- inspectable objects
+- pistol
+- ammunition
+
+### Exterior Path
+
+Contains:
+
+- navigation space
+- environmental dressing
+- hostile scavenger
+
+### NPC Area
+
+Contains:
+
+- friendly NPC
+- safe space to converse
+
+The map only needs enough polish to make the loop understandable.
+
+---
+
+# 15. Initial Project Structure
+
+Establish organization early.
+
+Conceptually:
+
+/Source/DeadCurrent  
+/AI  
+/Character  
+/Combat  
+/Dialogue  
+/Interaction  
+/Inventory  
+/Items  
+/Save  
+/World  
+
+/Content  
+/Characters  
+/Dialogue  
+/Environment  
+/Items  
+/Maps  
+/UI  
+/Weapons  
+/World  
+
+/Design  
+game_design.md  
+world_bible.md  
+technical_architecture.md  
+
+Exact folder names may evolve, but systems should remain clearly separated.
+
+---
+
+# 16. Gameplay Tags
+
+Establish the tag system now even if only a few tags are used.
+
+Initial examples might include:
+
+Damage.Ballistic  
+Item.Weapon.Firearm  
+Item.Ammo  
+Actor.Hostile  
+Actor.Friendly  
+State.Dead  
+Interaction.Pickup  
+Interaction.Loot  
+Interaction.Talk
+
+Do not create hundreds of tags yet.
+
+Create the hierarchy and naming convention.
+
+---
+
+# 17. Recommended Implementation Order
+
+Build the first playable in this order.
+
+## FP-01 — Project Foundation
+
+- UE project boots cleanly
+- source control initialized
+- C++ project compiles
+- folder structure exists
+- naming conventions documented
+
+**Done when:** a clean clone can build and launch the project.
+
+---
+
+## FP-02 — Player Movement
+
+- spawn
+- movement
+- camera
+- jump
+- basic input mappings
+
+**Done when:** moving around the test level feels stable.
+
+---
+
+## FP-03 — Interaction Framework
+
+- interaction interface
+- trace/detection
+- interaction prompt
+- generic interaction execution
+
+**Done when:** the player can interact with multiple unrelated object types through the same system.
+
+---
+
+## FP-04 — Item Definitions
+
+- item data structure
+- item IDs
+- test items
+
+**Done when:** world items reference shared data definitions.
+
+---
+
+## FP-05 — Inventory
+
+- add/remove/query
+- minimal UI/debug view
+- pickup integration
+
+**Done when:** the pistol and other objects can enter the player's inventory through normal interaction.
+
+---
+
+## FP-06 — Pistol
+
+- equip
+- aim
+- fire
+- ammo
+- reload
+- recoil
+- impact
+
+**Done when:** the player can reliably shoot a test target.
+
+---
+
+## FP-07 — Damage / Health
+
+- health component
+- damage processing
+- death
+
+**Done when:** weapon damage flows through a reusable gameplay system.
+
+---
+
+## FP-08 — Enemy
+
+- navigation
+- perception
+- pursuit
+- attack
+- death
+
+**Done when:** the enemy can independently detect, fight, lose, and be killed by the player.
+
+---
+
+## FP-09 — Loot
+
+- corpse inventory
+- loot interaction
+- item transfer
+
+**Done when:** killing the enemy produces usable loot.
+
+---
+
+## FP-10 — Friendly NPC
+
+- NPC actor
+- talk interaction
+- simple behavior
+
+**Done when:** the player can approach and initiate a conversation.
+
+---
+
+## FP-11 — Dialogue
+
+- dialogue data
+- dialogue runtime
+- minimal dialogue UI
+- branching options
+
+**Done when:** the player can complete a short conversation entirely through the reusable dialogue framework.
+
+---
+
+## FP-12 — Persistent IDs
+
+- stable actor identifiers
+- persistence interface
+
+**Done when:** important world actors can be uniquely recognized across game sessions.
+
+---
+
+## FP-13 — Save / Load
+
+Save:
+
+- player position
+- inventory
+- equipment
+- health
+- enemy death
+- enemy loot
+
+Load those values accurately.
+
+**Done when:** the player can kill and loot the scavenger, save, exit the game, reload, and find the world unchanged.
+
+---
+
+## FP-14 — Build the Scenario
+
+Assemble:
+
+- boathouse
+- pistol placement
+- exterior path
+- enemy location
+- friendly NPC
+- simple visual storytelling
+
+**Done when:** the entire gameplay loop can be played from beginning to end.
+
+---
+
+## FP-15 — First Playable Polish
+
+Only after everything works:
+
+- tune movement
+- tune weapon feel
+- improve sound
+- improve hit reactions
+- improve interaction prompts
+- remove debug clutter
+- fix save/load edge cases
+- improve lighting
+- add minimal environmental dressing
+
+**Done when:** the first playable feels like a tiny piece of an actual game rather than a collection of disconnected systems.
+
+---
+
+# 18. Required Tests
+
+Before declaring the milestone complete, deliberately test:
+
+### Interaction
+
+- pick up an item
+- interact with NPC
+- loot corpse
+
+### Combat
+
+- shoot enemy
+- take damage
+- reload
+- die
+- restart
+
+### Inventory
+
+- acquire pistol
+- acquire ammunition
+- consume ammunition
+- loot enemy
+
+### Save / Load
+
+Test:
+
+1. save before killing enemy
+2. reload
+3. kill enemy
+4. loot only some items
+5. save
+6. exit game
+7. reload
+
+Confirm:
+
+- enemy remains dead
+- previously looted items remain gone
+- unlooted items remain
+- player inventory is correct
+- player position is correct
+
+Persistence is part of the milestone, not a bonus.
+
+---
+
+# 19. Explicitly Out of Scope
+
+Do not allow these systems to delay the first playable:
+
+- open world
+- World Partition
+- PCG forests
+- full quest system
+- faction reputation
+- Focus
+- perks
+- attributes
+- crafting
+- settlement/outpost building
+- companions
+- multiple weapons
+- multiple enemy archetypes
+- weather simulation
+- full HUD
+- character creator
+- final art
+- advanced AI
+- procedural encounters
+- complete sound design
+
+They come later.
+
+---
+
+# 20. First Playable Definition of Done
+
+The milestone is complete only when a fresh player can:
+
+1. launch the game
+2. wake inside the boathouse
+3. move around naturally
+4. inspect/interact with the environment
+5. discover and acquire the pistol
+6. leave the structure
+7. encounter the scavenger
+8. fight or avoid the scavenger
+9. kill the scavenger if desired
+10. loot the body
+11. meet the friendly NPC
+12. complete a short conversation
+13. save the game
+14. exit
+15. relaunch
+16. load the save
+17. find the world exactly as they left it
+
+At that point, we have built the first tiny version of DEAD CURRENT.
+
+More importantly, we have proven the architectural spine required to build the rest of the game.
+
+---
+
+# 21. What Happens Immediately After
+
+Once the first playable is stable, development moves into the **Micro RPG** milestone.
+
+That adds:
+
+- one real quest
+- dialogue conditions
+- a quest objective
+- combat or alternate solution
+- return to quest giver
+- reward
+- first world-state consequence
+
+That is the bridge between the technical walking skeleton and the eventual 60–90 minute vertical slice.
