@@ -15,8 +15,24 @@ class DEADCURRENT_API UDCSaveGame : public USaveGame
 
 public:
 
+	/** Written as CurrentVersion. Saves from before versioning load as 0. */
+	UPROPERTY()
+	int32 SaveVersion = 0;
+
+	/**
+	 *  1: first playable. 2: micro RPG (MapPackage, world flags owned by UDCWorldStateSubsystem,
+	 *  quest stages from data-driven quests). Older saves still load; quest stages that no longer
+	 *  exist are dropped.
+	 */
+	static constexpr int32 CurrentVersion = 2;
+
+	/** Short map name, e.g. Lvl_Boathouse. */
 	UPROPERTY()
 	FString MapName;
+
+	/** Long package name, e.g. /Game/Maps/Lvl_Boathouse. Load opens this map before applying the save. */
+	UPROPERTY()
+	FString MapPackage;
 
 	UPROPERTY()
 	FVector PlayerLocation = FVector::ZeroVector;
@@ -72,9 +88,11 @@ public:
 	UPROPERTY()
 	TArray<FString> WorldInvItemPaths;
 
+	/** Player quest log: quest id + current stage. */
 	UPROPERTY()
 	TArray<FDCSavedQuestState> Quests;
 
+	/** UDCWorldStateSubsystem flags. */
 	UPROPERTY()
 	TArray<FName> WorldFlags;
 };

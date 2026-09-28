@@ -20,6 +20,10 @@ public class DeadCurrent : ModuleRules
 			"GameplayTasks"
 		});
 
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"AssetRegistry"
+		});
+
 		// Module root is public so systems include each other as "Folder/File.h".
 		PublicIncludePaths.Add(ModuleDirectory);
 	}

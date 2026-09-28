@@ -1,303 +1,263 @@
 #include "Quest/DCQuestComponent.h"
-#include "AI/DCScavengerCharacter.h"
-#include "Combat/DCHealthComponent.h"
-#include "EngineUtils.h"
+#include "Core/DCGameplayRules.h"
+#include "DeadCurrent.h"
 #include "Inventory/DCInventoryComponent.h"
-#include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestDefinition.h"
+#include "World/DCWorldStateSubsystem.h"
+
+/** Transition chains longer than this are treated as a content loop. */
+static constexpr int32 DCMaxQuestEvaluationPasses = 16;
+
+void UDCQuestComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UDCInventoryComponent* Inventory = GetOwner() ? GetOwner()->FindComponentByClass<UDCInventoryComponent>() : nullptr)
+	{
+		Inventory->OnInventoryChanged.AddDynamic(this, &UDCQuestComponent::HandleInventoryChanged);
+	}
+
+	if (UDCWorldStateSubsystem* WorldState = UDCWorldStateSubsystem::Get(this))
+	{
+		WorldStateHandle = WorldState->OnChanged.AddUObject(this, &UDCQuestComponent::HandleWorldStateChanged);
+	}
+}
+
+void UDCQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UDCWorldStateSubsystem* WorldState = UDCWorldStateSubsystem::Get(this))
+	{
+		WorldState->OnChanged.Remove(WorldStateHandle);
+	}
+	WorldStateHandle.Reset();
+
+	Super::EndPlay(EndPlayReason);
+}
 
 bool UDCQuestComponent::StartQuest(FName QuestId, FName StageId)
 {
-	if (QuestId.IsNone() || StageId.IsNone() || Stages.Contains(QuestId))
+	if (QuestId.IsNone() || HasQuest(QuestId))
 	{
 		return false;
 	}
 
-	Stages.Add(QuestId, StageId);
-	BroadcastIfLive(QuestId, StageId);
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(QuestId);
+	if (StageId.IsNone() && Definition)
+	{
+		StageId = Definition->GetStartStage();
+	}
+
+	if (StageId.IsNone() || (Definition && !Definition->FindStage(StageId)))
+	{
+		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCQUEST] cannot start %s at stage '%s'%s"), *QuestId.ToString(),
+			*StageId.ToString(), Definition ? TEXT("") : TEXT(" (no definition loaded)"));
+		return false;
+	}
+
+	FDCQuestProgress& Progress = Quests.AddDefaulted_GetRef();
+	Progress.QuestId = QuestId;
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCQUEST] start %s"), *QuestId.ToString());
+	EnterStage(QuestId, StageId);
 	return true;
 }
 
 bool UDCQuestComponent::SetStage(FName QuestId, FName StageId)
 {
-	if (QuestId.IsNone() || StageId.IsNone() || !Stages.Contains(QuestId))
+	const FDCQuestProgress* Progress = FindProgress(QuestId);
+	if (!Progress || StageId.IsNone())
 	{
 		return false;
 	}
 
-	if (Stages[QuestId] == StageId)
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(QuestId);
+	if (Definition && !Definition->FindStage(StageId))
 	{
-		return true;
+		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCQUEST] %s has no stage '%s'"), *QuestId.ToString(), *StageId.ToString());
+		return false;
 	}
 
-	Stages[QuestId] = StageId;
-	BroadcastIfLive(QuestId, StageId);
+	if (Progress->StageId != StageId)
+	{
+		EnterStage(QuestId, StageId);
+	}
 	return true;
-}
-
-bool UDCQuestComponent::CompleteQuest(FName QuestId)
-{
-	if (QuestId.IsNone())
-	{
-		return false;
-	}
-
-	const FName Done = CompletedStageId(QuestId);
-	if (!Stages.Contains(QuestId))
-	{
-		return StartQuest(QuestId, Done);
-	}
-
-	return SetStage(QuestId, Done);
 }
 
 FName UDCQuestComponent::GetStage(FName QuestId) const
 {
-	const FName* Stage = Stages.Find(QuestId);
-	return Stage ? *Stage : NAME_None;
+	const FDCQuestProgress* Progress = FindProgress(QuestId);
+	return Progress ? Progress->StageId : NAME_None;
 }
 
-bool UDCQuestComponent::IsComplete(FName QuestId) const
+EDCQuestStatus UDCQuestComponent::GetQuestStatus(FName QuestId) const
 {
-	const FName Stage = GetStage(QuestId);
-	return !Stage.IsNone() && Stage == CompletedStageId(QuestId);
+	const FDCQuestProgress* Progress = FindProgress(QuestId);
+	if (!Progress)
+	{
+		return EDCQuestStatus::NotStarted;
+	}
+
+	const FDCQuestStage* Stage = FindCurrentStage(*Progress);
+	return Stage && Stage->bCompletesQuest ? EDCQuestStatus::Complete : EDCQuestStatus::Active;
 }
 
 FText UDCQuestComponent::GetObjectiveText() const
 {
-	for (const TPair<FName, FName>& Pair : Stages)
+	for (const FDCQuestProgress& Progress : Quests)
 	{
-		if (IsComplete(Pair.Key))
+		const FDCQuestStage* Stage = FindCurrentStage(Progress);
+		if (Stage && !Stage->bCompletesQuest && !Stage->ObjectiveText.IsEmpty())
 		{
-			continue;
-		}
-
-		if (const UDCQuestDefinition* Def = FindDefinition(Pair.Key))
-		{
-			if (const FDCQuestStage* Stage = Def->FindStage(Pair.Value))
-			{
-				if (!Stage->ObjectiveText.IsEmpty())
-				{
-					return Stage->ObjectiveText;
-				}
-			}
+			return Stage->ObjectiveText;
 		}
 	}
 	return FText::GetEmpty();
 }
 
-void UDCQuestComponent::SetFlag(FName Flag)
+FText UDCQuestComponent::GetStageText(FName QuestId) const
 {
-	if (Flag.IsNone() || Flags.Contains(Flag))
+	const FDCQuestProgress* Progress = FindProgress(QuestId);
+	const FDCQuestStage* Stage = Progress ? FindCurrentStage(*Progress) : nullptr;
+	return Stage ? Stage->ObjectiveText : FText::GetEmpty();
+}
+
+void UDCQuestComponent::EvaluateQuests()
+{
+	if (bEvaluating)
 	{
+		bEvaluateAgain = true;
 		return;
 	}
 
-	Flags.Add(Flag);
-}
-
-void UDCQuestComponent::NotifyHostileDied()
-{
-	TArray<FName> QuestIds;
-	Stages.GetKeys(QuestIds);
-	for (const FName QuestId : QuestIds)
+	TGuardValue<bool> Guard(bEvaluating, true);
+	for (int32 Pass = 0; Pass < DCMaxQuestEvaluationPasses; ++Pass)
 	{
-		const FName Current = GetStage(QuestId);
-		const UDCQuestDefinition* Def = FindDefinition(QuestId);
-		const FDCQuestStage* Stage = Def ? Def->FindStage(Current) : nullptr;
-		if (Stage && Stage->bAdvanceOnHostileDeath && !Stage->NextStageOnHostileDeath.IsNone())
+		bEvaluateAgain = false;
+		bool bMoved = false;
+		const FDCRuleContext Context = MakeRuleContext();
+
+		// Copy: entering a stage can start other quests and grow the log.
+		const TArray<FDCQuestProgress> Snapshot = Quests;
+		for (const FDCQuestProgress& Progress : Snapshot)
 		{
-			SetStage(QuestId, Stage->NextStageOnHostileDeath);
+			const FDCQuestStage* Stage = FindCurrentStage(Progress);
+			if (!Stage || Stage->bCompletesQuest)
+			{
+				continue;
+			}
+
+			for (const FDCQuestTransition& Transition : Stage->Transitions)
+			{
+				if (UDCGameplayRules::CheckConditions(Transition.Conditions, Context))
+				{
+					EnterStage(Progress.QuestId, Transition.NextStage);
+					bMoved = true;
+					break;
+				}
+			}
+		}
+
+		if (!bMoved && !bEvaluateAgain)
+		{
+			return;
 		}
 	}
+
+	UE_LOG(LogDeadCurrent, Warning, TEXT("[DCQUEST] transitions still changing after %d passes; check quest data for loops"),
+		DCMaxQuestEvaluationPasses);
 }
 
-bool UDCQuestComponent::Meets(const FDCGameplayCondition& Condition) const
-{
-	bool bPass = true;
-	switch (Condition.Type)
-	{
-	case EDCConditionType::None:
-		bPass = true;
-		break;
-	case EDCConditionType::QuestStage:
-		bPass = GetStage(Condition.Id) == Condition.Stage;
-		break;
-	case EDCConditionType::QuestNotStarted:
-		bPass = !HasQuest(Condition.Id);
-		break;
-	case EDCConditionType::QuestActive:
-		bPass = IsQuestActive(Condition.Id);
-		break;
-	case EDCConditionType::QuestComplete:
-		bPass = IsComplete(Condition.Id);
-		break;
-	case EDCConditionType::HostileDead:
-		bPass = IsHostileDead();
-		break;
-	case EDCConditionType::HasItem:
-		bPass = HasItem(Condition.Id, FMath::Max(1, Condition.Quantity));
-		break;
-	case EDCConditionType::WorldFlag:
-		bPass = HasFlag(Condition.Id);
-		break;
-	default:
-		bPass = true;
-		break;
-	}
-
-	return Condition.bNegate ? !bPass : bPass;
-}
-
-bool UDCQuestComponent::MeetsAll(const TArray<FDCGameplayCondition>& Conditions) const
-{
-	for (const FDCGameplayCondition& Condition : Conditions)
-	{
-		if (!Meets(Condition))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-void UDCQuestComponent::Apply(const FDCGameplayConsequence& Consequence)
-{
-	switch (Consequence.Type)
-	{
-	case EDCConsequenceType::StartQuest:
-		StartQuest(Consequence.Id, Consequence.Stage);
-		break;
-	case EDCConsequenceType::SetQuestStage:
-		SetStage(Consequence.Id, Consequence.Stage);
-		break;
-	case EDCConsequenceType::CompleteQuest:
-		CompleteQuest(Consequence.Id);
-		break;
-	case EDCConsequenceType::GiveItem:
-		GiveOrRemoveItem(Consequence.Id, Consequence.Item, Consequence.Quantity, true);
-		break;
-	case EDCConsequenceType::RemoveItem:
-		GiveOrRemoveItem(Consequence.Id, Consequence.Item, Consequence.Quantity, false);
-		break;
-	case EDCConsequenceType::SetWorldFlag:
-		SetFlag(Consequence.Id);
-		break;
-	default:
-		break;
-	}
-}
-
-void UDCQuestComponent::ApplyAll(const TArray<FDCGameplayConsequence>& Consequences)
-{
-	for (const FDCGameplayConsequence& Consequence : Consequences)
-	{
-		Apply(Consequence);
-	}
-}
-
-void UDCQuestComponent::CaptureState(TArray<FDCSavedQuestState>& OutQuests, TArray<FName>& OutFlags) const
+void UDCQuestComponent::CaptureState(TArray<FDCSavedQuestState>& OutQuests) const
 {
 	OutQuests.Reset();
-	for (const TPair<FName, FName>& Pair : Stages)
+	for (const FDCQuestProgress& Progress : Quests)
 	{
-		FDCSavedQuestState Saved;
-		Saved.QuestId = Pair.Key;
-		Saved.StageId = Pair.Value;
-		OutQuests.Add(Saved);
+		FDCSavedQuestState& Saved = OutQuests.AddDefaulted_GetRef();
+		Saved.QuestId = Progress.QuestId;
+		Saved.StageId = Progress.StageId;
 	}
-	OutFlags = Flags;
 }
 
-void UDCQuestComponent::ReplaceFromSaved(const TArray<FDCSavedQuestState>& SavedQuests, const TArray<FName>& SavedFlags)
+void UDCQuestComponent::ReplaceFromSaved(const TArray<FDCSavedQuestState>& SavedQuests)
 {
-	Stages.Empty();
+	Quests.Reset();
 	for (const FDCSavedQuestState& Saved : SavedQuests)
 	{
-		if (!Saved.QuestId.IsNone() && !Saved.StageId.IsNone())
+		if (Saved.QuestId.IsNone() || Saved.StageId.IsNone() || HasQuest(Saved.QuestId))
 		{
-			Stages.Add(Saved.QuestId, Saved.StageId);
+			continue;
 		}
-	}
-	Flags = SavedFlags;
-}
 
-FName UDCQuestComponent::CompletedStageId(FName QuestId) const
-{
-	if (const UDCQuestDefinition* Def = FindDefinition(QuestId))
-	{
-		return Def->CompletedStage.IsNone() ? FName(TEXT("done")) : Def->CompletedStage;
-	}
-	return TEXT("done");
-}
-
-const UDCQuestDefinition* UDCQuestComponent::FindDefinition(FName QuestId) const
-{
-	return UDCQuestDefinition::FindByQuestId(QuestId);
-}
-
-bool UDCQuestComponent::IsHostileDead() const
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return false;
-	}
-
-	bool bSawAny = false;
-	for (TActorIterator<ADCScavengerCharacter> It(World); It; ++It)
-	{
-		bSawAny = true;
-		const UDCHealthComponent* Health = It->GetHealthComponent();
-		if (Health && !Health->IsDead())
+		// A stage that no longer exists (quest data changed since the save) would leave the quest stuck.
+		// Drop it so the quest can be picked up again.
+		const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(Saved.QuestId);
+		if (Definition && !Definition->FindStage(Saved.StageId))
 		{
-			return false;
+			UE_LOG(LogDeadCurrent, Warning, TEXT("[DCQUEST] saved stage %s.%s no longer exists; quest reset"),
+				*Saved.QuestId.ToString(), *Saved.StageId.ToString());
+			continue;
 		}
+
+		FDCQuestProgress& Progress = Quests.AddDefaulted_GetRef();
+		Progress.QuestId = Saved.QuestId;
+		Progress.StageId = Saved.StageId;
 	}
-	return bSawAny;
 }
 
-bool UDCQuestComponent::HasItem(FName ItemId, int32 Quantity) const
+FDCQuestProgress* UDCQuestComponent::FindProgress(FName QuestId)
 {
-	const AActor* Owner = GetOwner();
-	const UDCInventoryComponent* Inventory = Owner
-		? Owner->FindComponentByClass<UDCInventoryComponent>()
-		: nullptr;
-	return Inventory && Inventory->GetQuantityByItemId(ItemId) >= Quantity;
+	return Quests.FindByPredicate([QuestId](const FDCQuestProgress& P) { return P.QuestId == QuestId; });
 }
 
-void UDCQuestComponent::GiveOrRemoveItem(FName ItemId, const TSoftObjectPtr<UDCItemDefinition>& Item, int32 Quantity, bool bGive)
+const FDCQuestProgress* UDCQuestComponent::FindProgress(FName QuestId) const
 {
-	AActor* Owner = GetOwner();
-	UDCInventoryComponent* Inventory = Owner
-		? Owner->FindComponentByClass<UDCInventoryComponent>()
-		: nullptr;
-	if (!Inventory || Quantity <= 0)
+	if (QuestId.IsNone())
+	{
+		return nullptr;
+	}
+	return Quests.FindByPredicate([QuestId](const FDCQuestProgress& P) { return P.QuestId == QuestId; });
+}
+
+const FDCQuestStage* UDCQuestComponent::FindCurrentStage(const FDCQuestProgress& Progress) const
+{
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(Progress.QuestId);
+	return Definition ? Definition->FindStage(Progress.StageId) : nullptr;
+}
+
+FDCRuleContext UDCQuestComponent::MakeRuleContext()
+{
+	FDCRuleContext Context = FDCRuleContext::ForActor(GetOwner());
+	Context.Quests = this;
+	return Context;
+}
+
+void UDCQuestComponent::EnterStage(FName QuestId, FName StageId)
+{
+	FDCQuestProgress* Progress = FindProgress(QuestId);
+	if (!Progress)
 	{
 		return;
 	}
 
-	const UDCItemDefinition* Definition = Item.LoadSynchronous();
-	if (!Definition)
-	{
-		Definition = UDCItemDefinition::FindByItemId(ItemId);
-	}
-	if (!Definition)
-	{
-		return;
-	}
-
-	if (bGive)
-	{
-		Inventory->AddItem(Definition, Quantity);
-	}
-	else
-	{
-		Inventory->RemoveItem(Definition, Quantity);
-	}
-}
-
-void UDCQuestComponent::BroadcastIfLive(FName QuestId, FName StageId)
-{
+	Progress->StageId = StageId;
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCQUEST] %s -> %s"), *QuestId.ToString(), *StageId.ToString());
 	OnQuestUpdated.Broadcast(QuestId, StageId);
+
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(QuestId);
+	if (const FDCQuestStage* Stage = Definition ? Definition->FindStage(StageId) : nullptr)
+	{
+		UDCGameplayRules::ApplyConsequences(Stage->OnEnter, MakeRuleContext());
+	}
+
+	EvaluateQuests();
+}
+
+void UDCQuestComponent::HandleInventoryChanged(UDCInventoryComponent* Inventory)
+{
+	EvaluateQuests();
+}
+
+void UDCQuestComponent::HandleWorldStateChanged()
+{
+	EvaluateQuests();
 }

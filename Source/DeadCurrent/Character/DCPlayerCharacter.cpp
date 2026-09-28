@@ -7,6 +7,7 @@
 #include "DeadCurrent.h"
 #include "Dialogue/DCDialogueComponent.h"
 #include "Quest/DCQuestComponent.h"
+#include "Quest/DCQuestDefinition.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "EnhancedInputComponent.h"
@@ -318,17 +319,13 @@ void ADCPlayerCharacter::HandleQuestUpdated(FName QuestId, FName StageId)
 		return;
 	}
 
-	const FText Objective = QuestComponent->GetObjectiveText();
-	if (!Objective.IsEmpty())
-	{
-		ADCHUD::ShowMessageFor(this, Objective, 4.0f);
-		return;
-	}
-
-	if (QuestComponent->IsComplete(QuestId))
-	{
-		ADCHUD::ShowMessageFor(this, NSLOCTEXT("DCPlayerCharacter", "QuestDone", "Quest complete."), 3.0f);
-	}
+	const UDCQuestDefinition* Definition = UDCQuestDefinition::FindByQuestId(QuestId);
+	const FText Name = Definition ? Definition->DisplayName : FText::FromName(QuestId);
+	const FText StageText = QuestComponent->GetStageText(QuestId);
+	const FText Message = QuestComponent->IsComplete(QuestId)
+		? FText::Format(NSLOCTEXT("DCPlayerCharacter", "QuestDone", "Quest complete: {0}. {1}"), Name, StageText)
+		: FText::Format(NSLOCTEXT("DCPlayerCharacter", "QuestStage", "{0}: {1}"), Name, StageText);
+	ADCHUD::ShowMessageFor(this, Message, 5.0f);
 
 	(void)StageId;
 }

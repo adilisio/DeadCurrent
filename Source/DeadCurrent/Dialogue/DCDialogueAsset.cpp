@@ -1,5 +1,5 @@
 #include "Dialogue/DCDialogueAsset.h"
-#include "Quest/DCQuestComponent.h"
+#include "Core/DCGameplayRules.h"
 
 const FDCDialogueNode* UDCDialogueAsset::FindNode(FName NodeId) const
 {
@@ -18,25 +18,11 @@ const FDCDialogueNode* UDCDialogueAsset::FindNode(FName NodeId) const
 	return nullptr;
 }
 
-FName UDCDialogueAsset::ResolveEntry(const UDCQuestComponent* Quests) const
+FName UDCDialogueAsset::ResolveEntry(const FDCRuleContext& Context) const
 {
 	for (const FDCDialogueEntry& Entry : Entries)
 	{
-		if (!FindNode(Entry.NodeId))
-		{
-			continue;
-		}
-
-		if (!Quests)
-		{
-			if (Entry.Conditions.IsEmpty())
-			{
-				return Entry.NodeId;
-			}
-			continue;
-		}
-
-		if (Quests->MeetsAll(Entry.Conditions))
+		if (FindNode(Entry.NodeId) && UDCGameplayRules::CheckConditions(Entry.Conditions, Context))
 		{
 			return Entry.NodeId;
 		}

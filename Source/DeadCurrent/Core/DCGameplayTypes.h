@@ -5,81 +5,107 @@
 
 class UDCItemDefinition;
 
+/**
+ *  What a condition checks. Dialogue, quests and interactables all use this one list.
+ *  New checks (skills, attributes, reputation, discovered information) are added here
+ *  and in UDCGameplayRules::CheckCondition.
+ */
 UENUM(BlueprintType)
 enum class EDCConditionType : uint8
 {
 	None UMETA(Hidden),
-	QuestStage,
-	QuestNotStarted,
-	QuestActive,
-	QuestComplete,
-	HostileDead,
+	/** The instigator carries at least Quantity of item Id. */
 	HasItem,
-	WorldFlag
+	/** Quest Id has not been started. */
+	QuestNotStarted,
+	/** Quest Id is started and has not reached a completing stage. */
+	QuestActive,
+	/** Quest Id reached any completing stage (any outcome). */
+	QuestComplete,
+	/** Quest Id is at stage Stage. */
+	QuestStage,
+	/** World flag Id is set. */
+	WorldFlag,
+	/** The actor with persistent id Id is dead. */
+	ActorDead
 };
 
+/**
+ *  What a consequence does. Shared by dialogue choices, quest stages and interactables.
+ */
 UENUM(BlueprintType)
 enum class EDCConsequenceType : uint8
 {
 	None UMETA(Hidden),
-	StartQuest,
-	SetQuestStage,
-	CompleteQuest,
+	/** Add Quantity of item Id (or Item) to the instigator's inventory. */
 	GiveItem,
+	/** Remove Quantity of item Id (or Item) from the instigator's inventory. */
 	RemoveItem,
-	SetWorldFlag
+	/** Start quest Id at Stage, or at the quest's start stage when Stage is empty. */
+	StartQuest,
+	/** Move quest Id to Stage. Moving to a completing stage completes the quest. */
+	SetQuestStage,
+	/** Set world flag Id. */
+	SetWorldFlag,
+	/** Clear world flag Id. */
+	ClearWorldFlag
 };
 
 /**
- *  One check used by dialogue and quests. All conditions on a choice or entry are ANDed.
+ *  One check. A list of conditions passes when every entry passes.
  */
 USTRUCT(BlueprintType)
 struct DEADCURRENT_API FDCGameplayCondition
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Condition")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	EDCConditionType Type = EDCConditionType::None;
 
-	/** Quest id, item id, or world flag, depending on Type. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Condition")
+	/** Item id, quest id, world flag, or persistent actor id, depending on Type. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	FName Id;
 
-	/** Quest stage when Type is QuestStage. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Condition")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition",
+		meta=(EditCondition="Type==EDCConditionType::QuestStage", EditConditionHides))
 	FName Stage;
 
-	/** Minimum quantity when Type is HasItem. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Condition", meta=(ClampMin="1"))
+	/** Minimum quantity for HasItem. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition",
+		meta=(ClampMin="1", EditCondition="Type==EDCConditionType::HasItem", EditConditionHides))
 	int32 Quantity = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Condition")
+	/** Pass when the check fails instead. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	bool bNegate = false;
 };
 
 /**
- *  One result of a dialogue choice (or later a quest event).
+ *  One change to the game. Lists run in order.
  */
 USTRUCT(BlueprintType)
 struct DEADCURRENT_API FDCGameplayConsequence
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Consequence")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Consequence")
 	EDCConsequenceType Type = EDCConsequenceType::None;
 
-	/** Quest id, item id, or world flag, depending on Type. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Consequence")
+	/** Item id, quest id, or world flag, depending on Type. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Consequence")
 	FName Id;
 
-	/** Stage to set when Type is StartQuest or SetQuestStage. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Consequence")
+	/** Stage for StartQuest (optional) and SetQuestStage. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Consequence",
+		meta=(EditCondition="Type==EDCConsequenceType::StartQuest||Type==EDCConsequenceType::SetQuestStage", EditConditionHides))
 	FName Stage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Consequence", meta=(ClampMin="1"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Consequence",
+		meta=(ClampMin="1", EditCondition="Type==EDCConsequenceType::GiveItem||Type==EDCConsequenceType::RemoveItem", EditConditionHides))
 	int32 Quantity = 1;
 
-	/** Optional direct item for GiveItem / RemoveItem. Id is used if this is unset. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Consequence")
+	/** Optional direct item reference for GiveItem / RemoveItem. Id is used when this is unset. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Consequence",
+		meta=(EditCondition="Type==EDCConsequenceType::GiveItem||Type==EDCConsequenceType::RemoveItem", EditConditionHides))
 	TSoftObjectPtr<UDCItemDefinition> Item;
 };

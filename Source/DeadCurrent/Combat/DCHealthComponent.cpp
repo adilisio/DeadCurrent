@@ -1,5 +1,6 @@
 #include "Combat/DCHealthComponent.h"
 #include "GameFramework/Actor.h"
+#include "World/DCWorldStateSubsystem.h"
 
 UDCHealthComponent::UDCHealthComponent()
 {
@@ -30,6 +31,9 @@ float UDCHealthComponent::ApplyDamage(const FDCDamageInfo& Damage)
 		CurrentHealth = 0.0f;
 		bDead = true;
 		OnDied.Broadcast(this, Damage);
+
+		// Deaths are world state: quests and other conditions re-check.
+		UDCWorldStateSubsystem::NotifyChanged(this);
 	}
 
 	return Applied;

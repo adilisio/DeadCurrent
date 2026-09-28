@@ -31,5 +31,6 @@ public:
 
 	const FDCDialogueNode* FindNode(FName NodeId) const;
 
-	FName ResolveEntry(const class UDCQuestComponent* Quests) const;
+	/** First entry whose conditions pass for Context, otherwise EntryNodeId. */
+	FName ResolveEntry(const struct FDCRuleContext& Context) const;
 };

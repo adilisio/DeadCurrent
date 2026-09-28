@@ -9,7 +9,6 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Kismet/GameplayStatics.h"
-#include "Quest/DCQuestComponent.h"
 #include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
@@ -129,17 +128,6 @@ void ADCScavengerCharacter::HandleDied(UDCHealthComponent* Health, const FDCDama
 		ADCHUD::ShowMessageFor(Pawn, LOCTEXT("Down", "Scavenger down."), 2.0f);
 	}
 
-	if (UWorld* World = GetWorld())
-	{
-		if (APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0))
-		{
-			if (UDCQuestComponent* Quests = Player->FindComponentByClass<UDCQuestComponent>())
-			{
-				Quests->NotifyHostileDied();
-			}
-		}
-	}
-
 	Die();
 }
 
@@ -253,6 +241,9 @@ void ADCScavengerCharacter::ApplyPersistentState_Implementation(const FDCPersist
 
 	if (!State.bAlive && HealthComponent && !HealthComponent->IsDead())
 	{
+		// Mark the health component dead too (without OnDied), so the corpse is lootable
+		// and ActorDead conditions hold after a load.
+		HealthComponent->ApplyLoadedState(0.0f, true);
 		Die();
 	}
 

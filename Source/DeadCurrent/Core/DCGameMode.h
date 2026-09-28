@@ -14,4 +14,6 @@ class DEADCURRENT_API ADCGameMode : public AGameModeBase
 
 public:
 	ADCGameMode();
+
+	virtual void StartPlay() override;
 };

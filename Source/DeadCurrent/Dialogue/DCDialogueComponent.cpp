@@ -1,7 +1,7 @@
 #include "Dialogue/DCDialogueComponent.h"
 #include "Dialogue/DCDialogueAsset.h"
 #include "GameFramework/PlayerController.h"
-#include "Quest/DCQuestComponent.h"
+#include "Core/DCGameplayRules.h"
 
 UDCDialogueComponent::UDCDialogueComponent()
 {
@@ -49,7 +49,7 @@ bool UDCDialogueComponent::StartDialogue(const UDCDialogueAsset* Asset, AActor* 
 
 	ActiveAsset = Asset;
 	Participant = InParticipant;
-	if (!AdvanceTo(Asset->ResolveEntry(GetQuestComponent())))
+	if (!AdvanceTo(Asset->ResolveEntry(FDCRuleContext::ForActor(GetOwner()))))
 	{
 		ActiveAsset = nullptr;
 		Participant = nullptr;
@@ -88,11 +88,9 @@ bool UDCDialogueComponent::SelectChoice(int32 ChoiceIndex)
 		return false;
 	}
 
-	const FDCDialogueChoice& Choice = Node->Choices[Visible[ChoiceIndex]];
-	if (UDCQuestComponent* Quests = GetQuestComponent())
-	{
-		Quests->ApplyAll(Choice.Consequences);
-	}
+	// Copy what we need first: consequences may change state the node list depends on.
+	const FDCDialogueChoice Choice = Node->Choices[Visible[ChoiceIndex]];
+	UDCGameplayRules::ApplyConsequences(Choice.Consequences, FDCRuleContext::ForActor(GetOwner()));
 
 	if (Choice.NextNodeId.IsNone())
 	{
@@ -117,20 +115,15 @@ TArray<int32> UDCDialogueComponent::GetVisibleChoiceIndices() const
 		return Visible;
 	}
 
-	const UDCQuestComponent* Quests = GetQuestComponent();
+	const FDCRuleContext Context = FDCRuleContext::ForActor(GetOwner());
 	for (int32 Index = 0; Index < Node->Choices.Num(); ++Index)
 	{
-		if (!Quests || Quests->MeetsAll(Node->Choices[Index].Conditions))
+		if (UDCGameplayRules::CheckConditions(Node->Choices[Index].Conditions, Context))
 		{
 			Visible.Add(Index);
 		}
 	}
 	return Visible;
-}
-
-UDCQuestComponent* UDCDialogueComponent::GetQuestComponent() const
-{
-	return GetOwner() ? GetOwner()->FindComponentByClass<UDCQuestComponent>() : nullptr;
 }
 
 bool UDCDialogueComponent::AdvanceTo(FName NodeId)

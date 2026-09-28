@@ -62,8 +62,6 @@ public:
 
 private:
 
-	class UDCQuestComponent* GetQuestComponent() const;
-
 	bool AdvanceTo(FName NodeId);
 
 	UPROPERTY()

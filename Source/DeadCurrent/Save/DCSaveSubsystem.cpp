@@ -10,13 +10,19 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "Quest/DCQuestComponent.h"
-#include "Quest/DCQuestDefinition.h"
 #include "Save/DCPersistent.h"
 #include "Save/DCPersistentRegistry.h"
 #include "Save/DCSaveGame.h"
 #include "UI/DCHUD.h"
+#include "World/DCWorldStateSubsystem.h"
 
 const FString UDCSaveSubsystem::SlotName = TEXT("DeadCurrent");
+
+/** Map package without the PIE prefix, e.g. /Game/Maps/Lvl_Boathouse. */
+static FString DCMapPackage(const UWorld* World)
+{
+	return World ? UWorld::RemovePIEPrefix(World->GetOutermost()->GetName()) : FString();
+}
 
 static FString DCShortMapName(const UWorld* World)
 {
@@ -25,7 +31,7 @@ static FString DCShortMapName(const UWorld* World)
 		return FString();
 	}
 
-	const FString FromPackage = FPackageName::GetShortName(World->GetOutermost()->GetName());
+	const FString FromPackage = FPackageName::GetShortName(DCMapPackage(World));
 	return FromPackage.IsEmpty() ? World->GetMapName() : FromPackage;
 }
 
@@ -76,28 +82,6 @@ static bool DCTakeFlatInventory(const UDCSaveGame* Save, FName Id, TArray<FDCSav
 	return Save->WorldInvActorIds.Contains(Id);
 }
 
-void UDCSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-
-	static const TCHAR* ItemPaths[] = {
-		TEXT("/Game/Items/DA_Item_Pistol.DA_Item_Pistol"),
-		TEXT("/Game/Items/DA_Item_Ammo9mm.DA_Item_Ammo9mm"),
-		TEXT("/Game/Items/DA_Item_FieldDressing.DA_Item_FieldDressing"),
-		TEXT("/Game/Items/DA_Item_SalvagedWiring.DA_Item_SalvagedWiring"),
-		TEXT("/Game/Items/DA_Item_RadioCoil.DA_Item_RadioCoil"),
-	};
-	for (const TCHAR* Path : ItemPaths)
-	{
-		if (UDCItemDefinition* Item = LoadObject<UDCItemDefinition>(nullptr, Path))
-		{
-			PreloadedItems.Add(Item);
-		}
-	}
-
-	LoadObject<UDCQuestDefinition>(nullptr, TEXT("/Game/Quests/DA_Quest_ShoreWatch.DA_Quest_ShoreWatch"));
-}
-
 bool UDCSaveSubsystem::SaveCurrentGame()
 {
 	UWorld* World = GetWorld();
@@ -109,8 +93,17 @@ bool UDCSaveSubsystem::SaveCurrentGame()
 		return false;
 	}
 
+	// A save taken while dead would load into a dead player with no respawn pending.
+	if (Player->GetHealthComponent() && Player->GetHealthComponent()->IsDead())
+	{
+		ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "DeadNoSave", "You can't save now."), 2.0f);
+		return false;
+	}
+
 	UDCSaveGame* Save = Cast<UDCSaveGame>(UGameplayStatics::CreateSaveGameObject(UDCSaveGame::StaticClass()));
+	Save->SaveVersion = UDCSaveGame::CurrentVersion;
 	Save->MapName = DCShortMapName(World);
+	Save->MapPackage = DCMapPackage(World);
 	CapturePlayer(Save, Player);
 	CaptureWorld(Save, World);
 
@@ -118,21 +111,20 @@ bool UDCSaveSubsystem::SaveCurrentGame()
 	ADCHUD::ShowMessageFor(Player, bOk
 		? NSLOCTEXT("DCSave", "Saved", "Saved.")
 		: NSLOCTEXT("DCSave", "SaveFailed", "Save failed."), 2.0f);
-	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] SaveCurrentGame %s"), bOk ? TEXT("ok") : TEXT("failed"));
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] SaveCurrentGame %s (%s, %d quests, %d flags)"), bOk ? TEXT("ok") : TEXT("failed"),
+		*Save->MapPackage, Save->Quests.Num(), Save->WorldFlags.Num());
 	return bOk;
 }
 
 bool UDCSaveSubsystem::LoadCurrentGame()
 {
 	UWorld* World = GetWorld();
-	ADCPlayerCharacter* Player = World
-		? Cast<ADCPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0))
-		: nullptr;
-	if (!World || !Player)
+	if (!World)
 	{
 		return false;
 	}
 
+	APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0);
 	UDCSaveGame* Save = Cast<UDCSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
 	if (!Save)
 	{
@@ -140,19 +132,73 @@ bool UDCSaveSubsystem::LoadCurrentGame()
 		return false;
 	}
 
+	FString Map = Save->MapPackage.IsEmpty() ? Save->MapName : Save->MapPackage;
+	if (Map.IsEmpty())
+	{
+		Map = DCMapPackage(World);
+	}
+
+	// Reopen the map so every actor starts fresh (pickups back, enemies alive), then apply the save.
+	PendingLoad = Save;
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] LoadCurrentGame: opening %s (save version %d)"), *Map, Save->SaveVersion);
+	UGameplayStatics::OpenLevel(World, FName(*Map));
+	return true;
+}
+
+void UDCSaveSubsystem::ApplyPendingLoad(UWorld* World)
+{
+	if (!PendingLoad || !World)
+	{
+		return;
+	}
+
+	UDCSaveGame* Save = PendingLoad;
+	PendingLoad = nullptr;
+
+	ADCPlayerCharacter* Player = Cast<ADCPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0));
+	if (!Player)
+	{
+		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCSAVE] ApplyPendingLoad: no player character"));
+		return;
+	}
+
 	if (!DCMapsMatch(Save->MapName, World))
 	{
 		ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "WrongMap", "Save is for a different map."), 3.0f);
-		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCSAVE] LoadCurrentGame skipped: save map %s, current %s"),
+		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCSAVE] ApplyPendingLoad skipped: save map %s, current %s"),
 			*Save->MapName, *DCShortMapName(World));
-		return false;
+		return;
 	}
 
 	ApplyWorld(Save, World);
 	ApplyPlayer(Save, Player);
 	ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "Loaded", "Loaded."), 2.0f);
-	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] LoadCurrentGame ok (%d world actors)"), Save->WorldActors.Num());
-	return true;
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] load applied (%d world actors, %d quests, %d flags)"),
+		Save->WorldActors.Num(), Save->Quests.Num(), Save->WorldFlags.Num());
+}
+
+void UDCSaveSubsystem::CaptureProgress(UDCSaveGame* Save, const UDCQuestComponent* Quests, const UDCWorldStateSubsystem* WorldState)
+{
+	if (Quests)
+	{
+		Quests->CaptureState(Save->Quests);
+	}
+	if (WorldState)
+	{
+		Save->WorldFlags = WorldState->GetFlags();
+	}
+}
+
+void UDCSaveSubsystem::ApplyProgress(const UDCSaveGame* Save, UDCQuestComponent* Quests, UDCWorldStateSubsystem* WorldState)
+{
+	if (WorldState)
+	{
+		WorldState->ReplaceFlags(Save->WorldFlags);
+	}
+	if (Quests)
+	{
+		Quests->ReplaceFromSaved(Save->Quests);
+	}
 }
 
 void UDCSaveSubsystem::CapturePlayer(UDCSaveGame* Save, const ADCPlayerCharacter* Player) const
@@ -185,13 +231,10 @@ void UDCSaveSubsystem::CapturePlayer(UDCSaveGame* Save, const ADCPlayerCharacter
 		Save->bWeaponHolstered = Firearm->IsHolstered();
 	}
 
-	if (const UDCQuestComponent* Quests = Player->GetQuestComponent())
-	{
-		Quests->CaptureState(Save->Quests, Save->WorldFlags);
-	}
+	CaptureProgress(Save, Player->GetQuestComponent(), UDCWorldStateSubsystem::Get(Player));
 }
 
-void UDCSaveSubsystem::ApplyPlayer(UDCSaveGame* Save, ADCPlayerCharacter* Player) const
+void UDCSaveSubsystem::ApplyPlayer(const UDCSaveGame* Save, ADCPlayerCharacter* Player) const
 {
 	Player->BeginSaveRestore();
 
@@ -218,15 +261,12 @@ void UDCSaveSubsystem::ApplyPlayer(UDCSaveGame* Save, ADCPlayerCharacter* Player
 		Firearm->SetHolstered(Save->bWeaponHolstered);
 	}
 
-	if (UDCQuestComponent* Quests = Player->GetQuestComponent())
-	{
-		Quests->ReplaceFromSaved(Save->Quests, Save->WorldFlags);
-	}
+	ApplyProgress(Save, Player->GetQuestComponent(), UDCWorldStateSubsystem::Get(Player));
 
 	Player->EndSaveRestore();
 }
 
-void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World) const
+void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World)
 {
 	const UDCPersistentRegistry* Registry = World->GetSubsystem<UDCPersistentRegistry>();
 	if (!Registry)
@@ -263,7 +303,7 @@ void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World) const
 	}
 }
 
-void UDCSaveSubsystem::ApplyWorld(UDCSaveGame* Save, UWorld* World) const
+void UDCSaveSubsystem::ApplyWorld(const UDCSaveGame* Save, UWorld* World)
 {
 	UDCPersistentRegistry* Registry = World->GetSubsystem<UDCPersistentRegistry>();
 	if (!Registry)
