@@ -15,6 +15,22 @@
 
 const FString UDCSaveSubsystem::SlotName = TEXT("DeadCurrent");
 
+void UDCSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	static const TCHAR* ItemPaths[] = {
+		TEXT("/Game/Items/DA_Item_Pistol.DA_Item_Pistol"),
+		TEXT("/Game/Items/DA_Item_Ammo9mm.DA_Item_Ammo9mm"),
+		TEXT("/Game/Items/DA_Item_FieldDressing.DA_Item_FieldDressing"),
+		TEXT("/Game/Items/DA_Item_SalvagedWiring.DA_Item_SalvagedWiring"),
+	};
+	for (const TCHAR* Path : ItemPaths)
+	{
+		LoadObject<UDCItemDefinition>(nullptr, Path);
+	}
+}
+
 bool UDCSaveSubsystem::SaveCurrentGame()
 {
 	UWorld* World = GetWorld();

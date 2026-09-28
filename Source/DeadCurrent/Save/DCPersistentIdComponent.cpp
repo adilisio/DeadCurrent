@@ -6,12 +6,14 @@
 UDCPersistentIdComponent::UDCPersistentIdComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UDCPersistentIdComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetComponentTickEnabled(bDrawId && !PersistentId.IsNone());
 
 	if (UWorld* World = GetWorld())
 	{

@@ -34,5 +34,5 @@ protected:
 	FName PersistentId;
 
 	UPROPERTY(EditAnywhere, Category="Save")
-	bool bDrawId = true;
+	bool bDrawId = false;
 };

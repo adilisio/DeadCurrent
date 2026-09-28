@@ -179,13 +179,13 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 `UDCPersistentIdComponent` (`Save/`) holds an authored `FName` unique within the map (e.g. `gym.scavenger`, `gym.mara`). `UDCPersistentRegistry` is a world subsystem that registers those IDs at BeginPlay and can `FindActor` by id. Duplicate ids log an error and are rejected.
 
-`IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture stores id, existence, alive/dead, door yaw, and inventory stacks. Cyan debug labels draw the id above those actors (`bDrawId`).
+`IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture stores id, existence, alive/dead, door yaw, and inventory stacks. Cyan debug labels can draw the id above those actors (`bDrawId`, off by default). Scavenger patrol/chase text (`bDrawState`) is also off by default.
 
 Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`.
 
 Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`.
 
-`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. The first F9 after a process start can hitch while item assets resolve; polish that in FP-15.
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. Item data assets are loaded when the subsystem starts so F9 does not hitch on first resolve.
 
 Automation tests `DeadCurrent.Save.PersistentId` and `DeadCurrent.Save.InventoryRestore` cover lookup and inventory snapshot restore.
 

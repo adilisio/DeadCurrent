@@ -17,6 +17,8 @@ class DEADCURRENT_API UDCSaveSubsystem : public UGameInstanceSubsystem
 
 public:
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 	static const FString SlotName;
 
 	UFUNCTION(BlueprintCallable, Category="Save")

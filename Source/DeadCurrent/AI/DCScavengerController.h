@@ -52,7 +52,7 @@ protected:
 	float PatrolPause = 1.2f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	bool bDrawState = true;
+	bool bDrawState = false;
 
 private:
 
