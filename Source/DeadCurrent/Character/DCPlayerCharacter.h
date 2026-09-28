@@ -5,6 +5,7 @@
 #include "DCPlayerCharacter.generated.h"
 
 class UCameraComponent;
+class UDCInteractorComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -25,6 +26,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UCameraComponent* FirstPersonCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCInteractorComponent* InteractorComponent;
 
 protected:
 
@@ -48,6 +52,10 @@ protected:
 	/** Pressed to toggle crouch */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* CrouchAction;
+
+	/** Pressed to use the focused interactable */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* InteractAction;
 
 	/** Ground speed while sprinting. Normal speed is the movement component's MaxWalkSpeed. */
 	UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="0", Units="cm/s"))
@@ -104,6 +112,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoCrouchToggle();
 
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoInteract();
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -111,6 +122,10 @@ public:
 	USkeletalMeshComponent* GetFirstPersonMesh() const { return FirstPersonMesh; }
 
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+	UDCInteractorComponent* GetInteractorComponent() const { return InteractorComponent; }
+
+	const UInputAction* GetInteractAction() const { return InteractAction; }
 
 private:
 

@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
+#include "Interaction/DCInteractorComponent.h"
 
 ADCPlayerCharacter::ADCPlayerCharacter()
 {
@@ -26,6 +27,8 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
 	FirstPersonCameraComponent->FirstPersonFieldOfView = 70.0f;
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
+
+	InteractorComponent = CreateDefaultSubobject<UDCInteractorComponent>(TEXT("Interactor"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -73,6 +76,8 @@ void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADCPlayerCharacter::DoSprintEnd);
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoCrouchToggle);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoInteract);
 	}
 	else
 	{
@@ -147,6 +152,11 @@ void ADCPlayerCharacter::DoCrouchToggle()
 		bSprintHeld = false;
 		Crouch();
 	}
+}
+
+void ADCPlayerCharacter::DoInteract()
+{
+	InteractorComponent->TryInteract();
 }
 
 void ADCPlayerCharacter::UpdateSprint()

@@ -1,6 +1,6 @@
-"""FP-02: create sprint/crouch input actions, map them, and assign them to the player Blueprint.
+"""Create the project's player input actions, map them in IMC_Default, and assign them to the player Blueprint.
 
-Safe to re-run. Run with:
+Add new player actions to ACTION_KEYS and BP_PROPERTIES. Safe to re-run. Run with:
 UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> -unattended -nullrhi
 """
 import unreal
@@ -12,16 +12,23 @@ PLAYER_BP_PATH = "/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"
 ACTION_KEYS = {
     "IA_Sprint": ["LeftShift", "Gamepad_LeftThumbstick"],
     "IA_Crouch": ["LeftControl", "C", "Gamepad_FaceButton_Right"],
+    "IA_Interact": ["E", "Gamepad_FaceButton_Left"],
 }
 
 BP_PROPERTIES = {
     "IA_Sprint": "sprint_action",
     "IA_Crouch": "crouch_action",
+    "IA_Interact": "interact_action",
 }
 
 
 def log(msg):
-    unreal.log_warning("[FP02] " + msg)
+    unreal.log_warning("[DCINPUT] " + msg)
+
+
+def save(asset):
+    if not unreal.EditorAssetLibrary.save_loaded_asset(asset, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {asset.get_path_name()} (is the file read-only?)")
 
 
 def get_or_create_action(name):
@@ -31,7 +38,7 @@ def get_or_create_action(name):
     tools = unreal.AssetToolsHelpers.get_asset_tools()
     action = tools.create_asset(name, ACTIONS_PATH, unreal.InputAction, unreal.InputAction_Factory())
     action.set_editor_property("value_type", unreal.InputActionValueType.BOOLEAN)
-    unreal.EditorAssetLibrary.save_loaded_asset(action)
+    save(action)
     log(f"created {path}")
     return action
 
@@ -59,7 +66,7 @@ def main():
                 imc.map_key(action, make_key(key))
                 log(f"mapped {name} <- {key}")
     # map_key does not mark the package dirty.
-    unreal.EditorAssetLibrary.save_loaded_asset(imc, only_if_is_dirty=False)
+    save(imc)
 
     bp = unreal.load_asset(PLAYER_BP_PATH)
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
@@ -67,7 +74,7 @@ def main():
     for name, prop in BP_PROPERTIES.items():
         cdo.set_editor_property(prop, actions[name])
         log(f"{PLAYER_BP_PATH}.{prop} = {name}")
-    unreal.EditorAssetLibrary.save_loaded_asset(bp, only_if_is_dirty=False)
+    save(bp)
     log("done")
 
 

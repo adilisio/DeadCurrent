@@ -6,7 +6,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 - Unreal Engine 5.8 (installed build, `EngineAssociation` = `5.8`)
 - Visual Studio 2026 Build Tools with MSVC 14.51, Windows SDK 10.0.26100
-- Git with Git LFS for binary assets (see `.gitattributes`)
+- Git with Git LFS for binary assets (see `.gitattributes`). Assets are not marked `lockable`: LFS makes lockable files read-only until locked, which breaks editor and script saves. Add locking only if more people start editing the same assets.
 
 ## Building from a clean clone
 
@@ -20,6 +20,10 @@ Living document. Update it whenever a foundational system lands or a convention 
    Or right-click `DeadCurrent.uproject` > Generate Visual Studio project files, then build `DeadCurrentEditor` from the IDE.
 3. Open `DeadCurrent.uproject`. The editor and game start in `/Game/Maps/Lvl_TestGym`.
 
+## Playtesting
+
+`Tools/PlayTest.bat` launches the game standalone (no editor) in a 1280x720 window on the discrete GPU, with reduced graphics for low-end machines: Medium scalability, no Lumen, screen space reflections, no virtual shadow maps, no volumetric clouds, 60 FPS cap. The project's own rendering settings are unchanged. It uses the compiled editor build, so rebuild `DeadCurrentEditor` after C++ changes. The first launch compiles shaders and takes several minutes.
+
 ## Editor scripts
 
 `Tools/EditorScripts/` holds Python scripts that create or regenerate assets, so generated content can be rebuilt instead of hand-edited. They need the editor-only `PythonScriptPlugin` and `EditorScriptingUtilities` plugins, which the project enables. Run one headless with:
@@ -30,8 +34,9 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 | Script | Does |
 | --- | --- |
-| `fp02_setup_input.py` | Creates `IA_Sprint` and `IA_Crouch`, maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run. |
-| `fp02_build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
+| `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
+| `create_items.py` | Creates or updates the item definitions in `/Game/Items`. Safe to re-run; edits made in the editor to those items are overwritten. |
+| `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
 ## Player controls
@@ -43,18 +48,54 @@ Living document. Update it whenever a foundational system lands or a convention 
 | Jump | Space | A / Cross |
 | Sprint (hold, forward only) | Left Shift | Left stick click |
 | Crouch (toggle) | Left Ctrl, C | B / Circle |
+| Interact | E | X / Square |
 
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 
 ## Test gym
 
-`Lvl_TestGym` is a greybox movement test map (not World Partition). From the spawn, facing forward:
+`Lvl_TestGym` is a greybox movement and interaction test map (not World Partition). Interactables use the colored prototype material. From the spawn, facing forward:
 
+- just ahead: an inspectable crate (right) and sign (left), and a table with the four test item pickups
 - center: sprint lane with a floor marker every 5 m
 - left: stairs up to 1.8 m platforms with 2 m, 3.5 m and 5 m gaps (5 m should need a sprint)
 - right: a 30 degree walkable ramp and a 50 degree ramp that should not be climbable
 - far right: ledges at 20, 40, 60, 80 and 110 cm (20 and 40 step up, 60 and 80 need a jump, 110 is out of reach)
-- far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway into a 1 m corridor
+- far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
+
+## Interaction
+
+Anything the player can use implements `IDCInteractable` (`Interaction/DCInteractable.h`), in C++ or Blueprint:
+
+- `CanInteract(Interactor)`: unusable interactables show no prompt
+- `GetInteractionPrompt(Interactor)`: action and target name, shown as `[E] Open Test Door`
+- `GetInteractionType()`: an `Interaction.*` tag
+- `Interact(Interactor)`
+
+`UDCInteractorComponent` on the player sweeps from the view point each frame (2.5 m range, 8 cm radius, Visibility channel), keeps the usable interactable in focus, and broadcasts `OnFocusChanged`. The interact input calls `TryInteract()`. `ADCHUD` draws the prompt from the focused actor, so new interactable types need no UI or player changes.
+
+Current implementations: `ADCInspectableActor` (shows a description), `ADCDoor` (swings away from the user). Pickups, containers, corpses and NPCs will implement the same interface.
+
+## Items
+
+Each kind of item is a `UDCItemDefinition` Data Asset in `/Game/Items`, named `DA_Item_<Name>`. It holds:
+
+- `ItemId`: the stable identifier saves will store. Never change it after an item exists in a save.
+- `DisplayName`, `Description`, `Category` (an `Item.*` tag), `Weight` (kg), `Value`, `MaxStackSize`
+- `Icon`, `WorldMesh`, `WorldMeshScale` (lets generic meshes stand in until an item has its own art)
+
+The editor's data validation flags definitions missing an ID, name or category.
+
+`ADCItemPickup` is an item lying in the world. It references a definition and a quantity, and takes its mesh and prompt text (`[E] Take 9mm Rounds (24)`) from the definition.
+
+| Asset | ItemId | Category | Stack |
+| --- | --- | --- | --- |
+| `DA_Item_Pistol` | `pistol_service` | `Item.Weapon.Firearm` | 1 |
+| `DA_Item_Ammo9mm` | `ammo_9mm` | `Item.Ammo` | 999 |
+| `DA_Item_FieldDressing` | `field_dressing` | `Item.Consumable.Medical` | 10 |
+| `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
+
+`ADCHUD` is a temporary canvas HUD (crosshair dot, prompt, timed messages via `ADCHUD::ShowMessageFor`). It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 
@@ -78,6 +119,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `AI/` | Enemy controllers, perception, behavior |
 | `Dialogue/` | Dialogue data and runtime |
 | `Save/` | Save game, persistent IDs, persistence interfaces |
+| `UI/` | HUD and widget base classes |
 | `World/` | Persistent world objects and world state |
 
 Split into more modules only when a boundary is proven (for example an editor-only tools module).
