@@ -100,6 +100,7 @@ def door(label, folder, hinge, width, height, thickness, display_name):
     leaf.set_editor_property("relative_location", unreal.Vector(-thickness / 2 - CUBE_MIN.x * scale.x,
                                                                1.0 - CUBE_MIN.y * scale.y,
                                                                1.0 - CUBE_MIN.z * scale.z))
+    set_persistent_id(actor, "gym.door")
     return actor
 
 
@@ -227,7 +228,16 @@ def resolve_soft(value):
     return unreal.load_asset(str(value))
 
 
-def pickup(label, folder, item_path, quantity, x, y, surface_z, yaw=0.0):
+def set_persistent_id(actor, persistent_id):
+    comp = actor.get_component_by_class(unreal.DCPersistentIdComponent)
+    if not comp:
+        log(f"no PersistentId on {actor.get_actor_label()}")
+        return
+    comp.set_editor_property("persistent_id", persistent_id)
+    log(f"id {actor.get_actor_label()}={persistent_id}")
+
+
+def pickup(label, folder, item_path, quantity, x, y, surface_z, yaw=0.0, persistent_id=None):
     """Item pickup resting on a surface at `surface_z`, centered on (x, y)."""
     item = unreal.load_asset(item_path)
     mesh = resolve_soft(item.get_editor_property("world_mesh"))
@@ -245,6 +255,8 @@ def pickup(label, folder, item_path, quantity, x, y, surface_z, yaw=0.0):
     mesh_comp = actor.get_editor_property("mesh")
     mesh_comp.set_static_mesh(mesh)
     mesh_comp.set_editor_property("relative_scale3d", scale)
+    if persistent_id:
+        set_persistent_id(actor, persistent_id)
     return actor
 
 
@@ -252,10 +264,14 @@ def build_spawn_props():
     folder = "SpawnProps"
     table_top = 75
     block("Table", folder, 320, 380, -90, 90, 0, table_top)
-    pickup("Pickup_Pistol", folder, "/Game/Items/DA_Item_Pistol", 1, 350, -55, table_top)
-    pickup("Pickup_Ammo9mm", folder, "/Game/Items/DA_Item_Ammo9mm", 24, 350, -10, table_top)
-    pickup("Pickup_FieldDressing", folder, "/Game/Items/DA_Item_FieldDressing", 2, 350, 25, table_top)
-    pickup("Pickup_SalvagedWiring", folder, "/Game/Items/DA_Item_SalvagedWiring", 3, 350, 60, table_top)
+    pickup("Pickup_Pistol", folder, "/Game/Items/DA_Item_Pistol", 1, 350, -55, table_top,
+           persistent_id="gym.pickup_pistol")
+    pickup("Pickup_Ammo9mm", folder, "/Game/Items/DA_Item_Ammo9mm", 24, 350, -10, table_top,
+           persistent_id="gym.pickup_ammo")
+    pickup("Pickup_FieldDressing", folder, "/Game/Items/DA_Item_FieldDressing", 2, 350, 25, table_top,
+           persistent_id="gym.pickup_dressing")
+    pickup("Pickup_SalvagedWiring", folder, "/Game/Items/DA_Item_SalvagedWiring", 3, 350, 60, table_top,
+           persistent_id="gym.pickup_wiring")
     inspectable("Crate", folder, (350, 250, 30), (60, 60, 60), "Weathered Crate",
                 "Stenciled letters, mostly flaked away: GREAT LAKES MARITIME SUPPLY. The lid is nailed shut.")
     inspectable("Sign", folder, (350, -250, 80), (10, 120, 160), "Test Gym Sign",
@@ -347,6 +363,7 @@ def build_scavenger():
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
     )
+    set_persistent_id(scav, "gym.scavenger")
 
     inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
                 "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage.")
@@ -364,6 +381,7 @@ def build_npc():
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
     )
+    set_persistent_id(npc, "gym.mara")
     inspectable("NPCSign", folder, (420, 1280, 80), (8, 100, 140), "Shore watcher",
                 "Mara waits here, out of the scavenger's sight. Press E to talk, then 1/2/3 to choose replies.")
 

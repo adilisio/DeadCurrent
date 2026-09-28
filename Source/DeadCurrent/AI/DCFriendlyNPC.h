@@ -3,15 +3,17 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interaction/DCInteractable.h"
+#include "Save/DCPersistent.h"
 #include "DCFriendlyNPC.generated.h"
 
 class UDCDialogueAsset;
+class UDCPersistentIdComponent;
 
 /**
  *  Idle friendly character. Talk starts a dialogue asset (FP-11).
  */
 UCLASS()
-class DEADCURRENT_API ADCFriendlyNPC : public ACharacter, public IDCInteractable
+class DEADCURRENT_API ADCFriendlyNPC : public ACharacter, public IDCInteractable, public IDCPersistent
 {
 	GENERATED_BODY()
 
@@ -25,7 +27,14 @@ public:
 	virtual FGameplayTag GetInteractionType_Implementation() const override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
+	virtual FName GetPersistentId_Implementation() const override;
+	virtual void CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const override;
+	virtual void ApplyPersistentState_Implementation(const FDCPersistentActorState& State) override;
+
 protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UDCPersistentIdComponent> PersistentIdComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC")
 	FText DisplayName;

@@ -3,16 +3,18 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interaction/DCInteractable.h"
+#include "Save/DCPersistent.h"
 #include "DCDoor.generated.h"
 
 class UStaticMeshComponent;
+class UDCPersistentIdComponent;
 
 /**
  *  A hinged door that swings open away from whoever uses it.
  *  The actor origin is the hinge; the door leaf should extend along the actor's +Y axis.
  */
 UCLASS()
-class DEADCURRENT_API ADCDoor : public AActor, public IDCInteractable
+class DEADCURRENT_API ADCDoor : public AActor, public IDCInteractable, public IDCPersistent
 {
 	GENERATED_BODY()
 
@@ -26,6 +28,10 @@ public:
 	virtual FGameplayTag GetInteractionType_Implementation() const override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
+	virtual FName GetPersistentId_Implementation() const override;
+	virtual void CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const override;
+	virtual void ApplyPersistentState_Implementation(const FDCPersistentActorState& State) override;
+
 	UFUNCTION(BlueprintPure, Category="Door")
 	bool IsOpen() const { return bIsOpen; }
 
@@ -38,6 +44,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UStaticMeshComponent> DoorMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UDCPersistentIdComponent> PersistentIdComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Door")
 	FText DisplayName;

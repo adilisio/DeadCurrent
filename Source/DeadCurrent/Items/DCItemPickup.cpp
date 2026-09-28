@@ -5,6 +5,7 @@
 #include "Engine/StaticMesh.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 
 #define LOCTEXT_NAMESPACE "DCItemPickup"
@@ -14,6 +15,8 @@ ADCItemPickup::ADCItemPickup()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
 	SetRootComponent(Mesh);
+
+	PersistentIdComponent = CreateDefaultSubobject<UDCPersistentIdComponent>(TEXT("PersistentId"));
 }
 
 void ADCItemPickup::OnConstruction(const FTransform& Transform)
@@ -77,6 +80,26 @@ void ADCItemPickup::Interact_Implementation(AActor* Interactor)
 
 	Quantity -= Taken;
 	if (Quantity <= 0)
+	{
+		Destroy();
+	}
+}
+
+FName ADCItemPickup::GetPersistentId_Implementation() const
+{
+	return UDCPersistentIdComponent::GetIdOnActor(this);
+}
+
+void ADCItemPickup::CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const
+{
+	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
+	OutState.bExists = Quantity > 0;
+	OutState.bAlive = true;
+}
+
+void ADCItemPickup::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
+{
+	if (!State.bExists)
 	{
 		Destroy();
 	}

@@ -4,17 +4,19 @@
 #include "Combat/DCDamageable.h"
 #include "GameFramework/Character.h"
 #include "Interaction/DCInteractable.h"
+#include "Save/DCPersistent.h"
 #include "DCScavengerCharacter.generated.h"
 
 class UDCHealthComponent;
 class UDCInventoryComponent;
+class UDCPersistentIdComponent;
 
 /**
  *  Hostile scavenger. Combat brain lives on ADCScavengerController.
  *  After death the body is a loot container using the same inventory component.
  */
 UCLASS()
-class DEADCURRENT_API ADCScavengerCharacter : public ACharacter, public IDCDamageable, public IDCInteractable
+class DEADCURRENT_API ADCScavengerCharacter : public ACharacter, public IDCDamageable, public IDCInteractable, public IDCPersistent
 {
 	GENERATED_BODY()
 
@@ -27,6 +29,10 @@ public:
 	virtual FDCInteractionPrompt GetInteractionPrompt_Implementation(AActor* Interactor) const override;
 	virtual FGameplayTag GetInteractionType_Implementation() const override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
+
+	virtual FName GetPersistentId_Implementation() const override;
+	virtual void CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const override;
+	virtual void ApplyPersistentState_Implementation(const FDCPersistentActorState& State) override;
 
 	/** Swing at Target if in range and off cooldown. Returns true if damage was applied. */
 	UFUNCTION(BlueprintCallable, Category="Combat")
@@ -50,6 +56,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UDCInventoryComponent> InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UDCPersistentIdComponent> PersistentIdComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AI")
 	TArray<FVector> PatrolPoints;

@@ -169,9 +169,19 @@ Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Ru
 UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCmds=Automation RunTests DeadCurrent; Quit" -TestExit="Automation Test Queue Empty"
 ```
 
-## HUD
+## Save
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, and a health bar. It will be replaced by UMG widgets when the HUD grows.
+`UDCPersistentIdComponent` (`Save/`) holds an authored `FName` unique within the map (e.g. `gym.scavenger`, `gym.mara`). `UDCPersistentRegistry` is a world subsystem that registers those IDs at BeginPlay and can `FindActor` by id. Duplicate ids log an error and are rejected.
+
+`IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture currently stores id, whether the actor still exists, and alive/dead for characters. Cyan debug labels draw the id above those actors (`bDrawId`).
+
+Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`.
+
+Automation test `DeadCurrent.Save.PersistentId` covers lookup, duplicate rejection and unregister.
+
+FP-13 will write these records into a save game.
+
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, and the dialogue panel. It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 

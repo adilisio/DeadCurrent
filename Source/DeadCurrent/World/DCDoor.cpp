@@ -1,6 +1,7 @@
 #include "World/DCDoor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
+#include "Save/DCPersistentIdComponent.h"
 
 #define LOCTEXT_NAMESPACE "DCDoor"
 
@@ -15,6 +16,8 @@ ADCDoor::ADCDoor()
 	DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
 	DoorMesh->SetupAttachment(Hinge);
 	DoorMesh->SetMobility(EComponentMobility::Movable);
+
+	PersistentIdComponent = CreateDefaultSubobject<UDCPersistentIdComponent>(TEXT("PersistentId"));
 
 	DisplayName = LOCTEXT("DefaultName", "Door");
 }
@@ -75,6 +78,23 @@ void ADCDoor::Interact_Implementation(AActor* Interactor)
 	}
 
 	SetActorTickEnabled(true);
+}
+
+FName ADCDoor::GetPersistentId_Implementation() const
+{
+	return UDCPersistentIdComponent::GetIdOnActor(this);
+}
+
+void ADCDoor::CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const
+{
+	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
+	OutState.bExists = true;
+	OutState.bAlive = true;
+}
+
+void ADCDoor::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
+{
+	(void)State;
 }
 
 #undef LOCTEXT_NAMESPACE

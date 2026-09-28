@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -20,6 +21,7 @@ ADCScavengerCharacter::ADCScavengerCharacter()
 
 	HealthComponent = CreateDefaultSubobject<UDCHealthComponent>(TEXT("Health"));
 	InventoryComponent = CreateDefaultSubobject<UDCInventoryComponent>(TEXT("Inventory"));
+	PersistentIdComponent = CreateDefaultSubobject<UDCPersistentIdComponent>(TEXT("PersistentId"));
 
 	GetCapsuleComponent()->SetCapsuleSize(42.0f, 92.0f);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -225,6 +227,26 @@ void ADCScavengerCharacter::Interact_Implementation(AActor* Interactor)
 		? FText::Format(LOCTEXT("LootedItems", "Took {0}"), FText::FromString(FString::Join(Parts, TEXT(", "))))
 		: LOCTEXT("Looted", "Looted the scavenger.");
 	ADCHUD::ShowMessageFor(Interactor, Message, 2.5f);
+}
+
+FName ADCScavengerCharacter::GetPersistentId_Implementation() const
+{
+	return UDCPersistentIdComponent::GetIdOnActor(this);
+}
+
+void ADCScavengerCharacter::CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const
+{
+	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
+	OutState.bExists = true;
+	OutState.bAlive = !(HealthComponent && HealthComponent->IsDead());
+}
+
+void ADCScavengerCharacter::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
+{
+	if (!State.bAlive && HealthComponent && !HealthComponent->IsDead())
+	{
+		Die();
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

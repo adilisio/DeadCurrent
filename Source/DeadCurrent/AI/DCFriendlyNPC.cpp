@@ -8,6 +8,7 @@
 #include "Dialogue/DCDialogueComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -18,6 +19,8 @@ ADCFriendlyNPC::ADCFriendlyNPC()
 	PrimaryActorTick.bCanEverTick = true;
 	AIControllerClass = nullptr;
 	AutoPossessAI = EAutoPossessAI::Disabled;
+
+	PersistentIdComponent = CreateDefaultSubobject<UDCPersistentIdComponent>(TEXT("PersistentId"));
 
 	GetCapsuleComponent()->SetCapsuleSize(42.0f, 92.0f);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -142,6 +145,23 @@ void ADCFriendlyNPC::Interact_Implementation(AActor* Interactor)
 	{
 		ADCHUD::ShowMessageFor(Interactor, Greeting, GreetingDuration);
 	}
+}
+
+FName ADCFriendlyNPC::GetPersistentId_Implementation() const
+{
+	return UDCPersistentIdComponent::GetIdOnActor(this);
+}
+
+void ADCFriendlyNPC::CapturePersistentState_Implementation(FDCPersistentActorState& OutState) const
+{
+	OutState.PersistentId = UDCPersistentIdComponent::GetIdOnActor(this);
+	OutState.bExists = true;
+	OutState.bAlive = true;
+}
+
+void ADCFriendlyNPC::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
+{
+	(void)State;
 }
 
 #undef LOCTEXT_NAMESPACE
