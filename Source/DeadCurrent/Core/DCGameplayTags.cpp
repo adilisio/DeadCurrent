@@ -10,6 +10,7 @@ namespace DCTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Ammo, "Item.Ammo", "Item is ammunition");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Consumable_Medical, "Item.Consumable.Medical", "Item heals or treats the user when consumed");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Salvage, "Item.Salvage", "Item is scrap used for crafting, repair or trade");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Quest, "Item.Quest", "Item is a quest object");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Actor_Hostile, "Actor.Hostile", "Actor is hostile to the player");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Actor_Friendly, "Actor.Friendly", "Actor is friendly to the player");

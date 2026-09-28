@@ -1,6 +1,7 @@
 #include "World/DCInspectableActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
+#include "Quest/DCQuestComponent.h"
 #include "UI/DCHUD.h"
 
 #define LOCTEXT_NAMESPACE "DCInspectableActor"
@@ -28,7 +29,19 @@ FGameplayTag ADCInspectableActor::GetInteractionType_Implementation() const
 
 void ADCInspectableActor::Interact_Implementation(AActor* Interactor)
 {
-	ADCHUD::ShowMessageFor(Interactor, Description, DescriptionDuration);
+	FText Line = Description;
+	if (!WorldFlag.IsNone() && !FlagDescription.IsEmpty() && Interactor)
+	{
+		if (const UDCQuestComponent* Quests = Interactor->FindComponentByClass<UDCQuestComponent>())
+		{
+			if (Quests->HasFlag(WorldFlag))
+			{
+				Line = FlagDescription;
+			}
+		}
+	}
+
+	ADCHUD::ShowMessageFor(Interactor, Line, DescriptionDuration);
 }
 
 #undef LOCTEXT_NAMESPACE

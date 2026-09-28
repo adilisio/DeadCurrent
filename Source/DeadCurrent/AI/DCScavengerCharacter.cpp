@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Kismet/GameplayStatics.h"
+#include "Quest/DCQuestComponent.h"
 #include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
@@ -126,6 +128,18 @@ void ADCScavengerCharacter::HandleDied(UDCHealthComponent* Health, const FDCDama
 	{
 		ADCHUD::ShowMessageFor(Pawn, LOCTEXT("Down", "Scavenger down."), 2.0f);
 	}
+
+	if (UWorld* World = GetWorld())
+	{
+		if (APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0))
+		{
+			if (UDCQuestComponent* Quests = Player->FindComponentByClass<UDCQuestComponent>())
+			{
+				Quests->NotifyHostileDied();
+			}
+		}
+	}
+
 	Die();
 }
 

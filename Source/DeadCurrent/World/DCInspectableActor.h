@@ -34,6 +34,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect", meta=(MultiLine="true"))
 	FText Description;
 
+	/** When set and the interactor has this world flag, FlagDescription is shown instead. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect")
+	FName WorldFlag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect", meta=(MultiLine="true"))
+	FText FlagDescription;
+
 	/** Seconds the description stays on screen */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect", meta=(ClampMin="0", Units="s"))
 	float DescriptionDuration = 5.0f;

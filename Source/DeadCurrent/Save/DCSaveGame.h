@@ -47,4 +47,10 @@ public:
 
 	UPROPERTY()
 	TArray<FDCPersistentActorState> WorldActors;
+
+	UPROPERTY()
+	TArray<FDCSavedQuestState> Quests;
+
+	UPROPERTY()
+	TArray<FName> WorldFlags;
 };

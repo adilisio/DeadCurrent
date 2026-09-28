@@ -31,6 +31,10 @@ ITEMS = [
          description="Copper wire stripped from dead machinery.",
          category="Item.Salvage", weight=0.25, value=4, stack=50,
          mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(16, 16, 5)),
+    dict(asset="DA_Item_RadioCoil", item_id="radio_coil", name="Radio Coil",
+         description="A copper coil pried from a scavenger's shore radio.",
+         category="Item.Quest", weight=0.2, value=8, stack=1,
+         mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(10, 10, 8)),
 ]
 
 

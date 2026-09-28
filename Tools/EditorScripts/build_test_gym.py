@@ -65,10 +65,13 @@ def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unrea
     return actor
 
 
-def inspectable(label, folder, center, size, display_name, description):
+def inspectable(label, folder, center, size, display_name, description, world_flag=None, flag_description=None):
     actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCInspectableActor)
     actor.set_editor_property("display_name", unreal.Text(display_name))
     actor.set_editor_property("description", unreal.Text(description))
+    if world_flag:
+        actor.set_editor_property("world_flag", unreal.Name(world_flag))
+        actor.set_editor_property("flag_description", unreal.Text(flag_description or ""))
     return actor
 
 
@@ -366,7 +369,9 @@ def build_scavenger():
     set_persistent_id(scav, "gym.scavenger")
 
     inspectable("ScavengerSign", folder, (2100, 700, 80), (8, 100, 140), "Scavenger",
-                "A scavenger patrols past the 20 m plates. Kill him, then look at the body and press E to loot ammo and salvage. F5 saves. F9 loads after you quit.")
+                "A scavenger patrols past the 20 m plates. Kill him, or take the radio coil from his camp, then talk to Mara. F5 saves. F9 loads after you quit.")
+    pickup("Pickup_RadioCoil", folder, "/Game/Items/DA_Item_RadioCoil", 1, 2380, -520, 20,
+           persistent_id="gym.pickup_coil")
 
 
 def build_npc():
@@ -383,7 +388,9 @@ def build_npc():
     )
     set_persistent_id(npc, "gym.mara")
     inspectable("NPCSign", folder, (420, 1280, 80), (8, 100, 140), "Shore watcher",
-                "Mara waits here, out of the scavenger's sight. Press E to talk, then 1/2/3 to choose replies.")
+                "Mara waits here. Talk with E. She has work if you want it: the scavenger on the lane, or the coil at his camp. 1/2/3 choose replies.",
+                world_flag="shore.cleared",
+                flag_description="Mara's watch is quieter. The scavenger's radio is dead, or he is.")
 
 
 def main():

@@ -85,6 +85,24 @@ int32 UDCInventoryComponent::GetQuantity(const UDCItemDefinition* Item) const
 	return Total;
 }
 
+int32 UDCInventoryComponent::GetQuantityByItemId(FName ItemId) const
+{
+	if (ItemId.IsNone())
+	{
+		return 0;
+	}
+
+	int32 Total = 0;
+	for (const FDCItemStack& Stack : Stacks)
+	{
+		if (Stack.Item && Stack.Item->ItemId == ItemId)
+		{
+			Total += Stack.Quantity;
+		}
+	}
+	return Total;
+}
+
 int32 UDCInventoryComponent::TransferAllTo(UDCInventoryComponent* Destination)
 {
 	if (!Destination || Destination == this || Stacks.IsEmpty())

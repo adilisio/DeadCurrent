@@ -14,6 +14,7 @@
 #include "Interaction/DCInteractorComponent.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Quest/DCQuestComponent.h"
 
 void ADCHUD::DrawHUD()
 {
@@ -28,6 +29,7 @@ void ADCHUD::DrawHUD()
 	DrawInteractionPrompt();
 	DrawMessage();
 	DrawDialogue();
+	DrawObjective();
 
 	if (bShowInventory)
 	{
@@ -107,7 +109,17 @@ void ADCHUD::DrawMessage()
 		return;
 	}
 
-	DrawCenteredText(CurrentMessage.ToString(), Canvas->ClipY * 0.75f, GEngine->GetMediumFont(), TextColor);
+	UFont* Font = GEngine->GetMediumFont();
+	const float MaxWidth = FMath::Max(120.0f, Canvas->ClipX - 80.0f);
+	TArray<FString> Lines;
+	WrapTextToWidth(CurrentMessage.ToString(), Font, MaxWidth, Lines);
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	float Y = Canvas->ClipY * 0.75f;
+	for (const FString& Line : Lines)
+	{
+		DrawCenteredText(Line, Y, Font, TextColor);
+		Y += LineHeight;
+	}
 }
 
 void ADCHUD::DrawInventory()
@@ -261,6 +273,38 @@ void ADCHUD::DrawHealth()
 	}
 }
 
+void ADCHUD::DrawObjective()
+{
+	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(GetOwningPawn());
+	if (!Character || !Character->GetQuestComponent())
+	{
+		return;
+	}
+
+	if (Character->GetDialogueComponent() && Character->GetDialogueComponent()->IsInDialogue())
+	{
+		return;
+	}
+
+	const FText Objective = Character->GetQuestComponent()->GetObjectiveText();
+	if (Objective.IsEmpty())
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float MaxWidth = FMath::Max(120.0f, Canvas->ClipX - 80.0f);
+	TArray<FString> Lines;
+	WrapTextToWidth(Objective.ToString(), Font, MaxWidth, Lines);
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	float Y = 28.0f;
+	for (const FString& Line : Lines)
+	{
+		DrawCenteredText(Line, Y, Font, FLinearColor(0.85f, 0.75f, 0.45f, 1.0f));
+		Y += LineHeight;
+	}
+}
+
 void ADCHUD::DrawDialogue()
 {
 	const ADCPlayerCharacter* Character = Cast<ADCPlayerCharacter>(GetOwningPawn());
@@ -275,10 +319,46 @@ void ADCHUD::DrawDialogue()
 	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
 	const float Padding = 16.0f;
 	const float PanelWidth = FMath::Min(720.0f, Canvas->ClipX - 80.0f);
-	const int32 ChoiceRows = FMath::Max(1, Node->Choices.Num());
-	const float PanelHeight = Padding * 2.0f + LineHeight * (4 + ChoiceRows);
+	const float InnerWidth = FMath::Max(80.0f, PanelWidth - Padding * 2.0f);
+
+	TArray<FString> LineRows;
+	WrapTextToWidth(Node->Line.ToString(), Font, InnerWidth, LineRows);
+	if (LineRows.IsEmpty())
+	{
+		LineRows.Add(FString());
+	}
+
+	const TArray<int32> Visible = Dialogue->GetVisibleChoiceIndices();
+	TArray<TArray<FString>> ChoiceRows;
+	ChoiceRows.Reserve(Visible.Num());
+	int32 ChoiceLineCount = 0;
+	for (int32 VisibleIndex = 0; VisibleIndex < Visible.Num(); ++VisibleIndex)
+	{
+		const int32 ChoiceIndex = Visible[VisibleIndex];
+		const FString Choice = FString::Printf(TEXT("[%d]  %s"), VisibleIndex + 1, *Node->Choices[ChoiceIndex].Text.ToString());
+		TArray<FString> Wrapped;
+		WrapTextToWidth(Choice, Font, InnerWidth, Wrapped);
+		if (Wrapped.IsEmpty())
+		{
+			Wrapped.Add(Choice);
+		}
+		ChoiceLineCount += Wrapped.Num();
+		ChoiceRows.Add(MoveTemp(Wrapped));
+	}
+	ChoiceLineCount = FMath::Max(1, ChoiceLineCount);
+
+	const float PanelHeight = Padding * 2.0f
+		+ LineHeight * 1.25f
+		+ LineHeight * LineRows.Num()
+		+ LineHeight * 0.5f
+		+ LineHeight * ChoiceLineCount;
+
 	const float X = (Canvas->ClipX - PanelWidth) * 0.5f;
 	float Y = Canvas->ClipY * 0.58f;
+	if (Y + PanelHeight > Canvas->ClipY - 16.0f)
+	{
+		Y = FMath::Max(16.0f, Canvas->ClipY - 16.0f - PanelHeight);
+	}
 
 	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.72f), X, Y, PanelWidth, PanelHeight);
 
@@ -289,15 +369,123 @@ void ADCHUD::DrawDialogue()
 	DrawText(Speaker, FLinearColor(0.85f, 0.75f, 0.45f, 1.0f), Left, Y, Font);
 	Y += LineHeight * 1.25f;
 
-	DrawText(Node->Line.ToString(), TextColor, Left, Y, Font);
-	Y += LineHeight * 1.5f;
+	Y = DrawWrappedLines(LineRows, Left, Y, Font, TextColor);
+	Y += LineHeight * 0.5f;
 
-	for (int32 Index = 0; Index < Node->Choices.Num(); ++Index)
+	for (const TArray<FString>& Rows : ChoiceRows)
 	{
-		const FString Choice = FString::Printf(TEXT("[%d]  %s"), Index + 1, *Node->Choices[Index].Text.ToString());
-		DrawText(Choice, TextColor, Left, Y, Font);
+		Y = DrawWrappedLines(Rows, Left, Y, Font, TextColor);
+	}
+}
+
+void ADCHUD::WrapTextToWidth(const FString& Text, UFont* Font, float MaxWidth, TArray<FString>& OutLines)
+{
+	OutLines.Reset();
+	if (Text.IsEmpty() || !Font || MaxWidth <= 0.0f)
+	{
+		if (!Text.IsEmpty())
+		{
+			OutLines.Add(Text);
+		}
+		return;
+	}
+
+	auto Measure = [this, Font](const FString& S) -> float
+	{
+		float Width = 0.0f;
+		float Height = 0.0f;
+		GetTextSize(S, Width, Height, Font);
+		return Width;
+	};
+
+	auto FlushWord = [&](FString& Current, const FString& Word)
+	{
+		FString Remaining = Word;
+		while (Remaining.Len() > 0 && Measure(Remaining) > MaxWidth)
+		{
+			int32 Fit = Remaining.Len();
+			while (Fit > 1 && Measure(Remaining.Left(Fit)) > MaxWidth)
+			{
+				--Fit;
+			}
+
+			if (!Current.IsEmpty())
+			{
+				OutLines.Add(Current);
+				Current.Reset();
+			}
+
+			OutLines.Add(Remaining.Left(Fit));
+			Remaining.RightChopInline(Fit);
+		}
+
+		if (Remaining.IsEmpty())
+		{
+			return;
+		}
+
+		const FString Test = Current.IsEmpty() ? Remaining : Current + TEXT(" ") + Remaining;
+		if (!Current.IsEmpty() && Measure(Test) > MaxWidth)
+		{
+			OutLines.Add(Current);
+			Current = Remaining;
+		}
+		else
+		{
+			Current = Test;
+		}
+	};
+
+	TArray<FString> Paragraphs;
+	Text.ParseIntoArray(Paragraphs, TEXT("\n"), false);
+	if (Paragraphs.Num() == 0)
+	{
+		Paragraphs.Add(Text);
+	}
+
+	for (int32 ParagraphIndex = 0; ParagraphIndex < Paragraphs.Num(); ++ParagraphIndex)
+	{
+		const FString& Paragraph = Paragraphs[ParagraphIndex];
+		if (Paragraph.IsEmpty())
+		{
+			OutLines.Add(FString());
+			continue;
+		}
+
+		TArray<FString> Words;
+		Paragraph.ParseIntoArrayWS(Words);
+		if (Words.Num() == 0)
+		{
+			OutLines.Add(Paragraph);
+			continue;
+		}
+
+		FString Current;
+		for (const FString& Word : Words)
+		{
+			FlushWord(Current, Word);
+		}
+		if (!Current.IsEmpty())
+		{
+			OutLines.Add(Current);
+		}
+	}
+}
+
+float ADCHUD::DrawWrappedLines(const TArray<FString>& Lines, float X, float Y, UFont* Font, const FLinearColor& Color)
+{
+	if (!Font)
+	{
+		return Y;
+	}
+
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	for (const FString& Line : Lines)
+	{
+		DrawText(Line, Color, X, Y, Font);
 		Y += LineHeight;
 	}
+	return Y;
 }
 
 void ADCHUD::DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color)

@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "DeadCurrent.h"
 #include "Dialogue/DCDialogueComponent.h"
+#include "Quest/DCQuestComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "EnhancedInputComponent.h"
@@ -46,6 +47,7 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 	HealthComponent = CreateDefaultSubobject<UDCHealthComponent>(TEXT("Health"));
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 	DialogueComponent = CreateDefaultSubobject<UDCDialogueComponent>(TEXT("Dialogue"));
+	QuestComponent = CreateDefaultSubobject<UDCQuestComponent>(TEXT("Quest"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -70,6 +72,7 @@ void ADCPlayerCharacter::BeginPlay()
 
 	InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADCPlayerCharacter::HandleInventoryChanged);
 	HealthComponent->OnDied.AddDynamic(this, &ADCPlayerCharacter::HandleDied);
+	QuestComponent->OnQuestUpdated.AddDynamic(this, &ADCPlayerCharacter::HandleQuestUpdated);
 
 	if (StimuliSource)
 	{
@@ -306,6 +309,28 @@ void ADCPlayerCharacter::HandleDied(UDCHealthComponent* Health, const FDCDamageI
 	ADCHUD::ShowMessageFor(this, NSLOCTEXT("DCPlayerCharacter", "Died", "You died."), 4.0f);
 
 	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ADCPlayerCharacter::Respawn, 4.0f, false);
+}
+
+void ADCPlayerCharacter::HandleQuestUpdated(FName QuestId, FName StageId)
+{
+	if (bRestoringSave)
+	{
+		return;
+	}
+
+	const FText Objective = QuestComponent->GetObjectiveText();
+	if (!Objective.IsEmpty())
+	{
+		ADCHUD::ShowMessageFor(this, Objective, 4.0f);
+		return;
+	}
+
+	if (QuestComponent->IsComplete(QuestId))
+	{
+		ADCHUD::ShowMessageFor(this, NSLOCTEXT("DCPlayerCharacter", "QuestDone", "Quest complete."), 3.0f);
+	}
+
+	(void)StageId;
 }
 
 void ADCPlayerCharacter::Respawn()

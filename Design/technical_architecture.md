@@ -37,6 +37,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 | `setup_player_input.py` | Creates the player input actions (sprint, crouch, interact, inventory, fire, reload, holster), maps them in `IMC_Default`, assigns them on `BP_FirstPersonCharacter`. Safe to re-run; add new player actions here. |
 | `create_items.py` | Creates or updates the item definitions in `/Game/Items`. Safe to re-run; edits made in the editor to those items are overwritten. |
 | `create_dialogue.py` | Creates or updates dialogue Data Assets in `/Game/Dialogue`. Safe to re-run. |
+| `create_quest.py` | Creates or updates quest Data Assets in `/Game/Quests`. Safe to re-run. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
 | `build_boathouse.py` | Regenerates `/Game/Maps/Lvl_Boathouse`, the first-playable scenario. Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
@@ -70,12 +71,12 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 - far left: a 1.4 m crouch tunnel, then a 1 m wide, 2.1 m tall doorway with a door, a 2 m clear area for the door to swing into, then a 1 m corridor
 - shooting range: a close plate 8 m ahead on the right, three plates at 20 m down the sprint lane, and a backstop behind them
 - right of spawn: a chemical-spill pad that damages the player
-- past the 20 m plates: a scavenger on a patrol loop
-- right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**
+- past the 20 m plates: a scavenger on a patrol loop, with a radio coil pickup at his camp
+- right-forward of spawn: Mara, a friendly NPC who turns to face you and talks on **E**. She offers Shore Watch (kill the scavenger or bring the coil).
 
 ## First playable map
 
-`Lvl_Boathouse` is the first-playable scenario (not World Partition). Greybox, same prototype materials as the gym. The player wakes inside the boathouse, takes the pistol from the workbench, goes out the door, meets a scavenger on the shore path, then finds Mara behind a ridge out of the scavenger's sight. Persistent IDs use the `boat.` prefix.
+`Lvl_Boathouse` is the first-playable scenario (not World Partition). Greybox, same prototype materials as the gym. The player wakes inside the boathouse, takes the pistol from the workbench, goes out the door, meets a scavenger on the shore path, then finds Mara behind a ridge out of the scavenger's sight. Mara offers **Shore Watch**: kill the scavenger or sneak the radio coil from his camp, then return for 24× 9mm. Completing it sets world flag `shore.cleared` (Mara's greeting changes; the lookout crate text changes). Persistent IDs use the `boat.` prefix.
 
 ## Interaction
 
@@ -108,6 +109,7 @@ The editor's data validation flags definitions missing an ID, name or category.
 | `DA_Item_Ammo9mm` | `ammo_9mm` | `Item.Ammo` | 999 |
 | `DA_Item_FieldDressing` | `field_dressing` | `Item.Consumable.Medical` | 10 |
 | `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
+| `DA_Item_RadioCoil` | `radio_coil` | `Item.Quest` | 1 |
 
 `DA_Item_Pistol` is a firearm item: same `UDCItemDefinition` as other items, with magazine, ammo, damage, recoil and equipped-view fields. `IsFirearm()` is true when `Category` is `Item.Weapon.Firearm`. Other guns are more of these assets, not new C++ classes.
 
@@ -151,11 +153,25 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 
 ## Dialogue
 
-`UDCDialogueAsset` (`Dialogue/`) is a node graph Data Asset under `/Game/Dialogue`. Each node has a speaker, line, and choices. A choice's `NextNodeId` is empty to end the conversation. Conditions and consequences can hang on choices later without changing the walker.
+`UDCDialogueAsset` (`Dialogue/`) is a node graph Data Asset under `/Game/Dialogue`. Each node has a speaker, line, and choices. A choice's `NextNodeId` is empty to end the conversation. `Entries` pick the opening node: first entry whose conditions pass wins, otherwise `EntryNodeId`. Choices can hide behind `FDCGameplayCondition`s and fire `FDCGameplayConsequence`s (start/complete quest, give/remove items, set a world flag). Digit keys **1–9** pick **visible** choices.
 
-`UDCDialogueComponent` on the player runs the active conversation: `StartDialogue` / `SelectChoice` / `EndDialogue`. Digit keys **1–9** pick choices. The canvas HUD draws the current line and numbered replies. Fire, inventory and interact are blocked while talking.
+`UDCDialogueComponent` on the player runs the active conversation: `StartDialogue` / `SelectChoice` / `EndDialogue`. The canvas HUD draws the current line and numbered replies. Fire, inventory and interact are blocked while talking.
 
-Automation test `DeadCurrent.Dialogue.Branching` covers start, branch, and goodbye.
+`DA_Dialogue_MaraIntro` is Mara's Shore Watch conversation (offer, in-progress, kill/coil turn-in, already-dead, done).
+
+Automation tests `DeadCurrent.Dialogue.Branching` and `DeadCurrent.Dialogue.Conditions` cover walking the graph and conditional entries.
+
+## Quests
+
+`UDCQuestDefinition` (`Quest/`) is a Data Asset under `/Game/Quests`. Stages hold objective text and an optional "advance when a scavenger dies" hook. `UDCQuestComponent` on the player stores quest id → stage and a list of world flags. Dialogue and inspectables read those through `Meets` / `HasFlag`.
+
+`FDCGameplayCondition` / `FDCGameplayConsequence` (`Core/DCGameplayTypes.h`) are shared by dialogue and quests.
+
+`DA_Quest_ShoreWatch` (`shore.watch`): accept from Mara → kill the scavenger (stage advances to `return`) or bring `radio_coil` → return → 24× 9mm and flag `shore.cleared`.
+
+The HUD shows the current objective at the top of the screen. F5/F9 persist quest stages and world flags.
+
+Automation tests `DeadCurrent.Quest.Stages` and `DeadCurrent.Quest.Consequences` cover start/advance/complete, flags, save restore, and consequence application.
 
 ## Inventory
 
@@ -181,15 +197,15 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -unattended -nullrhi -nosound "-ExecCm
 
 `IDCPersistent` is the save hook: `GetPersistentId`, `CapturePersistentState`, `ApplyPersistentState`. The scavenger, Mara, the gym door and world pickups implement it. Capture stores id, existence, alive/dead, door yaw, and inventory stacks. Cyan debug labels can draw the id above those actors (`bDrawId`, off by default). Scavenger patrol/chase text (`bDrawState`) is also off by default.
 
-Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`.
+Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`, `gym.pickup_coil`.
 
-Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`.
+Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`.
 
-`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. Item data assets are loaded when the subsystem starts so F9 does not hitch on first resolve.
+`UDCSaveGame` is the slot (`DeadCurrent`, user 0). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, quest stages, world flags, and every registered persistent actor. F5 saves, F9 loads. Load applies world actors first (destroy pickups missing from the save, restore scavenger death/loot and door swing), then replaces player inventory without triggering a magazine refill from reserve. Item and quest data assets are loaded when the subsystem starts so F9 does not hitch on first resolve.
 
 Automation tests `DeadCurrent.Save.PersistentId` and `DeadCurrent.Save.InventoryRestore` cover lookup and inventory snapshot restore.
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, and the dialogue panel. It will be replaced by UMG widgets when the HUD grows.
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel, the weapon ammo readout, a health bar, the dialogue panel, and the active quest objective. It will be replaced by UMG widgets when the HUD grows.
 
 ## C++ vs Blueprint / data
 
@@ -212,6 +228,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `Combat/` | Weapons, damage processing, health |
 | `AI/` | Enemy controllers, perception, behavior |
 | `Dialogue/` | Dialogue data and runtime |
+| `Quest/` | Quest definitions, player quest log, conditions/consequences |
 | `Save/` | Save game, persistent IDs, persistence interfaces |
 | `UI/` | HUD and widget base classes |
 | `World/` | Persistent world objects and world state |
@@ -224,6 +241,7 @@ Split into more modules only when a boundary is proven (for example an editor-on
 | --- | --- |
 | `Characters/` | Character meshes and animation. `Mannequins/` comes from the UE template packs. |
 | `Dialogue/` | Dialogue assets |
+| `Quests/` | Quest definition assets |
 | `Environment/` | Environment art and dressing |
 | `FirstPerson/` | UE First Person template blueprints and test level (temporary) |
 | `Input/` | Input actions and mapping contexts (from the template, now owned by us) |
@@ -270,7 +288,7 @@ Roots and their meaning:
 | Root | Meaning |
 | --- | --- |
 | `Damage.` | Damage types (`Damage.Ballistic`, `Damage.Environmental`, `Damage.Melee`) |
-| `Item.` | Item classification (`Item.Weapon.Firearm`, `Item.Ammo`) |
+| `Item.` | Item classification (`Item.Weapon.Firearm`, `Item.Ammo`, `Item.Quest`) |
 | `Actor.` | Actor disposition (`Actor.Hostile`, `Actor.Friendly`) |
 | `State.` | Transient actor state (`State.Dead`) |
 | `Interaction.` | Interaction kinds (`Interaction.Pickup`, `Interaction.Loot`, `Interaction.Talk`) |

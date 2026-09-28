@@ -11,10 +11,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCInventoryStackingTest, "DeadCurrent.Inventor
 bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 {
 	UDCItemDefinition* Ammo = NewObject<UDCItemDefinition>();
+	Ammo->ItemId = TEXT("ammo.9mm");
 	Ammo->MaxStackSize = 10;
 	Ammo->Weight = 0.5f;
 
 	UDCItemDefinition* Pistol = NewObject<UDCItemDefinition>();
+	Pistol->ItemId = TEXT("weapon.pistol");
 	Pistol->MaxStackSize = 1;
 	Pistol->Weight = 1.0f;
 
@@ -25,6 +27,7 @@ bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Two ammo stacks"), Inventory->GetStacks().Num(), 2);
 	TestEqual(TEXT("First stack is full"), Inventory->GetStacks()[0].Quantity, 10);
 	TestEqual(TEXT("Ammo quantity"), Inventory->GetQuantity(Ammo), 15);
+	TestEqual(TEXT("Quantity by id"), Inventory->GetQuantityByItemId(TEXT("ammo.9mm")), 15);
 
 	Inventory->AddItem(Pistol, 2);
 	TestEqual(TEXT("Unstackable items take a stack each"), Inventory->GetStacks().Num(), 4);
@@ -49,8 +52,6 @@ bool FDCInventoryStackingTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Transfer to self is rejected"), Other->TransferAllTo(Other), 0);
 	TestEqual(TEXT("Transfer to null is rejected"), Other->TransferAllTo(nullptr), 0);
 
-	Ammo->ItemId = TEXT("ammo.9mm");
-	Pistol->ItemId = TEXT("weapon.pistol");
 	UDCInventoryComponent* Snapshot = NewObject<UDCInventoryComponent>();
 	Snapshot->AddItem(Ammo, 9);
 	Snapshot->AddItem(Pistol, 1);

@@ -45,6 +45,9 @@ public:
 	int32 GetQuantity(const UDCItemDefinition* Item) const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
+	int32 GetQuantityByItemId(FName ItemId) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
 	float GetTotalWeight() const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory")

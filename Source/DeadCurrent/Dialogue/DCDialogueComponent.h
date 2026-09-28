@@ -48,6 +48,9 @@ public:
 
 	const FDCDialogueNode* GetCurrentNode() const;
 
+	/** 0-based indices into the current node's Choices that pass conditions. */
+	TArray<int32> GetVisibleChoiceIndices() const;
+
 	UPROPERTY(BlueprintAssignable, Category="Dialogue")
 	FDCDialogueEvent OnDialogueStarted;
 
@@ -58,6 +61,8 @@ public:
 	FDCDialogueNodeEvent OnNodeChanged;
 
 private:
+
+	class UDCQuestComponent* GetQuestComponent() const;
 
 	bool AdvanceTo(FName NodeId);
 

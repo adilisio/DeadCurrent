@@ -55,7 +55,13 @@ private:
 
 	void DrawDialogue();
 
+	void DrawObjective();
+
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
+
+	void WrapTextToWidth(const FString& Text, UFont* Font, float MaxWidth, TArray<FString>& OutLines);
+
+	float DrawWrappedLines(const TArray<FString>& Lines, float X, float Y, UFont* Font, const FLinearColor& Color);
 
 	FText CurrentMessage;
 

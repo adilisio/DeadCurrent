@@ -8,6 +8,8 @@
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Kismet/GameplayStatics.h"
+#include "Quest/DCQuestComponent.h"
+#include "Quest/DCQuestDefinition.h"
 #include "Save/DCPersistent.h"
 #include "Save/DCPersistentRegistry.h"
 #include "Save/DCSaveGame.h"
@@ -24,11 +26,14 @@ void UDCSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		TEXT("/Game/Items/DA_Item_Ammo9mm.DA_Item_Ammo9mm"),
 		TEXT("/Game/Items/DA_Item_FieldDressing.DA_Item_FieldDressing"),
 		TEXT("/Game/Items/DA_Item_SalvagedWiring.DA_Item_SalvagedWiring"),
+		TEXT("/Game/Items/DA_Item_RadioCoil.DA_Item_RadioCoil"),
 	};
 	for (const TCHAR* Path : ItemPaths)
 	{
 		LoadObject<UDCItemDefinition>(nullptr, Path);
 	}
+
+	LoadObject<UDCQuestDefinition>(nullptr, TEXT("/Game/Quests/DA_Quest_ShoreWatch.DA_Quest_ShoreWatch"));
 }
 
 bool UDCSaveSubsystem::SaveCurrentGame()
@@ -109,6 +114,11 @@ void UDCSaveSubsystem::CapturePlayer(UDCSaveGame* Save, const ADCPlayerCharacter
 		Save->MagazineRounds = Firearm->GetRoundsInMagazine();
 		Save->bWeaponHolstered = Firearm->IsHolstered();
 	}
+
+	if (const UDCQuestComponent* Quests = Player->GetQuestComponent())
+	{
+		Quests->CaptureState(Save->Quests, Save->WorldFlags);
+	}
 }
 
 void UDCSaveSubsystem::ApplyPlayer(UDCSaveGame* Save, ADCPlayerCharacter* Player) const
@@ -136,6 +146,11 @@ void UDCSaveSubsystem::ApplyPlayer(UDCSaveGame* Save, ADCPlayerCharacter* Player
 	{
 		Firearm->RestoreMagazine(Save->MagazineRounds);
 		Firearm->SetHolstered(Save->bWeaponHolstered);
+	}
+
+	if (UDCQuestComponent* Quests = Player->GetQuestComponent())
+	{
+		Quests->ReplaceFromSaved(Save->Quests, Save->WorldFlags);
 	}
 
 	Player->EndSaveRestore();

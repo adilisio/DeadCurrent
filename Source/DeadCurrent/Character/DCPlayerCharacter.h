@@ -13,6 +13,7 @@ class UDCInteractorComponent;
 class UDCInventoryComponent;
 class UDCHealthComponent;
 class UDCDialogueComponent;
+class UDCQuestComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -48,6 +49,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UDCDialogueComponent* DialogueComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCQuestComponent* QuestComponent;
 
 protected:
 
@@ -168,6 +172,9 @@ protected:
 	UFUNCTION()
 	void HandleDied(UDCHealthComponent* Health, const FDCDamageInfo& Damage);
 
+	UFUNCTION()
+	void HandleQuestUpdated(FName QuestId, FName StageId);
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -185,6 +192,8 @@ public:
 	UDCHealthComponent* GetHealthComponent() const { return HealthComponent; }
 
 	UDCDialogueComponent* GetDialogueComponent() const { return DialogueComponent; }
+
+	UDCQuestComponent* GetQuestComponent() const { return QuestComponent; }
 
 	void BeginSaveRestore() { bRestoringSave = true; }
 

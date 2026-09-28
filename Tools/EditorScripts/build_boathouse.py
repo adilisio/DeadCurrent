@@ -57,10 +57,13 @@ def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unrea
     return actor
 
 
-def inspectable(label, folder, center, size, display_name, description):
+def inspectable(label, folder, center, size, display_name, description, world_flag=None, flag_description=None):
     actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCInspectableActor)
     actor.set_editor_property("display_name", unreal.Text(display_name))
     actor.set_editor_property("description", unreal.Text(description))
+    if world_flag:
+        actor.set_editor_property("world_flag", unreal.Name(world_flag))
+        actor.set_editor_property("flag_description", unreal.Text(flag_description or ""))
     return actor
 
 
@@ -304,7 +307,9 @@ def build_scavenger():
     set_persistent_id(scav, "boat.scavenger")
 
     inspectable("CampJunk", folder, (2480, -220, 20), (50, 40, 40), "Scavenger kit",
-                "A torn pack, empty cans, a length of copper. Whoever walks this loop has been here a while.")
+                "A torn pack, empty cans, a radio housing with one coil still seated. Whoever walks this loop has been here a while.")
+    pickup("Pickup_RadioCoil", folder, "/Game/Items/DA_Item_RadioCoil", 1, 2520, -280, 20,
+           persistent_id="boat.pickup_coil")
 
 
 def build_cover_and_npc():
@@ -331,7 +336,9 @@ def build_cover_and_npc():
     set_persistent_id(npc, "boat.mara")
 
     inspectable("Lookout", folder, (3160, 1220, 40), (40, 30, 80), "Lookout crate",
-                "Someone has been watching the path from here. F5 saves. F9 loads after you quit.")
+                "Someone has been watching the path from here. F5 saves. F9 loads after you quit.",
+                world_flag="shore.cleared",
+                flag_description="The radio on this shore is quieter. Mara was right it wouldn't last.")
 
 
 def build_nav():

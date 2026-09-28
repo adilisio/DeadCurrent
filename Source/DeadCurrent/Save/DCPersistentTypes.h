@@ -21,6 +21,19 @@ struct DEADCURRENT_API FDCSavedItemStack
 	int32 Quantity = 1;
 };
 
+/** One quest's current stage in a save. */
+USTRUCT(BlueprintType)
+struct DEADCURRENT_API FDCSavedQuestState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
+	FName QuestId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Save")
+	FName StageId;
+};
+
 /**
  *  Snapshot of one persistent world actor. Lookup is always by PersistentId.
  */
