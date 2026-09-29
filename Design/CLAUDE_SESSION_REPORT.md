@@ -1,209 +1,195 @@
-# Claude Development Session Report
-
-Session date: 2026-09-28. Milestone: Phase 3, Exploration Loop. Work was split between Opus 5.5 (planning and implementation, EL-00..EL-08) and Sonnet 5.5 (visual check, docs, packaging, this report).
+# Development Session Report
 
 ## Executive Summary
 
-The Exploration Loop is implemented, documented and passes all 30 automated tests. Anthony playtested it, asked for fixes (below), and after a second look **accepted the phase** on 2026-09-28.
+Phase 4, the RPG Layer, is an acceptance candidate. A small character build now changes what the same shore will say.
 
-Phase 3 adds one small, optional, unmarked point of interest to `Lvl_Boathouse`: **the Wrecked Survey Launch**, on a new stretch of shore behind the boathouse. It is built from four small reusable pieces (location discovery, loot containers, inspectable verbs, switchable hazards) plus a flickering landmark light, and it uses the existing rule language, world state and save system. Shore Watch's content and `ADCPlayerCharacter` are unchanged.
+Three provisional attributes (Grasp, Fieldcraft, Bearing) feed three skills (Engineering, Survival, Persuasion). One perk point chooses among Schematic Eye, Pulse Read, and Relay Ear. Those checks are ordinary shared conditions on actors and dialogue that already existed: the wreck, Mara, the relay, and the Sounder Chart. A character with nothing spent still gets the accepted Shore Watch and Survey Launch solutions. Investment adds a reading or a line.
 
-The loop it proves: *notice a lamp on a mast → walk off the route → get a one-time discovery banner → read the clues → work out what happened → avoid or disable the live water → loot the obvious locker and the hidden kit → the world remembers, through save and load.*
+Before that work, a save written before a persistent pickup existed was destroying that pickup on load. Taken pickups are now recorded explicitly. Phase 3 is recorded as accepted, including the human playtest.
 
-What automation cannot confirm is whether it is worth walking there: pacing, whether the landmark pulls you, whether the clues read as a story. That is what the checklist below is for.
+36 automated tests pass. `DeadCurrentEditor` builds. A Development Win64 cook/package succeeded, and a null-RHI smoke launch loaded `Lvl_Boathouse`. Phase 5 was not started.
 
-This session I also rendered the new area for the first time and found a real defect: the prototype glow material (`M_SimpleGlow`) multiplies by particle colour, so on static meshes the mast lamp, the sparks and the live water rendered **black**. I replaced it with our own unlit glow material. From rendered screenshots the amber lamp now shows above the boathouse roof from the path and the live water reads as a blue slab.
+## Baseline Verified
 
-## Commits Made
+- Starting SHA: `54686bf` — Mark the Exploration Loop accepted. `origin/main` was at that commit. Local HEAD is authoritative and has moved forward on `main` only.
+- Original test count: 30, all passing, on the existing editor binary before any Phase 4 edit.
+- That baseline was not broken. The pickup fix and the RPG layer were each built and retested on top of it.
+- Untracked and left untracked: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py`.
 
-| SHA | Subject |
-| --- | --- |
-| b856648 | EL-00: Add the Exploration Loop plan. |
-| f871bf1 | EL-01/EL-02: Reusable location discovery and loot containers. |
-| 5954355 | EL-03/EL-05: Inspectable verbs, world-conditioned hazards, flicker light. |
-| ea05ad9 | EL-04/EL-06/EL-08: Wrecked Survey Launch POI, Mara's line, map tests. |
-| 6b95ac7 | Add a hand-off note for finishing the Exploration Loop session. |
-| eb00fc5 | Fix glow materials: own unlit glow instead of the particle-only M_SimpleGlow. |
-| 3bd771b | Document the Exploration Loop: architecture, design, and provisional lore. |
-| (this) | Session report. |
+## Pre-Phase-4 Fixes
 
-Nothing was pushed. The untracked `Content/Variant_Shooter/` and `Tools/EditorScripts/inspect_assets.py` were already there, and I left them alone.
+Commit `f48f097`.
 
-## Systems Added or Changed
+A persistent `ADCItemPickup` added to the map after a save was written was absent from that save. The loader treated every live persistent id missing from `WorldActors` as removed, and destroyed the new pickup.
 
-**Location discovery** (`World/DCLocationVolume`, `World/DCWorldStateSubsystem`).
-- The world state holds `DiscoveredLocations` beside the flags. `DiscoverLocation(Id)` is true only the first time and fires `OnLocationDiscovered` and `OnChanged`. `IsLocationDiscovered`, and a silent `ReplaceDiscoveredLocations` for loading.
-- New condition `LocationDiscovered(Id)` in the shared rule language.
-- The volume is a box with `LocationId` and `DisplayName`. It **polls player positions at 4 Hz instead of using collision**: the firearm traces WorldStatic/WorldDynamic/Pawn, so a trigger box would stop bullets, and overlap events fire during the load teleport. It stops ticking once discovered.
-- HUD: a `LOCATION DISCOVERED / <name>` banner. The Tab journal lists PLACES.
+Save version 4 now writes `RemovedPersistentIds`. An id is noted only when the actor ends play because it was destroyed (taken, or otherwise removed), not because the map unloaded. On load, only those ids are destroyed. An id that simply was not in the save keeps its authored state, which is how a pickup added later survives an older save.
 
-**Save format 3.** Adds `UDCSaveGame::DiscoveredLocations`. World flags and discoveries are now applied **first** in `ApplyPendingLoad`, before world actors and the player, so nothing re-announces on load. Older saves load with no discoveries.
+Saves from before version 4 still treat the historical boathouse pickups as taken when they are absent: `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, and `boat.pickup_coil` when the save is version 2 or newer (the coil postdates first-playable saves). Any other absent id stays. There is no general migration table.
 
-**Loot container** (`World/DCLootContainer`). One generic class: a mesh, a `UDCInventoryComponent` (authored `Stacks` are the starting contents) and a persistent id. **E** takes the next stack. Prompt: `Take 9mm Rounds (12) from Survey locker`; the message lists what is left; when empty, `Search X (empty)`. Persistence reuses the flat world-inventory arrays, with no container-specific save code. A container missing from a save (added later) keeps its contents.
+`DeadCurrent.Save.RemovedPickup` covers taken-stays-gone, kept-stays, and added-later-stays, including a version 0 save and a version 3 save. The real-map legacy load expects the coil pickup to remain. The existing coil-route map test still takes the coil and gets it back from F9.
 
-**Inspectable verbs.** `ADCInspectableActor::Action` (default "Inspect") and a per-variant `Action` override ("Read", "Pull the leads"). Also `GetDisplayName()`.
+Documentation that still said Phase 3 was awaiting a human playtest was corrected. Phase 3 is accepted. Human playtesting did occur.
 
-**Hazard conditions.** `ADCDamageVolume::ActiveConditions` are world conditions, evaluated against the volume itself, so item and quest conditions never pass. While inactive: no damage, mesh hidden. It re-checks every tick, because save restores replace flags silently.
+## RPGPhasePlan
 
-**Flicker light** (`World/DCFlickerLight`). A cosmetic point light plus a glow cube whose material `Color` is scaled by a random flicker with dropouts, and optional `ActiveConditions`.
+`RPGPhasePlan.txt`, commit `53eb765`, then executed.
 
-**Glow material (this session).** `M_DC_Glow` (created by `build_boathouse.py`): unlit, translucent, emissive = `Color.rgb`, opacity = `Color.a`. The `MI_DC_*` instances (`GlowAmber`, `GlowSpark`, `LiveWater`, plus the flat hull and rust colours) are generated by the same script.
+Mission: allocate a small build, walk into content that already exists, and get an option someone else does not get. The build is still there after save and load.
 
-**Unchanged:** `ADCPlayerCharacter`, and all Shore Watch writing, rewards, routes and outcomes.
+The plan locks the scope to three attributes, three skills, three perks, the existing shared rule language, the canvas HUD, and the actors already on `Lvl_Boathouse`. It excludes XP, a character creator, a new place, a new quest, and Phase 5.
 
-## Quest / Gameplay Added
+## Architecture Added
 
-There is no new quest (out of scope by plan). The POI is optional and unmarked.
+Commit `3a74f4d`, plus `56d0a5a` so the build panel's keys do not also save or load.
 
-**The Wrecked Survey Launch.** Coordinates in cm; +X is out the boathouse door, the lake is -Y.
+**Attributes.** Grasp, Fieldcraft, Bearing. Raw values, 0–2. Three points on a new game.
 
-- **Notice:** a new west window in the boathouse back wall (behind the spawn, south of the faded notice). Inspect it ("Look out") for a mention of a mast and a light. Outside, look back west from the path: a leaning mast (about 12.6 m) with a flickering amber lamp above the roofline.
-- **Route:** out the door, back around the south (lake) side of the boathouse, west about 15 m. Discovery fires about 7 m past the back wall (X about -700).
-- **The wreck:** bow on the beach near (-1500, -300), stern in the water near (-1500, -1260). Board by the plank on the east side near the bow (foot about (-1000, -510)). The wheelhouse fore door is on the east side.
-- **Clues** (inspectable names): Name board (driven ashore on purpose, "T_RN"); Life jackets (straps cut, they walked inland); Depth sounder (regular spikes, "AGAIN"); Survey log (verb **Read**, sets `wreck.log_read`); Breaker panel (text changes after the log); Battery bank (first Inspect sets `wreck.battery_seen`, then the verb becomes **Pull the leads**, which sets `wreck.power_cut`); Emergency beacon (dead for decades, hums like the scavenger's relay if `shore.relay_inspected`, and notes the lamp is still flickering after the power is cut); Dead fish; the west window (changes after discovery and after the power is cut).
-- **Hazard:** live water around the stern, 20 dmg/s (about 5 s to die from full health), a one-time "The water is live." message. A blue glow layer, six spark lights, a pale ring of dead fish and a chalk warning on the beach mark it. Pull the leads switches off the glow, sparks and damage (persistently); the water itself stays.
-- **Loot:** the **Survey locker** (`boat.wreck_locker`, wheelhouse west/aft corner): 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing. The **tender** (`boat.wreck_tender`), about 4 m off the stern at (-1500, -1650), inside the live water: 1× Sounder Chart (new item), 2× Field Dressing, 18× 9mm. The log says "Kit's in the tender, tied off the stern."
-- **Mara:** after `wreck.log_read`, her greeting/who/place/in-progress/epilogue nodes (never turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." Once. She calls the boat the *Tern* and says everybody decides it was a storm. The player can ask "Was it a storm?" (sets `wreck.mara_told`); she replies "It's always a storm. Stay out of the water round her stern. It bites."
-- **World-state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`.
+**Skills.** Engineering (from Grasp), Survival (from Fieldcraft), Persuasion (from Bearing). Invested ranks, 0–2. Two points on a new game. Effective skill is the invested rank plus 1 when the linked attribute is 2 or higher. `SkillAtLeast` uses the effective skill. `AttributeAtLeast` uses the raw attribute.
 
-All new lore is marked PROVISIONAL in `world_bible.md`. Nothing explains the Current.
+**Perks.** Schematic Eye, Pulse Read, Relay Ear. Owned or not. One point. Each one is consumed by an inspect variant.
+
+**Where it lives.** `UDCCharacterProgressionComponent` on the player, default subobject name `Progression`. Lookup is by Gameplay Tag (`Attribute.Grasp`, `Skill.Engineering`, `Perk.SchematicEye`). Unknown tags read as 0 or not owned. The character class does not grow a field per skill. There is no XP, level, or respec. F10 refunds the allocation only so a playtest can try each orientation.
+
+**Rules.** `AttributeAtLeast`, `SkillAtLeast`, and `HasPerk` were appended to the existing condition enum. `FDCRuleContext` carries the progression component. Dialogue, quests, and inspectables use the same evaluation. Validation rejects an attribute, skill, or perk id that is not in the catalog. Failed checks stay hidden. A visible choice or the active inspect variant shows a generated label such as `[Engineering 2]` or `[Schematic Eye]`. Authors do not type that label into the line.
+
+**Save.** Version 5 stores attribute ranks, skill ranks, and owned perks. Empty arrays are the unspent default, which is what a save from before this phase receives. Unspent points are the pool minus what is invested. They are not a separate saved field.
+
+## Player-Facing RPG Proof
+
+Press **B** to open the build panel. **F1–F3** raise Grasp, Fieldcraft, Bearing. **F4–F6** raise Engineering, Survival, Persuasion. **F7–F9** take Schematic Eye, Pulse Read, Relay Ear. **F10** resets. **Tab** lists the build, including effective skill when it differs from the invested rank.
+
+- **Engineering 2** on the breaker panel: the cuts start at the shore-power breaker, and the mast lamp is not on those lugs. Pulling the battery leads still works with no skill.
+- **Survival 2** on the life jackets: they lie toward the treeline. The crew left inland together.
+- **Fieldcraft 2** on the chalk warning: it was written from the shallows, looking back at the boat.
+- **Persuasion 2** (effective) with Mara, after the survey log and her storm deflection: one press. She admits two people came up off that beach and that she did not follow. She does not explain the Current. The line is not offered again.
+- **Schematic Eye**, carrying the Sounder Chart (`survey_chart`): the depth sounder includes the margin note, last tick marked not a shoal, and the same spacing as the Engineering reading.
+- **Engineering 2** with the chart and without the perk: the sounder and the chart use the same spacing. The chart alone does not change the sounder.
+- **Pulse Read** on the dead fish: one shock, not a tide.
+- **Relay Ear**, only after the relay has already been inspected: the housing was seated by someone who knew the pinout. The first Shore Watch clue still happens for everyone.
 
 ## Automated Tests
 
-`Tools\RunTests.bat` on the final build: **30 tests, all passing** (25 editor-context, 5 in-map). Up from 24 at the start of the phase.
+`Tools\RunTests.bat -build` after the last code change. Exit code 0.
 
-| Test | Status |
-| --- | --- |
-| DeadCurrent.Exploration.Discovery / Container / WorldConditions (new) | Pass |
-| DeadCurrent.Content.Exploration.MaraWreckLine (new): shipped dialogue across Shore Watch states, save/reload | Pass |
-| DeadCurrent.Rules.Conditions (extended: LocationDiscovered), DeadCurrent.World.InspectVariants (extended: verbs) | Pass |
-| DeadCurrent.Map.Boathouse.SurveyLaunch (new, real map): walk-in discovery, real hazard damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce | Pass |
-| DeadCurrent.Map.Boathouse.SurveyLaunchSaves (new): the POI combined with Shore Watch accepted or complete, loading back and forth | Pass |
-| DeadCurrent.Map.Boathouse.LegacySave (extended): a pre-Phase-3 save leaves the POI untouched | Pass |
-| All Phase 1 and 2 tests (Rules, Quest, Dialogue, Content.Validate, Content.ShoreWatch, Map CoilRoute/CombatRoute, Combat, Inventory, Save) | Pass |
+Editor context, 30, all Success:
 
-**Rendered visual check (this session).** A throwaway rendered test (not committed) teleported the player to six viewpoints and took screenshots. Findings: the west window frames the wreck; the mast and lamp rise above the boathouse roof from the path; the wreck reads well from the beach and the discovery banner shows. Before the fix the lamp and water were black. After it, the lamp is a visible amber block and the water a blue translucent slab. This is greybox; it is not a lighting or art pass. Not checked: night or dusk lighting (the map is daylight only), and the flicker animation over time (screenshots are single frames).
+FirearmAmmo, Health, MaraWreckLine, Shore Watch CoilRoute / CombatRoute / Shortcuts, Validate, Dialogue Branching / Conditions / Consequences, Exploration Container / Discovery / WorldConditions, Inventory Stacking, Progression ContentChecks / Lookup / Rules / Save, Quest Branches / CrossQuest / Persistence / Stages, Rules Conditions / Consequences / Validation, Save InventoryRestore / PersistentId / RemovedPickup / WorldInventorySlot, InspectVariants.
 
+Map context on `Lvl_Boathouse`, 6, all Success:
 
-## First Playtest Feedback and Changes
+BuildChecks, CoilRoute, CombatRoute, LegacySave, SurveyLaunch, SurveyLaunchSaves.
 
-Anthony's first playtest (no bugs, smooth frame rate, banner/PLACES/save-load/first playable/Shore Watch all fine) produced these changes:
+**Total: 36 tests, all passing.**
 
-| Feedback | Response |
-| --- | --- |
-| The live water wasn't obvious and hurt by surprise | The dead fish and the "Dead fish" inspectable had been placed **below the ground**, so the warning ring was never visible. Fish are now pale and lie on the surface; the electric glow is brighter; there are six spark lights instead of two; and a chalked warning plank stands on the beach at the water's edge |
-| Pulling the leads made the water disappear; it should stay | The water was the damage volume's own mesh, which hides when inactive. The water is now a permanent dark no-collision surface; only the glow layer, damage and sparks switch off. Verified from rendered screenshots, live and cut |
-| The reward would be better with something new | The tender now also holds a novel item, the **Sounder Chart** (`survey_chart`, `Item.Quest`, no use yet): a strip of the *Tern*'s sounder paper with AGAIN pencilled at the end |
-| Clues are hard to piece together without audio and better visuals | Not addressed: the plan scopes out audio and final art. Recorded as a deferred decision |
-| The pinging lamp helped find it | Kept |
-| Haven't found Mara's wreck line | Not a bug: it only appears after you read the survey log (checklist G). Please try again |
-| *Tern* name and Mara's "storm" line | Fine for now; kept |
-
-**Result:** Anthony confirmed the water stays, the fish are closer and visible, and the novel item is found. Phase 3 accepted.
-
-Tests: the tender now has three stacks (chart, dressings, rounds) and the map tests were updated for it; all 30 pass.
+`DeadCurrent.Map.Boathouse.BuildChecks` is the real-map proof: the same placed actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks, and the Sounder Chart, then a real F9 restores the saved build.
 
 ## Build Status
 
-`DeadCurrentEditor Win64 Development` builds with no errors. Last build on the final commit.
+`DeadCurrentEditor` Win64 Development: **Succeeded.**
 
-## Packaging Smoke Test
+The compiler in use is MSVC 14.51, which is newer than Unreal's preferred 14.50. That warning is pre-existing and did not fail the build. DLL-load warnings for `aqProf`, Vtune, and WinPix in the test logs are the same.
 
-**Succeeded.** A Development Win64 build cooked, staged and paked with no project defects:
+## Package / Cook Status
 
-```
-"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun -project="C:\deadcurrent\DeadCurrent.uproject" -platform=Win64 -clientconfig=Development -build -cook -stage -pak -archive -archivedirectory="C:\deadcurrent\Saved\Packaged" -unattended -utf8output -nop4
-```
+Development Win64 `BuildCookRun` (`-build -cook -stage -pak -archive`, archive `Saved\Packaged`): **BUILD SUCCESSFUL.** AutomationTool ExitCode 0. BuildCookRun time 123.64 s. Log: `Saved\Logs\Package.log`.
 
-- Output: `Saved\Packaged\Windows\DeadCurrent.exe` (about 1 GB; `Saved/` is git-ignored). Log: `Saved\Logs\Package.log`. It took a few minutes. The only compiler note was the MSVC 14.51 "not a preferred version" warning (toolchain, harmless).
-- The cooked manifest contains `Lvl_Boathouse`, `M_DC_Glow` and the `MI_DC_*` instances, `DA_Dialogue_MaraIntro` and the item assets, so the Asset Manager registration from Phase 2 works for the new content too.
-- **Smoke launch:** `DeadCurrent.exe -nullrhi` opened `Lvl_Boathouse`, `[DCCONTENT] loaded 6 item and quest definitions` (5 items + Shore Watch) appeared, and it ran 25 s with no errors.
-- **Not verified:** playing the packaged build with rendering, or F5/F9 in it. That is a natural first check for Anthony: run `Saved\Packaged\Windows\DeadCurrent.exe` and repeat checklist H. Shader compile on first launch may take a while.
+The IoStore container includes `Lvl_Boathouse.umap`, `DA_Dialogue_MaraIntro.uasset`, `DA_Item_SurveyChart.uasset`, and `IA_Build.uasset`.
+
+Smoke launch of `Saved\Packaged\Windows\DeadCurrent.exe -nullrhi`: `[DCCONTENT] loaded 7 item and quest definitions`, then `LoadMap(/Game/Maps/Lvl_Boathouse)` completed. No fatal error. The process was stopped after the map came up. Rendering, input, and F5/F9 in the packaged window were not exercised.
 
 ## READY FOR ANTHONY TO TEST
 
-**Setup**
-1. Everything is local on `main`; nothing is pushed. Close the editor. Run `Tools\RunTests.bat -build` (builds, then about 2 minutes) to confirm 30/30 on your machine.
-2. Your old save still loads. If it predates Phase 3, the POI simply starts undiscovered. To start clean, delete `Saved\SaveGames\DeadCurrent.sav`.
-3. Launch with `Tools\PlayTest.bat` (or the editor and Play). Map: `/Game/Maps/Lvl_Boathouse`.
+Launch with `Tools\PlayTest.bat`, or the editor and Play. Map: `/Game/Maps/Lvl_Boathouse`. For a clean build, delete `Saved\SaveGames\DeadCurrent.sav` first. An older save loads as an unspent build. Press **B** and spend it. Taken bench and coil pickups from a save of the era that included them stay gone. A pickup added to the map after that save stays.
 
-**Controls:** WASD move, mouse look, Shift sprint, Ctrl/C crouch, **E** interact, **1-9** dialogue replies, LMB fire, R reload, 1 holster, **Tab** inventory + quests + places, **F5** save, **F9** load.
+**Controls:** WASD move, mouse look, Shift sprint, Ctrl or C crouch, **E** interact, **1–9** dialogue, LMB fire, R reload, 1 holster, **Tab** inventory, journal, and character, **B** build panel, **F5** save, **F9** load.
 
-**A. First Playable and Shore Watch still work** (regression; the Phase 2 checklist is at `git show 6b95ac7:Design/CLAUDE_SESSION_REPORT.md`; or just play one route)
-1. Wake in the boathouse, take the pistol and ammo, go out, follow the path, reach Mara, take Shore Watch.
-2. Complete either route. Rewards and dialogue should be unchanged.
+While the build panel is open, F5 and F9 spend Survival and Relay Ear. They do not save or load until you close the panel with **B**. The panel says so.
 
-**B. Notice**
-1. From the spawn, look at the boathouse back wall: there is a new window west of the faded notice. Inspect it. Expected: a line about a mast and a light. Does it make you want to go?
-2. Go out the door and a few metres down the path, then turn and look back west. Expected: an amber light on a mast above the roof, with no marker. Is it visible enough to catch your eye?
+### Engineering-oriented build
 
-**C. Discover**
-1. Walk round the lake side of the boathouse and head west. Expected: about 7 m past the back wall, a `LOCATION DISCOVERED / Wrecked Survey Launch` banner, once.
-2. Tab: a PLACES list shows the launch.
-3. Walk out of the area and back in: no second banner.
+1. Press **B**. **F1** twice (Grasp 2). **F4** twice (Engineering 2). Optional: **F7** (Schematic Eye).
+2. **Tab**. The character block shows Grasp 2, Engineering 2, and effective Engineering 3 if Grasp is 2.
+3. Go to the Wrecked Survey Launch, west of the boathouse. Inspect the breaker panel in the wheelhouse. The prompt is labeled `[Engineering 2]`. The text names the shore-power breaker and the mast lamp. Pulling the battery leads still works with no extra skill, and still cuts the live water.
+4. The tender is tied off the stern, in the live water. Pull the leads first, or cross if you accept the shock. Loot the Sounder Chart.
+5. Inspect the depth sounder. With Engineering 2 it mentions the same spacing. With Schematic Eye it also includes "NOT A SHOAL".
 
-**D. Read the place** (inspect each with E; the prompt verb varies)
-1. Name board on the bow: driven ashore on purpose, "T_RN".
-2. Life jackets on the beach: straps cut, they walked inland.
-3. Board by the plank on the east side near the bow. In the wheelhouse: depth sounder, breaker panel, and the survey log (**Read**). Expected: the pattern, "channel with no station", cut every breaker, "Kit's in the tender, tied off the stern."
-4. Inspect the breaker panel again after the log: the text changes.
-5. Aft deck: the battery bank (Inspect, then it offers **Pull the leads**), and the beacon on the transom (dead, or humming like the relay if you inspected the scavenger's relay earlier).
-6. Dead fish at the edge of the water; inspect them.
-7. Can you work out what happened without being told? Does anything not make sense?
+### Survival-oriented build
 
-**E. Danger**
-1. Step into the water round the stern. Expected: "The water is live." and 20 damage/s. You die in about 5 s at full health, so step straight back out.
-2. Is the danger readable before you step in (bright blue glow, pale dead fish ring, sparks, the chalk warning on the beach)? Inspect the Chalk warning plank.
-3. Optional: die there. You respawn at the PlayerStart with full health and your inventory.
+1. **B**, then **F10** to reset. **F2** twice (Fieldcraft 2). **F5** twice (Survival 2). **F8** (Pulse Read). Close with **B**.
+2. Life jackets: the reading mentions the treeline. Prompt `[Survival 2]`.
+3. Chalk warning: written from the shallows. Prompt `[Fieldcraft 2]`.
+4. Dead fish: one shock. Prompt `[Pulse Read]`.
+5. The breaker panel does not show the mast-lamp reading.
 
-**F. Loot**
-1. The survey locker in the wheelhouse west/aft corner: E takes one stack at a time (9mm ×12, Salvaged Wiring ×3, Field Dressing ×1). Take one or two and leave the rest.
-2. The tender about 4 m off the stern, in the live water: reach it either by pulling the leads first (safe), or by running the water. Expected: the new Sounder Chart, Field Dressing ×2, 9mm ×18. (You can also jump from the transom onto the tender without touching the water; that is accepted.)
-3. Pull the leads (Battery bank). Expected: the blue glow and the sparks go out, the damage stops, and the beacon, dead fish and chalk warning text change. The water should stay as dull dark water (it must not vanish). Walk in it to confirm it is safe.
+### Persuasion-oriented build
 
-**G. Mara**
-1. After reading the log, talk to Mara. Expected: a new reply, "There's a wrecked survey launch west of the boathouse. I read her log." She talks about the *Tern* and a storm. Pick **"Was it a storm?"** Expected: "It's always a storm. Stay out of the water round her stern. It bites."
-2. Talk again: the exchange is not offered twice.
+1. **B**, **F10**. **F3** twice (Bearing 2). **F6** once (Persuasion 1; Bearing 2 makes it effective 2). Close the panel.
+2. Read the survey log on the wreck first.
+3. Talk to Mara. Take the wreck line, then "Was it a storm?", then `[Persuasion 2] You're leaving something out.`
+4. She says she saw two people come up off the beach and that she didn't follow. That choice does not come back.
 
-**H. Save / load** (the important one)
-1. With the locker part-looted, the power cut and the tender emptied (or not), press **F5**.
-2. Quit completely. Relaunch, press **F9**.
-3. Expected: you are where you saved; the location is still discovered (Tab), **with no second banner**; the locker holds exactly what you left; the tender is as you left it; the water is still off if you pulled the leads (or still live if you did not); clue text reflects your state; Shore Watch is at the stage you left it.
-4. Optional: F5 with the water live, then pull the leads, then F9. The water should be live again.
-5. Optional: F9 an older save. Expected: the POI is untouched and undiscovered.
+### Perk proof
 
-**Edge cases worth a minute**
-- The scavenger can chase you to the wreck. Combat there is not specially handled.
-- Try the west region: bluffs and breakwaters should stop you walking off the map.
-- Jump on the tender from the transom; loot without touching the water.
+Schematic Eye and Pulse Read are in the builds above.
 
-## Known Issues / Limitations
+Relay Ear: inspect the scavenger's relay on the shore path once. The ordinary words clue still happens. Open **B** and press **F9** while the panel is open (this does not load). Inspect the relay again. The housing mentions the pinout.
 
-- **Greybox readability.** Anthony playtested the loop and accepted it. Tests still teleport and call interactions directly, so aiming feel is not what the automation covers.
-- **Visuals are greybox.** The map is daylight only, so the amber lamp is visible but is not dramatic. A dusk or overcast pass would sell it. Flicker was not checked over time.
-- **Older pickup saves.** A save that predates a pickup no longer destroys that pickup. Taken pickups are stored by id (`RemovedPersistentIds`, save version 4). Saves from before that still remove only the boathouse pickups that existed at the time.
-- The firearm's object-type trace also hits query-only overlap volumes (damage volumes). Pre-existing; the location volume avoids it by not using collision.
-- The water is a solid walkable block (a pre-existing prototype limitation), so "wading" is walking on a slab.
-- Location display names live on the volume actors. A future map screen or multi-map setup will want a location data asset.
-- Carried over from Phase 2: one save slot, no autosave or main menu, canvas HUD, prototype writing, quest log and world flags on the player and a world subsystem (multi-map will need them carried over).
-- No new item was added; existing items were enough.
+### Sounder Chart
 
-## Decisions Made
+The chart is in the tender. Carrying it does nothing by itself. Engineering 2 or Schematic Eye, at the depth sounder, is what reads it. Neither reading explains the Current.
 
-1. **One hand-built POI, generic classes.** The location, container, hazard-condition and flicker-light classes are reusable; only the wreck exists.
-2. **Polling for discovery, not collision.** A trigger box would block the hitscan firearm trace and fires overlap events during the load teleport.
-3. **World state and discoveries apply first on load**, so nothing re-announces and conditioned hazards are correct from the first frame.
-4. **Containers reuse the world-inventory save arrays** instead of adding a container save format; a container newer than the save keeps its contents.
-5. **The hazard has a diegetic off switch**, taught by the log (the crew cut every breaker). The hidden loot is inside the danger, so disabling it is the safe way to get it.
-6. **The wreck is decoupled from Shore Watch.** The only links are flavour: the beacon and one Mara line.
-7. **Our own glow material** instead of the prototype's particle-only `M_SimpleGlow`.
-8. **All new lore is PROVISIONAL**; nothing explains the Current.
+### Save and load
 
-## Deferred Decisions
+1. Close the build panel. Press **F5**.
+2. Quit completely. Relaunch. Press **F9**.
+3. **Tab**. Attributes, skills, effective ranks, and the perk match what you saved.
+4. Optional: after saving, press **B** and **F10**, then **F9** without closing over a new save. The saved build comes back.
 
-- Carried over: the relay's six words, Mara's role and faction, factions in general, "Great Lakes Maritime Authority" naming, reward balance, the scavenger after the coil route, whether the accept reply should matter, "no shooting".
-- New: the boat's name (*Tern*), the loot balance at the wreck (locker vs tender vs the danger), and whether Mara's "storm" line should vary with the Shore Watch outcome.
+### Shore Watch regression
+
+With a fresh or unspent character, both routes still work. The pistol, ammo, and dressing on the bench are still there. The relay can still be powered and brought to Mara, and the camp can still be fought. Mara's original storm deflection is still there when Persuasion is too low to press her.
+
+### Survey Launch regression
+
+Walk-in discovery, the name board, the log, the live water, pulling the leads, the locker, the tender, and the beacon's reaction to the relay all still work with nothing invested. The new readings are extra variants. They do not replace those actions.
+
+## Known Issues / Technical Debt
+
+- The world is still a greybox. There is no audio pass. The water is a walkable slab. Firearm traces versus query volumes are unchanged.
+- The HUD is still the temporary canvas. The build panel is a prototype, not a character creator. F10 is not a product respec.
+- F-keys can be awkward in editor PIE if the editor is using them. `Tools\PlayTest.bat` is the right check.
+- One save slot.
+- The historical pickup list is only the four `boat.pickup_*` ids. Gym pickups are not in it.
+- Unspent points are derived from the current pool constants. Changing a pool later is a design change, not a save migration.
+- New wreck and Mara lines from these checks are PROVISIONAL.
+- Packaged rendering and a rendered F5/F9 were not smoked. Null-RHI confirmed boot, content, and the map.
+- Navigation data for `Lvl_Boathouse` is still rebuilt at runtime. That warning is pre-existing.
+
+## Design Decisions Made
+
+- Attributes are not SPECIAL. Each one is the capacity behind one skill, so a later skill is another row.
+- Effective skill is invested ranks plus 1 at attribute 2. A spread of 1s gives no bonus. Specializing is the point.
+- Failed checks are hidden, the same policy dialogue already used. No greyed-out row in this phase.
+- Check labels are generated from the condition.
+- Perks are qualitative readings, not percentages. All three have a consumer.
+- Skill investment adds options. The battery leads, both containers, and both Shore Watch routes stay available with nothing spent.
+- The Sounder Chart is a reading, not a quest, and it does not explain the Current.
+- Mara's press is one limited admission. Her faction and the Current stay undecided.
+- Removed pickups are an explicit set. Absence from an old save is not removal.
+- While the build panel is open, F5 and F9 belong to the panel.
+
+## Deferred Product Decisions
+
+- Final attribute and skill names, pool sizes, and whether the attribute bonus stays at +1.
+- XP, levels, caps, and a real respec.
+- Whether failed checks should become visible-but-unavailable later.
+- More skills, and whether one attribute should feed more than one skill.
+- Mara's faction, the crew's fate, and what the sounder pattern is.
+- Phase 5: choices visibly altering locations and NPC behavior beyond what Shore Watch and the wreck already do.
 
 ## Recommended Next Step
 
-The Exploration Loop is accepted. Next: **plan Phase 4, the RPG Layer, as its own numbered checklist before building anything**, in the style of `FirstPhasePlan.txt` and `ExplorationLoopPlan.txt`. Consider fixing the pickup/older-save persistence issue first.
+Playtest the three builds on `Lvl_Boathouse` using the checklist above, then accept or reject the RPG Layer.
+
+Do not start Phase 5 from this session.
