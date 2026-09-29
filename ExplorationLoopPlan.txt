@@ -1,0 +1,249 @@
+# DEAD CURRENT — Phase 3: Exploration Loop Plan
+
+## Mission
+
+Prove that exploration itself is rewarding.
+
+The loop is:
+
+**Wilderness → notice something → investigate → discover a place → read the environment → interact / scavenge → loot → learn something → the world remembers → keep exploring**
+
+This phase is not about a big map. It adds ONE small, optional, hand-placed point of interest to the existing `Lvl_Boathouse` and the smallest reusable systems that make it work: location discovery, loot containers, and a little more expressiveness for inspectables and hazards. Everything is built on the rule language, world state and save system from Phases 1 and 2.
+
+The target feeling is the first miniature version of:
+
+"What's over there?" followed by "I'm glad I looked."
+
+---
+
+# 1. Starting Point
+
+- Phase 1 (Walking Skeleton): complete and accepted.
+- Phase 2 (Micro RPG, Shore Watch): implemented, 24 automated tests passing, awaiting human playtest.
+- Shore Watch is a regression target. Its writing, rewards, route structure, scavenger outcome, Mara's characterization and the relay mystery are not changed.
+
+---
+
+# 2. The Point of Interest: Wrecked Survey Launch
+
+A small Great Lakes Maritime Authority survey launch lies driven bow-first onto the stones west of (behind) the boathouse. Her stern sits in the lake. Nobody sends the player there.
+
+**Notice.** A leaning mast with a flickering amber lamp shows above the boathouse roofline from the shore path, and through a new window in the boathouse's back wall. It is visible, off the obvious route, and never marked.
+
+**Discover.** Walking toward it shows a one-time banner: LOCATION DISCOVERED / Wrecked Survey Launch.
+
+**Read the place (environmental storytelling).**
+- Name board at the bow: she was driven ashore deliberately, at speed.
+- Cut life jackets on the beach: the crew left in a hurry and walked inland.
+- Wheelhouse: a depth sounder whose paper trace shows a regular pattern; a gutted breaker panel whose cables the crew cut themselves; the skipper's survey log (last page).
+- Aft deck: a battery bank whose corroded leads trail into the lake, and an emergency beacon taped to TRANSMIT.
+- Dead fish in a ring around the stern.
+
+**Danger.** The water around the stern is live. It glows faintly and flickers, fish float dead in a ring around it, and the battery leads run into it. Wading in hurts: an environmental damage-over-time volume, not a new survival system. The player can avoid it, tank it, or inspect the battery bank and then pull the leads. That turns the hazard off, and it stays off after save/load.
+
+**Loot.**
+- Obvious: the survey locker in the wheelhouse.
+- Less obvious: the crew's kit in the tender tied off the stern, out in the live water. The log mentions it; looking around shows it.
+
+**Learn something (without explaining the Current).** The log describes a pattern on the sounder, "a channel with no station", and cutting every breaker yet still feeling it through the boots. After the player pulls the leads, the beacon's text notes that the masthead lamp is still flickering, with nothing left to power it.
+
+**World reaction.** After reading the log, Mara has one optional line about the wreck. It does not answer anything.
+
+All new lore is PROVISIONAL in `Design/world_bible.md`.
+
+---
+
+# 3. Scope Lock
+
+In scope:
+
+- location discovery (reusable)
+- loot containers (reusable)
+- inspectable action verbs, so logs can be "Read" and switches "Pulled", reusing the inspectable variants and rules
+- world conditions on the existing damage volume (hazards that can be switched off)
+- a cosmetic flickering light for landmarks and hazards (no gameplay)
+- the Wrecked Survey Launch content, built by `Tools/EditorScripts/build_boathouse.py`
+- one optional Mara line
+- persistence and automated tests for all of the above
+
+Explicitly out of scope (do not start):
+
+- World Partition, PCG, big terrain, second map, multi-map travel
+- map screen, map markers, fast travel, quest markers to the POI
+- skills, attributes, perks, Focus, reputation, companions
+- crafting, outposts, survival/exposure simulation
+- lockpicking, hacking, a terminal framework or document browser
+- new enemy archetypes, wildlife, new weapon families
+- main menu, autosave, save slots, final HUD, final art
+- radiant quests, economy
+- a new quest for the POI
+
+---
+
+# 4. Architecture Principles (carried forward)
+
+- C++ holds reusable rules, runtime and persistence. Content (the POI) lives in the map script and data.
+- New interactables implement `IDCInteractable`; persistent ones implement `IDCPersistent` with a `UDCPersistentIdComponent`.
+- World facts are world flags or discovered locations in `UDCWorldStateSubsystem`, read by the shared condition language.
+- No POI-specific code anywhere in C++. Nothing in `ADCPlayerCharacter`.
+- Don't over-engineer: one good reusable loop, not a framework.
+
+---
+
+# 5. Implementation Order
+
+## EL-00 — Plan
+
+- this document
+
+**Done when:** committed before implementation starts.
+
+---
+
+## EL-01 — Location Discovery
+
+- `UDCWorldStateSubsystem` gains discovered locations: `DiscoverLocation(Id)` (returns true only the first time), `IsLocationDiscovered`, `GetDiscoveredLocations`, restore without broadcast, and an `OnLocationDiscovered` event. Discovery also fires `OnChanged`, so quests can react later.
+- New condition type `LocationDiscovered(Id)`.
+- Save format version 3 stores discovered locations. Older saves load with none.
+- On load, world state (flags and locations) is restored before actors and the player are placed, so nothing re-announces on load.
+- `ADCLocationVolume` (World/): a box with `LocationId` and `DisplayName`. It checks the player's position a few times a second (it doesn't use collision, so it can't block bullets or interaction traces), discovers once, then stops checking.
+- HUD: a banner (LOCATION DISCOVERED / name), and a PLACES list under the quest journal on Tab.
+
+**Done when:** entering a volume discovers the location exactly once, the banner shows once, the state survives save/load, and a condition can read it.
+
+---
+
+## EL-02 — Loot Container
+
+- `ADCLootContainer` (World/): a mesh, a `UDCInventoryComponent` (starting contents are its authored `Stacks`), and a persistent id; implements `IDCInteractable` and `IDCPersistent`.
+- **E** takes the next stack, like a corpse. The prompt shows what you will take; the message after taking lists what is still inside. An empty container reads "(empty)".
+- The save system already captures every persistent actor's inventory (the flat world-inventory arrays), so partial and full looting persist with no container-specific save code.
+- A save that predates the container leaves it with its authored contents.
+- No container-specific subclasses; different containers are placed actors with different mesh, name and contents.
+
+**Done when:** partial and full looting survive save/load exactly, and containers work without a subclass.
+
+---
+
+## EL-03 — Environmental Storytelling Support
+
+- `ADCInspectableActor` gains an `Action` verb (default "Inspect"), and each variant can override it. The prompt uses the first matching variant's verb. This covers "Read" (the log) and "Pull the leads" (the battery) without a readable/terminal system.
+- At least one clue changes after another clue or state: the breaker panel after the log is read; the beacon after the leads are pulled (and if Shore Watch's relay was inspected); the fish after the leads are pulled; the battery after it has been inspected.
+
+**Done when:** variants with verbs are covered by tests, and the POI's clues change with world state.
+
+---
+
+## EL-04 — Exploration Reward
+
+- Survey locker (obvious): 9mm rounds, salvaged wiring, a field dressing.
+- Tender kit (less obvious, guarded by the live water): field dressings and 9mm rounds.
+- Existing items only; no new item is needed for the story.
+
+**Done when:** both containers are placed and lootable, and the contents are recorded in the docs so balance can be reviewed.
+
+---
+
+## EL-05 — Environmental Hazard
+
+- `ADCDamageVolume` gains `ActiveConditions` (world conditions). While they fail it deals no damage and hides its mesh.
+- `ADCFlickerLight` (World/): a cosmetic flickering point light and glow mesh, with the same optional world conditions.
+- Live water around the stern: 20 damage per second and a one-time warning. It is off once `wreck.power_cut` is set.
+
+**Done when:** the hazard hurts in the real map, the player can recognize it before stepping in, and it stays off after the leads are pulled, including after save/load.
+
+---
+
+## EL-06 — World Reactivity
+
+Remembered state:
+
+- location `shore.survey_launch` discovered
+- `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut` flags
+- container contents (`boat.wreck_locker`, `boat.wreck_tender`)
+- Mara: one optional line, available once after `wreck.log_read`; sets `wreck.mara_told`
+
+**Done when:** the Mara line appears only after the log is read, only once, and never disturbs Shore Watch.
+
+---
+
+## EL-07 — Persistence
+
+Save/load (F5, quit or F9) must restore every combination of:
+
+- POI not discovered / discovered
+- containers untouched / partially looted / fully looted
+- clues read, hazard on / off
+- hidden reward taken
+- Shore Watch not started / active / complete at the same time
+- a save that predates Phase 3 (legacy and Micro RPG saves)
+
+**Done when:** in-map automated tests cover these with real F9 map reloads.
+
+---
+
+## EL-08 — Automated Tests
+
+Editor context:
+
+- discovery happens once and fires once; the condition reads it; progress round-trips through a save slot
+- container transfer, partial loot, prompt, and save capture/apply (partial, empty, legacy/missing)
+- inspectable verbs per variant
+- hazard and flicker world conditions
+- shipped content: Mara's wreck line with Shore Watch in each state; content validation
+
+Game context (real `Lvl_Boathouse`):
+
+- the POI is present: location volume, containers, clues, hazard
+- the real playthrough: teleport in → discovered once → read, inspect, loot partially → hazard hurts → pull the leads → hazard stops → loot the tender → save → F9 → everything restored, nothing re-announced
+- save/load combinations with Shore Watch active or complete
+- an older save loads with the POI untouched
+- the existing Shore Watch map tests still pass
+
+**Done when:** every test (existing and new) passes via `Tools\RunTests.bat`.
+
+---
+
+## EL-09 — Acceptance Scenario (manual, for Anthony)
+
+1. Launch `Lvl_Boathouse`.
+2. The First Playable still works.
+3. Shore Watch still works.
+4. Leave the direct route.
+5. Notice the wreck with no marker.
+6. Approach it.
+7. Get a one-time discovery banner.
+8. Inspect the clues and infer the story.
+9. Recognize and avoid (or disable) the live water.
+10. Loot the survey locker.
+11. Find and loot the tender kit.
+12. Leave.
+13. Save.
+14. Quit completely.
+15. Relaunch and load.
+16. The location is still discovered.
+17. Clues and world state are correct.
+18. Loot has not respawned.
+19. Partially looted containers keep exactly what was left.
+20. Shore Watch state is correct.
+
+The session report carries the detailed checklist.
+
+---
+
+# 6. Packaging Smoke Test (after everything passes)
+
+- Try a Development cook/package for Win64.
+- Classify failures as project defects (fix) or toolchain/environment (document).
+- If it succeeds, document the output and how to launch it.
+
+---
+
+# 7. Definition of Done
+
+- Everything in EL-01..EL-08 is implemented and committed in coherent commits.
+- `DeadCurrentEditor` builds.
+- All tests pass.
+- Docs are updated (`technical_architecture.md`, `game_design.md`, `world_bible.md` with provisional markers).
+- `Design/CLAUDE_SESSION_REPORT.md` holds this session's report and Anthony's manual checklist.
+- Stop. Don't start the RPG Layer.
