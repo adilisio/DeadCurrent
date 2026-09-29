@@ -98,6 +98,8 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 
 While the build panel is open, F5 and F9 allocate Survival and Relay Ear. They do not save or load until the panel is closed.
 
+The engine debug view modes on F1–F5, and the F9 screenshot toggle, are removed in `Config/DefaultInput.ini`. Those keys stay with the build panel, save, and load. Restart the editor or `PlayTest.bat` after that config change. A package cooked before it still has the old bindings.
+
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 
 ## Test gym
@@ -352,7 +354,7 @@ Save format version (`UDCSaveGame::SaveVersion`, current 5): 0/1 = first playabl
 
 Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, `DeadCurrent.Save.WorldInventorySlot`, and `DeadCurrent.Save.RemovedPickup` cover lookup, inventory snapshot restore, USaveGame round-trip of corpse loot, and the taken-versus-added-later pickup cases. `DeadCurrent.Quest.Persistence` covers the quest log and flags, and `DeadCurrent.Map.Boathouse.*` covers full F9 loads in the real map.
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel with the quest journal beside it (quests, places, and a character block), the build panel (**B**), the weapon ammo readout, a health bar, the dialogue panel, and the tracked quest objective. It will be replaced by UMG widgets when the HUD grows. Dialogue choices that passed a build check show that check in front of the line.
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel with the quest journal beside it (quests, places, and a character block), the build panel (**B**), the weapon ammo readout, a health bar, the dialogue panel, and the tracked quest objective. The interaction prompt, inspect messages, discovery banner, and objective sit on a dark plate so light text stays readable on a pale wall. Inspect messages wrap to the same width as dialogue. It will be replaced by UMG widgets when the HUD grows. Dialogue choices that passed a build check show that check in front of the line.
 
 ## C++ vs Blueprint / data
 

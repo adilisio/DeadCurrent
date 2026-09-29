@@ -158,7 +158,7 @@ Walk-in discovery, the name board, the log, the live water, pulling the leads, t
 
 - The world is still a greybox. There is no audio pass. The water is a walkable slab. Firearm traces versus query volumes are unchanged.
 - The HUD is still the temporary canvas. The build panel is a prototype, not a character creator. F10 is not a product respec.
-- F-keys can be awkward in editor PIE if the editor is using them. `Tools\PlayTest.bat` is the right check.
+- Engine view modes used to steal F1–F5, and F9 used to toggle screenshot UI. Those bindings are removed in `Config/DefaultInput.ini`. Restart before the next playtest. The Win64 package cooked in this session still has the old bindings until the next cook.
 - One save slot.
 - The historical pickup list is only the four `boat.pickup_*` ids. Gym pickups are not in it.
 - Unspent points are derived from the current pool constants. Changing a pool later is a design change, not a save migration.

@@ -141,7 +141,7 @@ void ADCHUD::DrawInteractionPrompt()
 		Text += TEXT(" ") + Prompt.TargetName.ToString();
 	}
 
-	DrawCenteredText(Text, Canvas->ClipY * 0.5f + 40.0f, GEngine->GetMediumFont(), TextColor);
+	DrawBackedCenteredLines({ Text }, Canvas->ClipY * 0.5f + 40.0f, GEngine->GetMediumFont(), TextColor);
 }
 
 void ADCHUD::DrawMessage()
@@ -152,15 +152,31 @@ void ADCHUD::DrawMessage()
 	}
 
 	UFont* Font = GEngine->GetMediumFont();
-	const float MaxWidth = FMath::Max(120.0f, Canvas->ClipX - 80.0f);
+	const float Padding = 14.0f;
+	const float PanelWidth = FMath::Min(720.0f, Canvas->ClipX - 80.0f);
+	const float InnerWidth = FMath::Max(80.0f, PanelWidth - Padding * 2.0f);
 	TArray<FString> Lines;
-	WrapTextToWidth(CurrentMessage.ToString(), Font, MaxWidth, Lines);
+	WrapTextToWidth(CurrentMessage.ToString(), Font, InnerWidth, Lines);
+	if (Lines.IsEmpty())
+	{
+		return;
+	}
+
 	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
-	float Y = Canvas->ClipY * 0.75f;
+	const float PanelHeight = Padding * 2.0f + LineHeight * Lines.Num();
+	const float X = (Canvas->ClipX - PanelWidth) * 0.5f;
+	float Y = Canvas->ClipY * 0.68f;
+	if (Y + PanelHeight > Canvas->ClipY - 56.0f)
+	{
+		Y = FMath::Max(16.0f, Canvas->ClipY - 56.0f - PanelHeight);
+	}
+
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.72f), X, Y, PanelWidth, PanelHeight);
+	float TextY = Y + Padding;
 	for (const FString& Line : Lines)
 	{
-		DrawCenteredText(Line, Y, Font, TextColor);
-		Y += LineHeight;
+		DrawText(Line, TextColor, X + Padding, TextY, Font);
+		TextY += LineHeight;
 	}
 }
 
@@ -181,10 +197,11 @@ void ADCHUD::DrawBanner()
 	if (!BannerTitle.IsEmpty())
 	{
 		UFont* TitleFont = GEngine->GetMediumFont();
-		DrawCenteredText(BannerTitle.ToString(), Y, TitleFont, FLinearColor(0.85f, 0.75f, 0.45f, Alpha));
-		Y += TitleFont->GetMaxCharHeight() + 6.0f;
+		const FLinearColor TitleColor(0.85f, 0.75f, 0.45f, Alpha);
+		DrawBackedCenteredLines({ BannerTitle.ToString() }, Y, TitleFont, TitleColor);
+		Y += TitleFont->GetMaxCharHeight() + 18.0f;
 	}
-	DrawCenteredText(BannerSubtitle.ToString(), Y, GEngine->GetLargeFont(), FLinearColor(TextColor.R, TextColor.G, TextColor.B, Alpha));
+	DrawBackedCenteredLines({ BannerSubtitle.ToString() }, Y, GEngine->GetLargeFont(), FLinearColor(TextColor.R, TextColor.G, TextColor.B, Alpha));
 }
 
 void ADCHUD::DrawInventory()
@@ -548,16 +565,10 @@ void ADCHUD::DrawObjective()
 	const FString Objective = FString::Printf(TEXT("%s: %s"), *Name, *Quests->GetStageText(QuestId).ToString());
 
 	UFont* Font = GEngine->GetMediumFont();
-	const float MaxWidth = FMath::Max(120.0f, Canvas->ClipX - 80.0f);
+	const float MaxWidth = FMath::Min(720.0f, FMath::Max(120.0f, Canvas->ClipX - 80.0f));
 	TArray<FString> Lines;
 	WrapTextToWidth(Objective, Font, MaxWidth, Lines);
-	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
-	float Y = 28.0f;
-	for (const FString& Line : Lines)
-	{
-		DrawCenteredText(Line, Y, Font, FLinearColor(0.85f, 0.75f, 0.45f, 1.0f));
-		Y += LineHeight;
-	}
+	DrawBackedCenteredLines(Lines, 28.0f, Font, FLinearColor(0.85f, 0.75f, 0.45f, 1.0f));
 }
 
 void ADCHUD::DrawDialogue()
@@ -758,4 +769,36 @@ void ADCHUD::DrawCenteredText(const FString& Text, float Y, UFont* Font, const F
 	const float X = (Canvas->ClipX - Width) * 0.5f;
 	DrawText(Text, FLinearColor(0.0f, 0.0f, 0.0f, 0.7f * Color.A), X + 1.0f, Y + 1.0f, Font);
 	DrawText(Text, Color, X, Y, Font);
+}
+
+void ADCHUD::DrawBackedCenteredLines(const TArray<FString>& Lines, float TopY, UFont* Font, const FLinearColor& Color)
+{
+	if (!Font || Lines.IsEmpty())
+	{
+		return;
+	}
+
+	float MaxWidth = 0.0f;
+	for (const FString& Line : Lines)
+	{
+		float Width = 0.0f;
+		float Height = 0.0f;
+		GetTextSize(Line, Width, Height, Font);
+		MaxWidth = FMath::Max(MaxWidth, Width);
+	}
+
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	const float PadX = 12.0f;
+	const float PadY = 6.0f;
+	const float PlateWidth = MaxWidth + PadX * 2.0f;
+	const float PlateHeight = LineHeight * Lines.Num() - 4.0f + PadY * 2.0f;
+	const float X = (Canvas->ClipX - PlateWidth) * 0.5f;
+	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.72f * Color.A), X, TopY - PadY, PlateWidth, PlateHeight);
+
+	float Y = TopY;
+	for (const FString& Line : Lines)
+	{
+		DrawCenteredText(Line, Y, Font, Color);
+		Y += LineHeight;
+	}
 }
