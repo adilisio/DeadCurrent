@@ -2,7 +2,7 @@
 
 Living document. Read it before importing, generating, or placing any art or audio. Update it when the first real asset lands and a convention below stops being a proposal.
 
-Status (2026-09-29): nothing from the library has been imported yet. `Lvl_Boathouse` and `Lvl_TestGym` are greybox: `LevelPrototyping` meshes, `M_FlatCol` and `M_DC_Glow` material instances, no audio. Conventions marked **Proposed** have not been exercised.
+Status (2026-09-29): the art-layer decision is in force. `Lvl_Boathouse_Art` is an always-loaded streaming sublevel; `build_boathouse.py` re-links it and does not rewrite it. No library mesh or sound has been imported yet. The persistent map is still greybox. Conventions marked **Proposed** have not been exercised.
 
 ## Art direction (from `LongTermPlan.txt` §18)
 
@@ -116,7 +116,7 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 
 ### Gameplay constraints art must respect
 
-- **Generated maps.** `build_boathouse.py` regenerates `Lvl_Boathouse` and wipes hand edits. **Proposed:** gameplay actors stay script-built. Art dressing lives in a separate hand-authored level the script does not touch (a streaming sublevel or Level Instance, e.g. `Lvl_Boathouse_Art`), or it is placed by the script from a data table. Decide which before placing the first real mesh on the shore.
+- **Generated maps.** `build_boathouse.py` regenerates the persistent `Lvl_Boathouse` and wipes hand edits there. **Decision (2026-09-29):** dressing that is not a gameplay actor lives in the hand-authored streaming sublevel `Lvl_Boathouse_Art` (`/Game/Maps/Lvl_Boathouse_Art`, always loaded). The script re-links that level on every rebuild, destroys only persistent-level actors, and does not save the art level after the one-time create. A sentinel actor tagged `ArtLayerSentinel` is the proof: `Tools\RebuildContent.bat` must leave it in place, and `DeadCurrent.Map.Boathouse.ArtLayer` must find it. Gameplay actors (inspectables, containers, the door, the water slab, the damage volume, sparks, NPCs, pickups) stay in the persistent map, and the script assigns their meshes. Mood (sun, sky, fog, post process) stays in the script too, so the art level does not add a second sun. Art-level meshes are NoCollision unless a task writes down why a specific mesh needs simple collision.
 - **Collision is gameplay.** Firearm hitscan traces WorldStatic/WorldDynamic, AI navigation is rebuilt at runtime, and location discovery is polled (not collision-based) for exactly this reason. Dressing meshes change cover, sightlines, and nav. Rerun `Tools\RunTests.bat` (the `Map` suite walks real routes) after dressing a playable space.
 - **Clue actors are inspectables** (`ADCInspectableActor`) with persistent ids and world-state variants. Replace their greybox mesh; keep the actor, id, and variants. The glow and live-water visuals switch from world flags (`M_DC_Glow`, `ADCDamageVolume.ActiveConditions`). A new material must keep that switch working.
 

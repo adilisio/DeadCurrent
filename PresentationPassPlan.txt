@@ -21,7 +21,7 @@ The target feeling is:
 # 1. Starting Point
 
 - Phase 1 (Walking Skeleton), Phase 2 (Shore Watch), Phase 3 (Wrecked Survey Launch), and Phase 4 (RPG Layer) are accepted.
-- 36 automated tests were passing at the end of Phase 4. Baseline for this pass is HEAD `45986af` (agent orientation and the choice of this pass). The count is re-measured with `Tools\RunTests.bat -build` before any content task, and that measured count is the floor.
+- 36 automated tests were passing at the end of Phase 4. Re-measured 2026-09-29 on `ed2ffa5` with `Tools\RunTests.bat -build`: **36 tests, all passing** (30 editor, 6 map). That count is the floor.
 - `Lvl_Boathouse` is greybox: `LevelPrototyping` cubes, `M_FlatCol` / `M_DC_Glow`, mannequin bodies, no shore audio. The pistol still uses the template grenade-launcher shot.
 - `build_boathouse.py` loads the map and destroys every actor except world settings and the builder brush, then rebuilds. A hand edit in `Lvl_Boathouse` does not survive `Tools\RebuildContent.bat`.
 - Playtest overrides (`Tools\PlayTest.bat`): DX11, scalability 0, no Lumen, no volumetric fog or clouds, bloom / motion blur / DOF / lens flare / AO off, 400 MB texture pool, 70% screen percentage, 60 FPS cap. The look has to carry on a directional light, SkyAtmosphere, non-volumetric height fog, and post-process color grading.

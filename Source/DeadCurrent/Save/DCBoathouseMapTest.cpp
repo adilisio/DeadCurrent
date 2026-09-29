@@ -1026,4 +1026,35 @@ bool FDCBoathouseBuildChecksTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseArtLayerTest, "DeadCurrent.Map.Boathouse.ArtLayer",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCBoathouseArtLayerTest::RunTest(const FString& Parameters)
+{
+	using namespace DCBoathouseTest;
+	QueueFreshMap();
+
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		if (!TestNotNull(TEXT("Player"), Player()))
+		{
+			return true;
+		}
+
+		int32 Sentinels = 0;
+		for (TActorIterator<AActor> It(GameWorld()); It; ++It)
+		{
+			if (It->Tags.Contains(TEXT("ArtLayerSentinel")))
+			{
+				++Sentinels;
+			}
+		}
+		TestEqual(TEXT("Art layer sentinel loaded with the boathouse"), Sentinels, 1);
+		return true;
+	}));
+
+	QueueCleanup();
+	return true;
+}
+
 #endif

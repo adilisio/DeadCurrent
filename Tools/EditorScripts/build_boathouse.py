@@ -1,6 +1,11 @@
-"""Build /Game/Maps/Lvl_Boathouse, the first-playable greybox scenario.
+"""Build /Game/Maps/Lvl_Boathouse, the first-playable scenario.
 
-Regenerates the map from scratch on every run. Run with:
+Regenerates the persistent map from scratch on every run. The hand-authored streaming
+sublevel /Game/Maps/Lvl_Boathouse_Art is re-linked and never edited here: this script
+does not destroy its actors and does not save it, except for the one-time create of an
+empty level with a sentinel tagged ArtLayerSentinel.
+
+Run with:
 UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> -unattended -nullrhi
 
 Layout (X is out the door, Z is up, units are cm; the lake is -Y):
@@ -16,6 +21,8 @@ import math
 import unreal
 
 MAP_PATH = "/Game/Maps/Lvl_Boathouse"
+ART_MAP = "/Game/Maps/Lvl_Boathouse_Art"
+ART_SENTINEL = "ArtLayerSentinel"
 CUBE = "/Game/LevelPrototyping/Meshes/SM_Cube"
 MAT_FLOOR = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray"
 MAT_BLOCK = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_TopDark"
@@ -810,6 +817,117 @@ def build_survey_launch():
     log(f"survey launch: deck gap at {top}, lamp at {lamp}")
 
 
+def editor_world():
+    return unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+
+
+def package_name(obj):
+    if not obj:
+        return ""
+    outer = obj.get_outermost()
+    return outer.get_name() if outer else ""
+
+
+def focus_persistent():
+    """Gameplay actors have to be spawned into the persistent map, not the art sublevel."""
+    current = levels.get_current_level()
+    if package_name(current) == MAP_PATH:
+        return
+    short = MAP_PATH.rsplit("/", 1)[-1]
+    for name in (short, "PersistentLevel"):
+        levels.set_current_level_by_name(name)
+        if package_name(levels.get_current_level()) == MAP_PATH:
+            return
+    for level in unreal.EditorLevelUtils.get_levels(editor_world()):
+        log(f"level name={level.get_name()} package={package_name(level)}")
+    raise RuntimeError("Could not return to the persistent boathouse level")
+
+
+def art_levels():
+    """Loaded ULevels whose package is the art map. Each ULevel is named PersistentLevel, so the package is the id."""
+    found = []
+    for level in unreal.EditorLevelUtils.get_levels(editor_world()):
+        if package_name(level) == ART_MAP:
+            found.append(level)
+    return found
+
+
+def destroy_persistent_actors():
+    """Drop generated actors only. A loaded art sublevel shares get_all_level_actors()."""
+    persistent = levels.get_current_level()
+    if not persistent:
+        raise RuntimeError("No current level to rebuild")
+    persistent_package = package_name(persistent)
+    if persistent_package != MAP_PATH:
+        raise RuntimeError(f"Refusing to rebuild: current level package is '{persistent_package}'")
+    doomed = []
+    spared = 0
+    for actor in actors.get_all_level_actors():
+        outer = actor.get_outer()
+        if package_name(outer) != persistent_package:
+            spared += 1
+            continue
+        if isinstance(actor, (unreal.WorldSettings, unreal.Brush)):
+            continue
+        doomed.append(actor)
+    if not doomed and spared > 3:
+        raise RuntimeError(
+            f"Refusing to rebuild: no actors in package '{persistent_package}' "
+            f"({spared} actors were in other levels). The art level filter is wrong.")
+    actors.destroy_actors(doomed)
+    log(f"cleared {len(doomed)} persistent actors; left {spared} in other levels")
+
+
+def ensure_art_level():
+    """Re-link Lvl_Boathouse_Art. Create it once. Never save it on a later run."""
+    world = editor_world()
+    linked = art_levels()
+    if len(linked) > 1:
+        raise RuntimeError(f"Lvl_Boathouse_Art is linked {len(linked)} times")
+    if linked:
+        sentinels = []
+        for actor in actors.get_all_level_actors():
+            if package_name(actor.get_outer()) != ART_MAP:
+                continue
+            if ART_SENTINEL in [str(tag) for tag in actor.get_editor_property("tags")]:
+                sentinels.append(actor)
+        if len(sentinels) != 1:
+            raise RuntimeError(
+                f"Art level is linked but has {len(sentinels)} ArtLayerSentinel actors")
+        log("art level already linked; sentinel intact")
+        focus_persistent()
+        return
+
+    if not unreal.EditorAssetLibrary.does_asset_exist(ART_MAP):
+        streaming = unreal.EditorLevelUtils.create_new_streaming_level(
+            unreal.LevelStreamingAlwaysLoaded, ART_MAP, False)
+        if not streaming:
+            raise RuntimeError(f"Could not create {ART_MAP}")
+        if not levels.set_current_level_by_name("Lvl_Boathouse_Art"):
+            raise RuntimeError("Could not make the new art level current")
+        sentinel = actors.spawn_actor_from_class(
+            unreal.TargetPoint, unreal.Vector(0.0, 0.0, -2000.0))
+        sentinel.set_actor_label("ArtLayerSentinel")
+        sentinel.set_editor_property("tags", [unreal.Name(ART_SENTINEL)])
+        sentinel.set_actor_hidden_in_game(True)
+        sentinel.set_actor_enable_collision(False)
+        loaded = streaming.get_loaded_level()
+        if loaded and sentinel.get_outer() != loaded:
+            unreal.EditorLevelUtils.move_actors_to_level([sentinel], loaded)
+        package = (loaded or sentinel.get_outer()).get_outermost()
+        if not unreal.EditorLoadingAndSavingUtils.save_packages([package], False):
+            raise RuntimeError(f"Could not save {ART_MAP}")
+        log("created Lvl_Boathouse_Art with ArtLayerSentinel")
+    else:
+        streaming = unreal.EditorLevelUtils.add_level_to_world(
+            world, ART_MAP, unreal.LevelStreamingAlwaysLoaded)
+        if not streaming:
+            raise RuntimeError(f"Could not link {ART_MAP}")
+        log("relinked Lvl_Boathouse_Art")
+
+    focus_persistent()
+
+
 def build_nav():
     folder = "Ground"
     vol = actors.spawn_actor_from_class(unreal.NavMeshBoundsVolume, unreal.Vector(1700.0, 400.0, 0.0))
@@ -829,10 +947,11 @@ def build_nav():
 def main():
     if unreal.EditorAssetLibrary.does_asset_exist(MAP_PATH):
         levels.load_level(MAP_PATH)
-        actors.destroy_actors([a for a in actors.get_all_level_actors()
-                               if not isinstance(a, (unreal.WorldSettings, unreal.Brush))])
+        destroy_persistent_actors()
     elif not levels.new_level(MAP_PATH, False):
         raise RuntimeError(f"Could not create {MAP_PATH}")
+
+    focus_persistent()
 
     log(f"cube bounds min={CUBE_MIN} size={CUBE_SIZE}")
     build_lighting()
@@ -844,10 +963,15 @@ def main():
     build_west_shore()
     build_survey_launch()
     build_nav()
+    ensure_art_level()
 
+    focus_persistent()
     if not levels.save_current_level():
         raise RuntimeError(f"Could not save {MAP_PATH} (is the file read-only?)")
-    log(f"saved {MAP_PATH} with {len(actors.get_all_level_actors())} actors")
+    linked = art_levels()
+    if len(linked) != 1:
+        raise RuntimeError(f"Expected one art-level link after save, found {len(linked)}")
+    log(f"saved {MAP_PATH} with {len(actors.get_all_level_actors())} actors; art level linked")
 
 
 main()
