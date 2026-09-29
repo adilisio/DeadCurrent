@@ -23,6 +23,8 @@ To be defined. Three broad positions exist:
 - **Great Lakes Maritime Authority**: the pre-collapse body that ran shipping, storm protocol and shoreline infrastructure. Its notices, supply crates and radio relays are everywhere on the shore. Placeholder name from the first playable; confirm or replace.
 - **Maritime Authority relays**: shoreline radio relay housings, dead for sixty years. Some have started transmitting again when powered, faintly, in something close to words. Whether the words are real is deliberately unresolved.
 
+- **Maritime Authority survey launches** (PROVISIONAL, from the Exploration Loop): small crewed survey boats of the Authority. Wrecks of them may lie along the shore.
+
 ## Locations
 
 ### First playable / Micro RPG
@@ -31,6 +33,16 @@ To be defined. Three broad positions exist:
 - Exterior shoreline path (scavenger's patrol loop)
 - Scavenger camp on the path: a relay wired to a truck battery
 - Mara's lookout behind the ridge, out of the scavenger's sight
+
+### Exploration Loop (all PROVISIONAL; not canon until Anthony confirms)
+
+- **The Wrecked Survey Launch**, on the west shore behind the boathouse. She is a Maritime Authority survey launch, the *Tern* (the name board has flaked to "T_RN"). She was run aground deliberately "since the lights went out", during the collapse. The two-person crew cut every breaker, cut their life jackets off and walked inland.
+- The crew's log describes a regular "pattern" on the depth sounder at a mark off the point, and the same pattern on the radio "on a channel with no station". They felt it even with every breaker cut. Their kit was left in the tender, tied off the stern.
+- Sixty years on, the launch's battery bank is still live and electrifies the water round the stern (dead fish ring it). Pulling the battery leads stops it.
+- The masthead lamp flickers with no power at all.
+- The emergency beacon on the transom is dead, but hums like the scavenger's relay if the player has already inspected that relay.
+- **Mara** (and "everybody on this shore") treats the wreck as "a storm". She knows the *Tern*, tells the player to stay out of the water round her stern ("It bites"), and deflects. Whether she knows more is undecided.
+- **Nothing explains the Current.** The wreck is a symptom, not an answer. Do not add an explanation.
 
 ## Characters
 

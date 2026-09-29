@@ -24,7 +24,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 First Playable (FirstPhasePlan §18 / §20) is accepted: boathouse loop, per-stack corpse loot, and F5/F9 world restore including remaining corpse stacks.
 
-Micro RPG (LongTermPlan Phase 2) is implemented and awaiting a human playtest: the Shore Watch quest in `Lvl_Boathouse` with a combat route and a coil (stealth) route, different outcomes, and save/load at every stage. See `Design/CLAUDE_SESSION_REPORT.md` for the playtest checklist.
+Micro RPG (LongTermPlan Phase 2) is implemented and awaiting a human playtest: the Shore Watch quest in `Lvl_Boathouse` with a combat route and a coil (stealth) route, different outcomes, and save/load at every stage. Exploration Loop (LongTermPlan Phase 3) is implemented and awaiting a human playtest: the Wrecked Survey Launch, an optional point of interest west of the boathouse (location discovery, environmental clues, live-water hazard, two loot containers, one line from Mara). See `Design/CLAUDE_SESSION_REPORT.md` for the playtest checklist and `ExplorationLoopPlan.txt` for the scope.
 
 ## Automated tests
 
@@ -36,7 +36,7 @@ Tools\RunTests.bat -nomap       skip the in-map suite
 Tools\RunTests.bat -build       build DeadCurrentEditor first
 ```
 
-Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context suite runs in about 25 s, the in-map suite in about 25 s.
+Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. 30 tests: 25 editor-context and 5 in-map; the full run takes about 2 minutes including editor start-up.
 
 | Group | Covers |
 | --- | --- |
@@ -45,8 +45,12 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context 
 | `DeadCurrent.Dialogue.*` | Graph walking, conditional entries, hidden choices, choice consequences (quest, items, flags) |
 | `DeadCurrent.Content.Validate` | Every quest and dialogue asset: graph checks and references to real quests, stages and items; Asset Manager registration |
 | `DeadCurrent.Content.ShoreWatch.*` | The shipped quest and dialogue assets through both routes, pre-quest shortcuts, the clue line and epilogues, with save/restore at each stage |
-| `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). Scratch save slot |
-| `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants and the first-playable systems |
+| `DeadCurrent.Exploration.Discovery` | Once-only location discovery, rotated volume, announce count, save round-trip, silent restore, pre-Phase-3 save |
+| `DeadCurrent.Exploration.Container` | Prompt text, partial and full looting, slot round-trip into a fresh world, a container newer than the save |
+| `DeadCurrent.Exploration.WorldConditions` | Damage volume and flicker light switched by a world flag, including silent restore |
+| `DeadCurrent.Content.Exploration.MaraWreckLine` | The shipped dialogue: Mara's wreck exchange across Shore Watch states, offered once, survives save/reload |
+| `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. Scratch save slot |
+| `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants (including per-variant verbs) and the first-playable systems |
 
 `Core/DCTestHelpers.h` has `FDCTestWorld`, a throwaway game world with subsystems and BeginPlay, for tests that need a registry, world state or component events. In-map tests (`EAutomationTestFlags::ClientContext` only) run under `-game`; with rendering enabled the coil-route test also saves `Saved/Screenshots/<platform>/DC_QuestHUD.png`.
 
@@ -67,7 +71,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The editor-context 
 | `create_dialogue.py` | Creates or updates dialogue Data Assets in `/Game/Dialogue`. Safe to re-run. |
 | `create_quest.py` | Creates or updates quest Data Assets in `/Game/Quests` (Shore Watch). Safe to re-run. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
-| `build_boathouse.py` | Regenerates `/Game/Maps/Lvl_Boathouse`, the first-playable scenario. Hand edits to that map are lost on the next run. |
+| `build_boathouse.py` | Regenerates `/Game/Maps/Lvl_Boathouse`, the first-playable scenario, Shore Watch and the Survey Launch POI. Also creates the material instances in `/Game/Environment/Materials` (`MI_DC_*`, children of `M_FlatCol` and our own `M_DC_Glow`, an unlit translucent glow with `Color` rgb = emissive, a = opacity). Hand edits to that map are lost on the next run. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
 `Tools\RebuildContent.bat` runs `create_items`, `create_quest`, `create_dialogue`, `build_test_gym` and `build_boathouse` in that order (dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`.
@@ -122,6 +126,20 @@ Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement
 
 The relay rig (`RelayRig`, at the camp) is an inspectable with variants: inspecting it while it is live sets `shore.relay_inspected`, which opens a line with Mara (`shore.voice_discussed` once told). Mara's greeting depends on the stage, handles the scavenger already dead (`already_dead`) or the coil already taken before meeting her, takes a coil handed in after the kill route (sets `shore.relay_recovered`), and remarks once if he is killed after the coil route (`shore.mara_heard_kill`). The lookout crate by Mara reads differently for each outcome flag.
 
+### Point of interest: the Wrecked Survey Launch (Exploration Loop)
+
+An optional site on the west shore, not on any route and with no marker. Coordinates are cm; +X is out the boathouse door and the lake is -Y. The bow sits on the stones near (-1500, -300) and the stern is in the water near (-1500, -1260). The site is built by `build_survey_launch()` in `build_boathouse.py` and takes its ids from constants at the top of that script.
+
+- **Notice:** a west window in the boathouse back wall (inspect it: "Look out") mentions a mast and a light. Outside, a leaning mast (about 12.6 m) with a flickering amber lamp (`ADCFlickerLight`) shows above the boathouse roof from the path.
+- **Discovery:** an `ADCLocationVolume` (`shore.survey_launch`, "Wrecked Survey Launch") spanning X -2600..-700, Y -1850..450. Walking round the lake side of the boathouse and west triggers it about 7 m past the back wall.
+- **Clues** (all `ADCInspectableActor` with variants): name board, life jackets, depth sounder, survey log (verb "Read", sets `wreck.log_read`), breaker panel (changes after the log is read), battery bank (first inspect sets `wreck.battery_seen`; the verb then becomes "Pull the leads", which sets `wreck.power_cut`), emergency beacon (reacts to `shore.relay_inspected` and to the power being cut), dead fish, and the west window (changes after discovery and after the power is cut).
+- **Hazard:** live water, an `ADCDamageVolume` over X -2020..-980, Y -1780..-1000 at 20/s with `ActiveConditions = [!wreck.power_cut]`. A ring of dead fish marks its edge and two spark lights flicker over it. Pulling the leads switches the damage, the water glow and the sparks off, and that persists through saves.
+- **Loot** (`ADCLootContainer`): `boat.wreck_locker` (survey locker in the wheelhouse: 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing) and `boat.wreck_tender` (a small boat about 4 m off the stern, inside the live water, tied to the transom by a line: 2× Field Dressing, 18× 9mm). The log mentions the tender.
+- **Mara:** once `wreck.log_read` is set, her greeting, who, place, in-progress and epilogue nodes (never the turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." She answers; the player can ask "Was it a storm?" (sets `wreck.mara_told`). Offered once.
+- **World state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`. Never rename a shipped id.
+
+The POI adds no items, quests or C++ specific to the wreck: it is built from the generic classes below. Shore Watch content and `ADCPlayerCharacter` are unchanged.
+
 ## Interaction
 
 Anything the player can use implements `IDCInteractable` (`Interaction/DCInteractable.h`), in C++ or Blueprint:
@@ -133,7 +151,7 @@ Anything the player can use implements `IDCInteractable` (`Interaction/DCInterac
 
 `UDCInteractorComponent` on the player sweeps from the view point each frame (2.5 m range, 8 cm radius, Visibility channel), keeps the usable interactable in focus, and broadcasts `OnFocusChanged`. The interact input calls `TryInteract()`. `ADCHUD` draws the prompt from the focused actor, so new interactable types need no UI or player changes.
 
-Current implementations: `ADCInspectableActor` (shows a description; `Variants` pick the text by condition and can run consequences, e.g. a clue flag on first inspection), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory), `ADCScavengerCharacter` (loot after death), `ADCFriendlyNPC` (talk).
+Current implementations: `ADCInspectableActor` (shows a description; `Variants` pick the text by condition and can run consequences, e.g. a clue flag on first inspection; `Action` is the prompt verb, default "Inspect", and a variant can override it, e.g. "Read" or "Pull the leads"; `GetDisplayName()`), `ADCDoor` (swings away from the user), `ADCItemPickup` (adds to inventory), `ADCLootContainer` (take stacks from a placed container), `ADCScavengerCharacter` (loot after death), `ADCFriendlyNPC` (talk).
 
 ## Items
 
@@ -173,7 +191,7 @@ Recoil kicks the view up (with a little random yaw) and recovers over a few fram
 
 The pistol does 25, default max health is 100, so four hits drop a plate. `ADCShootableTarget` flashes and shows remaining health, then falls over on death. The player shows a health bar (bottom left); on death, movement is disabled and they respawn at the PlayerStart after 4 seconds with full health (inventory is kept).
 
-`ADCDamageVolume` (`World/`) is an overlap pad that applies `Damage.Environmental` each second. The gym has a "chemical spill" at 25/s, so standing on it kills in about 4 seconds.
+`ADCDamageVolume` (`World/`) is an overlap pad that applies `Damage.Environmental` each second. The gym has a "chemical spill" at 25/s, so standing on it kills in about 4 seconds. `ActiveConditions` (world conditions only: flags and discovered locations; they are evaluated against the volume itself, so item and quest conditions never pass) switch it off: while inactive it deals no damage and hides its mesh. It re-checks every tick because save restores replace flags silently. The Survey Launch's live water is one (20/s, off after `wreck.power_cut`). Note the firearm's object-type trace also hits these query-only overlap volumes (pre-existing).
 
 Automation test `DeadCurrent.Combat.Health` covers damage, death, ignored extra hits, heal and reset.
 
@@ -218,6 +236,7 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 | `QuestStage(Id, Stage)` | quest is at that exact stage (use it to tell outcomes apart) |
 | `WorldFlag(Id)` | world flag set |
 | `ActorDead(Id)` | the actor registered under persistent id Id has a dead health component |
+| `LocationDiscovered(Id)` | the location id has been discovered (see Exploration) |
 
 Every condition has `bNegate`. A list passes when every entry passes; an empty list passes.
 
@@ -234,7 +253,17 @@ Every condition has `bNegate`. A list passes when every entry passes; an empty l
 
 ## World state
 
-`UDCWorldStateSubsystem` (`World/`, world subsystem) owns named world flags (`shore.path_cleared`) and the `OnChanged` signal. Flags are set by consequences and read by conditions. `NotifyChanged` fires on flag changes and on any health-component death; quests re-check their transitions on it. Flags are saved and restored with the game. Name flags `<area>.<fact>`.
+`UDCWorldStateSubsystem` (`World/`, world subsystem) owns named world flags (`shore.path_cleared`) and the `OnChanged` signal. Flags are set by consequences and read by conditions. `NotifyChanged` fires on flag changes and on any health-component death; quests re-check their transitions on it. Flags are saved and restored with the game. Name flags `<area>.<fact>`. The subsystem also holds `DiscoveredLocations`: `DiscoverLocation(Id)` returns true only the first time and fires `OnLocationDiscovered` and `OnChanged`; `IsLocationDiscovered(Id)`; `ReplaceDiscoveredLocations` (silent, used by load).
+
+## Exploration
+
+**Locations.** `ADCLocationVolume` (`World/`) is a box with `LocationId` and `DisplayName`. It **polls player positions at 4 Hz instead of using collision**, for two reasons: the firearm traces WorldStatic/WorldDynamic/Pawn, so a trigger box would stop bullets, and overlap events fire during the load teleport. It stops ticking once its location is discovered. First discovery shows a `LOCATION DISCOVERED / <name>` banner on the HUD, and the Tab journal has a PLACES list. Display names live on the volume actors; a future map screen or multi-map setup will want a location data asset.
+
+**Containers.** `ADCLootContainer` (`World/`) is one reusable class: a mesh, a `UDCInventoryComponent` (the authored `Stacks` are the starting contents) and a persistent id. **E** takes the next stack. The prompt reads `Take 9mm Rounds (12) from Survey locker` and the message lists what is still inside; when empty it reads `Search X (empty)`. Persistence reuses the flat world-inventory arrays (see Save); there is no container-specific save code. A container missing from a save (added after it) keeps its authored contents.
+
+**Flicker light.** `ADCFlickerLight` (`World/`) is a cosmetic point light plus a glow cube whose material `Color` parameter is scaled with the flicker. Random flicker and dropouts, and optional `ActiveConditions` (world conditions) to switch it off.
+
+To add a location: place an `ADCLocationVolume` (or add a call in the map script), then use `LocationDiscovered(Id)` in any condition list.
 
 ## Quests
 
@@ -255,7 +284,7 @@ To add a quest: add a spec to `create_quest.py` (stages, transitions, OnEnter), 
 
 ## Inventory
 
-`UDCInventoryComponent` (`Inventory/`) holds a list of `FDCItemStack` (definition + quantity). The player has one; corpses and containers will use the same component, with starting contents set on the placed actor's `Stacks`.
+`UDCInventoryComponent` (`Inventory/`) holds a list of `FDCItemStack` (definition + quantity). The player has one; corpses and containers use the same component, with starting contents set on the placed actor's `Stacks`.
 
 - `AddItem(Item, Quantity)` tops up existing stacks, then starts new ones, never exceeding `MaxStackSize`. Returns the amount added. There is no capacity or weight limit yet.
 - `RemoveItem(Item, Quantity)` takes from the newest stacks first and drops empty stacks. Returns the amount removed.
@@ -275,13 +304,15 @@ Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Ru
 
 Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`, `gym.pickup_coil`.
 
-Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`.
+Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`, `boat.wreck_locker`, `boat.wreck_tender`.
 
 `UDCSaveGame` is the slot (`DeadCurrent`, user 0; tests switch to a scratch slot with `UDCSaveSubsystem::SetSlotName`). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, the quest log (quest id + stage), world flags (from `UDCWorldStateSubsystem`), and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`.
 
-F5 saves. Saving while dead is refused ("You can't save now."). F9 reads the slot, **reopens the saved map** (`MapPackage`, else `MapName`), and `ADCGameMode::StartPlay` calls `ApplyPendingLoad` once every actor has begun play. Loading therefore always starts from a fresh map (taken pickups come back, dead enemies are alive) and then applies the save, so a load inside a running session behaves exactly like a load after relaunching, loading while dead or mid-dialogue is clean, and loading an earlier save can never lose an item the world already destroyed. Apply order: world actors (destroy pickups missing from the save, restore deaths, which marks the health component dead so corpses stay lootable and `ActorDead` holds; then corpse inventory from the flat arrays), then the player (transform, health, inventory without a magazine refill), then world flags and the quest log. Restoring never re-runs stage `OnEnter` consequences.
+F5 saves. Saving while dead is refused ("You can't save now."). F9 reads the slot, **reopens the saved map** (`MapPackage`, else `MapName`), and `ADCGameMode::StartPlay` calls `ApplyPendingLoad` once every actor has begun play. Loading therefore always starts from a fresh map (taken pickups come back, dead enemies are alive) and then applies the save, so a load inside a running session behaves exactly like a load after relaunching, loading while dead or mid-dialogue is clean, and loading an earlier save can never lose an item the world already destroyed. Apply order: world flags and discovered locations first (silently, so discovery volumes and world-conditioned hazards already see them and nothing is re-announced), then world actors (destroy pickups missing from the save, restore deaths, which marks the health component dead so corpses stay lootable and `ActorDead` holds; then corpse and container inventory from the flat arrays), then the player (transform, health, inventory without a magazine refill), then the quest log. Restoring never re-runs stage `OnEnter` consequences.
 
-Save format version (`UDCSaveGame::SaveVersion`, current 2): 0/1 = first playable; 2 adds `MapPackage`, world flags owned by the world-state subsystem, and data-driven quest stages. Older saves still load (map reopened by short name); a saved quest stage that no longer exists in the quest data is dropped with a warning so the quest can be taken again. `MapName`/`MapPackage` route the load to the right map; there is still only one production map.
+Save format version (`UDCSaveGame::SaveVersion`, current 3): 0/1 = first playable; 2 adds `MapPackage`, world flags owned by the world-state subsystem, and data-driven quest stages; 3 adds `DiscoveredLocations`. Older saves load with no discoveries.
+
+**Known latent issue:** "missing from the save" means "taken", so loading a save made before an `ADCItemPickup` was added to the map destroys that pickup. The Survey Launch uses only containers (which keep their contents when missing from a save), so nothing is affected today, but fix it (track removed ids explicitly) before content adds pickups. Older saves still load (map reopened by short name); a saved quest stage that no longer exists in the quest data is dropped with a warning so the quest can be taken again. `MapName`/`MapPackage` route the load to the right map; there is still only one production map.
 
 Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, and `DeadCurrent.Save.WorldInventorySlot` cover lookup, inventory snapshot restore, and USaveGame round-trip of corpse loot. `DeadCurrent.Quest.Persistence` covers the quest log and flags, and `DeadCurrent.Map.Boathouse.*` covers full F9 loads in the real map.
 
