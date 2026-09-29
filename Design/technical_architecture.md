@@ -133,8 +133,8 @@ An optional site on the west shore, not on any route and with no marker. Coordin
 - **Notice:** a west window in the boathouse back wall (inspect it: "Look out") mentions a mast and a light. Outside, a leaning mast (about 12.6 m) with a flickering amber lamp (`ADCFlickerLight`) shows above the boathouse roof from the path.
 - **Discovery:** an `ADCLocationVolume` (`shore.survey_launch`, "Wrecked Survey Launch") spanning X -2600..-700, Y -1850..450. Walking round the lake side of the boathouse and west triggers it about 7 m past the back wall.
 - **Clues** (all `ADCInspectableActor` with variants): name board, life jackets, depth sounder, survey log (verb "Read", sets `wreck.log_read`), breaker panel (changes after the log is read), battery bank (first inspect sets `wreck.battery_seen`; the verb then becomes "Pull the leads", which sets `wreck.power_cut`), emergency beacon (reacts to `shore.relay_inspected` and to the power being cut), dead fish, and the west window (changes after discovery and after the power is cut).
-- **Hazard:** live water, an `ADCDamageVolume` over X -2020..-980, Y -1780..-1000 at 20/s with `ActiveConditions = [!wreck.power_cut]`. A ring of dead fish marks its edge and two spark lights flicker over it. Pulling the leads switches the damage, the water glow and the sparks off, and that persists through saves.
-- **Loot** (`ADCLootContainer`): `boat.wreck_locker` (survey locker in the wheelhouse: 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing) and `boat.wreck_tender` (a small boat about 4 m off the stern, inside the live water, tied to the transom by a line: 2× Field Dressing, 18× 9mm). The log mentions the tender.
+- **Hazard:** the water is a permanent dark, no-collision `WaterSurface` slab. Over it, `LiveWater` is an `ADCDamageVolume` (X -2020..-980, Y -1780..-1000, 20/s, `ActiveConditions = [!wreck.power_cut]`) whose bright blue glow mesh is the "electric" layer, with six flickering spark lights. A ring of pale dead fish lies on the surface at its edge, and a chalked warning plank (`Chalk warning`) stands on the beach at the edge. Pulling the leads switches the damage, the glow and the sparks off and persists through saves; the water itself stays (playtest feedback: it must not vanish).
+- **Loot** (`ADCLootContainer`): `boat.wreck_locker` (survey locker in the wheelhouse: 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing) and `boat.wreck_tender` (a small boat about 4 m off the stern, inside the live water, tied to the transom by a line: 1× Sounder Chart, 2× Field Dressing, 18× 9mm; the chart is the site's novel item). The log mentions the tender.
 - **Mara:** once `wreck.log_read` is set, her greeting, who, place, in-progress and epilogue nodes (never the turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." She answers; the player can ask "Was it a storm?" (sets `wreck.mara_told`). Offered once.
 - **World state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`. Never rename a shipped id.
 
@@ -172,8 +172,11 @@ The editor's data validation flags definitions missing an ID, name or category.
 | `DA_Item_FieldDressing` | `field_dressing` | `Item.Consumable.Medical` | 10 |
 | `DA_Item_SalvagedWiring` | `salvage_wiring` | `Item.Salvage` | 50 |
 | `DA_Item_RadioCoil` | `radio_coil` | `Item.Quest` | 1 |
+| `DA_Item_SurveyChart` | `survey_chart` | `Item.Quest` | 1 |
 
 (`DA_Item_RadioCoil` displays as "Relay Coil"; its id stays `radio_coil`.)
+
+`DA_Item_SurveyChart` (`survey_chart`, "Sounder Chart", `Item.Quest`, stack 1) is the Survey Launch's novel item, found in the tender. It has no use yet; it exists to be found, read in the inventory, and to be a hook for later phases.
 
 Items, quests and dialogue are registered as Asset Manager primary asset types in `Config/DefaultGame.ini` (`DCItemDefinition`, `DCQuestDefinition`, `DCDialogueAsset`, cook rule AlwaysCook) because gameplay finds them by id, not by hard reference. `UDCContentSubsystem` (`Core/`, game instance) loads every item and quest definition under `/Game/Items` and `/Game/Quests` at startup and keeps them loaded, so `FindByItemId` / `FindByQuestId` work anywhere (including corpse loot after a load) with no hard-coded paths. New definitions in those folders need no code.
 

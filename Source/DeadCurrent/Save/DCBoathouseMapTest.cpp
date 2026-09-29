@@ -549,7 +549,7 @@ bool FDCBoathouseSurveyLaunchTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("Start: not discovered"), Discovered());
 		TestFalse(TEXT("Start: spawn is outside the POI"), WreckVolume()->ContainsPoint(Player()->GetActorLocation()));
 		TestEqual(TEXT("Start: locker full"), StacksIn(Locker), 3);
-		TestEqual(TEXT("Start: tender full"), StacksIn(Tender), 2);
+		TestEqual(TEXT("Start: tender full"), StacksIn(Tender), 3);
 		TestTrue(TEXT("Start: water live"), LiveWaterHazard()->IsHazardActive());
 		TestTrue(TEXT("Start: no quest involved"), Player()->GetQuestComponent()->GetQuestLog().IsEmpty());
 
@@ -631,8 +631,10 @@ bool FDCBoathouseSurveyLaunchTest::RunTest(const FString& Parameters)
 		// The hidden kit in the tender.
 		Use(Container(Tender));
 		Use(Container(Tender));
+		Use(Container(Tender));
 		TestTrue(TEXT("Tender emptied"), Container(Tender)->IsEmpty());
 		TestEqual(TEXT("Kit dressings"), Count(TEXT("field_dressing")), 2);
+		TestEqual(TEXT("Kit chart (the novel item)"), Count(TEXT("survey_chart")), 1);
 		TestEqual(TEXT("All the rounds"), Count(TEXT("ammo_9mm")), 30);
 
 		Teleport(Beach);
@@ -731,7 +733,7 @@ bool FDCBoathouseSurveyLaunchSavesTest::RunTest(const FString& Parameters)
 		TestTrue(TEXT("Discovered"), Discovered());
 		Use(TEXT("Survey log"));
 		Use(Container(Tender));
-		TestEqual(TEXT("Tender partly looted"), StacksIn(Tender), 1);
+		TestEqual(TEXT("Tender partly looted"), StacksIn(Tender), 2);
 		SwitchSlot(SlotB);
 		TestTrue(TEXT("Save B"), Saves()->SaveCurrentGame());
 
@@ -760,7 +762,7 @@ bool FDCBoathouseSurveyLaunchSavesTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("B: scavenger alive"), Scav->GetHealthComponent()->IsDead());
 		TestTrue(TEXT("B: discovered"), Discovered());
 		TestTrue(TEXT("B: log read"), WorldState()->HasFlag(TEXT("wreck.log_read")));
-		TestEqual(TEXT("B: tender keeps its last stack"), StacksIn(Tender), 1);
+		TestEqual(TEXT("B: tender keeps its other stacks"), StacksIn(Tender), 2);
 		TestEqual(TEXT("B: that stack is the rounds"), Container(Tender)->GetInventoryComponent()->GetQuantityByItemId(TEXT("ammo_9mm")), 18);
 		TestEqual(TEXT("B: locker untouched"), StacksIn(Locker), 3);
 		TestTrue(TEXT("B: water still live"), LiveWaterHazard()->IsHazardActive());
@@ -796,7 +798,7 @@ bool FDCBoathouseSurveyLaunchSavesTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("C: Shore Watch complete"), Stage(), FName(TEXT("done_killed")));
 		TestTrue(TEXT("C: path cleared"), WorldState()->HasFlag(TEXT("shore.path_cleared")));
 		TestTrue(TEXT("C: discovered"), Discovered());
-		TestEqual(TEXT("C: tender still partial"), StacksIn(Tender), 1);
+		TestEqual(TEXT("C: tender still partial"), StacksIn(Tender), 2);
 		TalkToMara();
 		TestFalse(TEXT("C: wreck line used up"), VisibleChoiceTexts().Contains(TEXT("There's a wrecked survey launch west of the boathouse. I read her log.")));
 		Player()->GetDialogueComponent()->EndDialogue();
@@ -820,7 +822,7 @@ bool FDCBoathouseSurveyLaunchSavesTest::RunTest(const FString& Parameters)
 		}
 		TestEqual(TEXT("A: quest accepted"), Stage(), FName(TEXT("accepted")));
 		TestFalse(TEXT("A: not discovered"), Discovered());
-		TestEqual(TEXT("A: tender full again"), StacksIn(Tender), 2);
+		TestEqual(TEXT("A: tender full again"), StacksIn(Tender), 3);
 		TestEqual(TEXT("A: locker full"), StacksIn(Locker), 3);
 		TestFalse(TEXT("A: log unread"), WorldState()->HasFlag(TEXT("wreck.log_read")));
 		TestFalse(TEXT("A: loaded outside the POI"), WreckVolume()->ContainsPoint(Player()->GetActorLocation()));
@@ -892,7 +894,7 @@ bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
 		// The Exploration Loop POI postdates this save: it keeps its authored state.
 		TestFalse(TEXT("Legacy: wreck undiscovered"), Discovered());
 		TestEqual(TEXT("Legacy: locker full"), StacksIn(Locker), 3);
-		TestEqual(TEXT("Legacy: tender full"), StacksIn(Tender), 2);
+		TestEqual(TEXT("Legacy: tender full"), StacksIn(Tender), 3);
 		TestTrue(TEXT("Legacy: water live"), LiveWaterHazard() && LiveWaterHazard()->IsHazardActive());
 
 		// The quest can be picked up again, and the coil shortcut applies.

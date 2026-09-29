@@ -4,7 +4,7 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
-Phase 3, Exploration Loop (implemented, awaiting playtest):
+Phase 3, Exploration Loop (implemented; first playtest done, fixes applied, NOT yet accepted):
 
 Notice something odd > Leave the direct route > Discover a place > Read the clues > Infer what happened > Avoid or disable the danger > Take the reward > World remembers
 
@@ -33,8 +33,8 @@ The purpose is to prove the systems (shared conditions/consequences, data-driven
 An optional site west of the boathouse, off every route and with no marker. The player is drawn to it by a flickering amber lamp on a leaning mast, seen through a new west window in the boathouse and above the roof from the path. Walking there triggers a one-time "LOCATION DISCOVERED" banner, and the place is listed under PLACES on Tab.
 
 - **Clues, no exposition:** eight inspectables tell the story: she was run aground on purpose, the crew cut power and walked inland, the depth sounder shows a regular "pattern", the log mentions the same thing on a radio channel with no station, and the kit was left in the tender tied off the stern.
-- **Danger:** the water round the stern is live (20 damage/s, about 5 s to die at full health). A ring of dead fish marks its edge. The player can avoid it, or find the battery bank, learn from the log that the crew cut every breaker, and pull the leads. That switches the water off for good.
-- **Reward:** the obvious survey locker (12× 9mm, 3× wiring, 1× dressing) and the hidden kit in the tender out in the live water (2× dressings, 18× 9mm).
+- **Danger:** the water round the stern is live (20 damage/s, about 5 s to die at full health). A glowing blue layer, sparks, a pale ring of dead fish and a chalked warning on the beach mark it. The player can avoid it, or find the battery bank, learn from the log that the crew cut every breaker, and pull the leads. That switches the electricity off for good; the water stays.
+- **Reward:** the obvious survey locker (12× 9mm, 3× wiring, 1× dressing) and the hidden kit in the tender out in the live water (a novel item, the Sounder Chart, plus 2× dressings and 18× 9mm).
 - **Reactivity:** the window, breaker panel, beacon and fish change with what the player has done. After reading the log, Mara has one optional exchange about it (she deflects: "everybody decides it was a storm"). The beacon hums like the scavenger's relay if the player inspected it.
 - Nothing explains the Current. The site raises a question and answers none.
 
@@ -57,3 +57,4 @@ Record design decisions here as they are made, with the date and the reason.
 - 2026-09-28: The wreck's danger has a non-violent answer that the world teaches (the log says the crew cut every breaker; the battery bank is still live). Avoiding the water, and pulling the leads, both work. The hidden loot sits in the danger, so the disabled route is the safer one.
 - 2026-09-28: The wreck is optional and does not touch Shore Watch. Its only link to Shore Watch is flavour: the beacon hums like the scavenger's relay if the player has inspected it, and Mara has one deflecting line.
 - 2026-09-28: All wreck lore (the *Tern*, the crew, the "pattern", the live battery) is PROVISIONAL and unexplained on purpose; see the world bible. New deferred decisions: the boat's name, the loot balance at the wreck, and whether Mara's "storm" line should vary with the Shore Watch outcome.
+- 2026-09-28: First Exploration Loop playtest (Anthony). Kept: the pinging lamp works as a landmark, the reward is fine but wants something new, the *Tern* name and Mara's "storm" line are fine for now. Changed: (1) pulling the leads made the water disappear, because the live water's mesh was the water; the water is now a permanent surface and only the electric glow and sparks switch off. (2) The live water was a surprise; the dead fish had been placed below ground, so the ring was never visible. Fish are now pale and on the surface, the glow and sparks are stronger, and there is a chalk warning on the beach. (3) The tender now holds a novel item, the Sounder Chart. Deferred: audio and richer visuals (the clues are hard to piece together with greybox art and no sound); the plan scopes both out.

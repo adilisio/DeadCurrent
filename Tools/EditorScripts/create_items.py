@@ -35,6 +35,10 @@ ITEMS = [
          description="A hand-wound copper coil from a Maritime Authority relay. It is warm, and it hums when you hold it close.",
          category="Item.Quest", weight=0.2, value=8, stack=1,
          mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(10, 10, 8)),
+    dict(asset="DA_Item_SurveyChart", item_id="survey_chart", name="Sounder Chart",
+         description="A roll of the Tern's depth-sounder paper, torn off at the mark. Regular spikes, evenly spaced, and someone has pencilled AGAIN beside the last one.",
+         category="Item.Quest", weight=0.05, value=6, stack=1,
+         mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(5, 5, 22)),
 ]
 
 

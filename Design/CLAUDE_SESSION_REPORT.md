@@ -4,7 +4,7 @@ Session date: 2026-09-28. Milestone: Phase 3, Exploration Loop. Work was split b
 
 ## Executive Summary
 
-The Exploration Loop is implemented, documented and passes all 30 automated tests. It has not been played by a human.
+The Exploration Loop is implemented, documented and passes all 30 automated tests. Anthony has done a first playtest and asked for fixes (below), which are applied. **The phase is not accepted yet**; it needs another playtest pass.
 
 Phase 3 adds one small, optional, unmarked point of interest to `Lvl_Boathouse`: **the Wrecked Survey Launch**, on a new stretch of shore behind the boathouse. It is built from four small reusable pieces (location discovery, loot containers, inspectable verbs, switchable hazards) plus a flickering landmark light, and it uses the existing rule language, world state and save system. Shore Watch's content and `ADCPlayerCharacter` are unchanged.
 
@@ -61,8 +61,8 @@ There is no new quest (out of scope by plan). The POI is optional and unmarked.
 - **Route:** out the door, back around the south (lake) side of the boathouse, west about 15 m. Discovery fires about 7 m past the back wall (X about -700).
 - **The wreck:** bow on the beach near (-1500, -300), stern in the water near (-1500, -1260). Board by the plank on the east side near the bow (foot about (-1000, -510)). The wheelhouse fore door is on the east side.
 - **Clues** (inspectable names): Name board (driven ashore on purpose, "T_RN"); Life jackets (straps cut, they walked inland); Depth sounder (regular spikes, "AGAIN"); Survey log (verb **Read**, sets `wreck.log_read`); Breaker panel (text changes after the log); Battery bank (first Inspect sets `wreck.battery_seen`, then the verb becomes **Pull the leads**, which sets `wreck.power_cut`); Emergency beacon (dead for decades, hums like the scavenger's relay if `shore.relay_inspected`, and notes the lamp is still flickering after the power is cut); Dead fish; the west window (changes after discovery and after the power is cut).
-- **Hazard:** live water around the stern, 20 dmg/s (about 5 s to die from full health), a one-time "The water is live." message, a ring of dead fish at its edge and two blue spark lights. All off after Pull the leads, and that persists.
-- **Loot:** the **Survey locker** (`boat.wreck_locker`, wheelhouse west/aft corner): 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing. The **tender** (`boat.wreck_tender`), about 4 m off the stern at (-1500, -1650), inside the live water: 2× Field Dressing, 18× 9mm. The log says "Kit's in the tender, tied off the stern."
+- **Hazard:** live water around the stern, 20 dmg/s (about 5 s to die from full health), a one-time "The water is live." message. A blue glow layer, six spark lights, a pale ring of dead fish and a chalk warning on the beach mark it. Pull the leads switches off the glow, sparks and damage (persistently); the water itself stays.
+- **Loot:** the **Survey locker** (`boat.wreck_locker`, wheelhouse west/aft corner): 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing. The **tender** (`boat.wreck_tender`), about 4 m off the stern at (-1500, -1650), inside the live water: 1× Sounder Chart (new item), 2× Field Dressing, 18× 9mm. The log says "Kit's in the tender, tied off the stern."
 - **Mara:** after `wreck.log_read`, her greeting/who/place/in-progress/epilogue nodes (never turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." Once. She calls the boat the *Tern* and says everybody decides it was a storm. The player can ask "Was it a storm?" (sets `wreck.mara_told`); she replies "It's always a storm. Stay out of the water round her stern. It bites."
 - **World-state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`.
 
@@ -83,6 +83,23 @@ All new lore is marked PROVISIONAL in `world_bible.md`. Nothing explains the Cur
 | All Phase 1 and 2 tests (Rules, Quest, Dialogue, Content.Validate, Content.ShoreWatch, Map CoilRoute/CombatRoute, Combat, Inventory, Save) | Pass |
 
 **Rendered visual check (this session).** A throwaway rendered test (not committed) teleported the player to six viewpoints and took screenshots. Findings: the west window frames the wreck; the mast and lamp rise above the boathouse roof from the path; the wreck reads well from the beach and the discovery banner shows. Before the fix the lamp and water were black. After it, the lamp is a visible amber block and the water a blue translucent slab. This is greybox; it is not a lighting or art pass. Not checked: night or dusk lighting (the map is daylight only), and the flicker animation over time (screenshots are single frames).
+
+
+## First Playtest Feedback and Changes
+
+Anthony's first playtest (no bugs, smooth frame rate, banner/PLACES/save-load/first playable/Shore Watch all fine) produced these changes:
+
+| Feedback | Response |
+| --- | --- |
+| The live water wasn't obvious and hurt by surprise | The dead fish and the "Dead fish" inspectable had been placed **below the ground**, so the warning ring was never visible. Fish are now pale and lie on the surface; the electric glow is brighter; there are six spark lights instead of two; and a chalked warning plank stands on the beach at the water's edge |
+| Pulling the leads made the water disappear; it should stay | The water was the damage volume's own mesh, which hides when inactive. The water is now a permanent dark no-collision surface; only the glow layer, damage and sparks switch off. Verified from rendered screenshots, live and cut |
+| The reward would be better with something new | The tender now also holds a novel item, the **Sounder Chart** (`survey_chart`, `Item.Quest`, no use yet): a strip of the *Tern*'s sounder paper with AGAIN pencilled at the end |
+| Clues are hard to piece together without audio and better visuals | Not addressed: the plan scopes out audio and final art. Recorded as a deferred decision |
+| The pinging lamp helped find it | Kept |
+| Haven't found Mara's wreck line | Not a bug: it only appears after you read the survey log (checklist G). Please try again |
+| *Tern* name and Mara's "storm" line | Fine for now; kept |
+
+Tests: the tender now has three stacks (chart, dressings, rounds) and the map tests were updated for it; all 30 pass.
 
 ## Build Status
 
@@ -134,13 +151,13 @@ All new lore is marked PROVISIONAL in `world_bible.md`. Nothing explains the Cur
 
 **E. Danger**
 1. Step into the water round the stern. Expected: "The water is live." and 20 damage/s. You die in about 5 s at full health, so step straight back out.
-2. Is the danger readable before you step in (blue slab, dead fish ring, sparks)?
+2. Is the danger readable before you step in (bright blue glow, pale dead fish ring, sparks, the chalk warning on the beach)? Inspect the Chalk warning plank.
 3. Optional: die there. You respawn at the PlayerStart with full health and your inventory.
 
 **F. Loot**
 1. The survey locker in the wheelhouse west/aft corner: E takes one stack at a time (9mm ×12, Salvaged Wiring ×3, Field Dressing ×1). Take one or two and leave the rest.
-2. The tender about 4 m off the stern, in the live water: reach it either by pulling the leads first (safe), or by running the water. Expected: Field Dressing ×2, 9mm ×18. (You can also jump from the transom onto the tender without touching the water; that is accepted.)
-3. Pull the leads (Battery bank). Expected: the water's glow and the sparks go out, the damage stops, and the beacon and dead fish text change. Walk in the water to confirm it is safe.
+2. The tender about 4 m off the stern, in the live water: reach it either by pulling the leads first (safe), or by running the water. Expected: the new Sounder Chart, Field Dressing ×2, 9mm ×18. (You can also jump from the transom onto the tender without touching the water; that is accepted.)
+3. Pull the leads (Battery bank). Expected: the blue glow and the sparks go out, the damage stops, and the beacon, dead fish and chalk warning text change. The water should stay as dull dark water (it must not vanish). Walk in it to confirm it is safe.
 
 **G. Mara**
 1. After reading the log, talk to Mara. Expected: a new reply, "There's a wrecked survey launch west of the boathouse. I read her log." She talks about the *Tern* and a storm. Pick **"Was it a storm?"** Expected: "It's always a storm. Stay out of the water round her stern. It bites."

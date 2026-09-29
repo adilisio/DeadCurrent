@@ -29,6 +29,7 @@ MAT_GLOW = ENV_MATERIALS + "/M_DC_Glow"
 ITEM_AMMO = "/Game/Items/DA_Item_Ammo9mm"
 ITEM_DRESSING = "/Game/Items/DA_Item_FieldDressing"
 ITEM_WIRING = "/Game/Items/DA_Item_SalvagedWiring"
+ITEM_CHART = "/Game/Items/DA_Item_SurveyChart"
 
 # Exploration Loop: the Wrecked Survey Launch. Ids are saved; never rename them once shipped.
 WRECK_LOCATION = "shore.survey_launch"
@@ -588,7 +589,9 @@ def build_survey_launch():
     ensure_glow_material()
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
-    live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.25, 1.1, 3.2, 0.6)})
+    live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.2, 1.4, 4.0, 0.5)})
+    water_mat = material_instance("MI_DC_Water", MAT_FLAT, {"Base Color": (0.02, 0.07, 0.09, 1.0)})
+    fish_mat = material_instance("MI_DC_DeadFish", MAT_FLAT, {"Base Color": (0.78, 0.8, 0.72, 1.0)})
     live = [cond("WORLD_FLAG", id=WRECK_POWER_CUT, negate=True)]
 
     # Hull frame: local X = beam (+X is the east side, toward the boathouse), local Y = length (+Y is the
@@ -705,20 +708,35 @@ def build_survey_launch():
                 "Two life jackets on the stones, still buckled. The straps were cut through, not unclipped. "
                 "Whoever wore them was in a hurry, and walked inland.", duration=7.0)
 
-    # Live water round the stern. The fish mark its edge; the sparks and glow go out with the power.
-    hazard = box("LiveWater", folder, (-1500, -1390, 2), (1040, 780, 24), material=live_water,
+    # The water itself: dark, always there, no collision. Pulling the leads must never remove it.
+    surface = box("WaterSurface", folder, (-1500, -1390, 3), (1040, 780, 8), material=water_mat)
+    surface.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(
+        unreal.CollisionEnabled.NO_COLLISION)
+    # The electricity: a bright glow layer over the water that is also the damage volume. It (and the
+    # sparks) go out with the power; the water stays.
+    hazard = box("LiveWater", folder, (-1500, -1390, 8), (1040, 780, 20), material=live_water,
                  actor_class=unreal.DCDamageVolume)
     hazard.set_editor_property("display_name", unreal.Text("The water is live."))
     hazard.set_editor_property("damage_per_second", 20.0)
     hazard.set_editor_property("active_conditions", live)
-    flicker_light("Sparks_East", folder, (-1230, -1470, 30), (160, 200, 255), 25.0, 600.0, glow_cm=8.0,
-                  glow_material=spark, conditions=live, min_brightness=0.0, dropout=0.4, interval=(0.03, 0.25))
-    flicker_light("Sparks_West", folder, (-1760, -1600, 25), (160, 200, 255), 25.0, 600.0, glow_cm=8.0,
-                  glow_material=spark, conditions=live, min_brightness=0.0, dropout=0.4, interval=(0.03, 0.3))
+    for name, (sx, sy), interval in [("Sparks_A", (-1230, -1470), (0.03, 0.25)), ("Sparks_B", (-1760, -1600), (0.03, 0.3)),
+                                     ("Sparks_C", (-1120, -1180), (0.04, 0.35)), ("Sparks_D", (-1900, -1250), (0.03, 0.4)),
+                                     ("Sparks_E", (-1700, -1730), (0.05, 0.3)), ("Sparks_F", (-1300, -1650), (0.03, 0.25))]:
+        flicker_light(name, folder, (sx, sy, 24), (160, 200, 255), 40.0, 700.0, glow_cm=16.0,
+                      glow_material=spark, conditions=live, min_brightness=0.0, dropout=0.4, interval=interval)
+    # Pale dead fish ring the edge, lying on the surface where they can be seen.
     for index, (fx, fy) in enumerate([(-960, -990), (-960, -1250), (-960, -1520), (-1200, -1795), (-1500, -1795),
                                       (-1800, -1795), (-2040, -1560), (-2040, -1280), (-2040, -1010)]):
-        block(f"Fish_{index}", folder, fx - 14, fx + 14, fy - 5, fy + 5, -10, -4, material=trim_mat)
-    inspectable("DeadFish", folder, (-950, -1000, -6), (34, 12, 8), "Dead fish",
+        block(f"Fish_{index}", folder, fx - 22, fx + 22, fy - 8, fy + 8, 6, 12, material=fish_mat)
+    # A chalked warning on the beach at the edge of the water (the danger should not be a pure surprise).
+    inspectable("ChalkWarning", folder, (-1040, -930, 30), (8, 60, 60), "Chalk warning",
+                "Chalked on a plank stuck upright in the stones, in a hurried hand: KEEP OUT OF THE WATER. "
+                "IT'S STILL ON. Under it, smaller: cut the breakers, it doesn't matter.",
+                variants=[
+                    variant("The chalk warning is still on the plank. The water beyond it is only water now.",
+                            [cond("WORLD_FLAG", id=WRECK_POWER_CUT)]),
+                ], duration=7.0)
+    inspectable("DeadFish", folder, (-950, -1000, 12), (40, 14, 10), "Dead fish",
                 "Dead fish, belly-up, in a ring around the stern, every one the same distance out. "
                 "Inside the ring the water has a faint, crawling shimmer.",
                 variants=[
@@ -729,7 +747,7 @@ def build_survey_launch():
     # The crew's kit, in the tender tied off the stern: out in the live water.
     tender = box("Tender", folder, (-1500, -1650, 12), (120, 240, 45), material=interactable_mat,
                  actor_class=unreal.DCLootContainer)
-    setup_container(tender, "Tender", "boat.wreck_tender", [(ITEM_DRESSING, 2), (ITEM_AMMO, 18)])
+    setup_container(tender, "Tender", "boat.wreck_tender", [(ITEM_CHART, 1), (ITEM_DRESSING, 2), (ITEM_AMMO, 18)])
     stern = hull.world((0, -500, -20))
     rope_run = stern[1] - (-1530.0)
     box_rot("TenderLine", folder, (-1500, (stern[1] - 1530.0) / 2, (stern[2] + 20) / 2),
