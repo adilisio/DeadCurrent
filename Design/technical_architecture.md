@@ -51,6 +51,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 | `DeadCurrent.Exploration.WorldConditions` | Damage volume and flicker light switched by a world flag, including silent restore |
 | `DeadCurrent.Content.Exploration.MaraWreckLine` | The shipped dialogue: Mara's wreck exchange across Shore Watch states, offered once, survives save/reload |
 | `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. `BuildChecks`: the same actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks and the Sounder Chart, then a real F9 restores the build. Scratch save slot |
+| `DeadCurrent.Presentation.ConditionalAudio` | `ADCConditionalAudio` follows a world flag (hum until cut, one-shot on the rising edge, silent when already set at start, re-arms after a silent restore) and writes no world state |
 | `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants (including per-variant verbs) and the first-playable systems |
 
 `Core/DCTestHelpers.h` has `FDCTestWorld`, a throwaway game world with subsystems and BeginPlay, for tests that need a registry, world state or component events. In-map tests (`EAutomationTestFlags::ClientContext` only) run under `-game`; with rendering enabled the coil-route test also saves `Saved/Screenshots/<platform>/DC_QuestHUD.png`. `DeadCurrent.Review.Capture` is also client-context, and it is not part of this run. See Review capture.
@@ -80,13 +81,15 @@ The folder is `Saved/Review/<yyyy-mm-dd_hhmm>/`: the PNGs, `contact_sheet.png`, 
 | `create_dialogue.py` | Creates or updates dialogue Data Assets in `/Game/Dialogue`. Safe to re-run. |
 | `create_quest.py` | Creates or updates quest Data Assets in `/Game/Quests` (Shore Watch). Safe to re-run. |
 | `build_test_gym.py` | Regenerates `/Game/Maps/Lvl_TestGym`. Hand edits to that map are lost on the next run. |
-| `import_art.py` | Imports CC0 shore surfaces into `/Game/Art/<Source>/<AssetId>/` at 2K and creates `M_DC_Surface` plus the `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, and `MI_DC_Steel` instances. Safe to re-run; existing textures are replaced in place. |
+| `import_art.py` | Imports CC0 shore surfaces into `/Game/Art/<Source>/<AssetId>/` at 2K and creates `M_DC_Surface` plus the `MI_DC_*` surface instances, the *Tern* wreck master (`M_DC_Wreck`: photo diffuse, tint, rust grime, then desaturated and cast cool so it reads as faded paint), the lake master `M_DC_Lake` and its instances (dark, two slow world-space normal layers, default-lit, not the Water plugin), the Meshy prop meshes, the name-board letters and chalk textures, and the Survival_Character skeleton compatibility and costume tints. Safe to re-run; existing textures are replaced in place. |
+| `import_audio.py` | Imports the game-ready CC0 sounds from `C:\FO5_AssetLibrary\Audio` into `/Game/Audio/{Ambience,SFX,Weapons}` (loop flag on the beds and hums) and creates the `SA_DC_Hum`, `SA_DC_Snap`, and `SA_DC_Clunk` attenuation assets. Safe to re-run. |
 | `build_boathouse.py` | Regenerates the persistent `/Game/Maps/Lvl_Boathouse` (Shore Watch and the Survey Launch). Also creates the material instances in `/Game/Environment/Materials` (`MI_DC_*`, children of `M_FlatCol` and our own `M_DC_Glow`, an unlit translucent glow with `Color` rgb = emissive, a = opacity). Hand edits to that persistent map are lost on the next run. It re-links the streaming sublevel `/Game/Maps/Lvl_Boathouse_Art` and does not edit or save it. Requires the surface instances from `import_art.py`. |
 | `dress_shore.py` | Imports three CC0 driftwood meshes and replaces actors tagged `ShoreDress` in `Lvl_Boathouse_Art`. NoCollision. Safe to re-run. Not part of `RebuildContent.bat`; a content rebuild leaves those actors. |
 | `dress_structures.py` | Imports the *Tern* and the CC0 crate, lamp, and can, and replaces actors tagged `StructureDress` in the art level. NoCollision. The tender mesh is assigned by `build_boathouse.py` on the existing container. |
+| `dress_audio.py` | Places the always-on shore wind and lap beds (two 2D `ADCConditionalAudio`, tagged `ShoreAudio`) in `Lvl_Boathouse_Art`. Not part of `RebuildContent.bat`; a content rebuild leaves them. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
-`Tools\RebuildContent.bat` runs `create_items`, `create_quest`, `create_dialogue`, `build_test_gym` and `build_boathouse` in that order (dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`.
+`Tools\RebuildContent.bat` runs `import_art`, `import_audio`, `create_items`, `create_quest`, `create_dialogue`, `build_test_gym` and `build_boathouse` in that order (the pistol references the audio; dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one. `Tools\ImportSurvivalCharacter.ps1` is a one-time pack migration, not part of the rebuild (see `art_pipeline.md`). `Tools\Package.bat` cooks a Development Win64 build to `Saved\Packaged` and smoke-launches it. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`.
 
 ## Player controls
 
@@ -158,6 +161,28 @@ An optional site on the west shore, not on any route and with no marker. Coordin
 - **Relay Ear:** after `shore.relay_inspected` is set (the first look still sets it for everyone), the perk adds a pinout reading. It does not skip the Shore Watch clue.
 
 The POI adds no quest and no wreck-specific C++. Build checks are shared conditions on the existing actors. Pulling the leads, both containers, and both Shore Watch routes still work with nothing invested.
+
+## Presentation layer
+
+Presentation Pass (2026-09-29) added art and sound to `Lvl_Boathouse` with no gameplay change. The shape it left behind:
+
+**Art layer.** Non-gameplay dressing lives in the always-loaded sublevel `Lvl_Boathouse_Art`, which `build_boathouse.py` re-links and never edits. `dress_shore.py`, `dress_structures.py`, and `dress_audio.py` own actors in it by tag (`ShoreDress`, `StructureDress`, `ShoreAudio`). Gameplay actors stay in the persistent map, and the script assigns their meshes and materials so a rebuild restores their look. Everything in the art level is NoCollision.
+
+**Materials.** `M_DC_Surface` (triplanar ground, walls), `M_DC_Wreck` (the *Tern* hull), `M_DC_Lake` (open water and the basin slab, default-lit opaque with two slow world-space normal layers; `DeepColor`, `TileCm`), `M_DC_Glow` (unchanged live-water glow), and the Meshy props' own materials. All are generated by `import_art.py`, so a rebuild restores them.
+
+**Props.** The ten Meshy props and the library meshes are `wear_mesh`ed onto the existing inspectables and pickups in `build_boathouse.py` (scaled to the same footprint the interaction trace already hits). Item world meshes are set in `create_items.py`.
+
+**Bodies.** Mara and the scavenger use `SK_Survival_Character` (migrated to `/Game/Survival_Character`, textures at 1K) with the unchanged `ABP_Unarmed`. The pack skeleton lists the mannequin skeleton as compatible, which is what lets that animation blueprint drive it; `import_art.py` sets that on every rebuild. Jacket and jeans slots take `MI_DC_MaraJacket` / `MI_DC_ScavJacket` (and the jeans pair), tints of the pack's own instances. If the pack is missing, `assign_mannequin` falls back to the mannequins.
+
+**Audio.**
+- `ADCConditionalAudio` (`World/`) is presentation like `ADCFlickerLight`. It re-checks a `FDCGameplayCondition` list every 0.25 s against the player pawn when there is one (so `HasItem` and `ActorDead` work) and against itself otherwise. `WhileTrue` loops while the list passes and fades out when it stops; `OnceWhenTrue` plays on the rising edge only, so a load that already has the flag is silent. With no conditions and no attenuation it is a 2D bed. It sets no flag and saves nothing.
+- Placement: the wind and lap beds are two unconditioned 2D actors in the art level (`dress_audio.py`). The relay hum, live-water hum, and breaker clunk are placed by `build_boathouse.py` because they follow gameplay state: the relay hum plays while the player does not hold `radio_coil`, `shore.relay_recovered` is unset, and `boat.scavenger` is alive; the live-water hum plays while `!wreck.power_cut`; the breaker plays once when `wreck.power_cut` rises.
+- `ADCFlickerLight` has optional `FlashSounds`: the six spark lights play one of six snaps on a flash-on with a 30% chance.
+- The pistol's `FireSound` and `DryFireSound` are CC0 shots set in `create_items.py`. `DCAudioCues::PlayUI` (`Audio/`) plays a cue by path when a pickup or container item is taken and when the inventory opens; a missing asset is a silent no-op. Cue assets are in `/Game/Interface_And_Item_Sounds`.
+- Starting levels come from `C:\FO5_AssetLibrary\Audio\SOURCING_NOTES.md` (wind 0.07, lap 0.46, live hum 0.02, relay 0.06, sparks 0.22, breaker 0.56, pistol 1.0). They are tuned by ear in `import_audio.py` and `build_boathouse.py`.
+- `Config/DefaultGame.ini` always cooks `/Game/Audio` and `/Game/Interface_And_Item_Sounds`, because those are loaded by path.
+
+**Packaging.** `Tools\Package.bat` runs a Development Win64 `BuildCookRun` to `Saved\Packaged` and a null-RHI smoke launch of `Lvl_Boathouse`. The packaged game target compiles the review capture code, so it must not use editor-only API outside `#if WITH_EDITOR` (`GetActorLabel`).
 
 ## Interaction
 
@@ -391,7 +416,8 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `Quest/` | Quest definitions and the player quest log (conditions/consequences live in `Core/`) |
 | `Save/` | Save game, persistent IDs, persistence interfaces |
 | `UI/` | HUD and widget base classes |
-| `World/` | Persistent world objects, inspectables, and `UDCWorldStateSubsystem` (world flags) |
+| `Audio/` | Presentation cue helper (`DCAudioCues`): a sound played beside an existing action, by path, silent when the asset is missing |
+| `World/` | Persistent world objects, inspectables, `UDCWorldStateSubsystem` (world flags), and the cosmetic presentation actors (`ADCFlickerLight`, `ADCConditionalAudio`) |
 
 Split into more modules only when a boundary is proven (for example an editor-only tools module).
 

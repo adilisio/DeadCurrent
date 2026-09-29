@@ -2,7 +2,7 @@
 
 Living document. Read it before importing, generating, or placing any art or audio. Update it when the first real asset lands and a convention below stops being a proposal.
 
-Status (2026-09-29): the art-layer decision is in force (`Lvl_Boathouse_Art`). `import_art.py` has brought in the CC0 shore surfaces and `M_DC_Surface`. `build_boathouse.py` assigns sand, mud, coast rock, and land rock on the ground, and plaster, concrete, and steel on the boathouse and the lookout shed. `dress_shore.py` places NoCollision driftwood. `dress_structures.py` places the *Tern*, the tender's source mesh, and NoCollision crate, lamp, and scrap dressing. No audio yet.
+Status (2026-09-29): the art-layer decision is in force (`Lvl_Boathouse_Art`). `import_art.py` has brought in the CC0 shore surfaces and `M_DC_Surface`. `build_boathouse.py` assigns sand, mud, coast rock, and land rock on the ground, and plaster, concrete, and steel on the boathouse and the lookout shed. `dress_shore.py` places NoCollision driftwood. `dress_structures.py` places the *Tern*, the tender's source mesh, and NoCollision crate, lamp, and scrap dressing. The ten Meshy props, the lake material, the `Survival_Character` bodies, and first audio (`import_audio.py`, `ADCConditionalAudio`) landed in PP-06 to PP-09. The Presentation Pass is awaiting Anthony's acceptance.
 
 ## Art direction (from `LongTermPlan.txt` §18)
 
@@ -59,7 +59,7 @@ Poly Haven (23) and ambientCG (3), all CC0. Each has a `source.json`. Normal map
 
 ### 4. Audio: `C:\FO5_AssetLibrary\Audio\Gunshots\`
 
-8 WAVs from Freesound, all **CC0**, each with a `source.json` (author, URL, loudness, intended use): revolver `.38`, heavy pistol, carbine, Enfield .303, field sniper, a distant NPC shot, and two dry-fires (revolver, striker). No ambient, water, wind, or electrical audio yet. That gap matters most for the Current and the live water.
+8 WAVs from Freesound, all **CC0**, each with a `source.json` (author, URL, loudness, intended use): revolver `.38`, heavy pistol, carbine, Enfield .303, field sniper, a distant NPC shot, and two dry-fires (revolver, striker). Ambient, water, wind, electrical, spark, and breaker sounds were sourced separately on 2026-09-29 (`C:\FO5_AssetLibrary\Audio\Ambience`, `SFX`, with `SOURCING_NOTES.md`) and are in the provenance table below. **Gaps:** the breaker throw is a stand-in for a clamp coming off a terminal; there is no music, no footstep or surface set, no voice, and no sound for the Current itself.
 
 ### 5. Earlier Meshy outputs: `C:\FO5_AssetLibrary\Meshy\`
 
@@ -168,6 +168,16 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `Survival_Character` (`SK_Survival_Character`, skeleton, physics asset, 11 material instances, 43 textures cut to 1K) | `FO5_AssetLibrary/Content/Survival_Character` | marketplace pack owned by Anthony (from the earlier project) | pack author |
 | `MI_DC_MaraJacket`, `MI_DC_MaraJeans`, `MI_DC_ScavJacket`, `MI_DC_ScavJeans` | tints on the pack's jacket and jeans instances, in `import_art.py` | project | DEAD CURRENT |
 | `M_DC_Lake`, `MI_DC_OpenLake`, `MI_DC_Water` | authored in `import_art.py`; normal map is engine example content `water_n` | project (engine content) | DEAD CURRENT |
+| `S_DC_LakeWind` | Freesound 656748, "Gusty wind at lake" (`Audio/Ambience/game/amb_lake_wind.wav`) | CC0 | StephanBrenn |
+| `S_DC_WaterLap` | Freesound 568819, "Water waves lapping, lake, gentle, close" | CC0 | TRP |
+| `S_DC_HumLiveWater` | Freesound 341617, "Electricity Ambience 2" | CC0 | PureAudioNinja |
+| `S_DC_HumRelay` | Freesound 869178, "Unknown_Broadcast_Signal_01" | CC0 | SignatureSoundsOrg |
+| `S_DC_Spark01`–`04` | Freesound 807671, "12 - Bonus - Sparks Flying" (sliced) | CC0 | Snoops_Audio1 |
+| `S_DC_Spark05`–`06` | Freesound 871766, "ELECArc_Sparking Electricity Bed" (sliced) | CC0 | harrisonlace |
+| `S_DC_BreakerPull` | Freesound 451933 (stand-in: a heavy breaker throw, not a clamp coming off a terminal) | CC0 | see `Audio/SFX/sfx_breaker_pull.source.json` |
+| `S_DC_PistolShot` | Freesound 422326, ".38" (`Audio/Gunshots/gun_revolver_38_shot.wav`) | CC0 | soneproject |
+| `S_DC_PistolDry` | Freesound 842748, "Glock 17 Trigger Pull" | CC0 | qubodup |
+| `Click_03_Cue`, `Flick_Switch_01_Cue` (pickup and inventory-open cues) | `Interface_And_Item_Sounds` pack, migrated to `/Game/Interface_And_Item_Sounds` | marketplace pack owned by Anthony | pack author |
 | `T_NameBoardLetters`, `M_DC_Letters` | authored in `import_art.py` (the `T_RN` letters are a texture, not Meshy text) | project | DEAD CURRENT |
 | `T_ChalkKeepOut`, `M_DC_Chalk` | authored in `import_art.py` | project | DEAD CURRENT |
 

@@ -13,12 +13,15 @@ First-person action RPG in a post-collapse Great Lakes archipelago. Unreal Engin
 | Canon and PROVISIONAL lore | `Design/world_bible.md` |
 | Latest session's results + Anthony's test checklist | `Design/CLAUDE_SESSION_REPORT.md` |
 | Art, audio, the asset library, Meshy | `Design/art_pipeline.md` |
+| How content scales (asset tiers, POI contract, agent roles) | `Design/content_production_strategy.md` |
+| Building a new POI, or handing work to another agent | `Design/POIs/README.md`, `TEMPLATE.md`, `AGENT_HANDOFF_TEMPLATE.md` |
+| Anthony's live return checklist (where work stopped) | `Design/ANTHONY_CHECKLIST.md` |
 
 ## Where we are (2026-09-29)
 
-- Phases 1–4 are **accepted**: Walking Skeleton, Micro RPG (Shore Watch), Exploration Loop (Wrecked Survey Launch), and RPG Layer (3 attributes / 3 skills / 3 perks as shared rule conditions on existing actors, accepted 2026-09-29). 36 automated tests pass.
-- Everything is on one map, `Lvl_Boathouse`, and it is still **greybox**: prototype materials, canvas HUD, no audio, water is a slab. Playtests have flagged that clues are hard to read without real art and sound.
-- **Next: Presentation Pass** (chosen 2026-09-29). A bounded art, audio, and readability pass on the existing shore, no new gameplay. Plan file: `PresentationPassPlan.txt` (PP-xx task ids). Constraints and the asset library: `Design/art_pipeline.md`.
+- Phases 1–4 are **accepted**: Walking Skeleton, Micro RPG (Shore Watch), Exploration Loop (Wrecked Survey Launch), and RPG Layer (3 attributes / 3 skills / 3 perks as shared rule conditions on existing actors, accepted 2026-09-29). 38 automated tests pass.
+- Everything is on one map, `Lvl_Boathouse`. The **Presentation Pass** (PP-00..PP-10) has dressed it: real materials and meshes, an overcast cold-lake grade, rippled water, Meshy clue props, `Survival_Character` bodies on Mara and the scavenger, and first audio. The canvas HUD is still temporary.
+- **Presentation Pass: READY FOR ANTHONY ACCEPTANCE** (not accepted). Plan: `PresentationPassPlan.txt`. The checks only he can make are in `Design/ANTHONY_CHECKLIST.md` and `Design/CLAUDE_SESSION_REPORT.md`. Constraints and the asset library: `Design/art_pipeline.md`. `Design/content_production_strategy.md` is the approved direction for making content cheaper without making it generic; it does not expand any phase. `Design/POIs/PRODUCTION_PILOT.md` is a plan only, for Anthony to approve.
 - After that: Phase 5 World State, then Phase 6 Vertical Slice (the lighthouse-in-a-storm settlement, `LongTermPlan.txt` §23). **Anthony chooses and accepts phases. Don't start the next phase unless he's said to.**
 
 ## How work is done here

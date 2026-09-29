@@ -4,69 +4,75 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- Local `main` is at `bf9e8be` (PP-09). Session started at local `822aa16`; `origin/main` was `7a3fc58`, merged as `7d2a3d9`. **Nothing pushed yet.**
-- Uncommitted on purpose: `Content/Variant_Shooter/` and `Tools/EditorScripts/inspect_assets.py` (earlier leftovers), this file.
+- Local `main` = `origin/main` after the final push (see `git log -1`). Session started at local `822aa16`; `origin/main` was `7a3fc58`, merged as `7d2a3d9`.
+- Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers).
 
 ## Current Milestone / Task
 
-**Presentation Pass — PP-06 to PP-09 are committed. PP-10 (stabilize: docs, cook, smoke launch, performance, session report) is next.** Not yet marked ready for acceptance.
+**Presentation Pass (PP-00..PP-10): READY FOR ANTHONY ACCEPTANCE. Not accepted.** Work stopped here on purpose. Phase 5 has not been started.
 
 ## Completed Since Last Update
 
-- PP-06 `90a6436`: every clue prop and pickup wears a Meshy mesh (330 of 500 credits). The *Tern* hull was salmon pink (photo diffuse plus rust grime); it now casts cool, faded white-grey.
-- PP-07 `59e9d83`: the lake and the basin slab share a dark rippled freshwater material (`M_DC_Lake`). New map assertions: the slab is still there after the leads are pulled and after a load.
-- PP-08 `873f15c`, `0f88ed8`: Mara (teal jacket) and the scavenger (rust-brown jacket) use the `Survival_Character` pack on the mannequin animations. Textures were cut from 770 MB to 50 MB before entering the repo.
-- PP-09 `bf9e8be`: shore wind and lap beds (art level), relay hum, live-water hum, spark snaps, breaker clunk, pistol shot and dry-fire (CC0), pickup and inventory cues. `ADCConditionalAudio` follows the rule language and sets nothing.
-- `Design/POIs/` (`TEMPLATE.md`, `AGENT_HANDOFF_TEMPLATE.md`, `README.md`) added: `547dae7`.
+- PP-10: docs updated, clean rebuild (twice), 38/38 tests, final captures, Development Win64 cook, smoke launch of `Lvl_Boathouse`, frame times measured, `CLAUDE_SESSION_REPORT.md` replaced.
+- Fixed a packaging-only compile error in the review capture code (`GetActorLabel` outside `#if WITH_EDITOR`).
+- Added `Tools\Package.bat`.
+- Wrote `Design/POIs/PRODUCTION_PILOT.md` (plan only).
+- Earlier this session: PP-06 to PP-09 (see the session report), `Design/POIs/` templates.
 
 ## READY FOR ANTHONY TO CHECK
 
-Nothing to check yet. The Presentation Pass is not ready for acceptance until PP-10 finishes. When it is, the walkthrough lives in `PresentationPassPlan.txt` §9 and the session report.
+Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for a clean run).
 
-Things only your ears and eyes can judge, collected as they land:
-
-1. **Audio balance** (`Tools\PlayTest.bat`). Start a new game. Walk out the door, then west to the wreck. Does the wind bed sit under everything? Does the water lap startle you? Can you hear Mara's lines over the relay hum near the camp? Is the pistol still the loudest thing?
-2. **Relay hum.** Near the relay it should hum. Take the coil or kill the scavenger: it should stop within about half a second.
-3. **Live water.** Near the water at the wreck: a low hum and now and then a spark snap. Pull the leads: one breaker clunk, the hum and snaps stop, the water stays (dark and rippled).
-4. **UI cues.** A short click when you take anything. A switch flick when you open the inventory (Tab). These are the pack's `Click_03` and `Flick_Switch_01`, chosen by file size, not by ear. Tell me if either sounds wrong.
-5. **Mara and the scavenger.** Do they read as two different people at a distance? Both share the pack's single male head (see decisions).
-6. **The *Tern*.** From the beach: does the hull read as faded white paint over grime, not pink or blown out?
+1. **Boathouse.** Where: you wake on the floor. What to do: take the pistol from the bench, fire once, dry-fire, take the ammo and dressing. Should happen: it reads as a cold steel shed; the shot and the dry click sound like a pistol; each pickup clicks. Ask: is the pistol the loudest thing? Do the click and the **Tab** switch flick suit the game?
+2. **The door.** Step outside. Should happen: wind and water are already there, before anything glows. Ask: does the wind sit under everything? Does the lap ever startle you?
+3. **Coil route.** Walk east past the ridge to the relay. Should happen: it hums, louder as you close in. Take the coil: the hum stops within about half a second. Bring it to Mara. Ask: does Mara read as a person watching the path (teal jacket)? Can you hear her lines over anything?
+4. **Combat route.** New game (F10 / delete the save). Kill the scavenger. Should happen: he reads as a rust-brown jacketed figure, clearly not Mara; the hum stops when he dies.
+5. **Survey Launch.** Walk west past the back of the boathouse. Should happen: the *Tern* from the beach reads as faded white paint over grime, not pink; the name board reads `T_RN`; the live water hums and now and then snaps; the water is dark and rippled. Pull the leads at the battery bank: one clunk, the hum and snaps stop, the glow goes, the water stays. Loot the locker and the tender. Ask: is the cyan glow too loud? Is the hull right?
+6. **One RPG build** (**B** panel, Engineering). Should happen: the breaker panel's extra reading, then the chart from the tender and the sounder. The meshes changed; the words did not.
+7. **Save and reload.** F5, quit, relaunch, F9. Should happen: build, cut power, quest as saved; the shore looks and sounds the same.
+8. **Overall.** Ask: is the whole shore too blue and grey? Do you stop and look at things even when they don't glow?
 
 ## Decisions Needed From Anthony
 
-- **Mara's face.** The pack ships one head (short dark hair, male-presenting). I did not decide who Mara is. Options: keep it as a placeholder, or swap to another head later. Default: keep.
-- **Cold grade and hull tint** (open question from the plan): the hull is now pale blue-white. `Tint`, `PaintCast`, and `GrimeAmount` on `MI_DC_TernU1/U2` are the controls.
-- **Wind bed has very faint birds.** You chose to keep it; the boathouse window line says "No birds". No action unless you change your mind.
+- Accept the Presentation Pass, or list what to change.
+- Grade: too blue or grey? Hull tint: `Tint`, `PaintCast`, `GrimeAmount` on `MI_DC_TernU1/U2`; grade in `build_lighting()`.
+- Mara's face: keep the pack's single head as a placeholder, or swap later?
+- Wind bed has very faint birds (your choice) versus the "No birds" window line.
+- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` §12).
+- Chase the frame-time shortfall now or after acceptance?
 
 ## Known Issues
 
-- The basin water slab shows a faint dotted line at its south edge (near-coplanar with the lake). Cosmetic.
-- The live-water glow is still the Phase 3 flat cyan sheet; only the permanent water changed.
-- `T_EyeMidPlaneDisplacement` (Survival_Character eye texture) would not export and stays at source size (small).
-- Both characters have the same face. See decisions.
-- Live-water hum is an `ADCConditionalAudio` placed by `build_boathouse.py`, not code inside `ADCDamageVolume` as `PresentationPassPlan.txt` §4 words it. Same rule (`!wreck.power_cut`), one fewer C++ change.
+- **Frame time 18.4 ms average (about 54 FPS)** vs the 16.7 ms target, uniform across all views; 30% screen percentage did not change it, so it is CPU-side or a fixed cost. Not bisected. Suspects: two heavier animated characters, added actors, five audio components. A `stat unit` session would settle it.
+- Basin water slab has a faint dotted edge. Cosmetic.
+- Live-water glow is still the Phase 3 flat cyan sheet.
+- Both characters share one head. One eye texture (`T_EyeMidPlaneDisplacement`) is still at source size (small).
+- Breaker throw is a stand-in sound. Not verified by ear: balance, hum seams, UI cues.
+- The packaged game's audio is untested (smoke launch has no audio device).
+- Live-water hum is an `ADCConditionalAudio`, not code inside `ADCDamageVolume` as the plan worded it.
+- Content rebuilds rewrite imported binaries differently each run; I discarded that churn rather than commit it.
 
 ## Future Tier-C Candidates (for the first biome recipe; not automated)
 
-Noted while dressing the shore. Nothing here is built as a system.
+Also in `Design/content_production_strategy.md` §5.
 
-- shore stones (black rock, waterline band)
-- driftwood, small and large (`dead_quiver_branch_01`, `dead_tree_trunk`, `tree_stump_01` are already placed by hand in `dress_shore.py`: nine placements, a good first recipe test)
-- minor debris and camp scrap (crates, cans)
-- mud and wet-sand variation (currently one texture per band)
-- shoreline grass (none yet; the beach is bare)
+- shore stones (waterline band, under the ridge)
+- driftwood and dead branches (nine hand placements in `dress_shore.py`: the cleanest first recipe test)
+- minor debris and camp scrap
+- mud and wet-sand variation (one texture per band, so the beach reads flat)
+- shoreline grass (none yet)
 - generic maritime scrap (rope, floats, tires)
-- ambient audio zones: the wind and lap beds are two 2D actors; a biome recipe would own these
+- an ambience zone owning the wind and lap beds
 
 ## Automated Status
 
-- Build: `DeadCurrentEditor` builds (last run with PP-09).
-- Tests: **38 of 38 pass** (31 editor, 7 map). Baseline was 36. New: `DeadCurrent.Presentation.ConditionalAudio`, `Map.Boathouse.ArtLayer` (now also the audio actors), plus water-slab, relay-hum assertions in existing map tests.
-- Rebuild (`Tools\RebuildContent.bat`): clean, exit 0. Art level keeps the sentinel and both audio beds after a rebuild.
-- Review captures: last run `Saved/Review/2026-09-29_1732` (PP-08). Audio has no visual output; no recapture needed for PP-09.
-- Package: not attempted yet.
-- Meshy spend: **330 of 500 credits** across ten props.
+- Build: `DeadCurrentEditor` builds; the Development Win64 game target also builds (packaging).
+- Tests: **38 of 38** (31 editor, 7 map). Baseline 36.
+- Rebuild: `Tools\RebuildContent.bat` clean, exit 0; art level keeps the sentinel and audio beds.
+- Review captures: final run `Saved/Review/2026-09-29_1758`; no defaults, missing textures, warnings, or errors.
+- Package: Development Win64 cook to `Saved\Packaged\Windows` succeeded; null-RHI smoke launch loaded `Lvl_Boathouse` and its art level.
+- Meshy spend: 330 of 500 credits, ten props.
 
 ## Next Autonomous Task
 
-PP-10: update docs (`technical_architecture.md`, `game_design.md`, `art_pipeline.md`, `CLAUDE.md`, `PresentationPassPlan.txt` status), full rebuild, full suite, final captures and frame times, Development Win64 cook and smoke launch, replace `CLAUDE_SESSION_REPORT.md`, mark **READY FOR ANTHONY ACCEPTANCE**, push fast-forward after checking origin. Then write `Design/POIs/PRODUCTION_PILOT.md` (plan only). Do not start Phase 5.
+None. Stop and wait for Anthony's acceptance decision and his answer on the production pilot. Do not start Phase 5.

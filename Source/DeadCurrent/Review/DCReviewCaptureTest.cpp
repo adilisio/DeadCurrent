@@ -1026,7 +1026,7 @@ namespace DCReviewCapture
 					UMaterialInterface* Material = Primitive->GetMaterial(MaterialIndex);
 					if (IsDefaultOrGridMaterial(Material))
 					{
-						const FString Who = FString::Printf(TEXT("%s (%s)"), *Material->GetPathName(), *ActorIt->GetActorLabel());
+						const FString Who = FString::Printf(TEXT("%s (%s)"), *Material->GetPathName(), *ActorLabel(*ActorIt));
 						NoteUnique(Run.DefaultMaterials, Who);
 						continue;
 					}

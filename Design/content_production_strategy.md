@@ -228,6 +228,20 @@ Biome recipes should be:
 
 PCG is not a substitute for level design.
 
+### First recipe candidates (observed during the Presentation Pass, not built)
+
+The Presentation Pass dressed one shore by hand. What it needed, in order of how obviously repeatable it was, is the first "Great Lakes rocky shoreline" recipe's input list. Nothing here is automated.
+
+- driftwood and dead branches: nine hand placements in `dress_shore.py`, three CC0 meshes, scaled and yawed. The cleanest first recipe test.
+- shore stones along the waterline and under the ridge: not placed yet; a strip along the gravel curb
+- minor debris and camp scrap: crates, cans, and the tender at the camp
+- mud and wet-sand variation: currently one texture per band, so the beach reads flat from a distance
+- shoreline grass: none yet
+- generic maritime scrap: rope, floats, tires
+- the ambient bed: two 2D `ADCConditionalAudio` actors would become a per-biome ambience zone
+
+Exclusion rules the pass learned the hard way: nothing with collision in the doorway, on the boarding plank, inside the scavenger's patrol square, or between Mara and the path; nothing that blocks the interaction trace on a clue.
+
 ---
 
 ## 6. The content cell / POI contract
