@@ -2,7 +2,7 @@
 
 Living document. Read it before importing, generating, or placing any art or audio. Update it when the first real asset lands and a convention below stops being a proposal.
 
-Status (2026-09-29): the art-layer decision is in force (`Lvl_Boathouse_Art`). `import_art.py` has brought in the CC0 shore surfaces and `M_DC_Surface`. The persistent map is still greybox until those instances are assigned. No audio yet. Conventions still marked **Proposed** have not been exercised.
+Status (2026-09-29): the art-layer decision is in force (`Lvl_Boathouse_Art`). `import_art.py` has brought in the CC0 shore surfaces and `M_DC_Surface`. `build_boathouse.py` assigns sand, mud, coast rock, and land rock on the ground, curbs, ridge, and bluffs, and a darker open-lake flat on the lake slabs. `dress_shore.py` places NoCollision CC0 driftwood in the art level. No audio yet. Conventions still marked **Proposed** have not been exercised.
 
 ## Art direction (from `LongTermPlan.txt` §18)
 
@@ -126,7 +126,7 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 - Raw FBX/glTF/texture sets: `Tools/EditorScripts/import_art.py`, re-runnable, registered first in `Tools\RebuildContent.bat`. A second run replaces textures in place (27 surface textures before and after).
 - Destination: `/Game/Art/<Source>/<AssetId>/` (`PolyHaven`, `AmbientCG`, and later `Megascans`, `Meshy`, `Freesound`). Names use `T_` / `MI_` / `SM_`.
 - `M_DC_Surface` is a default-lit master. Base color and roughness are triplanar in world space so a scaled greybox cube does not stretch them. `TileSizeCm` is the repeat, in centimeters. `PackedORM` uses an ARM texture (R occlusion, G roughness, B metal), which matches the Poly Haven layout. Unpacked sets use a roughness texture and the `Metallic` scalar. The normal map is sampled in world XY and faded out on vertical faces, so floors keep detail and walls keep the mesh normal.
-- The boathouse script resolves `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, and `MI_DC_Steel` before it saves. It does not assign them yet.
+- The boathouse script resolves `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, and `MI_DC_Steel` before it saves. Sand, mud, coast rock, and land rock are assigned on the ground, curbs, ridge, bluffs, and beach stones. Concrete, plaster, and steel wait for the structures.
 - Fab meshes (the *Tern*) are imported by the same script when they are placed. They are not in the repo until then.
 - Baseline screenshots are not in this step. `UnrealEditor-Cmd` crashes in `take_high_res_screenshot` (null RHI, and again with `-AllowCommandletRendering`). The six cameras are listed in `Tools/EditorScripts/capture_presentation.py`. They get captured from the game window at the start of the mood task, before the lights change.
 
@@ -149,5 +149,8 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `T_chipped_concrete_*`, `MI_DC_Concrete` | `CC0/polyhaven/chipped_concrete` | CC0 | Amal Kumar |
 | `T_blue_plaster_weathered_*`, `MI_DC_Plaster` | `CC0/polyhaven/blue_plaster_weathered` | CC0 | Amal Kumar |
 | `T_CorrugatedSteel009_*`, `MI_DC_Steel` | `CC0/ambientcg/CorrugatedSteel009` | CC0 | ambientCG |
+| `dead_quiver_branch_01` | `CC0/polyhaven/dead_quiver_branch_01` | CC0 | Greg Zaal, Jenelle van Heerden |
+| `dead_tree_trunk` | `CC0/polyhaven/dead_tree_trunk` | CC0 | Rob Tuytel |
+| `tree_stump_01` | `CC0/polyhaven/tree_stump_01` | CC0 | Rob Tuytel |
 
 URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 1).

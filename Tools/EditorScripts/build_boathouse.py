@@ -89,7 +89,9 @@ def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unrea
     actor.set_folder_path(folder)
     mesh_comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     mesh_comp.set_static_mesh(cube_mesh)
-    mesh_comp.set_material(0, material or block_mat)
+    chosen = material or block_mat
+    for slot in range(mesh_comp.get_num_materials()):
+        mesh_comp.set_material(slot, chosen)
     return actor
 
 
@@ -117,7 +119,9 @@ def box_rot(label, folder, center, size, rot=(0.0, 0.0, 0.0), material=None, act
     actor.set_folder_path(folder)
     mesh_comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     mesh_comp.set_static_mesh(cube_mesh)
-    mesh_comp.set_material(0, material or block_mat)
+    chosen = material or block_mat
+    for slot in range(mesh_comp.get_num_materials()):
+        mesh_comp.set_material(slot, chosen)
     return actor
 
 
@@ -383,9 +387,11 @@ def build_lighting():
     sun_comp.set_editor_property("atmosphere_sun_light", True)
     sun_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     # High and cool, not a raking sunset. Auto-exposure still meters the interior.
-    sun_comp.set_editor_property("intensity", 220.0)
-    sun_comp.set_editor_property("light_color", unreal.Color(r=186, g=204, b=222, a=255))
-    sun_comp.set_editor_property("temperature", 7500.0)
+    # Lower than the first overcast pass. PlayTest has no bloom, so the sky and ground
+    # have to sit under the emissives instead of competing with them.
+    sun_comp.set_editor_property("intensity", 85.0)
+    sun_comp.set_editor_property("light_color", unreal.Color(r=170, g=186, b=200, a=255))
+    sun_comp.set_editor_property("temperature", 6800.0)
     sun_comp.set_editor_property("use_temperature", True)
 
     sky = actors.spawn_actor_from_class(unreal.SkyLight, unreal.Vector(0, 0, 1000))
@@ -394,24 +400,25 @@ def build_lighting():
     sky_comp = sky.get_component_by_class(unreal.SkyLightComponent)
     sky_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     sky_comp.set_editor_property("real_time_capture", True)
-    sky_comp.set_editor_property("intensity", 1.15)
+    sky_comp.set_editor_property("intensity", 0.38)
 
     atmo = actors.spawn_actor_from_class(unreal.SkyAtmosphere, unreal.Vector(0, 0, 0))
     atmo.set_actor_label("SkyAtmosphere")
     atmo.set_folder_path(folder)
     atmo_comp = atmo.get_component_by_class(unreal.SkyAtmosphereComponent)
     # Even scattering so the sky is grey-blue instead of a saturated blue dome.
-    atmo_comp.set_editor_property("rayleigh_scattering", unreal.LinearColor(0.42, 0.50, 0.62, 1.0))
-    atmo_comp.set_editor_property("rayleigh_scattering_scale", 0.045)
-    atmo_comp.set_editor_property("mie_scattering_scale", 0.08)
+    atmo_comp.set_editor_property("rayleigh_scattering", unreal.LinearColor(0.22, 0.26, 0.30, 1.0))
+    atmo_comp.set_editor_property("rayleigh_scattering_scale", 0.018)
+    atmo_comp.set_editor_property("mie_scattering_scale", 0.16)
+    atmo_comp.set_editor_property("sky_luminance_factor", unreal.LinearColor(0.28, 0.30, 0.34, 1.0))
 
     fog = actors.spawn_actor_from_class(unreal.ExponentialHeightFog, unreal.Vector(0, 0, 0))
     fog.set_actor_label("HeightFog")
     fog.set_folder_path(folder)
     fog_comp = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
-    fog_comp.set_editor_property("fog_density", 0.018)
-    fog_comp.set_editor_property("fog_max_opacity", 0.5)
-    fog_comp.set_editor_property("fog_inscattering_luminance", unreal.LinearColor(0.52, 0.58, 0.64, 1.0))
+    fog_comp.set_editor_property("fog_density", 0.03)
+    fog_comp.set_editor_property("fog_max_opacity", 0.72)
+    fog_comp.set_editor_property("fog_inscattering_luminance", unreal.LinearColor(0.18, 0.21, 0.24, 1.0))
     # Volumetric fog stays off. PlayTest also sets r.VolumetricFog=0. The height fog above is the distance tint.
 
     pp = actors.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(0.0, 0.0, 0.0))
@@ -424,26 +431,48 @@ def build_lighting():
     settings.set_editor_property("override_auto_exposure_method", True)
     settings.set_editor_property("auto_exposure_method", unreal.AutoExposureMethod.AEM_HISTOGRAM)
     settings.set_editor_property("override_auto_exposure_min_brightness", True)
-    settings.set_editor_property("auto_exposure_min_brightness", 0.6)
+    settings.set_editor_property("auto_exposure_min_brightness", 0.15)
     settings.set_editor_property("override_auto_exposure_max_brightness", True)
-    settings.set_editor_property("auto_exposure_max_brightness", 4.0)
+    settings.set_editor_property("auto_exposure_max_brightness", 1.15)
     settings.set_editor_property("override_auto_exposure_bias", True)
-    settings.set_editor_property("auto_exposure_bias", 0.15)
+    settings.set_editor_property("auto_exposure_bias", -0.55)
     # Higher white balance is cooler. Saturation stays in the grade, which Low scalability does not strip.
     settings.set_editor_property("override_white_temp", True)
-    settings.set_editor_property("white_temp", 8200.0)
+    settings.set_editor_property("white_temp", 7000.0)
     settings.set_editor_property("override_color_saturation", True)
     settings.set_editor_property("color_saturation", unreal.Vector4(0.78, 0.82, 0.88, 1.0))
     settings.set_editor_property("override_color_contrast", True)
-    settings.set_editor_property("color_contrast", unreal.Vector4(1.06, 1.06, 1.06, 1.0))
+    settings.set_editor_property("color_contrast", unreal.Vector4(1.12, 1.12, 1.12, 1.0))
     pp.set_editor_property("settings", settings)
+
+    # The sun does not reach the ceiling. A local fill, not a second sun.
+    fill = actors.spawn_actor_from_class(unreal.PointLight, unreal.Vector(360.0, 0.0, 230.0))
+    fill.set_actor_label("BoathouseFill")
+    fill.set_folder_path(folder)
+    fill_comp = fill.get_component_by_class(unreal.PointLightComponent)
+    fill_comp.set_editor_property("intensity_units", unreal.LightUnits.CANDELAS)
+    fill_comp.set_editor_property("intensity", 280.0)
+    fill_comp.set_editor_property("attenuation_radius", 900.0)
+    fill_comp.set_editor_property("light_color", unreal.Color(r=186, g=196, b=204, a=255))
+    fill_comp.set_editor_property("cast_shadows", False)
+
+
+def surface(name):
+    path = f"/Game/Environment/Materials/{name}"
+    asset = unreal.load_asset(path)
+    if not asset:
+        raise RuntimeError(f"Missing {path}. Run import_art.py first.")
+    return asset
 
 
 def build_ground():
     folder = "Ground"
-    block("Floor", folder, -200, 3600, -600, 1800, -50, 0, material=floor_mat)
-    block("ShoreCurb", folder, -200, 3600, -600, -580, 0, 18)
-    block("Water", folder, -200, 3600, -1400, -600, -80, -10)
+    sand = surface("MI_DC_CoastSand")
+    mud = surface("MI_DC_Mud")
+    lake = material_instance("MI_DC_OpenLake", MAT_FLAT, {"Base Color": (0.012, 0.022, 0.028, 1.0)})
+    block("Floor", folder, -200, 3600, -600, 1800, -50, 0, material=sand)
+    block("ShoreCurb", folder, -200, 3600, -600, -580, 0, 18, material=mud)
+    block("Water", folder, -200, 3600, -1400, -600, -80, -10, material=lake)
 
     start = actors.spawn_actor_from_class(
         unreal.PlayerStart, unreal.Vector(220.0, 0.0, 100.0),
@@ -565,8 +594,8 @@ def build_scavenger():
 def build_cover_and_npc():
     folder = "Cover"
     # LOS wall: scavenger patrols south of this, Mara stands north.
-    block("Ridge", folder, 1900, 3400, 550, 650, 0, 280)
-    block("RidgeEnd", folder, 3380, 3480, 550, 1500, 0, 280)
+    block("Ridge", folder, 1900, 3400, 550, 650, 0, 280, material=surface("MI_DC_LandRock"))
+    block("RidgeEnd", folder, 3380, 3480, 550, 1500, 0, 280, material=surface("MI_DC_LandRock"))
 
     folder = "NPC"
     block("Shed_Back", folder, 3040, 3220, 1480, 1500, 0, 220)
@@ -598,20 +627,23 @@ def build_cover_and_npc():
 def build_west_shore():
     """Ground for the Exploration Loop POI, west of (behind) the boathouse."""
     folder = "WestShore"
-    block("Floor_West", folder, -3200, -200, -600, 1800, -50, 0, material=floor_mat)
+    rock = surface("MI_DC_CoastRock")
+    mud = surface("MI_DC_Mud")
+    lake = unreal.load_asset("/Game/Environment/Materials/MI_DC_OpenLake")
+    block("Floor_West", folder, -3200, -200, -600, 1800, -50, 0, material=rock)
     # The curb stops where the launch's hull crosses the shoreline.
-    block("ShoreCurb_West_A", folder, -3200, -1720, -600, -580, 0, 18)
-    block("ShoreCurb_West_B", folder, -1280, -200, -600, -580, 0, 18)
-    block("Water_West", folder, -3200, -200, -2400, -600, -80, -10)
+    block("ShoreCurb_West_A", folder, -3200, -1720, -600, -580, 0, 18, material=mud)
+    block("ShoreCurb_West_B", folder, -1280, -200, -600, -580, 0, 18, material=mud)
+    block("Water_West", folder, -3200, -200, -2400, -600, -80, -10, material=lake)
     # Keep the player on the map: a bluff to the west and north, rocks around the far water.
-    block("Bluff_West", folder, -3240, -3200, -2440, 1840, -80, 420)
-    block("Bluff_North", folder, -3200, -200, 1800, 1840, -50, 300)
-    block("Breakwater_South", folder, -3200, -200, -2440, -2400, -80, 140)
-    block("Breakwater_East", folder, -220, -200, -2400, -1400, -80, 140)
+    block("Bluff_West", folder, -3240, -3200, -2440, 1840, -80, 420, material=surface("MI_DC_LandRock"))
+    block("Bluff_North", folder, -3200, -200, 1800, 1840, -50, 300, material=surface("MI_DC_LandRock"))
+    block("Breakwater_South", folder, -3200, -200, -2440, -2400, -80, 140, material=rock)
+    block("Breakwater_East", folder, -220, -200, -2400, -1400, -80, 140, material=rock)
     # Beach stones.
-    block("Boulder_A", folder, -2250, -2080, -520, -400, 0, 70)
-    block("Boulder_B", folder, -880, -760, -560, -470, 0, 45)
-    block("Boulder_C", folder, -2600, -2450, 200, 330, 0, 90)
+    block("Boulder_A", folder, -2250, -2080, -520, -400, 0, 70, material=rock)
+    block("Boulder_B", folder, -880, -760, -560, -470, 0, 45, material=rock)
+    block("Boulder_C", folder, -2600, -2450, 200, 330, 0, 90, material=rock)
 
 
 def build_survey_launch():
@@ -630,7 +662,7 @@ def build_survey_launch():
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
     live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.2, 1.4, 4.0, 0.5)})
-    water_mat = material_instance("MI_DC_Water", MAT_FLAT, {"Base Color": (0.02, 0.07, 0.09, 1.0)})
+    water_mat = material_instance("MI_DC_Water", MAT_FLAT, {"Base Color": (0.008, 0.018, 0.024, 1.0)})
     fish_mat = material_instance("MI_DC_DeadFish", MAT_FLAT, {"Base Color": (0.78, 0.8, 0.72, 1.0)})
     live = [cond("WORLD_FLAG", id=WRECK_POWER_CUT, negate=True)]
 
