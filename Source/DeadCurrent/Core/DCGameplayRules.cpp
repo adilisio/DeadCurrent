@@ -67,6 +67,9 @@ bool UDCGameplayRules::CheckCondition(const FDCGameplayCondition& Condition, con
 	case EDCConditionType::ActorDead:
 		bPass = DCIsActorDead(Condition.Id, Context);
 		break;
+	case EDCConditionType::LocationDiscovered:
+		bPass = Context.WorldState && Context.WorldState->IsLocationDiscovered(Condition.Id);
+		break;
 	default:
 		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCRULES] unhandled condition type %d"), static_cast<int32>(Condition.Type));
 		bPass = false;

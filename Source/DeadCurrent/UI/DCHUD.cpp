@@ -16,6 +16,8 @@
 #include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestComponent.h"
 #include "Quest/DCQuestDefinition.h"
+#include "World/DCLocationVolume.h"
+#include "World/DCWorldStateSubsystem.h"
 
 void ADCHUD::DrawHUD()
 {
@@ -29,6 +31,7 @@ void ADCHUD::DrawHUD()
 	DrawCrosshair();
 	DrawInteractionPrompt();
 	DrawMessage();
+	DrawBanner();
 	DrawDialogue();
 	DrawObjective();
 
@@ -47,14 +50,40 @@ void ADCHUD::ShowMessage(const FText& Message, float Duration)
 	MessageExpireTime = GetWorld()->GetTimeSeconds() + Duration;
 }
 
-void ADCHUD::ShowMessageFor(const AActor* Actor, const FText& Message, float Duration)
+ADCHUD* ADCHUD::FindFor(const AActor* Actor)
 {
 	const APawn* Pawn = Cast<APawn>(Actor);
 	const APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
+	return PC ? PC->GetHUD<ADCHUD>() : nullptr;
+}
+
+void ADCHUD::ShowMessageFor(const AActor* Actor, const FText& Message, float Duration)
+{
+	if (ADCHUD* HUD = FindFor(Actor))
 	{
 		HUD->ShowMessage(Message, Duration);
 	}
+}
+
+void ADCHUD::ShowBanner(const FText& Title, const FText& Subtitle, float Duration)
+{
+	BannerTitle = Title;
+	BannerSubtitle = Subtitle;
+	BannerStartTime = GetWorld()->GetTimeSeconds();
+	BannerExpireTime = BannerStartTime + Duration;
+}
+
+void ADCHUD::ShowBannerFor(const AActor* Actor, const FText& Title, const FText& Subtitle, float Duration)
+{
+	if (ADCHUD* HUD = FindFor(Actor))
+	{
+		HUD->ShowBanner(Title, Subtitle, Duration);
+	}
+}
+
+FText ADCHUD::GetActiveBannerSubtitle() const
+{
+	return GetWorld() && GetWorld()->GetTimeSeconds() <= BannerExpireTime ? BannerSubtitle : FText::GetEmpty();
 }
 
 void ADCHUD::DrawCrosshair()
@@ -121,6 +150,29 @@ void ADCHUD::DrawMessage()
 		DrawCenteredText(Line, Y, Font, TextColor);
 		Y += LineHeight;
 	}
+}
+
+void ADCHUD::DrawBanner()
+{
+	const double Now = GetWorld()->GetTimeSeconds();
+	if (BannerSubtitle.IsEmpty() || Now > BannerExpireTime)
+	{
+		return;
+	}
+
+	// Quick fade in, slow fade out.
+	const float FadeIn = FMath::Clamp(static_cast<float>((Now - BannerStartTime) / 0.3), 0.0f, 1.0f);
+	const float FadeOut = FMath::Clamp(static_cast<float>((BannerExpireTime - Now) / 1.0), 0.0f, 1.0f);
+	const float Alpha = FMath::Min(FadeIn, FadeOut);
+
+	float Y = Canvas->ClipY * 0.2f;
+	if (!BannerTitle.IsEmpty())
+	{
+		UFont* TitleFont = GEngine->GetMediumFont();
+		DrawCenteredText(BannerTitle.ToString(), Y, TitleFont, FLinearColor(0.85f, 0.75f, 0.45f, Alpha));
+		Y += TitleFont->GetMaxCharHeight() + 6.0f;
+	}
+	DrawCenteredText(BannerSubtitle.ToString(), Y, GEngine->GetLargeFont(), FLinearColor(TextColor.R, TextColor.G, TextColor.B, Alpha));
 }
 
 void ADCHUD::DrawInventory()
@@ -226,16 +278,33 @@ void ADCHUD::DrawQuestLog(float X, float Top)
 		Rows.Add({ TEXT("(none)"), TextColor * 0.7f });
 	}
 
-	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 1.5f);
+	// Discovered places, so a load can be checked at a glance.
+	const UDCWorldStateSubsystem* WorldState = UDCWorldStateSubsystem::Get(this);
+	const TArray<FName> NoPlaces;
+	const TArray<FName>& Places = WorldState ? WorldState->GetDiscoveredLocations() : NoPlaces;
+	const int32 PlacesHeaderRow = Rows.Num();
+	Rows.Add({ FString(), TextColor });
+	Rows.Add({ TEXT("PLACES"), TextColor });
+	for (const FName Place : Places)
+	{
+		Rows.Add({ ADCLocationVolume::FindDisplayName(GetWorld(), Place).ToString(), TextColor * 0.8f });
+	}
+	if (Places.IsEmpty())
+	{
+		Rows.Add({ TEXT("(none)"), TextColor * 0.7f });
+	}
+
+	// Rows, plus half a line of spacing under each of the two headers.
+	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 2.0f);
 	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.65f), X, Top, PanelWidth, PanelHeight);
 
 	float Y = Top + Padding;
 	DrawText(TEXT("QUESTS"), TextColor, X + Padding, Y, Font);
 	Y += LineHeight * 1.5f;
-	for (const FRow& Row : Rows)
+	for (int32 Index = 0; Index < Rows.Num(); ++Index)
 	{
-		DrawText(Row.Text, Row.Color, X + Padding, Y, Font);
-		Y += LineHeight;
+		DrawText(Rows[Index].Text, Rows[Index].Color, X + Padding, Y, Font);
+		Y += Index == PlacesHeaderRow + 1 ? LineHeight * 1.5f : LineHeight;
 	}
 }
 
@@ -554,6 +623,6 @@ void ADCHUD::DrawCenteredText(const FString& Text, float Y, UFont* Font, const F
 	GetTextSize(Text, Width, Height, Font);
 
 	const float X = (Canvas->ClipX - Width) * 0.5f;
-	DrawText(Text, FLinearColor(0.0f, 0.0f, 0.0f, 0.7f), X + 1.0f, Y + 1.0f, Font);
+	DrawText(Text, FLinearColor(0.0f, 0.0f, 0.0f, 0.7f * Color.A), X + 1.0f, Y + 1.0f, Font);
 	DrawText(Text, Color, X, Y, Font);
 }

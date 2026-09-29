@@ -111,8 +111,8 @@ bool UDCSaveSubsystem::SaveCurrentGame()
 	ADCHUD::ShowMessageFor(Player, bOk
 		? NSLOCTEXT("DCSave", "Saved", "Saved.")
 		: NSLOCTEXT("DCSave", "SaveFailed", "Save failed."), 2.0f);
-	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] SaveCurrentGame %s (%s, %d quests, %d flags)"), bOk ? TEXT("ok") : TEXT("failed"),
-		*Save->MapPackage, Save->Quests.Num(), Save->WorldFlags.Num());
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] SaveCurrentGame %s (%s, %d quests, %d flags, %d locations)"), bOk ? TEXT("ok") : TEXT("failed"),
+		*Save->MapPackage, Save->Quests.Num(), Save->WorldFlags.Num(), Save->DiscoveredLocations.Num());
 	return bOk;
 }
 
@@ -170,11 +170,14 @@ void UDCSaveSubsystem::ApplyPendingLoad(UWorld* World)
 		return;
 	}
 
+	// World state first: anything that reacts to where things end up (discovery volumes, world-conditioned
+	// hazards) must already see the saved flags and discoveries, so nothing is re-announced on load.
+	ApplyWorldState(Save, World->GetSubsystem<UDCWorldStateSubsystem>());
 	ApplyWorld(Save, World);
 	ApplyPlayer(Save, Player);
 	ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "Loaded", "Loaded."), 2.0f);
-	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] load applied (%d world actors, %d quests, %d flags)"),
-		Save->WorldActors.Num(), Save->Quests.Num(), Save->WorldFlags.Num());
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] load applied (%d world actors, %d quests, %d flags, %d locations)"),
+		Save->WorldActors.Num(), Save->Quests.Num(), Save->WorldFlags.Num(), Save->DiscoveredLocations.Num());
 }
 
 void UDCSaveSubsystem::CaptureProgress(UDCSaveGame* Save, const UDCQuestComponent* Quests, const UDCWorldStateSubsystem* WorldState)
@@ -186,18 +189,25 @@ void UDCSaveSubsystem::CaptureProgress(UDCSaveGame* Save, const UDCQuestComponen
 	if (WorldState)
 	{
 		Save->WorldFlags = WorldState->GetFlags();
+		Save->DiscoveredLocations = WorldState->GetDiscoveredLocations();
 	}
 }
 
 void UDCSaveSubsystem::ApplyProgress(const UDCSaveGame* Save, UDCQuestComponent* Quests, UDCWorldStateSubsystem* WorldState)
 {
-	if (WorldState)
-	{
-		WorldState->ReplaceFlags(Save->WorldFlags);
-	}
+	ApplyWorldState(Save, WorldState);
 	if (Quests)
 	{
 		Quests->ReplaceFromSaved(Save->Quests);
+	}
+}
+
+void UDCSaveSubsystem::ApplyWorldState(const UDCSaveGame* Save, UDCWorldStateSubsystem* WorldState)
+{
+	if (WorldState)
+	{
+		WorldState->ReplaceFlags(Save->WorldFlags);
+		WorldState->ReplaceDiscoveredLocations(Save->DiscoveredLocations);
 	}
 }
 

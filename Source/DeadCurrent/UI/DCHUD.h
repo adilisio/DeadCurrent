@@ -25,6 +25,15 @@ public:
 	/** Convenience for gameplay code: shows a message on the HUD of the player controlling Actor, if any */
 	static void ShowMessageFor(const AActor* Actor, const FText& Message, float Duration = 4.0f);
 
+	/** Large two-line announcement in the upper part of the screen, e.g. LOCATION DISCOVERED / Wrecked Survey Launch */
+	UFUNCTION(BlueprintCallable, Category="HUD")
+	void ShowBanner(const FText& Title, const FText& Subtitle, float Duration = 4.0f);
+
+	static void ShowBannerFor(const AActor* Actor, const FText& Title, const FText& Subtitle, float Duration = 4.0f);
+
+	/** Subtitle of the banner on screen now, or empty. */
+	FText GetActiveBannerSubtitle() const;
+
 	UFUNCTION(BlueprintCallable, Category="HUD")
 	void ToggleInventory() { bShowInventory = !bShowInventory; }
 
@@ -47,6 +56,8 @@ private:
 
 	void DrawMessage();
 
+	void DrawBanner();
+
 	void DrawInventory();
 
 	void DrawWeapon();
@@ -57,8 +68,10 @@ private:
 
 	void DrawObjective();
 
-	/** Quest journal beside the inventory panel: each quest, its status, and its objective or outcome. */
+	/** Journal beside the inventory panel: each quest with its status and objective or outcome, then discovered places. */
 	void DrawQuestLog(float X, float Top);
+
+	static ADCHUD* FindFor(const AActor* Actor);
 
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
 
@@ -71,4 +84,12 @@ private:
 	bool bShowInventory = false;
 
 	double MessageExpireTime = 0.0;
+
+	FText BannerTitle;
+
+	FText BannerSubtitle;
+
+	double BannerStartTime = 0.0;
+
+	double BannerExpireTime = 0.0;
 };

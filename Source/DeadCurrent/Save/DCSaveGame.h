@@ -21,10 +21,11 @@ public:
 
 	/**
 	 *  1: first playable. 2: micro RPG (MapPackage, world flags owned by UDCWorldStateSubsystem,
-	 *  quest stages from data-driven quests). Older saves still load; quest stages that no longer
-	 *  exist are dropped.
+	 *  quest stages from data-driven quests). 3: exploration loop (DiscoveredLocations; loot
+	 *  containers use the existing world inventory arrays). Older saves still load; quest stages
+	 *  that no longer exist are dropped, and older saves have no discovered locations.
 	 */
-	static constexpr int32 CurrentVersion = 2;
+	static constexpr int32 CurrentVersion = 3;
 
 	/** Short map name, e.g. Lvl_Boathouse. */
 	UPROPERTY()
@@ -95,4 +96,8 @@ public:
 	/** UDCWorldStateSubsystem flags. */
 	UPROPERTY()
 	TArray<FName> WorldFlags;
+
+	/** UDCWorldStateSubsystem discovered locations, in discovery order. */
+	UPROPERTY()
+	TArray<FName> DiscoveredLocations;
 };

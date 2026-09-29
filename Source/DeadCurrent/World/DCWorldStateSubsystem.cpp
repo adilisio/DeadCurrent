@@ -44,6 +44,32 @@ void UDCWorldStateSubsystem::ReplaceFlags(const TArray<FName>& SavedFlags)
 	}
 }
 
+bool UDCWorldStateSubsystem::DiscoverLocation(FName LocationId)
+{
+	if (LocationId.IsNone() || DiscoveredLocations.Contains(LocationId))
+	{
+		return false;
+	}
+
+	DiscoveredLocations.Add(LocationId);
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCWORLD] location discovered %s"), *LocationId.ToString());
+	OnLocationDiscovered.Broadcast(LocationId);
+	NotifyChanged();
+	return true;
+}
+
+void UDCWorldStateSubsystem::ReplaceDiscoveredLocations(const TArray<FName>& SavedLocations)
+{
+	DiscoveredLocations.Reset();
+	for (const FName LocationId : SavedLocations)
+	{
+		if (!LocationId.IsNone())
+		{
+			DiscoveredLocations.AddUnique(LocationId);
+		}
+	}
+}
+
 void UDCWorldStateSubsystem::NotifyChanged()
 {
 	OnChanged.Broadcast();

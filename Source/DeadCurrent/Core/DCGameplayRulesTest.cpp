@@ -118,6 +118,13 @@ bool FDCRulesConditionsTest::RunTest(const FString& Parameters)
 	TargetHealth->ApplyDamage(Damage);
 	TestTrue(TEXT("ActorDead after lethal damage"), Check(Cond(EDCConditionType::ActorDead, TEXT("test.target"))));
 
+	// LocationDiscovered reads the world's discovered locations.
+	TestFalse(TEXT("LocationDiscovered before"), Check(Cond(EDCConditionType::LocationDiscovered, TEXT("test.place"))));
+	Context.WorldState->DiscoverLocation(TEXT("test.place"));
+	TestTrue(TEXT("LocationDiscovered after"), Check(Cond(EDCConditionType::LocationDiscovered, TEXT("test.place"))));
+	TestFalse(TEXT("Negated LocationDiscovered"), Check(Cond(EDCConditionType::LocationDiscovered, TEXT("test.place"), NAME_None, 1, true)));
+	TestFalse(TEXT("A flag is not a location"), Check(Cond(EDCConditionType::LocationDiscovered, TEXT("test.flag"))));
+
 	// Lists are ANDed.
 	TestTrue(TEXT("All pass"), UDCGameplayRules::CheckConditions({
 		Cond(EDCConditionType::WorldFlag, TEXT("test.flag")),

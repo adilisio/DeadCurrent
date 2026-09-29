@@ -27,7 +27,9 @@ enum class EDCConditionType : uint8
 	/** World flag Id is set. */
 	WorldFlag,
 	/** The actor with persistent id Id is dead. */
-	ActorDead
+	ActorDead,
+	/** Location Id has been discovered (UDCWorldStateSubsystem). */
+	LocationDiscovered
 };
 
 /**
@@ -62,7 +64,7 @@ struct DEADCURRENT_API FDCGameplayCondition
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	EDCConditionType Type = EDCConditionType::None;
 
-	/** Item id, quest id, world flag, or persistent actor id, depending on Type. */
+	/** Item id, quest id, world flag, persistent actor id, or location id, depending on Type. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	FName Id;
 

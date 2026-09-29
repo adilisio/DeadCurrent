@@ -40,11 +40,14 @@ public:
 
 	bool HasPendingLoad() const { return PendingLoad != nullptr; }
 
-	/** Quest log and world flags. Split out from the player so tests can round-trip them. */
+	/** Quest log, world flags and discovered locations. Split out from the player so tests can round-trip them. */
 	static void CaptureProgress(UDCSaveGame* Save, const UDCQuestComponent* Quests, const UDCWorldStateSubsystem* WorldState);
 
-	/** World flags first, then the quest log. Neither re-runs stage consequences. */
+	/** World state first (ApplyWorldState), then the quest log. Neither re-runs stage consequences. */
 	static void ApplyProgress(const UDCSaveGame* Save, UDCQuestComponent* Quests, UDCWorldStateSubsystem* WorldState);
+
+	/** World flags and discovered locations, without broadcasting. */
+	static void ApplyWorldState(const UDCSaveGame* Save, UDCWorldStateSubsystem* WorldState);
 
 	/** Every registered persistent actor (existence, alive, doors, inventories). */
 	static void CaptureWorld(UDCSaveGame* Save, UWorld* World);
