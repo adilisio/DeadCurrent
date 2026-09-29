@@ -134,7 +134,7 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 
 Every visual change is captured and reviewed before a session report is marked **READY FOR ANTHONY TO TEST**.
 
-Run `Tools\ReviewCapture.bat` (close the editor first). It writes PNGs and `manifest.json` to `Saved/Review/<yyyy-mm-dd_hhmm>/`, from the viewpoints and expectations in `Tools/Review/Lvl_Boathouse.json`, at the same settings as `Tools\PlayTest.bat`. A review reads those captures against the written expectations and the automatic checks. That happens before Anthony is asked to play. His time is for how the shore feels.
+Run `Tools\ReviewCapture.bat` (close the editor first). It writes PNGs, `contact_sheet.png`, and a UTF-8 `manifest.json` to `Saved/Review/<yyyy-mm-dd_hhmm>/`, from the viewpoints and expectations in `Tools/Review/Lvl_Boathouse.json`, at the same settings as `Tools\PlayTest.bat`. A review reads those captures against the written expectations and the automatic checks. That happens before Anthony is asked to play. His time is for how the shore feels.
 
 ### Provenance
 

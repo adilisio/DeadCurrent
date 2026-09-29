@@ -3,6 +3,7 @@
 #include "Character/DCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "CollisionShape.h"
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/OutputDevice.h"
@@ -13,6 +14,8 @@
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayTagContainer.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
 #include "Interaction/DCInteractable.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
@@ -20,11 +23,14 @@
 #include "Misc/App.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Modules/ModuleManager.h"
 #include "Quest/DCQuestComponent.h"
+#include "Save/DCPersistentRegistry.h"
 #include "Save/DCSaveSubsystem.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Tests/AutomationCommon.h"
+#include "UI/DCHUD.h"
 #include "UnrealClient.h"
 #include "World/DCInspectableActor.h"
 #include "World/DCWorldStateSubsystem.h"
@@ -50,6 +56,7 @@ namespace DCReviewCapture
 	struct FLandmark
 	{
 		FString Id;
+		FString Subject;
 		FVector Location = FVector::ZeroVector;
 	};
 
@@ -60,6 +67,10 @@ namespace DCReviewCapture
 		FRotator Rotation = FRotator::ZeroRotator;
 		FString Focus;
 		FVector FocusOffset = FVector::ZeroVector;
+		FString Subject;
+		TArray<FString> Subjects;
+		FVector ViewOffset = FVector::ZeroVector;
+		bool bOffsetInWorld = false;
 		FString Expectation;
 		FString Source;
 		TSharedPtr<FJsonObject> Setup;
@@ -243,7 +254,29 @@ namespace DCReviewCapture
 				return false;
 			}
 			Object->TryGetStringField(TEXT("focus"), Shot.Focus);
+			Object->TryGetStringField(TEXT("subject"), Shot.Subject);
 			ReadVector(Object, TEXT("focus_offset"), Shot.FocusOffset);
+			if (!ReadVector(Object, TEXT("view_offset"), Shot.ViewOffset))
+			{
+				Shot.ViewOffset = Shot.FocusOffset;
+			}
+			const TArray<TSharedPtr<FJsonValue>>* SubjectNames = nullptr;
+			if (Object->TryGetArrayField(TEXT("subjects"), SubjectNames) && SubjectNames)
+			{
+				for (const TSharedPtr<FJsonValue>& SubjectValue : *SubjectNames)
+				{
+					Shot.Subjects.Add(SubjectValue->AsString());
+				}
+			}
+			FString OffsetSpace;
+			if (Object->TryGetStringField(TEXT("view_offset_space"), OffsetSpace))
+			{
+				Shot.bOffsetInWorld = OffsetSpace.Equals(TEXT("world"), ESearchCase::IgnoreCase);
+			}
+			else
+			{
+				Shot.bOffsetInWorld = Shot.Subjects.Num() > 0;
+			}
 			if (Object->HasField(TEXT("setup")))
 			{
 				Shot.Setup = Object->GetObjectField(TEXT("setup"));
@@ -255,10 +288,15 @@ namespace DCReviewCapture
 				{
 					const TSharedPtr<FJsonObject> LandmarkObject = LandmarkValue->AsObject();
 					FLandmark Landmark;
-					if (!LandmarkObject.IsValid() || !LandmarkObject->TryGetStringField(TEXT("id"), Landmark.Id)
-						|| !ReadVector(LandmarkObject, TEXT("location"), Landmark.Location))
+					if (!LandmarkObject.IsValid() || !LandmarkObject->TryGetStringField(TEXT("id"), Landmark.Id))
 					{
-						Error = FString::Printf(TEXT("Viewpoint %s has a landmark without id or location"), *Shot.Id);
+						Error = FString::Printf(TEXT("Viewpoint %s has a landmark without an id"), *Shot.Id);
+						return false;
+					}
+					LandmarkObject->TryGetStringField(TEXT("subject"), Landmark.Subject);
+					if (!ReadVector(LandmarkObject, TEXT("location"), Landmark.Location) && Landmark.Subject.IsEmpty())
+					{
+						Error = FString::Printf(TEXT("Viewpoint %s landmark %s needs a location or a subject"), *Shot.Id, *Landmark.Id);
 						return false;
 					}
 					Shot.Landmarks.Add(Landmark);
@@ -569,6 +607,146 @@ namespace DCReviewCapture
 		}
 	}
 
+	FString ActorLabel(const AActor* Actor)
+	{
+		if (!Actor)
+		{
+			return FString();
+		}
+#if WITH_EDITOR
+		const FString Label = Actor->GetActorLabel();
+		if (!Label.IsEmpty())
+		{
+			return Label;
+		}
+#endif
+		return Actor->GetName();
+	}
+
+	AActor* FindByLabel(const FString& Label)
+	{
+		UWorld* World = GameWorld();
+		if (!World || Label.IsEmpty())
+		{
+			return nullptr;
+		}
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			if (ActorLabel(*It).Equals(Label, ESearchCase::IgnoreCase))
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
+	AActor* FindSubjectActor(const FString& Name)
+	{
+		if (Name.IsEmpty())
+		{
+			return nullptr;
+		}
+		if (ADCInspectableActor* Inspectable = FindInspectable(Name))
+		{
+			return Inspectable;
+		}
+		if (UWorld* World = GameWorld())
+		{
+			if (const UDCPersistentRegistry* Registry = World->GetSubsystem<UDCPersistentRegistry>())
+			{
+				if (AActor* Actor = Registry->FindActor(FName(*Name)))
+				{
+					return Actor;
+				}
+			}
+		}
+		return FindByLabel(Name);
+	}
+
+	bool SubjectBounds(const FShot& Shot, FVector& OutCenter, FVector& OutExtent, TArray<AActor*>& OutActors, FQuat& OutRotation, FString& Error)
+	{
+		OutActors.Reset();
+		if (Shot.Subjects.Num() > 0)
+		{
+			FBox Box(ForceInit);
+			for (const FString& Label : Shot.Subjects)
+			{
+				AActor* Actor = FindByLabel(Label);
+				if (!Actor)
+				{
+					Error = FString::Printf(TEXT("Could not find %s"), *Label);
+					return false;
+				}
+				FVector Center;
+				FVector Extent;
+				Actor->GetActorBounds(false, Center, Extent);
+				Box += FBox::BuildAABB(Center, Extent);
+				OutActors.Add(Actor);
+			}
+			OutCenter = Box.GetCenter();
+			OutExtent = Box.GetExtent();
+			OutRotation = FQuat::Identity;
+			return true;
+		}
+
+		const FString Name = !Shot.Subject.IsEmpty() ? Shot.Subject : Shot.Focus;
+		AActor* Actor = FindSubjectActor(Name);
+		if (!Actor)
+		{
+			Error = FString::Printf(TEXT("Could not find %s"), *Name);
+			return false;
+		}
+		Actor->GetActorBounds(false, OutCenter, OutExtent);
+		OutRotation = Actor->GetActorQuat();
+		OutActors.Add(Actor);
+		return true;
+	}
+
+	void AimAtSubject(UWorld* World, const FVector& Center, const TArray<AActor*>& Actors, const FQuat& Rotation, const FVector& Offset, bool bWorldOffset, FVector& OutEye, FRotator& OutRotation)
+	{
+		FVector WorldOffset = bWorldOffset ? Offset : Rotation.RotateVector(Offset);
+		if (WorldOffset.IsNearlyZero())
+		{
+			WorldOffset = FVector(200.0, 0.0, 40.0);
+		}
+		const FVector Direction = WorldOffset.GetSafeNormal();
+		FVector Eye = Center + WorldOffset;
+
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(ReviewAim), false);
+		for (AActor* Actor : Actors)
+		{
+			Params.AddIgnoredActor(Actor);
+		}
+		if (ADCPlayerCharacter* Pawn = Player())
+		{
+			Params.AddIgnoredActor(Pawn);
+		}
+		const FCollisionShape Sphere = FCollisionShape::MakeSphere(16.0f);
+		for (int32 Step = 0; Step < 16 && World->OverlapBlockingTestByChannel(Eye, FQuat::Identity, ECC_WorldStatic, Sphere, Params); ++Step)
+		{
+			Eye += Direction * 40.0f;
+		}
+		OutEye = Eye;
+		OutRotation = (Center - OutEye).Rotation();
+	}
+
+	void ClearTransientHud(bool bKeepMessage)
+	{
+		ADCPlayerCharacter* Pawn = Player();
+		APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+		ADCHUD* HUD = Controller ? Controller->GetHUD<ADCHUD>() : nullptr;
+		if (!HUD)
+		{
+			return;
+		}
+		if (bKeepMessage)
+		{
+			HUD->ClearBanner();
+			return;
+		}
+		HUD->ClearTransient();
+	}
+
 	bool PlaceShot(const FShot& Shot, FVector& OutEye, FRotator& OutRotation, FString& Error)
 	{
 		ADCPlayerCharacter* Pawn = Player();
@@ -580,16 +758,19 @@ namespace DCReviewCapture
 
 		OutEye = Shot.Location;
 		OutRotation = Shot.Rotation;
-		if (!Shot.Focus.IsEmpty())
+		const bool bHasSubject = !Shot.Subject.IsEmpty() || !Shot.Focus.IsEmpty() || Shot.Subjects.Num() > 0;
+		if (bHasSubject)
 		{
-			ADCInspectableActor* Target = FindInspectable(Shot.Focus);
-			if (!Target)
+			FVector Center;
+			FVector Extent;
+			TArray<AActor*> Actors;
+			FQuat Rotation;
+			if (!SubjectBounds(Shot, Center, Extent, Actors, Rotation, Error))
 			{
-				Error = FString::Printf(TEXT("Could not find %s"), *Shot.Focus);
 				return false;
 			}
-			OutEye = Target->GetActorLocation() + Shot.FocusOffset;
-			OutRotation = (Target->GetActorLocation() - OutEye).Rotation();
+			const FVector Offset = Shot.ViewOffset.IsNearlyZero() ? Shot.FocusOffset : Shot.ViewOffset;
+			AimAtSubject(Pawn->GetWorld(), Center, Actors, Rotation, Offset, Shot.bOffsetInWorld, OutEye, OutRotation);
 		}
 		LockCamera(Pawn, OutEye, OutRotation);
 
@@ -880,17 +1061,39 @@ namespace DCReviewCapture
 
 		const UCameraComponent* Camera = Pawn->GetFirstPersonCameraComponent();
 		const FVector CameraLocation = Camera ? Camera->GetComponentLocation() : Pawn->GetActorLocation();
-		FCollisionQueryParams Params(SCENE_QUERY_STAT(ReviewLandmark), false);
-		Params.AddIgnoredActor(Pawn);
 		for (const FLandmark& Landmark : Run.Shots[Run.Index].Landmarks)
 		{
+			AActor* LandmarkActor = FindSubjectActor(Landmark.Subject);
+			FVector Target = Landmark.Location;
+			FCollisionQueryParams Params(SCENE_QUERY_STAT(ReviewLandmark), false);
+			Params.AddIgnoredActor(Pawn);
+			if (LandmarkActor)
+			{
+				FVector Center;
+				FVector Extent;
+				LandmarkActor->GetActorBounds(false, Center, Extent);
+				const FVector TowardCamera = (CameraLocation - Center).GetSafeNormal();
+				Target = Center + FVector(TowardCamera.X * Extent.X, TowardCamera.Y * Extent.Y, TowardCamera.Z * Extent.Z);
+				Params.AddIgnoredActor(LandmarkActor);
+			}
+			for (TActorIterator<AActor> ActorIt(World); ActorIt; ++ActorIt)
+			{
+				FVector Center;
+				FVector Extent;
+				ActorIt->GetActorBounds(false, Center, Extent);
+				const FVector Delta = Target - Center;
+				if (FMath::Abs(Delta.X) <= Extent.X + 20.0f && FMath::Abs(Delta.Y) <= Extent.Y + 20.0f && FMath::Abs(Delta.Z) <= Extent.Z + 40.0f)
+				{
+					Params.AddIgnoredActor(*ActorIt);
+				}
+			}
 			FHitResult Hit;
-			const bool bHit = World->LineTraceSingleByChannel(Hit, CameraLocation, Landmark.Location, ECC_Visibility, Params);
-			const float TargetDistance = FVector::Dist(CameraLocation, Landmark.Location);
-			const bool bUnblocked = !bHit || (TargetDistance - Hit.Distance) <= 150.0f;
+			const bool bHit = World->LineTraceSingleByChannel(Hit, CameraLocation, Target, ECC_Visibility, Params);
+			const float TargetDistance = FVector::Dist(CameraLocation, Target);
+			const bool bUnblocked = !bHit || (TargetDistance - Hit.Distance) <= 80.0f;
 			TSharedRef<FJsonObject> Result = MakeShared<FJsonObject>();
 			Result->SetStringField(TEXT("id"), Landmark.Id);
-			Result->SetBoolField(TEXT("in_frustum"), PointInFrustum(Landmark.Location));
+			Result->SetBoolField(TEXT("in_frustum"), PointInFrustum(Target));
 			Result->SetBoolField(TEXT("trace_unblocked"), bUnblocked);
 			Run.LandmarkResults.Add(MakeShared<FJsonValueObject>(Result));
 		}
@@ -928,11 +1131,162 @@ namespace DCReviewCapture
 		return Checks;
 	}
 
+	void PlotGlyph(TArray<FColor>& Pixels, int32 Width, int32 Height, int32 X, int32 Y, TCHAR Char, const FColor& Ink)
+	{
+		static const TCHAR* Alphabet = TEXT("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+		static const uint8 Rows[43][7] = {
+			{0x0E,0x11,0x11,0x1F,0x11,0x11,0x11}, {0x1E,0x11,0x11,0x1E,0x11,0x11,0x1E}, {0x0E,0x11,0x10,0x10,0x10,0x11,0x0E},
+			{0x1E,0x11,0x11,0x11,0x11,0x11,0x1E}, {0x1F,0x10,0x10,0x1E,0x10,0x10,0x1F}, {0x1F,0x10,0x10,0x1E,0x10,0x10,0x10},
+			{0x0E,0x11,0x10,0x17,0x11,0x11,0x0E}, {0x11,0x11,0x11,0x1F,0x11,0x11,0x11}, {0x0E,0x04,0x04,0x04,0x04,0x04,0x0E},
+			{0x01,0x01,0x01,0x01,0x11,0x11,0x0E}, {0x11,0x12,0x14,0x18,0x14,0x12,0x11}, {0x10,0x10,0x10,0x10,0x10,0x10,0x1F},
+			{0x11,0x1B,0x15,0x15,0x11,0x11,0x11}, {0x11,0x19,0x15,0x13,0x11,0x11,0x11}, {0x0E,0x11,0x11,0x11,0x11,0x11,0x0E},
+			{0x1E,0x11,0x11,0x1E,0x10,0x10,0x10}, {0x0E,0x11,0x11,0x11,0x15,0x12,0x0D}, {0x1E,0x11,0x11,0x1E,0x14,0x12,0x11},
+			{0x0E,0x11,0x10,0x0E,0x01,0x11,0x0E}, {0x1F,0x04,0x04,0x04,0x04,0x04,0x04}, {0x11,0x11,0x11,0x11,0x11,0x11,0x0E},
+			{0x11,0x11,0x11,0x11,0x11,0x0A,0x04}, {0x11,0x11,0x11,0x15,0x15,0x1B,0x11}, {0x11,0x11,0x0A,0x04,0x0A,0x11,0x11},
+			{0x11,0x11,0x0A,0x04,0x04,0x04,0x04}, {0x1F,0x01,0x02,0x04,0x08,0x10,0x1F},
+			{0x0E,0x11,0x13,0x15,0x19,0x11,0x0E}, {0x04,0x0C,0x04,0x04,0x04,0x04,0x0E}, {0x0E,0x11,0x01,0x06,0x08,0x10,0x1F},
+			{0x1F,0x01,0x02,0x06,0x01,0x11,0x0E}, {0x02,0x06,0x0A,0x12,0x1F,0x02,0x02}, {0x1F,0x10,0x1E,0x01,0x01,0x11,0x0E},
+			{0x06,0x08,0x10,0x1E,0x11,0x11,0x0E}, {0x1F,0x01,0x02,0x04,0x08,0x08,0x08}, {0x0E,0x11,0x11,0x0E,0x11,0x11,0x0E},
+			{0x0E,0x11,0x11,0x0F,0x01,0x02,0x0C}, {0x00,0x00,0x00,0x00,0x00,0x00,0x1F}
+		};
+		const int32 Index = FCString::Strchr(Alphabet, FChar::ToUpper(Char)) ? static_cast<int32>(FCString::Strchr(Alphabet, FChar::ToUpper(Char)) - Alphabet) : INDEX_NONE;
+		if (Index < 0 || Index >= 43)
+		{
+			return;
+		}
+		for (int32 Row = 0; Row < 7; ++Row)
+		{
+			for (int32 Col = 0; Col < 5; ++Col)
+			{
+				if ((Rows[Index][Row] & (1 << (4 - Col))) == 0)
+				{
+					continue;
+				}
+				const int32 PixelX = X + Col;
+				const int32 PixelY = Y + Row;
+				if (PixelX >= 0 && PixelY >= 0 && PixelX < Width && PixelY < Height)
+				{
+					Pixels[PixelY * Width + PixelX] = Ink;
+				}
+			}
+		}
+	}
+
+	void DrawLabel(TArray<FColor>& Pixels, int32 Width, int32 Height, int32 X, int32 Y, const FString& Text)
+	{
+		int32 Cursor = X;
+		for (const TCHAR Char : Text)
+		{
+			PlotGlyph(Pixels, Width, Height, Cursor, Y, Char, FColor::White);
+			Cursor += 6;
+		}
+	}
+
+	bool LoadPng(const FString& Path, TArray<FColor>& OutPixels, int32& OutWidth, int32& OutHeight)
+	{
+		TArray<uint8> Compressed;
+		if (!FFileHelper::LoadFileToArray(Compressed, *Path))
+		{
+			return false;
+		}
+		IImageWrapperModule& Module = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+		const TSharedPtr<IImageWrapper> Wrapper = Module.CreateImageWrapper(EImageFormat::PNG);
+		if (!Wrapper.IsValid() || !Wrapper->SetCompressed(Compressed.GetData(), Compressed.Num()))
+		{
+			return false;
+		}
+		TArray<uint8> Raw;
+		if (!Wrapper->GetRaw(ERGBFormat::BGRA, 8, Raw))
+		{
+			return false;
+		}
+		OutWidth = Wrapper->GetWidth();
+		OutHeight = Wrapper->GetHeight();
+		OutPixels.SetNum(OutWidth * OutHeight);
+		FMemory::Memcpy(OutPixels.GetData(), Raw.GetData(), Raw.Num());
+		return OutWidth > 0 && OutHeight > 0;
+	}
+
+	void BlitThumb(TArray<FColor>& Sheet, int32 SheetWidth, const TArray<FColor>& Source, int32 SourceWidth, int32 SourceHeight, int32 DestX, int32 DestY, int32 ThumbWidth, int32 ThumbHeight)
+	{
+		for (int32 Y = 0; Y < ThumbHeight; ++Y)
+		{
+			const int32 SourceY0 = Y * SourceHeight / ThumbHeight;
+			const int32 SourceY1 = FMath::Max(SourceY0 + 1, (Y + 1) * SourceHeight / ThumbHeight);
+			for (int32 X = 0; X < ThumbWidth; ++X)
+			{
+				const int32 SourceX0 = X * SourceWidth / ThumbWidth;
+				const int32 SourceX1 = FMath::Max(SourceX0 + 1, (X + 1) * SourceWidth / ThumbWidth);
+				int32 Red = 0;
+				int32 Green = 0;
+				int32 Blue = 0;
+				int32 Count = 0;
+				for (int32 SourceY = SourceY0; SourceY < SourceY1; ++SourceY)
+				{
+					for (int32 SourceX = SourceX0; SourceX < SourceX1; ++SourceX)
+					{
+						const FColor& Pixel = Source[SourceY * SourceWidth + SourceX];
+						Red += Pixel.R;
+						Green += Pixel.G;
+						Blue += Pixel.B;
+						++Count;
+					}
+				}
+				if (Count > 0)
+				{
+					Sheet[(DestY + Y) * SheetWidth + DestX + X] = FColor(Red / Count, Green / Count, Blue / Count);
+				}
+			}
+		}
+	}
+
+	void WriteContactSheet(const FRun& Run)
+	{
+		const int32 Columns = 4;
+		const int32 ThumbWidth = 320;
+		const int32 ThumbHeight = 180;
+		const int32 LabelHeight = 14;
+		const int32 Pad = 8;
+		const int32 CellHeight = ThumbHeight + LabelHeight;
+		const int32 Rows = FMath::DivideAndRoundUp(Run.Shots.Num(), Columns);
+		const int32 SheetWidth = Columns * ThumbWidth + (Columns + 1) * Pad;
+		const int32 SheetHeight = Rows * CellHeight + (Rows + 1) * Pad;
+		TArray<FColor> Sheet;
+		Sheet.Init(FColor(18, 18, 18), SheetWidth * SheetHeight);
+
+		for (int32 Index = 0; Index < Run.Shots.Num(); ++Index)
+		{
+			const int32 Column = Index % Columns;
+			const int32 Row = Index / Columns;
+			const int32 DestX = Pad + Column * (ThumbWidth + Pad);
+			const int32 DestY = Pad + Row * (CellHeight + Pad);
+			TArray<FColor> Pixels;
+			int32 SourceWidth = 0;
+			int32 SourceHeight = 0;
+			if (LoadPng(Run.OutDir / (Run.Shots[Index].Id + TEXT(".png")), Pixels, SourceWidth, SourceHeight))
+			{
+				BlitThumb(Sheet, SheetWidth, Pixels, SourceWidth, SourceHeight, DestX, DestY, ThumbWidth, ThumbHeight);
+			}
+			DrawLabel(Sheet, SheetWidth, SheetHeight, DestX, DestY + ThumbHeight + 3, Run.Shots[Index].Id);
+		}
+
+		IImageWrapperModule& Module = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+		const TSharedPtr<IImageWrapper> Wrapper = Module.CreateImageWrapper(EImageFormat::PNG);
+		if (!Wrapper.IsValid())
+		{
+			return;
+		}
+		Wrapper->SetRaw(Sheet.GetData(), Sheet.Num() * sizeof(FColor), SheetWidth, SheetHeight, ERGBFormat::BGRA, 8);
+		const TArray64<uint8> Compressed = Wrapper->GetCompressed(100);
+		FFileHelper::SaveArrayToFile(Compressed, *(Run.OutDir / TEXT("contact_sheet.png")));
+	}
+
 	void WriteManifest(const FRun& Run)
 	{
 		TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
 		Root->SetStringField(TEXT("map"), MapPath);
 		Root->SetStringField(TEXT("render"), TEXT("Tools/PlayTest.bat cvars, scalability 0, 1280x720"));
+		Root->SetStringField(TEXT("contact_sheet"), TEXT("contact_sheet.png"));
 		Root->SetArrayField(TEXT("viewpoints"), Run.ViewpointResults);
 		TSharedRef<FJsonObject> Route = MakeShared<FJsonObject>();
 		Route->SetStringField(TEXT("expectation"), Run.RouteExpectation);
@@ -945,7 +1299,7 @@ namespace DCReviewCapture
 			TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Text);
 		FJsonSerializer::Serialize(Root, Writer);
 		IFileManager::Get().MakeDirectory(*Run.OutDir, true);
-		FFileHelper::SaveStringToFile(Text, *(Run.OutDir / TEXT("manifest.json")));
+		FFileHelper::SaveStringToFile(Text, *(Run.OutDir / TEXT("manifest.json")), FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 	}
 
 	TSharedRef<FJsonObject> ShotRecord(const FShot& Shot, const FString& ImageFile, const FVector& CameraLocation, const FRotator& CameraRotation, bool bCaptured, const FString& Error)
@@ -1153,6 +1507,7 @@ namespace DCReviewCapture
 			{
 				Camera->SetWorldLocationAndRotation(Eye, Rotation);
 			}
+			ClearTransientHud(!bRoute && Run.Shots[Run.Index].Id == TEXT("hud_inspect"));
 			const FString ImagePath = Run.OutDir / ImageName;
 			FScreenshotRequest::RequestScreenshot(ImagePath, true, false, false);
 			Run.PhaseStart = Now;
@@ -1259,6 +1614,7 @@ namespace DCReviewCapture
 
 		case FRun::EPhase::Finish:
 			DetachViewpointCapture(Run);
+			WriteContactSheet(Run);
 			WriteManifest(Run);
 			RestoreSlot();
 			if (!Run.bFailed)

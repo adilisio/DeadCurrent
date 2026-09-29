@@ -22,7 +22,8 @@ public class DeadCurrent : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"AssetRegistry",
-			"Json"
+			"Json",
+			"ImageWrapper"
 		});
 
 		// Module root is public so systems include each other as "Folder/File.h".

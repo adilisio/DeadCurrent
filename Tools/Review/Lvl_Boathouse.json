@@ -24,13 +24,16 @@
       "expectation": "Looking west along the path, the flickering mast lamp above the boathouse roof pulls the eye toward the Survey Launch.",
       "source": "Design/game_design.md Wrecked Survey Launch; PresentationPassPlan.txt §9",
       "landmarks": [
-        {"id": "mast_lamp", "location": [-1418.2, -845.5, 1264.3]}
+        {"id": "mast_lamp", "subject": "MastLamp", "location": [-1418.2, -845.5, 1264.3]}
       ]
     },
     {
       "id": "camp_live",
       "location": [2100, -500, 180],
       "rotation": [0, 20, 0],
+      "subject": "Relay rig",
+      "view_offset": [0, -110, 8],
+      "view_offset_space": "local",
       "expectation": "The scavenger camp reads as rusted industrial scrap around a relay that is still live, and the relay housing reads first.",
       "source": "Design/game_design.md Shore Watch; LongTermPlan.txt §18"
     },
@@ -38,6 +41,9 @@
       "id": "camp_cold",
       "location": [2100, -500, 180],
       "rotation": [0, 20, 0],
+      "subject": "Relay rig",
+      "view_offset": [0, -110, 8],
+      "view_offset_space": "local",
       "setup": {"quest": "shore.watch", "stage": "done_coil"},
       "expectation": "The same camp after the coil route is complete: the relay reads cold and empty, and the scrap around it is unchanged.",
       "source": "Design/game_design.md Shore Watch coil route; PresentationPassPlan.txt §9 step 3"
@@ -46,6 +52,9 @@
       "id": "lookout",
       "location": [2900, 1100, 180],
       "rotation": [0, 40, 0],
+      "subject": "boat.mara",
+      "view_offset": [420, 0, 30],
+      "view_offset_space": "local",
       "expectation": "Mara's lookout reads as one person watching the path from behind the ridge, out of the scavenger's sight, and Mara reads first.",
       "source": "PresentationPassPlan.txt §9 step 3; Design/game_design.md Shore Watch"
     },
@@ -53,10 +62,13 @@
       "id": "wreck",
       "location": [-900, -200, 180],
       "rotation": [0, 180, 0],
+      "subjects": ["Hull", "Bow", "Wheelhouse_Roof", "Mast", "NameBoard", "Transom"],
+      "view_offset": [1020, 820, -70],
+      "view_offset_space": "world",
       "expectation": "The Survey Launch reads as a wrecked boat on the stones, oxidized hull first, before the live-water glow.",
       "source": "PresentationPassPlan.txt §9 step 5; LongTermPlan.txt §18",
       "landmarks": [
-        {"id": "live_water", "location": [-1500, -1390, 8]}
+        {"id": "live_water", "subject": "LiveWater", "location": [-1500, -1390, 8]}
       ]
     },
     {
@@ -66,7 +78,7 @@
       "expectation": "The water reads as dark freshwater with an electrical shimmer and a ring of dead fish, and the glow reads as the danger.",
       "source": "PresentationPassPlan.txt §4; Design/game_design.md Wrecked Survey Launch",
       "landmarks": [
-        {"id": "live_water", "location": [-1500, -1390, 8]}
+        {"id": "live_water", "subject": "LiveWater", "location": [-1500, -1390, 8]}
       ]
     },
     {
@@ -77,15 +89,16 @@
       "expectation": "The same view after the leads are pulled: the glow and the sparks are gone, and the water and the dead-fish ring are still there.",
       "source": "PresentationPassPlan.txt §4 and §9 step 5; Design/game_design.md Wrecked Survey Launch",
       "landmarks": [
-        {"id": "live_water", "location": [-1500, -1390, 8]}
+        {"id": "live_water", "subject": "LiveWater", "location": [-1500, -1390, 8]}
       ]
     },
     {
       "id": "clue_breaker",
       "location": [-1567, -820, 250],
       "rotation": [0, 180, 0],
-      "focus": "Breaker panel",
-      "focus_offset": [80, 0, 15],
+      "subject": "Breaker panel",
+      "view_offset": [110, 0, 15],
+      "view_offset_space": "local",
       "expectation": "The breaker panel reads as a gutted marine panel, with careful cuts and taped ends, not a grey box.",
       "source": "PresentationPassPlan.txt §6 breaker_panel; Design/art_pipeline.md art direction"
     },
@@ -93,8 +106,9 @@
       "id": "clue_battery",
       "location": [-1525, -1060, 170],
       "rotation": [0, 200, 0],
-      "focus": "Battery bank",
-      "focus_offset": [80, 40, 45],
+      "subject": "Battery bank",
+      "view_offset": [120, 40, 60],
+      "view_offset_space": "local",
       "expectation": "The battery bank reads as old marine cells in a split box, with the leads running toward the water.",
       "source": "PresentationPassPlan.txt §6 battery_bank; Design/game_design.md Wrecked Survey Launch"
     },
@@ -102,8 +116,9 @@
       "id": "clue_sounder",
       "location": [-1458, -680, 230],
       "rotation": [0, 180, 0],
-      "focus": "Depth sounder",
-      "focus_offset": [70, -20, 20],
+      "subject": "Depth sounder",
+      "view_offset": [90, -40, 25],
+      "view_offset_space": "local",
       "expectation": "The depth sounder reads as a boat instrument with a paper roll, not a grey box.",
       "source": "PresentationPassPlan.txt §6 depth_sounder; Design/art_pipeline.md art direction"
     },
@@ -111,8 +126,9 @@
       "id": "clue_name_board",
       "location": [-1500, -38, 103],
       "rotation": [-10, -90, 0],
-      "focus": "Name board",
-      "focus_offset": [0, 140, 30],
+      "subject": "Name board",
+      "view_offset": [0, 140, 20],
+      "view_offset_space": "local",
       "expectation": "The name board reads as a flaked painted board, peeling white and teal, with the letters T_RN still readable.",
       "source": "PresentationPassPlan.txt §6 name_board_tern; Design/game_design.md Wrecked Survey Launch"
     },
@@ -120,8 +136,9 @@
       "id": "clue_chalk",
       "location": [-950, -850, 55],
       "rotation": [0, -140, 0],
-      "focus": "Chalk warning",
-      "focus_offset": [90, 80, 25],
+      "subject": "Chalk warning",
+      "view_offset": [130, 10, 20],
+      "view_offset_space": "local",
       "expectation": "The chalk warning reads as a plank in the stones with a hurried warning about the water, readable before anyone steps in.",
       "source": "Design/game_design.md Wrecked Survey Launch; PresentationPassPlan.txt §9 step 5"
     },

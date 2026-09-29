@@ -98,6 +98,20 @@ FText ADCHUD::GetActiveMessage() const
 	return GetWorld() && GetWorld()->GetTimeSeconds() <= MessageExpireTime ? CurrentMessage : FText::GetEmpty();
 }
 
+void ADCHUD::ClearTransient()
+{
+	CurrentMessage = FText::GetEmpty();
+	MessageExpireTime = 0.0;
+	ClearBanner();
+}
+
+void ADCHUD::ClearBanner()
+{
+	BannerTitle = FText::GetEmpty();
+	BannerSubtitle = FText::GetEmpty();
+	BannerExpireTime = 0.0;
+}
+
 void ADCHUD::DrawCrosshair()
 {
 	const float Half = CrosshairSize * 0.5f;

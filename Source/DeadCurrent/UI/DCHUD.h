@@ -37,6 +37,12 @@ public:
 	/** Message on screen now, or empty. */
 	FText GetActiveMessage() const;
 
+	/** Drops the timed message and the discovery banner. Crosshair, health, and prompts stay. */
+	void ClearTransient();
+
+	/** Drops the discovery banner and leaves a timed inspect message on screen. */
+	void ClearBanner();
+
 	UFUNCTION(BlueprintCallable, Category="HUD")
 	void ToggleInventory() { bShowInventory = !bShowInventory; }
 
