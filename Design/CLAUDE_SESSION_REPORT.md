@@ -1,224 +1,190 @@
 # Claude Development Session Report
 
-Session date: 2026-09-28. Milestone: Phase 2, Micro RPG.
+Session date: 2026-09-28. Milestone: Phase 3, Exploration Loop. Work was split between Opus 5.5 (planning and implementation, EL-00..EL-08) and Sonnet 5.5 (visual check, docs, packaging, this report).
 
 ## Executive Summary
 
-The Micro RPG milestone is implemented and passes automated tests. It still needs a human playtest.
+The Exploration Loop is implemented, documented and passes all 30 automated tests. It has not been played by a human.
 
-The repo already had a rough Shore Watch quest from an earlier Cursor-assisted commit (63da586). Its rules lived on the player's quest component, `HostileDead` scanned every scavenger, and the scavenger called `NotifyHostileDied` on the player directly. I kept the quest id and premise and rebuilt the plumbing underneath:
+Phase 3 adds one small, optional, unmarked point of interest to `Lvl_Boathouse`: **the Wrecked Survey Launch**, on a new stretch of shore behind the boathouse. It is built from four small reusable pieces (location discovery, loot containers, inspectable verbs, switchable hazards) plus a flickering landmark light, and it uses the existing rule language, world state and save system. Shore Watch's content and `ADCPlayerCharacter` are unchanged.
 
-- a shared condition/consequence language used by dialogue, quests and inspectables
-- a world-state subsystem for world flags
-- data-driven quest stages with condition-driven transitions and several outcome stages
-- F9 now reopens the map before applying the save
+The loop it proves: *notice a lamp on a mast → walk off the route → get a one-time discovery banner → read the clues → work out what happened → avoid or disable the live water → loot the obvious locker and the hidden kit → the world remembers, through save and load.*
 
-Shore Watch is now a small but complete RPG loop. You can resolve it two ways (kill the scavenger, or quietly take the relay coil). Each way gets different rewards, different world flags, a different ending for the scavenger, and different dialogue and world text afterwards. All of it survives save/load.
+What automation cannot confirm is whether it is worth walking there: pacing, whether the landmark pulls you, whether the clues read as a story. That is what the checklist below is for.
 
-Automated coverage goes all the way to the real `Lvl_Boathouse` in game context: placed actors, real interactions, and real F9 map reloads at the pre-quest, ready-to-turn-in and completed stages. What automation cannot confirm is how it feels to play: aiming at things with E, sneaking past the scavenger, reading the text on screen.
+This session I also rendered the new area for the first time and found a real defect: the prototype glow material (`M_SimpleGlow`) multiplies by particle colour, so on static meshes the mast lamp, the sparks and the live water rendered **black**. I replaced it with our own unlit glow material. From rendered screenshots the amber lamp now shows above the boathouse roof from the path and the live water reads as a blue slab.
 
 ## Commits Made
 
 | SHA | Subject |
 | --- | --- |
-| 77ee8ed | MR-01..MR-04: Shared rules, world state, data-driven quest runtime. |
-| 288d404 | MR-05/MR-06: Shore Watch quest with combat and coil routes. |
-| 46ae257 | MR-08: Content validation and end-to-end Shore Watch tests. |
-| c4ec3db | MR-07: In-map save/load tests for both Shore Watch routes. |
-| 38bff43 | MR-09: Quest name on the HUD objective and a quest journal. |
-| 41765a2 | Register items, quests and dialogue with the Asset Manager for cooking. |
-| 7102d46 | MR-07: In-map test that a first-playable save still loads. |
-| 975a34d | Document the Micro RPG architecture, Shore Watch, and provisional canon. |
-| 091bdbf | Re-read each quest's current stage while evaluating transitions. |
-| 7638d44 | Don't holster or draw the pistol when 1 picks a dialogue reply. |
+| b856648 | EL-00: Add the Exploration Loop plan. |
+| f871bf1 | EL-01/EL-02: Reusable location discovery and loot containers. |
+| 5954355 | EL-03/EL-05: Inspectable verbs, world-conditioned hazards, flicker light. |
+| ea05ad9 | EL-04/EL-06/EL-08: Wrecked Survey Launch POI, Mara's line, map tests. |
+| 6b95ac7 | Add a hand-off note for finishing the Exploration Loop session. |
+| eb00fc5 | Fix glow materials: own unlit glow instead of the particle-only M_SimpleGlow. |
+| 3bd771b | Document the Exploration Loop: architecture, design, and provisional lore. |
 | (this) | Session report. |
 
 Nothing was pushed. The untracked `Content/Variant_Shooter/` and `Tools/EditorScripts/inspect_assets.py` were already there, and I left them alone.
 
-The first commit bundles MR-01 to MR-04 and the save plumbing. The old quest component held the rules, so the pieces couldn't be split into separately compiling commits. The Shore Watch assets were regenerated in the next commit (288d404).
-
 ## Systems Added or Changed
 
-**Shared rules (MR-01, MR-02).** Files: `Core/DCGameplayTypes.h`, `Core/DCGameplayRules.h/.cpp`.
-- Conditions: `HasItem`, `QuestNotStarted`, `QuestActive`, `QuestComplete`, `QuestStage`, `WorldFlag`, `ActorDead` (by persistent id). Each has `bNegate`; a list passes only if every condition passes.
-- Consequences: `GiveItem`, `RemoveItem`, `StartQuest` (optional stage), `SetQuestStage`, `SetWorldFlag`, `ClearWorldFlag`.
-- Everything is evaluated in one place against an `FDCRuleContext` (instigator, inventory, quest log, world state, persistent registry). Missing data fails safely.
-- `ValidateReferences` reports unknown quests, stages and items.
-- Blueprint entry points: `CheckConditionsFor` and `ApplyConsequencesFor`.
-- Removed: `HostileDead` (replaced by `ActorDead`) and `CompleteQuest` (use `SetQuestStage` with an outcome stage).
-- `technical_architecture.md` documents how to add later types (skills, reputation, and so on).
+**Location discovery** (`World/DCLocationVolume`, `World/DCWorldStateSubsystem`).
+- The world state holds `DiscoveredLocations` beside the flags. `DiscoverLocation(Id)` is true only the first time and fires `OnLocationDiscovered` and `OnChanged`. `IsLocationDiscovered`, and a silent `ReplaceDiscoveredLocations` for loading.
+- New condition `LocationDiscovered(Id)` in the shared rule language.
+- The volume is a box with `LocationId` and `DisplayName`. It **polls player positions at 4 Hz instead of using collision**: the firearm traces WorldStatic/WorldDynamic/Pawn, so a trigger box would stop bullets, and overlap events fire during the load teleport. It stops ticking once discovered.
+- HUD: a `LOCATION DISCOVERED / <name>` banner. The Tab journal lists PLACES.
 
-**World state.** `World/DCWorldStateSubsystem` is a world subsystem that owns the world flags; they used to live on the player's quest component. Its `OnChanged` signal fires when a flag changes and when any health component dies. That is how a death advances a quest without the dying actor knowing quests exist.
+**Save format 3.** Adds `UDCSaveGame::DiscoveredLocations`. World flags and discoveries are now applied **first** in `ApplyPendingLoad`, before world actors and the player, so nothing re-announces on load. Older saves load with no discoveries.
 
-**Quest runtime (MR-03).**
-- `UDCQuestDefinition` now has `StartStage`, and each stage has `ObjectiveText`, `bCompletesQuest` (several outcome stages allowed), `OnEnter` consequences, and an ordered list of `Transitions {Conditions, NextStage}`.
-- `UDCQuestComponent` is now only the quest log (id → stage, in start order). It re-checks transitions whenever the inventory, world state or a quest stage changes, and chains moves safely with a loop cap.
-- Editor data validation for quests.
+**Loot container** (`World/DCLootContainer`). One generic class: a mesh, a `UDCInventoryComponent` (authored `Stacks` are the starting contents) and a persistent id. **E** takes the next stack. Prompt: `Take 9mm Rounds (12) from Survey locker`; the message lists what is left; when empty, `Search X (empty)`. Persistence reuses the flat world-inventory arrays, with no container-specific save code. A container missing from a save (added later) keeps its contents.
 
-**Dialogue (MR-04).** Kept the existing architecture. Entries, choice visibility and choice consequences now go through the shared rules. Added graph validation: missing nodes, duplicate ids, and nodes where every choice could be hidden, which would trap the player.
+**Inspectable verbs.** `ADCInspectableActor::Action` (default "Inspect") and a per-variant `Action` override ("Read", "Pull the leads"). Also `GetDisplayName()`.
 
-**Inspectables.** `ADCInspectableActor::Variants` holds `{Conditions, Description, Consequences}`; the first variant whose conditions pass is used. This replaces the one-off `WorldFlag`/`FlagDescription` fields, and it is how the relay rig gives a clue.
+**Hazard conditions.** `ADCDamageVolume::ActiveConditions` are world conditions, evaluated against the volume itself, so item and quest conditions never pass. While inactive: no damage, mesh hidden. It re-checks every tick, because save restores replace flags silently.
 
-**Content loading and cooking.**
-- `Core/DCContentSubsystem` loads every item and quest definition by folder. It replaces the hard-coded preload list in the save subsystem.
-- Items, quests and dialogue are registered as Asset Manager primary assets (`Config/DefaultGame.ini`), so packaged builds will cook them.
+**Flicker light** (`World/DCFlickerLight`). A cosmetic point light plus a glow cube whose material `Color` is scaled by a random flicker with dropouts, and optional `ActiveConditions`.
 
-**Save (MR-07).**
-- Format version 2 adds `SaveVersion` and `MapPackage`; world flags now come from the world-state subsystem.
-- F9 reopens the saved map, then `ADCGameMode::StartPlay` applies the save. Loading mid-session now behaves exactly like loading after a relaunch. It also removes a soft-lock: before, loading a save from before you took the coil kept the pickup destroyed and lost the coil for good.
-- Saving while dead is refused. Loading while dead or mid-dialogue is clean.
-- **Bug fixed:** a scavenger restored as dead was ragdolled, but its health component still said alive. After a relaunch + F9 his corpse couldn't be looted and "is he dead" checks failed.
-- Legacy saves still load. A saved quest stage that no longer exists is dropped with a warning.
-- The slot name can be overridden so tests never touch your save.
+**Glow material (this session).** `M_DC_Glow` (created by `build_boathouse.py`): unlit, translucent, emissive = `Color.rgb`, opacity = `Color.a`. The `MI_DC_*` instances (`GlowAmber`, `GlowSpark`, `LiveWater`, plus the flat hull and rust colours) are generated by the same script.
 
-**HUD (MR-09).** The top line reads `Shore Watch: <objective>`. The Tab panel has a new QUESTS journal showing each quest's status and its objective, or the outcome once it's done. Verified from a rendered screenshot.
-
-**Player character.** Only two changes: a clearer quest message, and key 1 no longer holsters the pistol while you're talking (it was also dialogue reply 1).
-
-**Tools.**
-- `Tools/RunTests.bat`: build optional; runs the editor suite, then the in-map suite.
-- `Tools/RebuildContent.bat`: regenerates items → quests → dialogue → gym → boathouse.
+**Unchanged:** `ADCPlayerCharacter`, and all Shore Watch writing, rewards, routes and outcomes.
 
 ## Quest / Gameplay Added
 
-**Shore Watch** (`shore.watch`). The scavenger has wired a dead Great Lakes Maritime Authority relay to a truck battery at his camp, and it has started transmitting. Mara wants it quiet.
+There is no new quest (out of scope by plan). The POI is optional and unmarked.
 
-- **Route A (combat):** kill the scavenger. The quest moves to "tell Mara". She gives you 24× 9mm, sets `shore.path_cleared`, and the relay goes cold.
-- **Route B (coil):** take the relay coil from his camp without killing him. The quest moves to "bring Mara the coil". She takes the coil, gives you 2 field dressings, and sets `shore.relay_recovered`. **The scavenger stays alive and hostile.**
-- Your reply when accepting doesn't lock the route; what you do in the world decides it. If both happen before the quest updates, the kill wins.
-- **Pre-quest cases:**
-  - scavenger already dead when you meet Mara → "That you?"
-  - coil already in your pocket → "This coil? I already pulled it."
-- **Clue:** inspecting the live relay sets `shore.relay_inspected` and unlocks "I looked at his relay. It's saying words." with Mara (asked once).
-- **Afterwards:**
-  - Mara's greeting depends on the outcome.
-  - On route A she'll still take the coil if you bring it later.
-  - On route B she remarks once if you go back and kill him.
-  - The lookout crate by her and the relay rig read differently depending on what happened.
+**The Wrecked Survey Launch.** Coordinates in cm; +X is out the boathouse door, the lake is -Y.
+
+- **Notice:** a new west window in the boathouse back wall (behind the spawn, south of the faded notice). Inspect it ("Look out") for a mention of a mast and a light. Outside, look back west from the path: a leaning mast (about 12.6 m) with a flickering amber lamp above the roofline.
+- **Route:** out the door, back around the south (lake) side of the boathouse, west about 15 m. Discovery fires about 7 m past the back wall (X about -700).
+- **The wreck:** bow on the beach near (-1500, -300), stern in the water near (-1500, -1260). Board by the plank on the east side near the bow (foot about (-1000, -510)). The wheelhouse fore door is on the east side.
+- **Clues** (inspectable names): Name board (driven ashore on purpose, "T_RN"); Life jackets (straps cut, they walked inland); Depth sounder (regular spikes, "AGAIN"); Survey log (verb **Read**, sets `wreck.log_read`); Breaker panel (text changes after the log); Battery bank (first Inspect sets `wreck.battery_seen`, then the verb becomes **Pull the leads**, which sets `wreck.power_cut`); Emergency beacon (dead for decades, hums like the scavenger's relay if `shore.relay_inspected`, and notes the lamp is still flickering after the power is cut); Dead fish; the west window (changes after discovery and after the power is cut).
+- **Hazard:** live water around the stern, 20 dmg/s (about 5 s to die from full health), a one-time "The water is live." message, a ring of dead fish at its edge and two blue spark lights. All off after Pull the leads, and that persists.
+- **Loot:** the **Survey locker** (`boat.wreck_locker`, wheelhouse west/aft corner): 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing. The **tender** (`boat.wreck_tender`), about 4 m off the stern at (-1500, -1650), inside the live water: 2× Field Dressing, 18× 9mm. The log says "Kit's in the tender, tied off the stern."
+- **Mara:** after `wreck.log_read`, her greeting/who/place/in-progress/epilogue nodes (never turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." Once. She calls the boat the *Tern* and says everybody decides it was a storm. The player can ask "Was it a storm?" (sets `wreck.mara_told`); she replies "It's always a storm. Stay out of the water round her stern. It bites."
+- **World-state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`.
+
+All new lore is marked PROVISIONAL in `world_bible.md`. Nothing explains the Current.
 
 ## Automated Tests
 
-`Tools\RunTests.bat` runs everything: **24 tests, all passing** on the final build (21 editor-context and 3 in-map). The pre-existing tests still pass.
+`Tools\RunTests.bat` on the final build: **30 tests, all passing** (25 editor-context, 5 in-map). Up from 24 at the start of the phase.
 
 | Test | Status |
 | --- | --- |
-| DeadCurrent.Rules.Conditions / Consequences / Validation (new) | Pass |
-| DeadCurrent.Quest.Stages / Branches / Persistence / CrossQuest (rewritten + new) | Pass |
-| DeadCurrent.Dialogue.Branching (existing), Conditions (rewritten), Consequences (new) | Pass |
-| DeadCurrent.Content.Validate (new): every quest/dialogue asset, references, Asset Manager registration | Pass |
-| DeadCurrent.Content.ShoreWatch.CombatRoute / CoilRoute / Shortcuts (new): shipped assets, save/restore at each stage | Pass |
-| DeadCurrent.World.InspectVariants (new) | Pass |
-| DeadCurrent.Map.Boathouse.CombatRoute / CoilRoute / LegacySave (new, game context, real map, real F9) | Pass |
-| DeadCurrent.Combat.*, Inventory.Stacking, Save.* (existing) | Pass |
+| DeadCurrent.Exploration.Discovery / Container / WorldConditions (new) | Pass |
+| DeadCurrent.Content.Exploration.MaraWreckLine (new): shipped dialogue across Shore Watch states, save/reload | Pass |
+| DeadCurrent.Rules.Conditions (extended: LocationDiscovered), DeadCurrent.World.InspectVariants (extended: verbs) | Pass |
+| DeadCurrent.Map.Boathouse.SurveyLaunch (new, real map): walk-in discovery, real hazard damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce | Pass |
+| DeadCurrent.Map.Boathouse.SurveyLaunchSaves (new): the POI combined with Shore Watch accepted or complete, loading back and forth | Pass |
+| DeadCurrent.Map.Boathouse.LegacySave (extended): a pre-Phase-3 save leaves the POI untouched | Pass |
+| All Phase 1 and 2 tests (Rules, Quest, Dialogue, Content.Validate, Content.ShoreWatch, Map CoilRoute/CombatRoute, Combat, Inventory, Save) | Pass |
 
-`Quest.CrossQuest` covers a bug this session caught and fixed: when one quest moved another, the second could take a transition from its old stage.
-
-The coil-route map test was also run once with rendering (DX11); it passed and its HUD screenshot looked correct.
+**Rendered visual check (this session).** A throwaway rendered test (not committed) teleported the player to six viewpoints and took screenshots. Findings: the west window frames the wreck; the mast and lamp rise above the boathouse roof from the path; the wreck reads well from the beach and the discovery banner shows. Before the fix the lamp and water were black. After it, the lamp is a visible amber block and the water a blue translucent slab. This is greybox; it is not a lighting or art pass. Not checked: night or dusk lighting (the map is daylight only), and the flicker animation over time (screenshots are single frames).
 
 ## Build Status
 
-`DeadCurrentEditor Win64 Development` builds with no errors (UE 5.8 `Build.bat`). The last build was on the final commit. No packaged/cooked build was attempted.
+`DeadCurrentEditor Win64 Development` builds with no errors. Last build on the final commit.
+
+## Packaging Smoke Test
+
+**Succeeded.** A Development Win64 build cooked, staged and paked with no project defects:
+
+```
+"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun -project="C:\deadcurrent\DeadCurrent.uproject" -platform=Win64 -clientconfig=Development -build -cook -stage -pak -archive -archivedirectory="C:\deadcurrent\Saved\Packaged" -unattended -utf8output -nop4
+```
+
+- Output: `Saved\Packaged\Windows\DeadCurrent.exe` (about 1 GB; `Saved/` is git-ignored). Log: `Saved\Logs\Package.log`. It took a few minutes. The only compiler note was the MSVC 14.51 "not a preferred version" warning (toolchain, harmless).
+- The cooked manifest contains `Lvl_Boathouse`, `M_DC_Glow` and the `MI_DC_*` instances, `DA_Dialogue_MaraIntro` and the item assets, so the Asset Manager registration from Phase 2 works for the new content too.
+- **Smoke launch:** `DeadCurrent.exe -nullrhi` opened `Lvl_Boathouse`, `[DCCONTENT] loaded 6 item and quest definitions` (5 items + Shore Watch) appeared, and it ran 25 s with no errors.
+- **Not verified:** playing the packaged build with rendering, or F5/F9 in it. That is a natural first check for Anthony: run `Saved\Packaged\Windows\DeadCurrent.exe` and repeat checklist H. Shader compile on first launch may take a while.
 
 ## READY FOR ANTHONY TO TEST
 
 **Setup**
-1. Pull nothing; everything is local on `main`. Close the editor. Rebuild (`Tools\RunTests.bat -build` builds and runs all tests, about 1 minute).
-2. Optional: delete `Saved\SaveGames\DeadCurrent.sav`. Your old first-playable save still loads, but if its Shore Watch stage was `return` or `done`, the quest resets (by design; see Known Issues).
-3. Launch with `Tools\PlayTest.bat`, or open the editor and Play. The map is `/Game/Maps/Lvl_Boathouse` (the default).
+1. Everything is local on `main`; nothing is pushed. Close the editor. Run `Tools\RunTests.bat -build` (builds, then about 2 minutes) to confirm 30/30 on your machine.
+2. Your old save still loads. If it predates Phase 3, the POI simply starts undiscovered. To start clean, delete `Saved\SaveGames\DeadCurrent.sav`.
+3. Launch with `Tools\PlayTest.bat` (or the editor and Play). Map: `/Game/Maps/Lvl_Boathouse`.
 
-**Controls:** WASD move, mouse look, Shift sprint, Ctrl/C crouch, **E** interact/talk, **1–9** dialogue replies, LMB fire, R reload, 1 holster (not while talking), **Tab** inventory + quest journal, **F5** save, **F9** load.
+**Controls:** WASD move, mouse look, Shift sprint, Ctrl/C crouch, **E** interact, **1-9** dialogue replies, LMB fire, R reload, 1 holster, **Tab** inventory + quests + places, **F5** save, **F9** load.
 
-**Route A — combat**
-1. Wake in the boathouse, take the pistol and ammo from the workbench, go out the door.
-2. Follow the shore path; Mara is ahead and to the right, behind the long ridge, by a small shed. Reach her *without* fighting (skirt the ridge on its near end). Talk (E). She opens with: *"Keep your voice down. That scavenger still works this stretch of shore."*
-3. Pick **"You keep looking toward his camp."**. She says: *"Listen. Under the wind. He's wired an old Maritime Authority relay at his camp…"*
-4. Pick **"I'll put him down."**. Expected:
-   - reply: *"Then do it clean…"*
-   - message: `Shore Watch: Silence the relay at the scavenger's camp: kill him, or pull the coil from his rig without a fight.`
-   - the same text appears at the top of the screen
-5. **Save point 1 (quest active):** F5 → "Saved."
-6. Talk to Mara again. Expected: *"Still hear it? Every night it comes in a little clearer."*
-7. Kill the scavenger (four hits). Expected: `Shore Watch: The scavenger is dead. Tell Mara the relay has no one to tend it.`
-8. Loot one stack from the corpse (E once).
-9. **Save point 2 (ready to turn in):** F5.
-10. Quit the game completely. Relaunch and press F9. Expected:
-    - a quick map reload, then "Loaded."
-    - you're where you saved
-    - the scavenger is still a dead ragdoll and still lootable, with the remaining stacks
-    - the objective is still "Tell Mara…"
-11. Talk to Mara: *"It stopped. I heard it stop, right about when the shooting did."* Pick **"He's dead. His relay has no one to tend it."** Expected:
-    - `Quest complete: Shore Watch. You killed the scavenger…`
-    - +24 9mm
-    - *"Twenty-four rounds. He won't need them. You will."*
-12. Talk again. Expected: *"Path's quiet. His relay went cold with him. Don't get comfortable."*
-13. Inspect the lookout crate by Mara. Expected: *"A pencil tally on the lid: one walker, crossed out. Under it: RELAY COLD."*
-14. Tab: the journal shows `Shore Watch (complete)` with the kill summary.
-15. **Save point 3 (complete):** F5, quit, relaunch, F9. Everything in steps 12–14 should be unchanged, with no second reward.
-16. Optional: F9 back to save point 1. Expected: the scavenger is alive again, the pickups you took after that save are back, and the quest is at "Silence the relay".
+**A. First Playable and Shore Watch still work** (regression; the Phase 2 checklist is at `git show 6b95ac7:Design/CLAUDE_SESSION_REPORT.md`; or just play one route)
+1. Wake in the boathouse, take the pistol and ammo, go out, follow the path, reach Mara, take Shore Watch.
+2. Complete either route. Rewards and dialogue should be unchanged.
 
-**Route B — coil (start fresh: delete the save or play a new session)**
-1. Go to Mara. Ask about the camp and pick **"I'll pull the coil out of his rig. No shooting."** Expected reply: *"The coil sits in the relay housing by his pack…"*
-2. Sneak to his camp on the shore path, inside his square patrol (20–27 m out from the boathouse door, a torn pack and the relay rig on the lake side). Time his loop.
-3. Inspect the **Relay rig** (E). Expected: *"…The coil hums against your fingers, and under the hum, almost, words."* Inspect again: *"The relay still hums…"*
-4. Take the **Relay Coil** next to the rig. Expected: `Shore Watch: You have the relay coil. Bring it to Mara.` Inspecting the rig now says: *"The relay housing sits open and empty…"*
-5. **Save point (ready to turn in):** F5. Then hand in the coil (step 6), and F9. Expected: back to holding the coil, the coil pickup is still gone, and the quest is still "Bring it to Mara". This proves an earlier save restores correctly.
-6. Talk to Mara:
-   - she opens with *"That's the coil. Still warm. Give it here."*
-   - optionally pick **"I looked at his relay. It's saying words."** first: *"…Yeah. I've heard them too…"*; it won't show again
-   - then pick **"Here. It's yours."**
-   Expected:
-   - coil removed, +2 Field Dressing, no ammo
-   - `Quest complete: Shore Watch. You took the relay coil without a fight…`
-   - *"Two dressings. All I can spare. He's still out there… I'm going to sit up with this coil tonight and listen."*
-7. The scavenger is still alive and hostile.
-8. Talk again: *"The coil talked all night… He's still walking the shore. Keep clear of him."*
-9. Lookout crate: *"Mara's notebook lies open on the crate: the same six words in pencil, over and over…"*
-10. **Save / quit / relaunch / F9:** the outcome, flags, dialogue and crate text all persist.
-11. Optional: kill him afterwards, then talk to Mara. A one-time line appears: **"He won't be walking anywhere now."** → *"You went back for him anyway…"*. The outcome stays the coil route.
+**B. Notice**
+1. From the spawn, look at the boathouse back wall: there is a new window west of the faded notice. Inspect it. Expected: a line about a mast and a light. Does it make you want to go?
+2. Go out the door and a few metres down the path, then turn and look back west. Expected: an amber light on a mast above the roof, with no marker. Is it visible enough to catch your eye?
+
+**C. Discover**
+1. Walk round the lake side of the boathouse and head west. Expected: about 7 m past the back wall, a `LOCATION DISCOVERED / Wrecked Survey Launch` banner, once.
+2. Tab: a PLACES list shows the launch.
+3. Walk out of the area and back in: no second banner.
+
+**D. Read the place** (inspect each with E; the prompt verb varies)
+1. Name board on the bow: driven ashore on purpose, "T_RN".
+2. Life jackets on the beach: straps cut, they walked inland.
+3. Board by the plank on the east side near the bow. In the wheelhouse: depth sounder, breaker panel, and the survey log (**Read**). Expected: the pattern, "channel with no station", cut every breaker, "Kit's in the tender, tied off the stern."
+4. Inspect the breaker panel again after the log: the text changes.
+5. Aft deck: the battery bank (Inspect, then it offers **Pull the leads**), and the beacon on the transom (dead, or humming like the relay if you inspected the scavenger's relay earlier).
+6. Dead fish at the edge of the water; inspect them.
+7. Can you work out what happened without being told? Does anything not make sense?
+
+**E. Danger**
+1. Step into the water round the stern. Expected: "The water is live." and 20 damage/s. You die in about 5 s at full health, so step straight back out.
+2. Is the danger readable before you step in (blue slab, dead fish ring, sparks)?
+3. Optional: die there. You respawn at the PlayerStart with full health and your inventory.
+
+**F. Loot**
+1. The survey locker in the wheelhouse west/aft corner: E takes one stack at a time (9mm ×12, Salvaged Wiring ×3, Field Dressing ×1). Take one or two and leave the rest.
+2. The tender about 4 m off the stern, in the live water: reach it either by pulling the leads first (safe), or by running the water. Expected: Field Dressing ×2, 9mm ×18. (You can also jump from the transom onto the tender without touching the water; that is accepted.)
+3. Pull the leads (Battery bank). Expected: the water's glow and the sparks go out, the damage stops, and the beacon and dead fish text change. Walk in the water to confirm it is safe.
+
+**G. Mara**
+1. After reading the log, talk to Mara. Expected: a new reply, "There's a wrecked survey launch west of the boathouse. I read her log." She talks about the *Tern* and a storm. Pick **"Was it a storm?"** Expected: "It's always a storm. Stay out of the water round her stern. It bites."
+2. Talk again: the exchange is not offered twice.
+
+**H. Save / load** (the important one)
+1. With the locker part-looted, the power cut and the tender emptied (or not), press **F5**.
+2. Quit completely. Relaunch, press **F9**.
+3. Expected: you are where you saved; the location is still discovered (Tab), **with no second banner**; the locker holds exactly what you left; the tender is as you left it; the water is still off if you pulled the leads (or still live if you did not); clue text reflects your state; Shore Watch is at the stage you left it.
+4. Optional: F5 with the water live, then pull the leads, then F9. The water should be live again.
+5. Optional: F9 an older save. Expected: the POI is untouched and undiscovered.
 
 **Edge cases worth a minute**
-- Kill the scavenger on the way, *before* meeting Mara. She opens with *"The walker on the path went quiet. That you?"* **"It was me."** goes straight to the turn-in; **"Wasn't me."** leaves the quest unstarted and she'll ask again.
-- Grab the coil before meeting Mara. The offer shows **"This coil? I already pulled it."**, which goes straight to the coil turn-in.
-- Press F5 while dead: you get "You can't save now." Press F9 while dead or mid-conversation: it loads cleanly.
-- Pick reply 1 while the pistol is drawn: it should no longer holster.
+- The scavenger can chase you to the wreck. Combat there is not specially handled.
+- Try the west region: bluffs and breakwaters should stop you walking off the map.
+- Jump on the tender from the transom; loot without touching the water.
 
 ## Known Issues / Limitations
 
-- **No human playtest yet.** Automation calls interactions directly, so it doesn't test aiming with E, AI sight while you sneak, text readability, or pacing.
-- **Stealth isn't a system.** The coil route relies on the existing AI (18 m / 75° sight cone, no crouch bonus). Taking the coil while he chases you still counts as the coil route. Whether the stealth approach is realistic needs your judgement.
-- The combat route in the **test gym** can't finish Shore Watch, because the quest checks `boat.scavenger` and the gym's scavenger is `gym.scavenger`. The coil route works there.
-- **Old dev saves:** a save whose Shore Watch stage was `return` or `done` has the quest dropped (with a warning), so it can be taken again. The old `shore.cleared` flag carries over but nothing reads it.
-- **Map reloads:** F9 always reloads the map now. Expect a short hitch; it takes about 0.2 s in logs.
-- There is still one save slot, no autosave, and no main menu. `EquippedItemId` is still saved but not used (the first firearm is auto-equipped); unchanged this session.
-- **Multi-map:** quest log and world flags live on the player pawn and a world subsystem. Travelling between maps will need them carried over through the save or the game instance. That's out of scope for now.
-- **HUD:** still the canvas prototype. The journal only appears with Tab.
-- **Writing:** all dialogue and flavour text is prototype writing.
-- **Packaging:** the Asset Manager setup is verified in the editor, but no packaged build was made.
+- **No human playtest.** Tests teleport and call interactions directly. Aiming with E, readability of prompt text, pacing and whether the lamp pulls you are unverified.
+- **Visuals are greybox.** The map is daylight only, so the amber lamp is visible but is not dramatic. A dusk or overcast pass would sell it. Flicker was not checked over time.
+- **Latent save issue (not triggered):** loading an older save destroys any `ADCItemPickup` added to the map after that save, because "missing from the save" means "taken". The POI uses only containers, so nothing is affected today. Fix before content adds pickups (track removed ids explicitly).
+- The firearm's object-type trace also hits query-only overlap volumes (damage volumes). Pre-existing; the location volume avoids it by not using collision.
+- The water is a solid walkable block (a pre-existing prototype limitation), so "wading" is walking on a slab.
+- Location display names live on the volume actors. A future map screen or multi-map setup will want a location data asset.
+- Carried over from Phase 2: one save slot, no autosave or main menu, canvas HUD, prototype writing, quest log and world flags on the player and a world subsystem (multi-map will need them carried over).
+- No new item was added; existing items were enough.
 
 ## Decisions Made
 
-1. **Evolve Shore Watch instead of adding a second quest.** It already had the right shape (Mara, scavenger, coil). I kept id `shore.watch` and redesigned its stages, which avoided two overlapping quests.
-2. **Flat condition/consequence structs with an enum** rather than instanced UObjects. They're simple to evaluate and test, the Python scripts can write them, and the editor hides irrelevant fields with `EditCondition`. Adding a type means one enum value plus one case.
-3. **World flags moved to a world subsystem.** World facts shouldn't live on the player, and inspectables and future world events need them without a player reference.
-4. **Event-driven quest transitions:** inventory, world-state and stage changes trigger a re-check, instead of polling or hooks in actors. A death reaches quests only through `UDCWorldStateSubsystem::NotifyChanged`.
-5. **Several outcome stages** (`done_killed` / `done_coil`) rather than one "done" stage plus a flag. The outcome is part of the quest state, and dialogue tells them apart with `QuestStage`.
-6. **Rewards live in Mara's dialogue; outcome flags live in stage `OnEnter`,** so the flags hold however the stage is reached.
-7. **F9 reloads the map.** This fixed a real soft-lock and made in-session loads match loads after a relaunch. It also makes `MapName`/`MapPackage` actually route the load.
-8. **Refuse saving while dead**, rather than saving a dead player with no respawn pending.
-9. **Removed `CompleteQuest` and `HostileDead`.** `SetQuestStage` with an outcome stage and `ActorDead` cover them in a more general way.
-10. **Renamed the coil's display name to "Relay Coil".** Its `ItemId` stays `radio_coil`, so saves are unaffected.
-11. **Added provisional canon** to `world_bible.md` (Maritime Authority relays, Mara), marked provisional.
+1. **One hand-built POI, generic classes.** The location, container, hazard-condition and flicker-light classes are reusable; only the wreck exists.
+2. **Polling for discovery, not collision.** A trigger box would block the hitscan firearm trace and fires overlap events during the load teleport.
+3. **World state and discoveries apply first on load**, so nothing re-announces and conditioned hazards are correct from the first frame.
+4. **Containers reuse the world-inventory save arrays** instead of adding a container save format; a container newer than the save keeps its contents.
+5. **The hazard has a diegetic off switch**, taught by the log (the crew cut every breaker). The hidden loot is inside the danger, so disabling it is the safe way to get it.
+6. **The wreck is decoupled from Shore Watch.** The only links are flavour: the beacon and one Mara line.
+7. **Our own glow material** instead of the prototype's particle-only `M_SimpleGlow`.
+8. **All new lore is PROVISIONAL**; nothing explains the Current.
 
 ## Deferred Decisions
 
-- **What the relay says** (Mara writes down "six words"). The mystery is deliberately left unresolved; the actual words are a lore decision for you.
-- **The scavenger after the coil route:** he stays hostile. Should he leave, turn neutral, or come looking for his coil?
-- **Should the accept reply matter?** For example, Mara could react if you said "No shooting" and then shot him.
-- **Mara's role beyond Shore Watch**, her faction, and whether "Great Lakes Maritime Authority" is final canon.
-- **Reward balance:** 24× 9mm vs 2 field dressings.
-- **Game-flow features:** main menu, autosave, and multiple save slots.
-- **Gym:** whether the gym should get its own quest or keep sharing Mara's dialogue.
+- Carried over: the relay's six words, Mara's role and faction, factions in general, "Great Lakes Maritime Authority" naming, reward balance, the scavenger after the coil route, whether the accept reply should matter, "no shooting".
+- New: the boat's name (*Tern*), the loot balance at the wreck (locker vs tender vs the danger), and whether Mara's "storm" line should vary with the Shore Watch outcome.
 
 ## Recommended Next Step
 
-After the playtest (and fixes from it): **write the Phase 3 Exploration Loop plan** as a numbered checklist in the style of `FirstPhasePlan.txt`. Scope it to one small point of interest near the boathouse whose discovery, loot and story are built from the existing rules language: a discovered-location flag, an inspectable or terminal using conditions/consequences, and a container reusing the inventory component. Plan it before building any of it.
+After Anthony accepts the Exploration Loop (and any fixes from the playtest): **plan Phase 4, the RPG Layer, as its own numbered checklist before building anything**, in the style of `FirstPhasePlan.txt` and `ExplorationLoopPlan.txt`. Consider fixing the pickup/older-save persistence issue first.
