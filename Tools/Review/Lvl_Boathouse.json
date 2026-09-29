@@ -1,0 +1,152 @@
+{
+  "map": "/Game/Maps/Lvl_Boathouse",
+  "units": "cm",
+  "rotation_order": "pitch, yaw, roll",
+  "viewpoints": [
+    {
+      "id": "interior",
+      "location": [220, 0, 170],
+      "rotation": [0, 70, 0],
+      "expectation": "From the wake-up spot the boathouse reads as a cold maritime shed, and the workbench with the pistol reads first. It should not read as a grey room.",
+      "source": "PresentationPassPlan.txt §9 step 1; PresentationPassPlan.txt §4"
+    },
+    {
+      "id": "door",
+      "location": [760, 0, 170],
+      "rotation": [0, 0, 0],
+      "expectation": "From the doorway the path, the stones, and the lake read as a cold freshwater shore before any glow does.",
+      "source": "PresentationPassPlan.txt §9 step 2; LongTermPlan.txt §18"
+    },
+    {
+      "id": "path_west",
+      "location": [1500, -150, 170],
+      "rotation": [10, 180, 0],
+      "expectation": "Looking west along the path, the flickering mast lamp above the boathouse roof pulls the eye toward the Survey Launch.",
+      "source": "Design/game_design.md Wrecked Survey Launch; PresentationPassPlan.txt §9",
+      "landmarks": [
+        {"id": "mast_lamp", "location": [-1418.2, -845.5, 1264.3]}
+      ]
+    },
+    {
+      "id": "camp_live",
+      "location": [2100, -500, 180],
+      "rotation": [0, 20, 0],
+      "expectation": "The scavenger camp reads as rusted industrial scrap around a relay that is still live, and the relay housing reads first.",
+      "source": "Design/game_design.md Shore Watch; LongTermPlan.txt §18"
+    },
+    {
+      "id": "camp_cold",
+      "location": [2100, -500, 180],
+      "rotation": [0, 20, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_coil"},
+      "expectation": "The same camp after the coil route is complete: the relay reads cold and empty, and the scrap around it is unchanged.",
+      "source": "Design/game_design.md Shore Watch coil route; PresentationPassPlan.txt §9 step 3"
+    },
+    {
+      "id": "lookout",
+      "location": [2900, 1100, 180],
+      "rotation": [0, 40, 0],
+      "expectation": "Mara's lookout reads as one person watching the path from behind the ridge, out of the scavenger's sight, and Mara reads first.",
+      "source": "PresentationPassPlan.txt §9 step 3; Design/game_design.md Shore Watch"
+    },
+    {
+      "id": "wreck",
+      "location": [-900, -200, 180],
+      "rotation": [0, 180, 0],
+      "expectation": "The Survey Launch reads as a wrecked boat on the stones, oxidized hull first, before the live-water glow.",
+      "source": "PresentationPassPlan.txt §9 step 5; LongTermPlan.txt §18",
+      "landmarks": [
+        {"id": "live_water", "location": [-1500, -1390, 8]}
+      ]
+    },
+    {
+      "id": "water_live",
+      "location": [-1040, -700, 160],
+      "rotation": [-8, -100, 0],
+      "expectation": "The water reads as dark freshwater with an electrical shimmer and a ring of dead fish, and the glow reads as the danger.",
+      "source": "PresentationPassPlan.txt §4; Design/game_design.md Wrecked Survey Launch",
+      "landmarks": [
+        {"id": "live_water", "location": [-1500, -1390, 8]}
+      ]
+    },
+    {
+      "id": "water_cut",
+      "location": [-1040, -700, 160],
+      "rotation": [-8, -100, 0],
+      "setup": {"flags": ["wreck.power_cut"]},
+      "expectation": "The same view after the leads are pulled: the glow and the sparks are gone, and the water and the dead-fish ring are still there.",
+      "source": "PresentationPassPlan.txt §4 and §9 step 5; Design/game_design.md Wrecked Survey Launch",
+      "landmarks": [
+        {"id": "live_water", "location": [-1500, -1390, 8]}
+      ]
+    },
+    {
+      "id": "clue_breaker",
+      "location": [-1567, -820, 250],
+      "rotation": [0, 180, 0],
+      "focus": "Breaker panel",
+      "focus_offset": [80, 0, 15],
+      "expectation": "The breaker panel reads as a gutted marine panel, with careful cuts and taped ends, not a grey box.",
+      "source": "PresentationPassPlan.txt §6 breaker_panel; Design/art_pipeline.md art direction"
+    },
+    {
+      "id": "clue_battery",
+      "location": [-1525, -1060, 170],
+      "rotation": [0, 200, 0],
+      "focus": "Battery bank",
+      "focus_offset": [80, 40, 45],
+      "expectation": "The battery bank reads as old marine cells in a split box, with the leads running toward the water.",
+      "source": "PresentationPassPlan.txt §6 battery_bank; Design/game_design.md Wrecked Survey Launch"
+    },
+    {
+      "id": "clue_sounder",
+      "location": [-1458, -680, 230],
+      "rotation": [0, 180, 0],
+      "focus": "Depth sounder",
+      "focus_offset": [70, -20, 20],
+      "expectation": "The depth sounder reads as a boat instrument with a paper roll, not a grey box.",
+      "source": "PresentationPassPlan.txt §6 depth_sounder; Design/art_pipeline.md art direction"
+    },
+    {
+      "id": "clue_name_board",
+      "location": [-1500, -38, 103],
+      "rotation": [-10, -90, 0],
+      "focus": "Name board",
+      "focus_offset": [0, 140, 30],
+      "expectation": "The name board reads as a flaked painted board, peeling white and teal, with the letters T_RN still readable.",
+      "source": "PresentationPassPlan.txt §6 name_board_tern; Design/game_design.md Wrecked Survey Launch"
+    },
+    {
+      "id": "clue_chalk",
+      "location": [-950, -850, 55],
+      "rotation": [0, -140, 0],
+      "focus": "Chalk warning",
+      "focus_offset": [90, 80, 25],
+      "expectation": "The chalk warning reads as a plank in the stones with a hurried warning about the water, readable before anyone steps in.",
+      "source": "Design/game_design.md Wrecked Survey Launch; PresentationPassPlan.txt §9 step 5"
+    },
+    {
+      "id": "hud_inspect",
+      "location": [325, -160, 165],
+      "rotation": [0, -90, 0],
+      "setup": {"inspect": "Lake window"},
+      "expectation": "An inspect message is open over a bright view out the lake window, and the words stay readable on that background.",
+      "source": "PresentationPassPlan.txt §2 and mission; Design/game_design.md decisions log 2026-09-29"
+    }
+  ],
+  "route": {
+    "expectation": "The walk from the boathouse door, past the scavenger camp, and on to the Survey Launch beach stays one continuous cold shore.",
+    "source": "PresentationPassPlan.txt mission and §9",
+    "look_pitch": -6,
+    "points": [
+      [740, 0, 0],
+      [1600, -80, 0],
+      [2400, -100, 0],
+      [2900, -200, 0],
+      [2000, -400, 0],
+      [700, -450, 0],
+      [-200, -400, 0],
+      [-900, -350, 0]
+    ]
+  }
+}
