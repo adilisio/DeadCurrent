@@ -418,6 +418,7 @@ void ADCHUD::DrawBuild()
 		Rows.Add({ FString(TEXT("      ")) + UDCCharacterProgressionComponent::GetPerkDescription(Id).ToString(), TextColor * 0.7f });
 	}
 	Rows.Add({ TEXT("[F10]  Reset allocation (prototype)"), TextColor * 0.7f });
+	Rows.Add({ TEXT("Close this panel before F5 save or F9 load."), TextColor * 0.7f });
 	Rows.Add({ TEXT("[B]  Close"), TextColor * 0.7f });
 
 	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 1.4f);

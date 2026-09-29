@@ -96,6 +96,8 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 | Dialogue reply | 1-9 | |
 | Save / load | F5 / F9 | |
 
+While the build panel is open, F5 and F9 allocate Survival and Relay Ear. They do not save or load until the panel is closed.
+
 Movement tuning lives on `BP_FirstPersonCharacter`: normal speed is the movement component's `MaxWalkSpeed`, sprint and crouch view settings are in the character's Movement category.
 
 ## Test gym

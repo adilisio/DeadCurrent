@@ -2,6 +2,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Character/DCPlayerCameraManager.h"
 #include "DeadCurrent.h"
+#include "UI/DCHUD.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
@@ -42,6 +43,15 @@ void ADCPlayerController::Tick(float DeltaSeconds)
 	if (!IsLocalPlayerController())
 	{
 		return;
+	}
+
+	// The build panel spends F5 and F9. Save and load wait until it is closed.
+	if (const ADCHUD* HUD = Cast<ADCHUD>(GetHUD()))
+	{
+		if (HUD->IsBuildShown())
+		{
+			return;
+		}
 	}
 
 	if (WasInputKeyJustPressed(EKeys::F5))
