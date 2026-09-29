@@ -495,6 +495,24 @@ def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False):
     """Swap a greybox for an imported mesh. Uniform scale. Bounds center stays on center."""
     comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     comp.set_static_mesh(mesh)
+    # inspectable() overrides every slot with the greybox material. An empty override list
+    # lets the imported mesh's own materials render. A slot the FBX left empty renders black.
+    comp.set_editor_property("override_materials", [])
+    slots = mesh.get_editor_property("static_materials") or []
+    fallback = None
+    for slot in slots:
+        fallback = slot.get_editor_property("material_interface") or fallback
+    if fallback:
+        for index, slot in enumerate(slots):
+            if slot.get_editor_property("material_interface"):
+                continue
+            comp.set_material(index, fallback)
+            log(f"{actor.get_actor_label()} filled empty slot {index} with {fallback.get_name()}")
+    named = []
+    for index in range(comp.get_num_materials()):
+        mat = comp.get_material(index)
+        named.append(mat.get_name() if mat else "None")
+    log(f"{actor.get_actor_label()} materials {named}")
     bounds = mesh.get_bounding_box()
     extent = bounds.max - bounds.min
     longest = max(extent.x, extent.y, extent.z, 1.0)
@@ -509,6 +527,14 @@ def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False):
         False, True)
     comp.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
     log(f"{actor.get_actor_label()} wears {mesh.get_name()} scale={scale:.3f}")
+
+
+def seat(actor, bottom_z=2.0):
+    """Drop the mesh so its bounds sit on bottom_z. XY stays where wear_mesh put it."""
+    origin, extent = actor.get_actor_bounds(False)
+    loc = actor.get_actor_location()
+    actor.set_actor_location(
+        unreal.Vector(loc.x, loc.y, loc.z - (origin.z - extent.z) + bottom_z), False, True)
 
 
 def assign_tern_materials(comp, mesh):
@@ -702,6 +728,8 @@ def build_west_shore():
     block("ShoreCurb_West_A", folder, -3200, -1720, -600, -580, 0, 18, material=gravel)
     block("ShoreCurb_West_B", folder, -1280, -200, -600, -580, 0, 18, material=gravel)
     block("Water_West", folder, -3200, -200, -2400, -600, -16, -6, material=lake)
+    # East of the basin wall the sheet used to stop, and the channel mouth was a black void.
+    block("Water_Channel", folder, -200, 2800, -4200, -1400, -16, -6, material=lake)
     # Keep the player on the map: a bluff to the west and north, rocks around the far water.
     block("Bluff_West", folder, -3240, -3200, -2440, 1840, -80, 420, material=surface("MI_DC_LandRock"))
     block("Bluff_North", folder, -3200, -200, 1800, 1840, -50, 300, material=surface("MI_DC_LandRock"))
@@ -996,13 +1024,26 @@ def dress_library_clues():
         comp.set_material(slot, board)
 
     # One mesh for every relay inspect state (live, cold, empty). The coil stays its own pickup.
-    # Yaw 0 keeps the textured exterior toward the path. Yaw 180 turned a black side to the camp camera.
+    # Yaw 270 turns the open side (lid hinges, side gland) toward the camp camera and the path.
+    # The cavity polygons stay black under this grade; a fill light only lit the sand, so it is not used.
     relay = actor_by_label("RelayRig")
-    wear_mesh(relay, first_mesh("/Game/Art/Meshy/relay_housing"), 40.0, (2480.0, -220.0, 20.0))
-    origin, extent = relay.get_actor_bounds(False)
-    loc = relay.get_actor_location()
-    relay.set_actor_location(
-        unreal.Vector(loc.x, loc.y, loc.z - (origin.z - extent.z) + 2.0), False, True)
+    wear_mesh(relay, first_mesh("/Game/Art/Meshy/relay_housing"), 40.0, (2480.0, -220.0, 20.0), yaw=270.0)
+    seat(relay)
+
+    # Greybox inspectables that were still on MI_DefaultColorway. Library meshes, same actors.
+    wear_mesh(actor_by_label("Can"), first_mesh("/Game/Art/PolyHaven/can_rusted"), 44.0, (980.0, 80.0, 22.0))
+    seat(actor_by_label("Can"))
+    wear_mesh(actor_by_label("Crates"), first_mesh("/Game/Art/PolyHaven/wooden_crate_01"), 80.0, (1550.0, 220.0, 35.0))
+    seat(actor_by_label("Crates"))
+    wear_mesh(actor_by_label("Lookout"), first_mesh("/Game/Art/PolyHaven/wooden_crate_01"), 80.0, (3160.0, 1220.0, 40.0))
+    seat(actor_by_label("Lookout"))
+    hull_actor = actor_by_label("Hull")
+    boat = find_largest_mesh("/Game/Art/Fab/motorboat_wreck")
+    if not boat:
+        raise RuntimeError("Missing the motorboat mesh for the beached hull")
+    wear_mesh(hull_actor, boat, 220.0, (1200.0, -280.0, 40.0), yaw=90.0)
+    assign_tern_materials(hull_actor.get_component_by_class(unreal.StaticMeshComponent), boat)
+    seat(hull_actor)
 
 
 def editor_world():

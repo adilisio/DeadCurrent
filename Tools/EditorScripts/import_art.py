@@ -29,7 +29,7 @@ SURFACES = [
          root=os.path.join(LIBRARY, "polyhaven", "coast_rocks_01", "textures"),
          author="Rob Tuytel, Rico Cilliers",
          url="https://polyhaven.com/a/coast_rocks_01",
-         instance="MI_DC_LandRock", tile_cm=240.0, metallic=0.0,
+         instance="MI_DC_LandRock", tile_cm=640.0, metallic=0.0,
          tint=(0.38, 0.44, 0.50),
          maps=dict(color="coast_rocks_01_diff_2k.jpg", normal="coast_rocks_01_nor_dx_2k.jpg",
                    orm="coast_rocks_01_arm_2k.jpg")),
@@ -376,6 +376,11 @@ def ensure_instance(spec, textures):
     mel.set_material_instance_vector_parameter_value(
         mi, "Tint", unreal.LinearColor(tint[0], tint[1], tint[2], 1.0))
     mel.update_material_instance(mi)
+    for suffix in ("_X", "_Y", "_Z"):
+        bound = mel.get_material_instance_texture_parameter_value(mi, "BaseColor" + suffix)
+        log(f"{spec['instance']} BaseColor{suffix}={bound.get_name() if bound else 'MISSING'}")
+        if not bound:
+            raise RuntimeError(f"{spec['instance']} has no BaseColor{suffix}")
     if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
         raise RuntimeError(f"Could not save {path}")
     log(f"instance {path} packed={packed}")
@@ -559,6 +564,98 @@ def import_clue_meshes():
     import_mesh(
         r"C:\FO5_AssetLibrary\Meshy\lighthouse_logbook\model.fbx",
         "/Game/Art/Meshy/lighthouse_logbook")
+    for folder in ("/Game/Art/PolyHaven/life_jacket", "/Game/Art/Meshy/lighthouse_logbook"):
+        for asset_path in unreal.EditorAssetLibrary.list_assets(folder, recursive=True, include_folder=False):
+            asset = unreal.load_asset(asset_path)
+            if isinstance(asset, (unreal.Material, unreal.MaterialInstanceConstant)):
+                log(f"{asset.get_name()} samples {sampled_texture_names(asset)}")
+
+
+def sampled_texture_names(material):
+    """Texture asset names a material actually samples. Instances report their parameter values."""
+    names = []
+    if isinstance(material, unreal.Material):
+        for expr in material.get_editor_property("expressions") or []:
+            try:
+                tex = expr.get_editor_property("texture")
+            except Exception:
+                tex = None
+            if tex:
+                names.append(tex.get_name())
+        return names
+    if isinstance(material, unreal.MaterialInstanceConstant):
+        for param in material.get_editor_property("texture_parameter_values") or []:
+            tex = param.get_editor_property("parameter_value")
+            if tex:
+                names.append(tex.get_name())
+    return names
+
+
+def ensure_relay_material():
+    """Material_001 is the FBX instance. It must sample texture_0 and the three data maps."""
+    folder = "/Game/Art/Meshy/relay_housing"
+    instance = unreal.load_asset(folder + "/Material_001")
+    if not isinstance(instance, unreal.MaterialInstanceConstant):
+        raise RuntimeError(f"Material_001 is {type(instance)}, expected a MaterialInstanceConstant")
+    wanted = ("texture_0", "texture_0_normal", "texture_0_roughness", "texture_0_metallic")
+    textures = {}
+    for name in wanted:
+        tex = unreal.load_asset(f"{folder}/{name}")
+        if not tex:
+            raise RuntimeError(f"Missing {folder}/{name}")
+        textures[name] = tex
+        if name != "texture_0":
+            tex.set_editor_property("srgb", False)
+            unreal.EditorAssetLibrary.save_loaded_asset(tex, only_if_is_dirty=True)
+    before = sampled_texture_names(instance)
+    log(f"Material_001 before samples {before}")
+    parent_path = folder + "/M_DC_Relay"
+    if unreal.EditorAssetLibrary.does_asset_exist(parent_path):
+        unreal.EditorAssetLibrary.delete_asset(parent_path)
+    parent = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Relay", folder, unreal.Material, unreal.MaterialFactoryNew())
+    if not parent:
+        raise RuntimeError(f"Could not create {parent_path}")
+    parent.set_editor_property("two_sided", True)
+    parent.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    uv = make(parent, unreal.MaterialExpressionTextureCoordinate, -500, 0)
+    pins = {
+        "texture_0": unreal.MaterialProperty.MP_BASE_COLOR,
+        "texture_0_normal": unreal.MaterialProperty.MP_NORMAL,
+        "texture_0_roughness": unreal.MaterialProperty.MP_ROUGHNESS,
+        "texture_0_metallic": unreal.MaterialProperty.MP_METALLIC,
+    }
+    mel = unreal.MaterialEditingLibrary
+    facing = make(parent, unreal.MaterialExpressionTwoSidedSign, 400, 200)
+    for index, (name, prop) in enumerate(pins.items()):
+        sampler = None
+        if "normal" in name:
+            sampler = unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL
+        elif name != "texture_0":
+            sampler = unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR
+        node = sample_param(parent, name, uv, -40, index * 200, sampler)
+        node.set_editor_property("texture", textures[name])
+        if prop == unreal.MaterialProperty.MP_NORMAL:
+            flipped = mul(parent, node, facing, 280, index * 200)
+            mel.connect_material_property(flipped, "", prop)
+        else:
+            mel.connect_material_property(node, "", prop)
+    mel.recompile_material(parent)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(parent, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {parent_path}")
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(instance, parent)
+    for name, tex in textures.items():
+        mel.set_material_instance_texture_parameter_value(instance, name, tex)
+    mel.update_material_instance(instance)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False):
+        raise RuntimeError("Could not save Material_001")
+    found = sampled_texture_names(instance)
+    log(f"Material_001 after samples {found}")
+    missing = [name for name in wanted if name not in found]
+    if missing:
+        raise RuntimeError(f"Material_001 still missing {missing}")
+    return instance
 
 
 def import_relay():
@@ -566,7 +663,9 @@ def import_relay():
     src = r"C:\FO5_AssetLibrary\Meshy\relay_housing\model.fbx"
     if not os.path.isfile(src):
         raise RuntimeError(f"Missing {src}. Run Tools/generate_meshy.py relay_housing first.")
-    return import_mesh(src, "/Game/Art/Meshy/relay_housing", max_size=1024)
+    mesh = import_mesh(src, "/Game/Art/Meshy/relay_housing", max_size=1024)
+    ensure_relay_material()
+    return mesh
 
 
 def write_chalk_png():
