@@ -372,17 +372,21 @@ def assign_mannequin(actor, *mesh_paths):
 
 
 def build_lighting():
+    """Overcast cold lake. Has to read with PlayTest's cvars: no volumetric fog, no bloom, no Lumen."""
     folder = "Lighting"
     sun = actors.spawn_actor_from_class(
         unreal.DirectionalLight, unreal.Vector(0, 0, 1000),
-        unreal.Rotator(pitch=-40.0, yaw=35.0, roll=0.0))
+        unreal.Rotator(pitch=-58.0, yaw=20.0, roll=0.0))
     sun.set_actor_label("Sun")
     sun.set_folder_path(folder)
     sun_comp = sun.get_component_by_class(unreal.DirectionalLightComponent)
     sun_comp.set_editor_property("atmosphere_sun_light", True)
     sun_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
-    # Between moonlight (10) and the 12000 lux blowout. Auto-exposure meters the rest.
-    sun_comp.set_editor_property("intensity", 300.0)
+    # High and cool, not a raking sunset. Auto-exposure still meters the interior.
+    sun_comp.set_editor_property("intensity", 220.0)
+    sun_comp.set_editor_property("light_color", unreal.Color(r=186, g=204, b=222, a=255))
+    sun_comp.set_editor_property("temperature", 7500.0)
+    sun_comp.set_editor_property("use_temperature", True)
 
     sky = actors.spawn_actor_from_class(unreal.SkyLight, unreal.Vector(0, 0, 1000))
     sky.set_actor_label("SkyLight")
@@ -390,18 +394,25 @@ def build_lighting():
     sky_comp = sky.get_component_by_class(unreal.SkyLightComponent)
     sky_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     sky_comp.set_editor_property("real_time_capture", True)
-    sky_comp.set_editor_property("intensity", 0.8)
+    sky_comp.set_editor_property("intensity", 1.15)
 
     atmo = actors.spawn_actor_from_class(unreal.SkyAtmosphere, unreal.Vector(0, 0, 0))
     atmo.set_actor_label("SkyAtmosphere")
     atmo.set_folder_path(folder)
+    atmo_comp = atmo.get_component_by_class(unreal.SkyAtmosphereComponent)
+    # Even scattering so the sky is grey-blue instead of a saturated blue dome.
+    atmo_comp.set_editor_property("rayleigh_scattering", unreal.LinearColor(0.42, 0.50, 0.62, 1.0))
+    atmo_comp.set_editor_property("rayleigh_scattering_scale", 0.045)
+    atmo_comp.set_editor_property("mie_scattering_scale", 0.08)
 
     fog = actors.spawn_actor_from_class(unreal.ExponentialHeightFog, unreal.Vector(0, 0, 0))
     fog.set_actor_label("HeightFog")
     fog.set_folder_path(folder)
     fog_comp = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
-    fog_comp.set_editor_property("fog_density", 0.005)
-    fog_comp.set_editor_property("fog_max_opacity", 0.35)
+    fog_comp.set_editor_property("fog_density", 0.018)
+    fog_comp.set_editor_property("fog_max_opacity", 0.5)
+    fog_comp.set_editor_property("fog_inscattering_luminance", unreal.LinearColor(0.52, 0.58, 0.64, 1.0))
+    # Volumetric fog stays off. PlayTest also sets r.VolumetricFog=0. The height fog above is the distance tint.
 
     pp = actors.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(0.0, 0.0, 0.0))
     pp.set_actor_label("PostProcess")
@@ -413,11 +424,18 @@ def build_lighting():
     settings.set_editor_property("override_auto_exposure_method", True)
     settings.set_editor_property("auto_exposure_method", unreal.AutoExposureMethod.AEM_HISTOGRAM)
     settings.set_editor_property("override_auto_exposure_min_brightness", True)
-    settings.set_editor_property("auto_exposure_min_brightness", 0.5)
+    settings.set_editor_property("auto_exposure_min_brightness", 0.6)
     settings.set_editor_property("override_auto_exposure_max_brightness", True)
-    settings.set_editor_property("auto_exposure_max_brightness", 12.0)
+    settings.set_editor_property("auto_exposure_max_brightness", 4.0)
     settings.set_editor_property("override_auto_exposure_bias", True)
-    settings.set_editor_property("auto_exposure_bias", 0.0)
+    settings.set_editor_property("auto_exposure_bias", 0.15)
+    # Higher white balance is cooler. Saturation stays in the grade, which Low scalability does not strip.
+    settings.set_editor_property("override_white_temp", True)
+    settings.set_editor_property("white_temp", 8200.0)
+    settings.set_editor_property("override_color_saturation", True)
+    settings.set_editor_property("color_saturation", unreal.Vector4(0.78, 0.82, 0.88, 1.0))
+    settings.set_editor_property("override_color_contrast", True)
+    settings.set_editor_property("color_contrast", unreal.Vector4(1.06, 1.06, 1.06, 1.0))
     pp.set_editor_property("settings", settings)
 
 
