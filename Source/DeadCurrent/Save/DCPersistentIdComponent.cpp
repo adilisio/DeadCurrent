@@ -34,6 +34,11 @@ void UDCPersistentIdComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		if (UDCPersistentRegistry* Registry = World->GetSubsystem<UDCPersistentRegistry>())
 		{
+			// Destroy() is a player removal (taken pickup). Level travel and quitting are not.
+			if (EndPlayReason == EEndPlayReason::Destroyed && !PersistentId.IsNone())
+			{
+				Registry->NoteRemoved(PersistentId);
+			}
 			Registry->UnregisterActor(GetOwner());
 		}
 	}

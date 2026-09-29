@@ -1,8 +1,13 @@
+#include "Core/DCTestHelpers.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
+#include "Items/DCItemPickup.h"
 #include "Kismet/GameplayStatics.h"
+#include "Save/DCPersistentIdComponent.h"
+#include "Save/DCPersistentRegistry.h"
 #include "Save/DCPersistentTypes.h"
 #include "Save/DCSaveGame.h"
+#include "Save/DCSaveSubsystem.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -144,6 +149,106 @@ bool FDCSaveWorldInventorySlotTest::RunTest(const FString& Parameters)
 
 	UGameplayStatics::DeleteGameInSlot(Slot, 0);
 	UnrootItems();
+	return true;
+}
+
+namespace DCPickupSaveTest
+{
+	ADCItemPickup* SpawnPickup(UWorld* World, FName Id)
+	{
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		ADCItemPickup* Pickup = World->SpawnActorDeferred<ADCItemPickup>(
+			ADCItemPickup::StaticClass(), FTransform::Identity, nullptr, nullptr,
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		if (UDCPersistentIdComponent* Comp = Pickup->FindComponentByClass<UDCPersistentIdComponent>())
+		{
+			Comp->SetPersistentId(Id);
+		}
+		return Cast<ADCItemPickup>(UGameplayStatics::FinishSpawningActor(Pickup, FTransform::Identity));
+	}
+}
+
+/**
+ *  Taking a pickup records its id. A pickup added to the map after the save, and therefore
+ *  absent from it, is left in place. Older saves still remove only the pickups that existed then.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCSaveRemovedPickupTest, "DeadCurrent.Save.RemovedPickup",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCSaveRemovedPickupTest::RunTest(const FString& Parameters)
+{
+	using namespace DCPickupSaveTest;
+
+	UDCSaveGame* Save = nullptr;
+	{
+		FDCTestWorld Source;
+		ADCItemPickup* Taken = SpawnPickup(Source.Get(), TEXT("test.taken"));
+		ADCItemPickup* Kept = SpawnPickup(Source.Get(), TEXT("test.kept"));
+		TestNotNull(TEXT("Taken pickup registered"), Source.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.taken")));
+		TestNotNull(TEXT("Kept pickup registered"), Source.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.kept")));
+		Taken->Destroy();
+		TestNull(TEXT("Taken pickup left the registry"), Source.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.taken")));
+		TestTrue(TEXT("Kept pickup still registered"), Source.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.kept")) == Kept);
+
+		Save = NewObject<UDCSaveGame>();
+		Save->SaveVersion = UDCSaveGame::CurrentVersion;
+		Save->AddToRoot();
+		UDCSaveSubsystem::CaptureWorld(Save, Source.Get());
+	}
+
+	TestTrue(TEXT("Save names the taken pickup"), Save->RemovedPersistentIds.Contains(TEXT("test.taken")));
+	TestFalse(TEXT("Save does not name the kept pickup"), Save->RemovedPersistentIds.Contains(TEXT("test.kept")));
+
+	{
+		FDCTestWorld Dest;
+		ADCItemPickup* TakenAgain = SpawnPickup(Dest.Get(), TEXT("test.taken"));
+		ADCItemPickup* KeptAgain = SpawnPickup(Dest.Get(), TEXT("test.kept"));
+		ADCItemPickup* AddedLater = SpawnPickup(Dest.Get(), TEXT("test.added_later"));
+		UDCSaveSubsystem::ApplyWorld(Save, Dest.Get());
+
+		TestFalse(TEXT("Taken pickup stays gone"), IsValid(TakenAgain));
+		TestTrue(TEXT("Pickup present at save stays"), IsValid(KeptAgain));
+		TestTrue(TEXT("Pickup added after the save stays"), IsValid(AddedLater));
+		TestNull(TEXT("Taken id is not registered"), Dest.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.taken")));
+		TestNotNull(TEXT("New id is registered"), Dest.Get()->GetSubsystem<UDCPersistentRegistry>()->FindActor(TEXT("test.added_later")));
+	}
+
+	// Version 0 predates the coil. An absent coil was not taken; it did not exist yet.
+	// An absent bench pistol did exist, and was taken.
+	{
+		UDCSaveGame* Legacy = NewObject<UDCSaveGame>();
+		Legacy->SaveVersion = 0;
+		FDCTestWorld World;
+		ADCItemPickup* Pistol = SpawnPickup(World.Get(), TEXT("boat.pickup_pistol"));
+		ADCItemPickup* Coil = SpawnPickup(World.Get(), TEXT("boat.pickup_coil"));
+		ADCItemPickup* Future = SpawnPickup(World.Get(), TEXT("boat.pickup_future"));
+		UDCSaveSubsystem::ApplyWorld(Legacy, World.Get());
+		TestFalse(TEXT("v0: bench pistol absent from the save was taken"), IsValid(Pistol));
+		TestTrue(TEXT("v0: coil postdates the save and stays"), IsValid(Coil));
+		TestTrue(TEXT("v0: a pickup added even later stays"), IsValid(Future));
+	}
+
+	// Version 3 includes the coil. Absence means it was taken. A newer id still stays.
+	{
+		UDCSaveGame* Micro = NewObject<UDCSaveGame>();
+		Micro->SaveVersion = 3;
+		FDCPersistentActorState PistolState;
+		PistolState.PersistentId = TEXT("boat.pickup_pistol");
+		PistolState.bExists = true;
+		Micro->WorldActors.Add(PistolState);
+
+		FDCTestWorld World;
+		ADCItemPickup* Pistol = SpawnPickup(World.Get(), TEXT("boat.pickup_pistol"));
+		ADCItemPickup* Coil = SpawnPickup(World.Get(), TEXT("boat.pickup_coil"));
+		ADCItemPickup* Future = SpawnPickup(World.Get(), TEXT("boat.pickup_future"));
+		UDCSaveSubsystem::ApplyWorld(Micro, World.Get());
+		TestTrue(TEXT("v3: pistol listed in the save stays"), IsValid(Pistol));
+		TestFalse(TEXT("v3: coil absent from the save was taken"), IsValid(Coil));
+		TestTrue(TEXT("v3: a pickup the save could not have known stays"), IsValid(Future));
+	}
+
+	Save->RemoveFromRoot();
 	return true;
 }
 

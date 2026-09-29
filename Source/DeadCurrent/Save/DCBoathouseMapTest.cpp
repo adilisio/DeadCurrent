@@ -858,7 +858,7 @@ bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
 	QueueFreshMap();
 
 	// A first-playable (version 0/1) save: short map name only, the old Shore Watch stage ids,
-	// the old completion flag, and the coil already taken.
+	// the old completion flag, and a coil already in inventory. The coil pickup did not exist yet.
 	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
 	{
 		UDCSaveGame* Legacy = NewObject<UDCSaveGame>();
@@ -888,7 +888,7 @@ bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
 		}
 		TestTrue(TEXT("Legacy: player moved to saved spot"), Player()->GetActorLocation().Equals(FVector(3000.0, 1100.0, 100.0), 150.0));
 		TestEqual(TEXT("Legacy: coil restored"), Count(TEXT("radio_coil")), 1);
-		TestNull(TEXT("Legacy: coil pickup gone"), Find(TEXT("boat.pickup_coil")));
+		TestNotNull(TEXT("Legacy: coil pickup stays (it postdates this save)"), Find(TEXT("boat.pickup_coil")));
 		TestFalse(TEXT("Legacy: unknown stage dropped"), Player()->GetQuestComponent()->HasQuest(Quest));
 
 		// The Exploration Loop POI postdates this save: it keeps its authored state.

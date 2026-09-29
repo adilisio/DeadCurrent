@@ -311,6 +311,36 @@ void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World)
 		UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] capture %s alive=%d stacks=%d"),
 			*Id.ToString(), State.bAlive ? 1 : 0, Stacks.Num());
 	}
+
+	Save->RemovedPersistentIds = Registry->GetRemovedIds();
+}
+
+/**
+ *  Saves before version 4 did not record removals. On Lvl_Boathouse, a pickup that existed when
+ *  that save was written and is missing from WorldActors was taken. Pickups added to the map
+ *  later are not in this list, so they stay. The coil arrived with the Micro RPG (version 2).
+ */
+static void DCAddHistoricalTakenPickups(const UDCSaveGame* Save, const TSet<FName>& SavedIds, TArray<FName>& OutRemoved)
+{
+	if (!Save || Save->SaveVersion >= 4)
+	{
+		return;
+	}
+
+	static const FName Known[] = {
+		TEXT("boat.pickup_pistol"),
+		TEXT("boat.pickup_ammo"),
+		TEXT("boat.pickup_dressing"),
+		TEXT("boat.pickup_coil"),
+	};
+	const int32 Count = Save->SaveVersion >= 2 ? 4 : 3;
+	for (int32 Index = 0; Index < Count; ++Index)
+	{
+		if (!SavedIds.Contains(Known[Index]) && !OutRemoved.Contains(Known[Index]))
+		{
+			OutRemoved.Add(Known[Index]);
+		}
+	}
 }
 
 void UDCSaveSubsystem::ApplyWorld(const UDCSaveGame* Save, UWorld* World)
@@ -366,14 +396,14 @@ void UDCSaveSubsystem::ApplyWorld(const UDCSaveGame* Save, UWorld* World)
 		}
 	}
 
-	const TArray<FName> LiveIds = Registry->GetRegisteredIds();
-	for (const FName Id : LiveIds)
-	{
-		if (SavedIds.Contains(Id))
-		{
-			continue;
-		}
+	// Only ids we know were removed. A live actor that is simply absent from the save was not
+	// in the world when the save was written, and keeps its authored state.
+	TArray<FName> Removed = Save->RemovedPersistentIds;
+	DCAddHistoricalTakenPickups(Save, SavedIds, Removed);
+	Registry->RestoreRemovedIds(Removed);
 
+	for (const FName Id : Removed)
+	{
 		AActor* Actor = Registry->FindActor(Id);
 		if (!Actor || !Actor->Implements<UDCPersistent>())
 		{

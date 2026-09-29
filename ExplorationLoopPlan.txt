@@ -1,5 +1,7 @@
 # DEAD CURRENT — Phase 3: Exploration Loop Plan
 
+Status: accepted 2026-09-28 after human playtest. This document is the plan as it was executed.
+
 ## Mission
 
 Prove that exploration itself is rewarding.
@@ -19,7 +21,7 @@ The target feeling is the first miniature version of:
 # 1. Starting Point
 
 - Phase 1 (Walking Skeleton): complete and accepted.
-- Phase 2 (Micro RPG, Shore Watch): implemented, 24 automated tests passing, awaiting human playtest.
+- Phase 2 (Micro RPG, Shore Watch): accepted. Shore Watch was playtested with the Exploration Loop.
 - Shore Watch is a regression target. Its writing, rewards, route structure, scavenger outcome, Mara's characterization and the relay mystery are not changed.
 
 ---

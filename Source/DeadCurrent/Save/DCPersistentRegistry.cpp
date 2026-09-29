@@ -55,3 +55,25 @@ TArray<FName> UDCPersistentRegistry::GetRegisteredIds() const
 	ById.GetKeys(Ids);
 	return Ids;
 }
+
+void UDCPersistentRegistry::NoteRemoved(FName Id)
+{
+	if (!Id.IsNone())
+	{
+		RemovedIds.Add(Id);
+	}
+}
+
+void UDCPersistentRegistry::RestoreRemovedIds(const TArray<FName>& Ids)
+{
+	RemovedIds.Reset();
+	for (const FName Id : Ids)
+	{
+		NoteRemoved(Id);
+	}
+}
+
+TArray<FName> UDCPersistentRegistry::GetRemovedIds() const
+{
+	return RemovedIds.Array();
+}

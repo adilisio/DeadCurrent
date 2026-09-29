@@ -25,7 +25,20 @@ public:
 	UFUNCTION(BlueprintPure, Category="Save")
 	TArray<FName> GetRegisteredIds() const;
 
+	/**
+	 *  The actor with this id was removed during play (a taken pickup). Recorded on
+	 *  EndPlay(Destroyed), not on map travel, so a later save can name it explicitly.
+	 */
+	void NoteRemoved(FName Id);
+
+	/** Replaces the removed set. Used when a save is applied, before actors are destroyed again. */
+	void RestoreRemovedIds(const TArray<FName>& Ids);
+
+	TArray<FName> GetRemovedIds() const;
+
 private:
 
 	TMap<FName, TWeakObjectPtr<AActor>> ById;
+
+	TSet<FName> RemovedIds;
 };

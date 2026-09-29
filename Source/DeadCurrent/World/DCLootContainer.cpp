@@ -106,8 +106,8 @@ void ADCLootContainer::CapturePersistentState_Implementation(FDCPersistentActorS
 
 void ADCLootContainer::ApplyPersistentState_Implementation(const FDCPersistentActorState& State)
 {
-	// Contents are restored by UDCSaveSubsystem. A container missing from the save (bExists false) was
-	// added to the map after that save was made, so it keeps its authored contents.
+	// Contents are restored by UDCSaveSubsystem from the flat inventory arrays. An actor that is
+	// simply absent from the save keeps its authored state (it was added to the map later).
 }
 
 #undef LOCTEXT_NAMESPACE

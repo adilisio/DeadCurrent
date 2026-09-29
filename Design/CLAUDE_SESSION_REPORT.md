@@ -179,9 +179,9 @@ Tests: the tender now has three stacks (chart, dressings, rounds) and the map te
 
 ## Known Issues / Limitations
 
-- **No human playtest.** Tests teleport and call interactions directly. Aiming with E, readability of prompt text, pacing and whether the lamp pulls you are unverified.
+- **Greybox readability.** Anthony playtested the loop and accepted it. Tests still teleport and call interactions directly, so aiming feel is not what the automation covers.
 - **Visuals are greybox.** The map is daylight only, so the amber lamp is visible but is not dramatic. A dusk or overcast pass would sell it. Flicker was not checked over time.
-- **Latent save issue (not triggered):** loading an older save destroys any `ADCItemPickup` added to the map after that save, because "missing from the save" means "taken". The POI uses only containers, so nothing is affected today. Fix before content adds pickups (track removed ids explicitly).
+- **Older pickup saves.** A save that predates a pickup no longer destroys that pickup. Taken pickups are stored by id (`RemovedPersistentIds`, save version 4). Saves from before that still remove only the boathouse pickups that existed at the time.
 - The firearm's object-type trace also hits query-only overlap volumes (damage volumes). Pre-existing; the location volume avoids it by not using collision.
 - The water is a solid walkable block (a pre-existing prototype limitation), so "wading" is walking on a slab.
 - Location display names live on the volume actors. A future map screen or multi-map setup will want a location data asset.

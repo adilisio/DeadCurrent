@@ -22,10 +22,12 @@ public:
 	/**
 	 *  1: first playable. 2: micro RPG (MapPackage, world flags owned by UDCWorldStateSubsystem,
 	 *  quest stages from data-driven quests). 3: exploration loop (DiscoveredLocations; loot
-	 *  containers use the existing world inventory arrays). Older saves still load; quest stages
-	 *  that no longer exist are dropped, and older saves have no discovered locations.
+	 *  containers use the existing world inventory arrays). 4: RemovedPersistentIds. Older saves
+	 *  still load. Quest stages that no longer exist are dropped. Saves before 3 have no
+	 *  discovered locations. Saves before 4 do not list removed actors; load treats only the
+	 *  boathouse pickups that existed at that version, and were absent from WorldActors, as taken.
 	 */
-	static constexpr int32 CurrentVersion = 3;
+	static constexpr int32 CurrentVersion = 4;
 
 	/** Short map name, e.g. Lvl_Boathouse. */
 	UPROPERTY()
@@ -100,4 +102,12 @@ public:
 	/** UDCWorldStateSubsystem discovered locations, in discovery order. */
 	UPROPERTY()
 	TArray<FName> DiscoveredLocations;
+
+	/**
+	 *  Persistent ids removed during play (a pickup the player took). Absence from WorldActors
+	 *  is not removal: an actor added to the map after the save was written is left as authored.
+	 *  Saves older than version 4 leave this empty; see UDCSaveSubsystem::ApplyWorld.
+	 */
+	UPROPERTY()
+	TArray<FName> RemovedPersistentIds;
 };

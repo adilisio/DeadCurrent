@@ -8,7 +8,7 @@ Phase 3, Exploration Loop (accepted 2026-09-28 after playtest and fixes):
 
 Notice something odd > Leave the direct route > Discover a place > Read the clues > Infer what happened > Avoid or disable the danger > Take the reward > World remembers
 
-Phase 2, Micro RPG (implemented, awaiting playtest):
+Phase 2, Micro RPG (accepted; Shore Watch was played through during the Exploration Loop playtest):
 
 NPC > Conversation > Quest > Combat or alternative > Return > Reward > World remembers
 
