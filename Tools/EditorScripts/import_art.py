@@ -522,7 +522,7 @@ def find_static_mesh(dest):
     return None
 
 
-def import_mesh(filename, dest):
+def import_mesh(filename, dest, max_size=MAX_SIZE):
     existing = find_static_mesh(dest)
     if existing:
         log(f"reuse mesh {existing.get_path_name()}")
@@ -544,9 +544,9 @@ def import_mesh(filename, dest):
     for asset_path in unreal.EditorAssetLibrary.list_assets(dest, recursive=True, include_folder=False):
         asset = unreal.load_asset(asset_path)
         if isinstance(asset, unreal.Texture):
-            asset.set_editor_property("max_texture_size", MAX_SIZE)
+            asset.set_editor_property("max_texture_size", max_size)
             unreal.EditorAssetLibrary.save_loaded_asset(asset, only_if_is_dirty=False)
-            log(f"{asset.get_name()} {asset.blueprint_get_size_x()}x{asset.blueprint_get_size_y()} cap {MAX_SIZE}")
+            log(f"{asset.get_name()} {asset.blueprint_get_size_x()}x{asset.blueprint_get_size_y()} cap {max_size}")
     log(f"imported {mesh.get_path_name()}")
     return mesh
 
@@ -559,6 +559,14 @@ def import_clue_meshes():
     import_mesh(
         r"C:\FO5_AssetLibrary\Meshy\lighthouse_logbook\model.fbx",
         "/Game/Art/Meshy/lighthouse_logbook")
+
+
+def import_relay():
+    """The relay housing. 1K: it is a small inspectable, and PlayTest's texture pool is 400 MB."""
+    src = r"C:\FO5_AssetLibrary\Meshy\relay_housing\model.fbx"
+    if not os.path.isfile(src):
+        raise RuntimeError(f"Missing {src}. Run Tools/generate_meshy.py relay_housing first.")
+    return import_mesh(src, "/Game/Art/Meshy/relay_housing", max_size=1024)
 
 
 def write_chalk_png():
@@ -662,6 +670,7 @@ def main():
     ensure_wreck_instance("MI_DC_TernU1", boat[0], grime)
     ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
     import_clue_meshes()
+    import_relay()
     ensure_chalk_board()
 
 

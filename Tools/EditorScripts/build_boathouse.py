@@ -995,6 +995,15 @@ def dress_library_clues():
     for slot in range(comp.get_num_materials()):
         comp.set_material(slot, board)
 
+    # One mesh for every relay inspect state (live, cold, empty). The coil stays its own pickup.
+    # Yaw 0 keeps the textured exterior toward the path. Yaw 180 turned a black side to the camp camera.
+    relay = actor_by_label("RelayRig")
+    wear_mesh(relay, first_mesh("/Game/Art/Meshy/relay_housing"), 40.0, (2480.0, -220.0, 20.0))
+    origin, extent = relay.get_actor_bounds(False)
+    loc = relay.get_actor_location()
+    relay.set_actor_location(
+        unreal.Vector(loc.x, loc.y, loc.z - (origin.z - extent.z) + 2.0), False, True)
+
 
 def editor_world():
     return unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
