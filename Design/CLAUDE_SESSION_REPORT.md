@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Phase 4, the RPG Layer, is an acceptance candidate. A small character build now changes what the same shore will say.
+Phase 4, the RPG Layer, is accepted. Anthony played the Engineering, Survival, and Persuasion builds on 2026-09-29 and approved them. A small character build changes what the same shore will say.
 
 Three provisional attributes (Grasp, Fieldcraft, Bearing) feed three skills (Engineering, Survival, Persuasion). One perk point chooses among Schematic Eye, Pulse Read, and Relay Ear. Those checks are ordinary shared conditions on actors and dialogue that already existed: the wreck, Mara, the relay, and the Sounder Chart. A character with nothing spent still gets the accepted Shore Watch and Survey Launch solutions. Investment adds a reading or a line.
 
@@ -158,7 +158,7 @@ Walk-in discovery, the name board, the log, the live water, pulling the leads, t
 
 - The world is still a greybox. There is no audio pass. The water is a walkable slab. Firearm traces versus query volumes are unchanged.
 - The HUD is still the temporary canvas. The build panel is a prototype, not a character creator. F10 is not a product respec.
-- Engine view modes used to steal F1–F5, and F9 used to toggle screenshot UI. Those bindings are removed in `Config/DefaultInput.ini`. Restart before the next playtest. The Win64 package cooked in this session still has the old bindings until the next cook.
+- The Win64 package cooked before the playtest still has the old F-key view modes and the unbacked prompts. The editor and `Tools\PlayTest.bat` have the fixes. Recook before using that package.
 - One save slot.
 - The historical pickup list is only the four `boat.pickup_*` ids. Gym pickups are not in it.
 - Unspent points are derived from the current pool constants. Changing a pool later is a design change, not a save migration.
@@ -190,6 +190,4 @@ Walk-in discovery, the name board, the log, the live water, pulling the leads, t
 
 ## Recommended Next Step
 
-Playtest the three builds on `Lvl_Boathouse` using the checklist above, then accept or reject the RPG Layer.
-
-Do not start Phase 5 from this session.
+Phase 5, World State: choices visibly alter locations and NPC behavior. Do not start it until that phase is opened on purpose.

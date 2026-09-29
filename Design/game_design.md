@@ -4,7 +4,7 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
-Phase 4, RPG Layer (implemented; awaiting Anthony's playtest):
+Phase 4, RPG Layer (accepted 2026-09-29 after playtest):
 
 Allocate a small build > The same shore offers a reading or a line that another build does not get > The build survives save/load
 
@@ -66,3 +66,4 @@ Record design decisions here as they are made, with the date and the reason.
 - 2026-09-28: First Exploration Loop playtest (Anthony). Kept: the pinging lamp works as a landmark, the reward is fine but wants something new, the *Tern* name and Mara's "storm" line are fine for now. Changed: (1) pulling the leads made the water disappear, because the live water's mesh was the water; the water is now a permanent surface and only the electric glow and sparks switch off. (2) The live water was a surprise; the dead fish had been placed below ground, so the ring was never visible. Fish are now pale and on the surface, the glow and sparks are stronger, and there is a chalk warning on the beach. (3) The tender now holds a novel item, the Sounder Chart. Deferred: audio and richer visuals (the clues are hard to piece together with greybox art and no sound); the plan scopes both out.
 - 2026-09-28: Exploration Loop accepted by Anthony after the second playtest pass (water persists, fish visible, novel item found).
 - 2026-09-28: Phase 4 attributes are Grasp, Fieldcraft and Bearing, each linked to one skill (Engineering, Survival, Persuasion). Not a SPECIAL clone. Effective skill = ranks + 1 if the linked attribute is at least 2, so both a skill point and a committed attribute can open a check. Pools are 3 / 2 / 1. Failed checks are hidden, matching dialogue. New wreck and Mara lines from those checks are PROVISIONAL and do not explain the Current.
+- 2026-09-29: RPG Layer accepted by Anthony after playing the Engineering, Survival, and Persuasion builds on the existing shore. Playtest fixes kept with that pass: engine view modes no longer take F1–F5 or F9, and prompts plus inspect text sit on a dark plate.

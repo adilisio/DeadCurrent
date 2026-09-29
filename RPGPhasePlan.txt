@@ -1,5 +1,7 @@
 # DEAD CURRENT — Phase 4: RPG Layer Plan
 
+Status: accepted 2026-09-29 after human playtest of the Engineering, Survival, and Persuasion builds. This document is the plan as it was executed.
+
 ## Mission
 
 Prove that the character the player builds changes how they experience the same world.
