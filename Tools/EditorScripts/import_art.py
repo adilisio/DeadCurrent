@@ -155,6 +155,8 @@ def import_texture(filename, dest_path, dest_name, kind):
         tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_WORLD)
     if not unreal.EditorAssetLibrary.save_loaded_asset(tex, only_if_is_dirty=False):
         raise RuntimeError(f"Could not save {path}")
+    mips = tex.get_num_mips() if hasattr(tex, "get_num_mips") else "n/a"
+    log(f"{dest_name} {tex.blueprint_get_size_x()}x{tex.blueprint_get_size_y()} mips={mips} srgb={tex.get_editor_property('srgb')}")
     return tex
 
 
@@ -170,6 +172,11 @@ def import_maps(spec):
         if not os.path.isfile(full):
             raise RuntimeError(f"Missing source file {full}")
         name = f"T_{spec['asset_id']}_{suffixes[key]}"
+        path = f"{dest}/{name}"
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            imported[key] = unreal.load_asset(path)
+            log(f"{spec['asset_id']} {key} reuse {path}")
+            continue
         imported[key] = import_texture(full, dest, name, kinds[key])
         log(f"{spec['asset_id']} {key} -> {dest}/{name}")
     return imported
@@ -190,15 +197,20 @@ def sample_param(material, name, uv, x, y, sampler=None):
 
 
 def triplanar(material, name, scaled_world, weights, x, sampler=None):
-    """Blend three samples of one texture parameter. weights is (wx, wy, wz), already normalized."""
+    """Blend three samples. weights is (wx, wy, wz), already normalized.
+
+    Each projection is its own parameter (Name_X/Y/Z). Three TextureSampleParameter2D
+    nodes that share one name do not all receive the instance texture: the floor uses
+    the Z sample, which stayed on the default and shaded as a mirror of the normal grain.
+    """
     wx, wy, wz = weights
     sw = scaled_world
     uv_x = append(material, mask(material, sw, "b", x, -40), mask(material, sw, "g", x, 40), x + 160, 0)
     uv_y = append(material, mask(material, sw, "r", x, 80), mask(material, sw, "b", x, 160), x + 160, 120)
     uv_z = append(material, mask(material, sw, "r", x, 200), mask(material, sw, "g", x, 280), x + 160, 240)
-    sx = sample_param(material, name, uv_x, x + 360, -80, sampler)
-    sy = sample_param(material, name, uv_y, x + 360, 80, sampler)
-    sz = sample_param(material, name, uv_z, x + 360, 240, sampler)
+    sx = sample_param(material, f"{name}_X", uv_x, x + 360, -80, sampler)
+    sy = sample_param(material, f"{name}_Y", uv_y, x + 360, 80, sampler)
+    sz = sample_param(material, f"{name}_Z", uv_z, x + 360, 240, sampler)
     return add(
         material,
         add(material, mul(material, sx, wx, x + 620, -40), mul(material, sy, wy, x + 620, 80), x + 820, 0),
@@ -227,6 +239,9 @@ def ensure_master():
         raise RuntimeError(f"Could not create {MASTER}")
     material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
     material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_OPAQUE)
+    # The normal pin is a world-space vector. A scaled cube's UV0 tangents turn a
+    # world-UV normal sample into black-and-white lighting.
+    material.set_editor_property("tangent_space_normal", False)
 
     world = make(material, unreal.MaterialExpressionWorldPosition, -1800, 0)
     tile = make(material, unreal.MaterialExpressionScalarParameter, -1800, 200)
@@ -265,14 +280,17 @@ def ensure_master():
     shaded = mul(material, color, ao_factor, 1700, -80)
 
     normal_sampler = unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL
-    # One normal sample, world-XY, so floors (the walkable ground) keep detail. Walls use the mesh normal
-    # where the up-facing weight is low: blend is in the normal pin via a flatten toward (0,0,1).
+    # One sample, world XY. On an up-facing face this unpacked vector is already a world normal.
+    # Walls keep VertexNormalWS. A single Normal parameter binds; the triplanar maps use _X/_Y/_Z.
     uv_ground = append(material, mask(material, scaled, "r", 1200, 640), mask(material, scaled, "g", 1200, 720), 1400, 680)
     normal_sample = sample_param(material, "Normal", uv_ground, 1600, 640, normal_sampler)
-    flat = make(material, unreal.MaterialExpressionConstant3Vector, 1600, 860)
-    flat.set_editor_property("constant", unreal.LinearColor(0.0, 0.0, 1.0, 1.0))
+    # The master compiles against the parameter's default texture. A color default fails a Normal sampler.
+    default_normal = unreal.load_asset("/Engine/EngineMaterials/DefaultNormal")
+    if not default_normal:
+        raise RuntimeError("Missing /Engine/EngineMaterials/DefaultNormal")
+    normal_sample.set_editor_property("texture", default_normal)
     normal_lerp = make(material, unreal.MaterialExpressionLinearInterpolate, 1900, 700)
-    connect(flat, "", normal_lerp, "A")
+    connect(normal_ws, "", normal_lerp, "A")
     connect(normal_sample, "", normal_lerp, "B")
     connect(weights[2], "", normal_lerp, "Alpha")
 
@@ -300,14 +318,19 @@ def ensure_instance(spec, textures):
             raise RuntimeError(f"Could not create {path}")
     mel = unreal.MaterialEditingLibrary
     mel.set_material_instance_parent(mi, unreal.load_asset(MASTER))
-    mel.set_material_instance_texture_parameter_value(mi, "BaseColor", textures["color"])
+
+    def set_triplanar(param, texture):
+        for suffix in ("_X", "_Y", "_Z"):
+            mel.set_material_instance_texture_parameter_value(mi, param + suffix, texture)
+
+    set_triplanar("BaseColor", textures["color"])
     mel.set_material_instance_texture_parameter_value(mi, "Normal", textures["normal"])
     packed = "orm" in textures
     mel.set_material_instance_static_switch_parameter_value(mi, "PackedORM", packed)
     if packed:
-        mel.set_material_instance_texture_parameter_value(mi, "ORM", textures["orm"])
+        set_triplanar("ORM", textures["orm"])
     else:
-        mel.set_material_instance_texture_parameter_value(mi, "Roughness", textures["rough"])
+        set_triplanar("Roughness", textures["rough"])
     mel.set_material_instance_scalar_parameter_value(mi, "TileSizeCm", spec["tile_cm"])
     mel.set_material_instance_scalar_parameter_value(mi, "Metallic", spec["metallic"])
     if "metal" in textures:

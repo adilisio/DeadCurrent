@@ -1016,13 +1016,18 @@ namespace DCReviewCapture
 				{
 					continue;
 				}
+				if (Primitive->bOnlyOwnerSee || Primitive->bOwnerNoSee)
+				{
+					continue;
+				}
 				const int32 MaterialCount = FMath::Max(Primitive->GetNumMaterials(), 1);
 				for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
 				{
 					UMaterialInterface* Material = Primitive->GetMaterial(MaterialIndex);
 					if (IsDefaultOrGridMaterial(Material))
 					{
-						NoteUnique(Run.DefaultMaterials, Material ? Material->GetPathName() : TEXT("(null material)"));
+						const FString Who = FString::Printf(TEXT("%s (%s)"), *Material->GetPathName(), *ActorIt->GetActorLabel());
+						NoteUnique(Run.DefaultMaterials, Who);
 						continue;
 					}
 					if (!Material)
