@@ -126,7 +126,7 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 - Raw FBX/glTF/texture sets: `Tools/EditorScripts/import_art.py`, re-runnable, registered first in `Tools\RebuildContent.bat`. A second run replaces textures in place (27 surface textures before and after).
 - Destination: `/Game/Art/<Source>/<AssetId>/` (`PolyHaven`, `AmbientCG`, and later `Megascans`, `Meshy`, `Freesound`). Names use `T_` / `MI_` / `SM_`.
 - `M_DC_Surface` is a default-lit master. Base color and roughness are triplanar in world space so a scaled greybox cube does not stretch them. `TileSizeCm` is the repeat, in centimeters. `PackedORM` uses an ARM texture (R occlusion, G roughness, B metal), which matches the Poly Haven layout. Unpacked sets use a roughness texture and the `Metallic` scalar. The normal map is sampled in world XY and faded out on vertical faces, so floors keep detail and walls keep the mesh normal.
-- The boathouse script resolves `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, and `MI_DC_Steel` before it saves. Sand, mud, coast rock, and land rock are on the ground, curbs, ridge, bluffs, and beach stones. Plaster, concrete, and steel are on the boathouse and the lookout shed. Triplanar texture parameters are `Name_X`, `Name_Y`, and `Name_Z` so each projection receives the instance texture. The normal pin is a world-space vector.
+- The boathouse script resolves `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, `MI_DC_Steel`, `MI_DC_RustPaint`, `MI_DC_Gravel`, and the two Tern instances before it saves. Sand is the floor. Gravel is the waterline curb. Coast rock is the beach and the breakwaters. Land rock is the same coast-rock maps, tinted darker, on the ridge and bluffs. `Tint` on `M_DC_Surface` is the palette control. Boathouse and shed walls are corrugated steel (metallic 0.35 so the sheet is not a black mirror). Concrete sills and rust-paint trim sit on that. The *Tern* hull uses `M_DC_Wreck`: the Fab diffuse maps, a `Tint`, and a `GrimeAmount` blend of rusty painted metal. Triplanar texture parameters are `Name_X`, `Name_Y`, and `Name_Z` so each projection receives the instance texture. The normal pin is a world-space vector. The surface master is two-sided so a breakwater seen from the basin is not a black backface.
 - Fab meshes are imported by `dress_structures.py` when they are placed. The *Tern* (`motorboat_wreck`) is in the art level.
 - Baseline screenshots are not in this step. `UnrealEditor-Cmd` crashes in `take_high_res_screenshot` (null RHI, and again with `-AllowCommandletRendering`). The six cameras are listed in `Tools/EditorScripts/capture_presentation.py`. They get captured from the game window at the start of the mood task, before the lights change.
 
@@ -143,16 +143,19 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | Asset | Source path | License | Author |
 | --- | --- | --- | --- |
 | `T_coast_rocks_01_*`, `MI_DC_CoastRock` | `CC0/polyhaven/coast_rocks_01` | CC0 | Rob Tuytel, Rico Cilliers |
-| `T_coast_land_rocks_02_*`, `MI_DC_LandRock` | `CC0/polyhaven/coast_land_rocks_02` | CC0 | Rob Tuytel, Rico Cilliers |
+| `MI_DC_LandRock` | `CC0/polyhaven/coast_rocks_01` (tinted down) | CC0 | Rob Tuytel, Rico Cilliers |
 | `T_coast_sand_02_*`, `MI_DC_CoastSand` | `CC0/polyhaven/coast_sand_02` | CC0 | Rob Tuytel |
 | `T_brown_mud_02_*`, `MI_DC_Mud` | `CC0/polyhaven/brown_mud_02` | CC0 | Rob Tuytel |
 | `T_chipped_concrete_*`, `MI_DC_Concrete` | `CC0/polyhaven/chipped_concrete` | CC0 | Amal Kumar |
 | `T_blue_plaster_weathered_*`, `MI_DC_Plaster` | `CC0/polyhaven/blue_plaster_weathered` | CC0 | Amal Kumar |
 | `T_CorrugatedSteel009_*`, `MI_DC_Steel` | `CC0/ambientcg/CorrugatedSteel009` | CC0 | ambientCG |
+| `T_rusty_painted_metal_*`, `MI_DC_RustPaint` | `CC0/polyhaven/rusty_painted_metal` | CC0 | Amal Kumar |
+| `T_Gravel008_*`, `MI_DC_Gravel` | `CC0/ambientcg/Gravel008` | CC0 | ambientCG |
+| `T_motorboat_u1_BC`, `T_motorboat_u2_BC`, `MI_DC_TernU1`, `MI_DC_TernU2` | `Fab/motorboat_wreck/textures` | Fab Standard | Anthony's Fab account |
 | `dead_quiver_branch_01` | `CC0/polyhaven/dead_quiver_branch_01` | CC0 | Greg Zaal, Jenelle van Heerden |
 | `dead_tree_trunk` | `CC0/polyhaven/dead_tree_trunk` | CC0 | Rob Tuytel |
 | `tree_stump_01` | `CC0/polyhaven/tree_stump_01` | CC0 | Rob Tuytel |
 | `wooden_crate_01`, `Lantern_01`, `hanging_industrial_lamp`, `can_rusted` | `CC0/polyhaven/` | CC0 | Poly Haven |
 | `tires2` (*Tern* and the tender mesh) | `Fab/motorboat_wreck` | Fab Standard | Anthony's Fab account |
 
-URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 1).
+URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 0.35).

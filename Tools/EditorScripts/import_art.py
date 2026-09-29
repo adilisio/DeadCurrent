@@ -21,20 +21,24 @@ SURFACES = [
          author="Rob Tuytel, Rico Cilliers",
          url="https://polyhaven.com/a/coast_rocks_01",
          instance="MI_DC_CoastRock", tile_cm=180.0, metallic=0.0,
+         tint=(0.62, 0.68, 0.74),
          maps=dict(color="coast_rocks_01_diff_2k.jpg", normal="coast_rocks_01_nor_dx_2k.jpg",
                    orm="coast_rocks_01_arm_2k.jpg")),
-    dict(source="PolyHaven", asset_id="coast_land_rocks_02",
-         root=os.path.join(LIBRARY, "polyhaven", "coast_land_rocks_02", "textures"),
+    # Ridge and bluffs use the same cold shore rock, tinted down. The warm land-rock photo stayed brown.
+    dict(source="PolyHaven", asset_id="coast_rocks_01",
+         root=os.path.join(LIBRARY, "polyhaven", "coast_rocks_01", "textures"),
          author="Rob Tuytel, Rico Cilliers",
-         url="https://polyhaven.com/a/coast_land_rocks_02",
-         instance="MI_DC_LandRock", tile_cm=200.0, metallic=0.0,
-         maps=dict(color="coast_land_rocks_02_diff_2k.jpg", normal="coast_land_rocks_02_nor_dx_2k.jpg",
-                   orm="coast_land_rocks_02_arm_2k.jpg")),
+         url="https://polyhaven.com/a/coast_rocks_01",
+         instance="MI_DC_LandRock", tile_cm=240.0, metallic=0.0,
+         tint=(0.38, 0.44, 0.50),
+         maps=dict(color="coast_rocks_01_diff_2k.jpg", normal="coast_rocks_01_nor_dx_2k.jpg",
+                   orm="coast_rocks_01_arm_2k.jpg")),
     dict(source="PolyHaven", asset_id="coast_sand_02",
          root=os.path.join(LIBRARY, "polyhaven", "coast_sand_02"),
          author="Rob Tuytel",
          url="https://polyhaven.com/a/coast_sand_02",
          instance="MI_DC_CoastSand", tile_cm=140.0, metallic=0.0,
+         tint=(0.52, 0.58, 0.64),
          maps=dict(color="coast_sand_02_diff_2k.jpg", normal="coast_sand_02_nor_dx_2k.jpg",
                    rough="coast_sand_02_rough_2k.jpg", ao="coast_sand_02_ao_2k.jpg")),
     dict(source="PolyHaven", asset_id="brown_mud_02",
@@ -62,13 +66,39 @@ SURFACES = [
          root=os.path.join(LIBRARY, "ambientcg", "CorrugatedSteel009"),
          author="ambientCG",
          url="https://ambientcg.com/a/CorrugatedSteel009",
-         instance="MI_DC_Steel", tile_cm=80.0, metallic=1.0,
+         instance="MI_DC_Steel", tile_cm=80.0, metallic=0.35,
+         tint=(0.72, 0.78, 0.84),
          maps=dict(color="CorrugatedSteel009_2K-JPG_Color.jpg",
                    normal="CorrugatedSteel009_2K-JPG_NormalDX.jpg",
                    rough="CorrugatedSteel009_2K-JPG_Roughness.jpg",
                    ao="CorrugatedSteel009_2K-JPG_AmbientOcclusion.jpg",
                    metal="CorrugatedSteel009_2K-JPG_Metalness.jpg")),
+    dict(source="PolyHaven", asset_id="rusty_painted_metal",
+         root=os.path.join(LIBRARY, "polyhaven", "rusty_painted_metal"),
+         author="Amal Kumar",
+         url="https://polyhaven.com/a/rusty_painted_metal",
+         instance="MI_DC_RustPaint", tile_cm=90.0, metallic=0.25,
+         tint=(0.70, 0.66, 0.62),
+         maps=dict(color="rusty_painted_metal_diff_2k.jpg", normal="rusty_painted_metal_nor_dx_2k.jpg",
+                   rough="rusty_painted_metal_rough_2k.jpg", ao="rusty_painted_metal_ao_2k.jpg")),
+    dict(source="AmbientCG", asset_id="Gravel008",
+         root=os.path.join(LIBRARY, "ambientcg", "Gravel008"),
+         author="ambientCG",
+         url="https://ambientcg.com/a/Gravel008",
+         instance="MI_DC_Gravel", tile_cm=70.0, metallic=0.0,
+         tint=(0.58, 0.62, 0.66),
+         maps=dict(color="Gravel008_2K-JPG_Color.jpg", normal="Gravel008_2K-JPG_NormalDX.jpg",
+                   rough="Gravel008_2K-JPG_Roughness.jpg", ao="Gravel008_2K-JPG_AmbientOcclusion.jpg")),
 ]
+
+# The Tern's diffuse maps. The FBX import only wrote material stubs; these JPEGs are the paint.
+BOAT_TEXTURES = r"C:\FO5_AssetLibrary\Fab\motorboat_wreck\textures"
+BOAT_DEST = "/Game/Art/Fab/motorboat_wreck"
+BOAT_MAPS = (
+    ("biely_cln_u1_v1_diffuse-denoise.jpeg", "T_motorboat_u1_BC"),
+    ("biely_cln_u2_v1_diffuse-sharpen.jpeg", "T_motorboat_u2_BC"),
+)
+WRECK_MASTER = ENV_MATERIALS + "/M_DC_Wreck"
 
 # Paths build_boathouse.py is allowed to resolve. Keep this list and the script's check in step.
 SURFACE_INSTANCES = [f"{ENV_MATERIALS}/{spec['instance']}" for spec in SURFACES]
@@ -278,6 +308,12 @@ def ensure_master():
     ao_lift.set_editor_property("r", 1.0)
     ao_factor = static_switch(material, "PackedORM", False, ao, ao_lift, 1500, 0)
     shaded = mul(material, color, ao_factor, 1700, -80)
+    tint = make(material, unreal.MaterialExpressionVectorParameter, 1900, -200)
+    tint.set_editor_property("parameter_name", "Tint")
+    tint.set_editor_property("default_value", unreal.LinearColor(1.0, 1.0, 1.0, 1.0))
+    shaded = mul(material, shaded, tint, 2100, -80)
+    # Bluff and breakwater faces are seen from both sides. A culled backface reads as a black wall.
+    material.set_editor_property("two_sided", True)
 
     normal_sampler = unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL
     # One sample, world XY. On an up-facing face this unpacked vector is already a world normal.
@@ -293,12 +329,15 @@ def ensure_master():
     connect(normal_ws, "", normal_lerp, "A")
     connect(normal_sample, "", normal_lerp, "B")
     connect(weights[2], "", normal_lerp, "Alpha")
+    # A backface stays two-sided, and its normal flips so the basin side of a breakwater is not unlit black.
+    facing = make(material, unreal.MaterialExpressionTwoSidedSign, 2100, 820)
+    normal_out = mul(material, normal_lerp, facing, 2300, 720)
 
     mel = unreal.MaterialEditingLibrary
     mel.connect_material_property(shaded, "", unreal.MaterialProperty.MP_BASE_COLOR)
     mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
     mel.connect_material_property(metal, "", unreal.MaterialProperty.MP_METALLIC)
-    mel.connect_material_property(normal_lerp, "", unreal.MaterialProperty.MP_NORMAL)
+    mel.connect_material_property(normal_out, "", unreal.MaterialProperty.MP_NORMAL)
     mel.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
         raise RuntimeError(f"Could not save {MASTER}")
@@ -333,15 +372,144 @@ def ensure_instance(spec, textures):
         set_triplanar("Roughness", textures["rough"])
     mel.set_material_instance_scalar_parameter_value(mi, "TileSizeCm", spec["tile_cm"])
     mel.set_material_instance_scalar_parameter_value(mi, "Metallic", spec["metallic"])
-    if "metal" in textures:
-        # The master uses the scalar for unpacked maps. Steel's metalness map is stored for a later
-        # switch; the scalar stays at 1 so the sheet reads as metal until that sample is wired.
-        pass
+    tint = spec.get("tint", (1.0, 1.0, 1.0))
+    mel.set_material_instance_vector_parameter_value(
+        mi, "Tint", unreal.LinearColor(tint[0], tint[1], tint[2], 1.0))
     mel.update_material_instance(mi)
     if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
         raise RuntimeError(f"Could not save {path}")
     log(f"instance {path} packed={packed}")
     return path
+
+
+def capped_jpeg(filename, dest_name):
+    """The Fab JPEGs are 8192. Write a 2048 copy and import that, so the asset size is the cap."""
+    src = os.path.join(BOAT_TEXTURES, filename)
+    if not os.path.isfile(src):
+        raise RuntimeError(f"Missing {src}")
+    out_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "Saved", "TernImport"))
+    os.makedirs(out_dir, exist_ok=True)
+    dest = os.path.join(out_dir, dest_name + ".jpg")
+    script = (
+        "from PIL import Image\n"
+        "import sys\n"
+        "im = Image.open(sys.argv[1])\n"
+        "im.thumbnail((int(sys.argv[3]), int(sys.argv[3])), Image.Resampling.LANCZOS)\n"
+        "im.convert('RGB').save(sys.argv[2], 'JPEG', quality=90)\n"
+        "print('%dx%d' % im.size)\n"
+    )
+    import subprocess
+    result = subprocess.run(
+        ["py", "-3", "-c", script, src, dest, str(MAX_SIZE)],
+        capture_output=True, text=True, check=False)
+    if result.returncode != 0 or not os.path.isfile(dest):
+        raise RuntimeError(f"Could not downscale {filename}: {result.stderr.strip()}")
+    log(f"{dest_name} downscaled {result.stdout.strip()} from {filename}")
+    return dest
+
+
+def import_boat_maps():
+    if not unreal.EditorAssetLibrary.does_directory_exist(BOAT_DEST):
+        unreal.EditorAssetLibrary.make_directory(BOAT_DEST)
+    textures = []
+    for filename, dest_name in BOAT_MAPS:
+        path = f"{BOAT_DEST}/{dest_name}"
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            existing = unreal.load_asset(path)
+            if existing and existing.blueprint_get_size_x() <= MAX_SIZE and existing.blueprint_get_size_y() <= MAX_SIZE:
+                log(f"{dest_name} in-editor {existing.blueprint_get_size_x()}x{existing.blueprint_get_size_y()} "
+                    f"max_texture_size={existing.get_editor_property('max_texture_size')}")
+                textures.append(existing)
+                continue
+            if not unreal.EditorAssetLibrary.delete_asset(path):
+                raise RuntimeError(f"Could not replace {path}")
+        capped = capped_jpeg(filename, dest_name)
+        tex = import_texture(capped, BOAT_DEST, dest_name, "color")
+        log(f"{dest_name} in-editor {tex.blueprint_get_size_x()}x{tex.blueprint_get_size_y()} "
+            f"max_texture_size={tex.get_editor_property('max_texture_size')}")
+        textures.append(tex)
+    return textures
+
+
+def ensure_wreck_master():
+    if unreal.EditorAssetLibrary.does_asset_exist(WRECK_MASTER):
+        if not unreal.EditorAssetLibrary.delete_asset(WRECK_MASTER):
+            raise RuntimeError(f"Could not replace {WRECK_MASTER}")
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Wreck", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {WRECK_MASTER}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    material.set_editor_property("two_sided", True)
+
+    uv = make(material, unreal.MaterialExpressionTextureCoordinate, -900, 0)
+    diffuse = sample_param(material, "HullDiffuse", uv, -520, -40)
+    tint = make(material, unreal.MaterialExpressionVectorParameter, -520, 220)
+    tint.set_editor_property("parameter_name", "Tint")
+    tint.set_editor_property("default_value", unreal.LinearColor(0.42, 0.46, 0.48, 1.0))
+    tinted = mul(material, diffuse, tint, -160, 80)
+
+    world = make(material, unreal.MaterialExpressionWorldPosition, -900, 420)
+    tile = make(material, unreal.MaterialExpressionScalarParameter, -900, 580)
+    tile.set_editor_property("parameter_name", "GrimeTileCm")
+    tile.set_editor_property("default_value", 80.0)
+    scaled = div(material, world, tile, -560, 500)
+    grime_uv = append(
+        material,
+        mask(material, scaled, "r", -320, 440),
+        mask(material, scaled, "g", -320, 520),
+        -80, 480)
+    grime = sample_param(material, "Grime", grime_uv, 180, 420)
+    amount = make(material, unreal.MaterialExpressionScalarParameter, 180, 680)
+    amount.set_editor_property("parameter_name", "GrimeAmount")
+    amount.set_editor_property("default_value", 0.55)
+    blend = make(material, unreal.MaterialExpressionLinearInterpolate, 520, 160)
+    connect(tinted, "", blend, "A")
+    connect(grime, "", blend, "B")
+    connect(amount, "", blend, "Alpha")
+
+    rough = make(material, unreal.MaterialExpressionScalarParameter, 520, 420)
+    rough.set_editor_property("parameter_name", "Roughness")
+    rough.set_editor_property("default_value", 0.78)
+    metal = make(material, unreal.MaterialExpressionScalarParameter, 520, 560)
+    metal.set_editor_property("parameter_name", "Metallic")
+    metal.set_editor_property("default_value", 0.1)
+
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(blend, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.connect_material_property(metal, "", unreal.MaterialProperty.MP_METALLIC)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {WRECK_MASTER}")
+    log(f"created {WRECK_MASTER}")
+    return material
+
+
+def ensure_wreck_instance(name, diffuse, grime):
+    path = f"{ENV_MATERIALS}/{name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        mi = unreal.load_asset(path)
+    else:
+        mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            name, ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        if not mi:
+            raise RuntimeError(f"Could not create {path}")
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(mi, unreal.load_asset(WRECK_MASTER))
+    mel.set_material_instance_texture_parameter_value(mi, "HullDiffuse", diffuse)
+    mel.set_material_instance_texture_parameter_value(mi, "Grime", grime)
+    # Faded maritime paint: dark, cool, and more grime than hull. Anthony tunes these.
+    mel.set_material_instance_vector_parameter_value(mi, "Tint", unreal.LinearColor(0.34, 0.38, 0.40, 1.0))
+    mel.set_material_instance_scalar_parameter_value(mi, "GrimeAmount", 0.62)
+    mel.set_material_instance_scalar_parameter_value(mi, "GrimeTileCm", 70.0)
+    mel.set_material_instance_scalar_parameter_value(mi, "Roughness", 0.82)
+    mel.set_material_instance_scalar_parameter_value(mi, "Metallic", 0.08)
+    mel.update_material_instance(mi)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    log(f"instance {path}")
+    return mi
 
 
 def main():
@@ -363,6 +531,13 @@ def main():
         if not unreal.load_asset(path):
             raise RuntimeError(f"Could not resolve {path}")
     log(f"surface textures before={before} after={after}; instances={len(made)}")
+    boat = import_boat_maps()
+    ensure_wreck_master()
+    grime = unreal.load_asset("/Game/Art/PolyHaven/rusty_painted_metal/T_rusty_painted_metal_BC")
+    if not grime:
+        raise RuntimeError("Missing rusty_painted_metal base color for the Tern grime blend")
+    ensure_wreck_instance("MI_DC_TernU1", boat[0], grime)
+    ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
 
 
 main()

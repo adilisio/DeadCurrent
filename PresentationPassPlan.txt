@@ -341,6 +341,7 @@ Launch with `Tools\PlayTest.bat`. For a clean run, delete `Saved\SaveGames\DeadC
 These stay open. This pass does not decide them.
 
 - Is the cold grade too blue, too grey, or about right?
+- Is the shore palette cold enough? Ridge, bluffs, sand, and the waterline gravel are material-instance tints on `M_DC_Surface` (`Tint` on `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Gravel`, `MI_DC_CoastRock`). The *Tern* weathering is `Tint` and `GrimeAmount` on `MI_DC_TernU1` / `MI_DC_TernU2`.
 - What does Maritime Authority hardware look like, if it ever gets a mark? Props stay unlabeled.
 - What does Mara look like, beyond a survivor jacket on the mannequin?
 - The *Tern*'s walkable interior is still the blockout, because the motorboat mesh must not move the clues. If the mesh and the deck disagree, which one wins later?

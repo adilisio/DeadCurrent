@@ -205,14 +205,17 @@ def place_tern(mesh):
         yaw = 90.0
     elif axes[2] >= axes[0] and axes[2] >= axes[1]:
         yaw = 90.0
-    scale = 1100.0 / max(longest, 1.0)
+    scale_xy = 1100.0 / max(longest, 1.0)
+    # Keep the mesh as the outer hull, below the wheelhouse clues. Full height buried the deck cameras.
+    scale_z = 140.0 / max(axes[2], 1.0)
     # Hull frame origin (-1500, -760). Bow toward y=-300, stern toward the water.
     actor = actors.spawn_actor_from_class(
         unreal.StaticMeshActor, unreal.Vector(-1500.0, -830.0, 40.0),
         unreal.Rotator(pitch=-4.0, yaw=yaw, roll=-3.0))
-    actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+    actor.set_actor_scale3d(unreal.Vector(scale_xy, scale_xy, scale_z))
     actor.set_actor_label("StructureDress_Tern")
     finish(actor, mesh)
+    assign_tern_materials(actor.get_component_by_class(unreal.StaticMeshComponent), mesh)
     origin, bounds_extent = actor.get_actor_bounds(False)
     loc = actor.get_actor_location()
     actor.set_actor_location(unreal.Vector(
@@ -220,8 +223,23 @@ def place_tern(mesh):
         loc.y + (-830.0 - origin.y),
         loc.z + (5.0 - (origin.z - bounds_extent.z))), False, True)
     origin, bounds_extent = actor.get_actor_bounds(False)
-    log(f"Tern center {origin} extent {bounds_extent} yaw {yaw} mesh {axes}")
+    log(f"Tern center {origin} extent {bounds_extent} yaw {yaw} mesh {axes} scale {(scale_xy, scale_xy, scale_z)}")
     return actor
+
+
+def assign_tern_materials(comp, mesh):
+    u1 = unreal.load_asset("/Game/Environment/Materials/MI_DC_TernU1")
+    u2 = unreal.load_asset("/Game/Environment/Materials/MI_DC_TernU2")
+    if not u1 or not u2:
+        raise RuntimeError("Missing MI_DC_TernU1/U2. Run import_art.py first.")
+    slots = mesh.get_editor_property("static_materials") if mesh else []
+    for index in range(comp.get_num_materials()):
+        name = ""
+        if index < len(slots):
+            name = str(slots[index].get_editor_property("material_slot_name")).lower()
+        chosen = u2 if "u2" in name else u1
+        comp.set_material(index, chosen)
+        log(f"Tern slot {index} {name or '(unnamed)'} -> {chosen.get_name()}")
 
 
 def main():

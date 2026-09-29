@@ -32,6 +32,10 @@ REQUIRED_SURFACES = [
     "/Game/Environment/Materials/MI_DC_Concrete",
     "/Game/Environment/Materials/MI_DC_Plaster",
     "/Game/Environment/Materials/MI_DC_Steel",
+    "/Game/Environment/Materials/MI_DC_RustPaint",
+    "/Game/Environment/Materials/MI_DC_Gravel",
+    "/Game/Environment/Materials/MI_DC_TernU1",
+    "/Game/Environment/Materials/MI_DC_TernU2",
 ]
 CUBE = "/Game/LevelPrototyping/Meshes/SM_Cube"
 MAT_FLOOR = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray"
@@ -229,8 +233,9 @@ def setup_inspectable(actor, display_name, description, variants=(), action=None
     return actor
 
 
-def inspectable(label, folder, center, size, display_name, description, variants=(), action=None, duration=None):
-    actor = box(label, folder, center, size, material=interactable_mat, actor_class=unreal.DCInspectableActor)
+def inspectable(label, folder, center, size, display_name, description, variants=(), action=None, duration=None,
+                material=None):
+    actor = box(label, folder, center, size, material=material or interactable_mat, actor_class=unreal.DCInspectableActor)
     return setup_inspectable(actor, display_name, description, variants, action, duration)
 
 
@@ -297,7 +302,7 @@ def set_persistent_id(actor, persistent_id):
     log(f"id {actor.get_actor_label()}={persistent_id}")
 
 
-def door(label, folder, hinge, width, height, thickness, display_name, persistent_id):
+def door(label, folder, hinge, width, height, thickness, display_name, persistent_id, material=None):
     actor = actors.spawn_actor_from_class(
         unreal.DCDoor, unreal.Vector(*hinge), unreal.Rotator(pitch=0.0, yaw=0.0, roll=0.0))
     actor.set_actor_label(label)
@@ -305,7 +310,7 @@ def door(label, folder, hinge, width, height, thickness, display_name, persisten
     actor.set_editor_property("display_name", unreal.Text(display_name))
     leaf = actor.get_editor_property("door_mesh")
     leaf.set_static_mesh(cube_mesh)
-    leaf.set_material(0, interactable_mat)
+    leaf.set_material(0, material or interactable_mat)
     scale = unreal.Vector(thickness / CUBE_SIZE.x, width / CUBE_SIZE.y, height / CUBE_SIZE.z)
     leaf.set_editor_property("relative_scale3d", scale)
     leaf.set_editor_property("relative_location", unreal.Vector(
@@ -502,17 +507,31 @@ def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0):
         unreal.Vector(loc.x + (center[0] - origin.x), loc.y + (center[1] - origin.y), loc.z + (center[2] - origin.z)),
         False, True)
     comp.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
+    assign_tern_materials(comp, mesh)
     log(f"{actor.get_actor_label()} wears {mesh.get_name()} scale={scale:.3f}")
+
+
+def assign_tern_materials(comp, mesh):
+    """Both Tern slots: faded paint plus the rust-paint grime blend. Slot names from the FBX pick u1 or u2."""
+    u1 = unreal.load_asset("/Game/Environment/Materials/MI_DC_TernU1")
+    u2 = unreal.load_asset("/Game/Environment/Materials/MI_DC_TernU2")
+    slots = mesh.get_editor_property("static_materials") if mesh else []
+    for index in range(comp.get_num_materials()):
+        name = ""
+        if index < len(slots):
+            name = str(slots[index].get_editor_property("material_slot_name")).lower()
+        comp.set_material(index, u2 if "u2" in name else u1)
 
 
 def build_ground():
     folder = "Ground"
     sand = surface("MI_DC_CoastSand")
-    mud = surface("MI_DC_Mud")
+    gravel = surface("MI_DC_Gravel")
     lake = material_instance("MI_DC_OpenLake", MAT_FLAT, {"Base Color": (0.012, 0.022, 0.028, 1.0)})
     block("Floor", folder, -200, 3600, -600, 1800, -50, 0, material=sand)
-    block("ShoreCurb", folder, -200, 3600, -600, -580, 0, 18, material=mud)
-    block("Water", folder, -200, 3600, -1400, -600, -80, -10, material=lake)
+    block("ShoreCurb", folder, -200, 3600, -600, -580, 0, 18, material=gravel)
+    # A thin sheet. A deep slab's vertical face read as an untextured black wall at the far breakwater.
+    block("Water", folder, -200, 3600, -1400, -600, -16, -6, material=lake)
 
     start = actors.spawn_actor_from_class(
         unreal.PlayerStart, unreal.Vector(220.0, 0.0, 100.0),
@@ -526,29 +545,31 @@ def build_boathouse():
     wall_h = 280
     door_h = 210
     door_half = 50
-    plaster = surface("MI_DC_Plaster")
     steel = surface("MI_DC_Steel")
     concrete = surface("MI_DC_Concrete")
+    rust = surface("MI_DC_RustPaint")
 
+    # Corrugated walls. Concrete sills and a rust-paint lintel are the base and trim.
     # Back (west) wall with a window: the survey launch's mast and lamp show through it (Exploration Loop).
-    block("Wall_Back_North", folder, 0, 20, -110, 320, 0, wall_h, material=plaster)
-    block("Wall_Back_South", folder, 0, 20, -320, -250, 0, wall_h, material=plaster)
-    block("Wall_Back_Sill", folder, 0, 20, -250, -110, 0, 100, material=plaster)
-    block("Wall_Back_Head", folder, 0, 20, -250, -110, 230, wall_h, material=plaster)
-    block("Wall_Right", folder, 0, 720, 300, 320, 0, wall_h, material=plaster)
-    block("Ceiling", folder, 0, 720, -320, 320, wall_h, wall_h + 20, material=plaster)
+    block("Wall_Back_North", folder, 0, 20, -110, 320, 0, wall_h, material=steel)
+    block("Wall_Back_South", folder, 0, 20, -320, -250, 0, wall_h, material=steel)
+    block("Wall_Back_Sill", folder, 0, 20, -250, -110, 0, 100, material=concrete)
+    block("Wall_Back_Head", folder, 0, 20, -250, -110, 230, wall_h, material=steel)
+    block("Wall_Right", folder, 0, 720, 300, 320, 0, wall_h, material=steel)
+    block("Ceiling", folder, 0, 720, -320, 320, wall_h, wall_h + 20, material=steel)
 
     # Shore-side wall with a window looking at the lake.
-    block("Wall_Left_West", folder, 0, 250, -320, -300, 0, wall_h, material=plaster)
-    block("Wall_Left_East", folder, 400, 720, -320, -300, 0, wall_h, material=plaster)
+    block("Wall_Left_West", folder, 0, 250, -320, -300, 0, wall_h, material=steel)
+    block("Wall_Left_East", folder, 400, 720, -320, -300, 0, wall_h, material=steel)
     block("Wall_Left_Sill", folder, 250, 400, -320, -300, 0, 110, material=concrete)
-    block("Wall_Left_Head", folder, 250, 400, -320, -300, 200, wall_h, material=plaster)
+    block("Wall_Left_Head", folder, 250, 400, -320, -300, 200, wall_h, material=steel)
 
     dx = 700
-    block("Wall_Front_Left", folder, dx, dx + 20, -320, -door_half, 0, wall_h, material=plaster)
-    block("Wall_Front_Right", folder, dx, dx + 20, door_half, 320, 0, wall_h, material=plaster)
-    block("Wall_Front_Lintel", folder, dx, dx + 20, -door_half, door_half, door_h, wall_h, material=steel)
-    door("Door", folder, (dx + 10, -door_half, 0), door_half * 2 - 2, door_h - 2, 6, "Boathouse Door", "boat.door")
+    block("Wall_Front_Left", folder, dx, dx + 20, -320, -door_half, 0, wall_h, material=steel)
+    block("Wall_Front_Right", folder, dx, dx + 20, door_half, 320, 0, wall_h, material=steel)
+    block("Wall_Front_Lintel", folder, dx, dx + 20, -door_half, door_half, door_h, wall_h, material=rust)
+    door("Door", folder, (dx + 10, -door_half, 0), door_half * 2 - 2, door_h - 2, 6, "Boathouse Door", "boat.door",
+         material=rust)
 
     bench_top = 75
     block("Workbench", folder, 400, 520, 160, 260, 0, bench_top, material=concrete)
@@ -566,10 +587,12 @@ def build_boathouse():
     inspectable("Notice", folder, (30, 0, 150), (6, 80, 90), "Faded notice",
                 "GREAT LAKES MARITIME AUTHORITY. Storm protocol. Stay inland during Current events. The date is torn off.")
     inspectable("WindowSill", folder, (325, -270, 150), (140, 16, 8), "Lake window",
-                "The water sits too still. No birds. A hull lists in the shallows, paint long gone.")
+                "The water sits too still. No birds. A hull lists in the shallows, paint long gone.",
+                material=steel)
     inspectable("WestWindow", folder, (34, -180, 104), (28, 130, 8), "West window",
                 "West along the shore, a mast leans out over the water. A light at the top of it comes and goes. "
                 "Nothing out there should still have power.",
+                material=steel,
                 variants=[
                     variant("The survey launch's mast, leaning over the water. The lamp at the top is still flickering, "
                             "with nothing left to power it.",
@@ -641,10 +664,9 @@ def build_cover_and_npc():
     block("RidgeEnd", folder, 3380, 3480, 550, 1500, 0, 280, material=surface("MI_DC_LandRock"))
 
     folder = "NPC"
-    plaster = surface("MI_DC_Plaster")
     steel = surface("MI_DC_Steel")
-    block("Shed_Back", folder, 3040, 3220, 1480, 1500, 0, 220, material=plaster)
-    block("Shed_Left", folder, 3040, 3060, 1180, 1500, 0, 220, material=plaster)
+    block("Shed_Back", folder, 3040, 3220, 1480, 1500, 0, 220, material=steel)
+    block("Shed_Left", folder, 3040, 3060, 1180, 1500, 0, 220, material=steel)
     block("Shed_Roof", folder, 3040, 3220, 1180, 1500, 220, 240, material=steel)
 
     npc = actors.spawn_actor_from_class(
@@ -673,18 +695,21 @@ def build_west_shore():
     """Ground for the Exploration Loop POI, west of (behind) the boathouse."""
     folder = "WestShore"
     rock = surface("MI_DC_CoastRock")
-    mud = surface("MI_DC_Mud")
+    gravel = surface("MI_DC_Gravel")
     lake = unreal.load_asset("/Game/Environment/Materials/MI_DC_OpenLake")
     block("Floor_West", folder, -3200, -200, -600, 1800, -50, 0, material=rock)
-    # The curb stops where the launch's hull crosses the shoreline.
-    block("ShoreCurb_West_A", folder, -3200, -1720, -600, -580, 0, 18, material=mud)
-    block("ShoreCurb_West_B", folder, -1280, -200, -600, -580, 0, 18, material=mud)
-    block("Water_West", folder, -3200, -200, -2400, -600, -80, -10, material=lake)
+    # The curb stops where the launch's hull crosses the shoreline. Gravel is the waterline shingle.
+    block("ShoreCurb_West_A", folder, -3200, -1720, -600, -580, 0, 18, material=gravel)
+    block("ShoreCurb_West_B", folder, -1280, -200, -600, -580, 0, 18, material=gravel)
+    block("Water_West", folder, -3200, -200, -2400, -600, -16, -6, material=lake)
     # Keep the player on the map: a bluff to the west and north, rocks around the far water.
     block("Bluff_West", folder, -3240, -3200, -2440, 1840, -80, 420, material=surface("MI_DC_LandRock"))
     block("Bluff_North", folder, -3200, -200, 1800, 1840, -50, 300, material=surface("MI_DC_LandRock"))
     block("Breakwater_South", folder, -3200, -200, -2440, -2400, -80, 140, material=rock)
     block("Breakwater_East", folder, -220, -200, -2400, -1400, -80, 140, material=rock)
+    # Basin-facing skins. The outer blocks' inner sides were reading as an untextured black wall.
+    block("Breakwater_South_Inner", folder, -3200, -220, -2360, -2320, -20, 150, material=rock)
+    block("Breakwater_East_Inner", folder, -300, -240, -2360, -1400, -20, 150, material=rock)
     # Beach stones.
     block("Boulder_A", folder, -2250, -2080, -520, -400, 0, 70, material=rock)
     block("Boulder_B", folder, -880, -760, -560, -470, 0, 45, material=rock)
@@ -701,8 +726,10 @@ def build_survey_launch():
     tied off the stern, out in the live water (less obvious; the log mentions it).
     """
     folder = "SurveyLaunch"
-    hull_mat = material_instance("MI_DC_WreckHull", MAT_FLAT, {"Base Color": (0.13, 0.19, 0.23, 1.0)})
-    trim_mat = material_instance("MI_DC_WreckRust", MAT_FLAT, {"Base Color": (0.36, 0.16, 0.07, 1.0)})
+    hull_mat = material_instance("MI_DC_WreckHull", MAT_FLAT, {"Base Color": (0.10, 0.13, 0.15, 1.0)})
+    # Rails the mesh covers stay as collision. The boarding plank and cabin trim use the rust-paint instance.
+    rust = surface("MI_DC_RustPaint")
+    steel = surface("MI_DC_Steel")
     ensure_glow_material()
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
@@ -716,12 +743,13 @@ def build_survey_launch():
     hull = Frame((-1500.0, -760.0, 95.0), pitch=-4.0, roll=-3.0)
     hull.part("Hull", folder, (0, 0, -80), (360, 1000, 160), material=hull_mat, hidden=True)
     hull.part("Bow", folder, (0, 540, -70), (220, 80, 180), material=hull_mat, hidden=True)
-    hull.part("Rail_West", folder, (-174, 0, 30), (12, 1000, 60), material=trim_mat)
+    # The mesh covers these. Collision stays; the brown planks were showing through the hull.
+    hull.part("Rail_West", folder, (-174, 0, 30), (12, 1000, 60), material=rust, hidden=True)
     # Gap in the east rail where the plank comes aboard (local Y 180..320).
-    hull.part("Rail_East_Aft", folder, (174, -160, 30), (12, 680, 60), material=trim_mat)
-    hull.part("Rail_East_Bow", folder, (174, 410, 30), (12, 180, 60), material=trim_mat)
-    hull.part("Rail_Bow", folder, (0, 494, 30), (360, 12, 60), material=trim_mat)
-    hull.part("Transom", folder, (0, -494, 30), (360, 12, 60), material=trim_mat)
+    hull.part("Rail_East_Aft", folder, (174, -160, 30), (12, 680, 60), material=rust, hidden=True)
+    hull.part("Rail_East_Bow", folder, (174, 410, 30), (12, 180, 60), material=rust, hidden=True)
+    hull.part("Rail_Bow", folder, (0, 494, 30), (360, 12, 60), material=rust, hidden=True)
+    hull.part("Transom", folder, (0, -494, 30), (360, 12, 60), material=rust, hidden=True)
 
     # Boarding plank from the beach up to the gap in the east rail.
     top = hull.world((180, 250, 0))
@@ -729,7 +757,7 @@ def build_survey_launch():
     rise = top[2]
     plank_pitch = -math.degrees(math.atan2(rise, run))
     box_rot("Plank", folder, (top[0] + run / 2, top[1], rise / 2 - 2),
-            (math.hypot(run, rise), 90, 6), (plank_pitch, 0.0, 0.0), material=trim_mat)
+            (math.hypot(run, rise), 90, 6), (plank_pitch, 0.0, 0.0), material=rust)
 
     # Wheelhouse: local X -162..162, Y -180..132, walls 240 high, doorways fore and aft on the east side.
     wall_h, door_h = 240, 215
@@ -745,15 +773,15 @@ def build_survey_launch():
     hull.part("Wheelhouse_East_High", folder, (156, -24, 215), (12, 312, 50), material=hull_mat)
     hull.part("Wheelhouse_East_PostAft", folder, (156, -159, 150), (12, 42, 80), material=hull_mat)
     hull.part("Wheelhouse_East_PostFore", folder, (156, 111, 150), (12, 42, 80), material=hull_mat)
-    hull.part("Wheelhouse_Roof", folder, (0, -24, wall_h + 10), (336, 336, 20), material=trim_mat)
-    hull.part("Mast", folder, (0, -24, wall_h + 20 + 450), (16, 16, 900), material=trim_mat)
-    hull.part("Mast_Yard", folder, (0, -24, wall_h + 20 + 780), (160, 10, 10), material=trim_mat)
+    hull.part("Wheelhouse_Roof", folder, (0, -24, wall_h + 10), (336, 336, 20), material=rust)
+    hull.part("Mast", folder, (0, -24, wall_h + 20 + 450), (16, 16, 900), material=steel)
+    hull.part("Mast_Yard", folder, (0, -24, wall_h + 20 + 780), (160, 10, 10), material=steel)
     lamp = hull.world((0, -24, wall_h + 20 + 915))
     flicker_light("MastLamp", folder, lamp, (255, 170, 80), 60.0, 1400.0, glow_cm=60.0, glow_material=amber,
                   min_brightness=0.35, dropout=0.18, interval=(0.06, 0.9))
 
     # Inside the wheelhouse.
-    hull.part("Console", folder, (-68, 94, 47), (150, 48, 94), material=trim_mat)
+    hull.part("Console", folder, (-68, 94, 47), (150, 48, 94), material=rust)
     survey_log = hull.part("SurveyLog", folder, (-100, 94, 98), (36, 26, 6), material=interactable_mat,
                     actor_class=unreal.DCInspectableActor)
     log_text = ("Survey log, last entry, in pencil: \"Sounder has the pattern again, same mark off the point. "
@@ -818,8 +846,8 @@ def build_survey_launch():
                 "The corroded leads look like they'd tear free with a hard pull.",
                 [], [cons("SET_WORLD_FLAG", id=WRECK_BATTERY_SEEN)]),
     ], duration=8.0)
-    hull.part("BatteryLead", folder, (-105, -420, 45), (6, 150, 6), material=trim_mat)
-    hull.part("BatteryLead_Over", folder, (-105, -505, -30), (6, 6, 140), material=trim_mat)
+    hull.part("BatteryLead", folder, (-105, -420, 45), (6, 150, 6), material=rust)
+    hull.part("BatteryLead_Over", folder, (-105, -505, -30), (6, 6, 140), material=rust)
     beacon = hull.part("Beacon", folder, (110, -494, 78), (22, 22, 36), material=interactable_mat,
                        actor_class=unreal.DCInspectableActor)
     setup_inspectable(beacon, "Emergency beacon",
@@ -852,8 +880,8 @@ def build_survey_launch():
                 ], duration=8.0)
 
     # The water itself: dark, always there, no collision. Pulling the leads must never remove it.
-    surface = box("WaterSurface", folder, (-1500, -1390, 3), (1040, 780, 8), material=water_mat)
-    surface.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(
+    water_sheet = box("WaterSurface", folder, (-1500, -1390, 3), (1040, 780, 8), material=water_mat)
+    water_sheet.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(
         unreal.CollisionEnabled.NO_COLLISION)
     # The electricity: a bright glow layer over the water that is also the damage volume. It (and the
     # sparks) go out with the power; the water stays.
@@ -914,7 +942,7 @@ def build_survey_launch():
     stern = hull.world((0, -500, -20))
     rope_run = stern[1] - (-1530.0)
     box_rot("TenderLine", folder, (-1500, (stern[1] - 1530.0) / 2, (stern[2] + 20) / 2),
-            (4, rope_run, 4), (0.0, 0.0, -math.degrees(math.atan2(stern[2] - 20, rope_run))), material=trim_mat)
+            (4, rope_run, 4), (0.0, 0.0, -math.degrees(math.atan2(stern[2] - 20, rope_run))), material=rust)
 
     # Discovery: walking up to the wreck from the boathouse, the beach, or the water.
     discovery = actors.spawn_actor_from_class(unreal.DCLocationVolume, unreal.Vector(-1650.0, -700.0, 300.0))
