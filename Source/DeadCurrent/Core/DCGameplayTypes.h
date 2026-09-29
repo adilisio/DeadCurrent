@@ -7,7 +7,7 @@ class UDCItemDefinition;
 
 /**
  *  What a condition checks. Dialogue, quests and interactables all use this one list.
- *  New checks (skills, attributes, reputation, discovered information) are added here
+ *  New checks (reputation, discovered information) are added here
  *  and in UDCGameplayRules::CheckCondition.
  */
 UENUM(BlueprintType)
@@ -29,7 +29,13 @@ enum class EDCConditionType : uint8
 	/** The actor with persistent id Id is dead. */
 	ActorDead,
 	/** Location Id has been discovered (UDCWorldStateSubsystem). */
-	LocationDiscovered
+	LocationDiscovered,
+	/** Attribute Id (tag name, e.g. Attribute.Grasp) is at least Quantity. */
+	AttributeAtLeast,
+	/** Effective skill Id (tag name, e.g. Skill.Engineering) is at least Quantity. */
+	SkillAtLeast,
+	/** Perk Id (tag name, e.g. Perk.SchematicEye) is owned. */
+	HasPerk
 };
 
 /**
@@ -64,7 +70,7 @@ struct DEADCURRENT_API FDCGameplayCondition
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	EDCConditionType Type = EDCConditionType::None;
 
-	/** Item id, quest id, world flag, persistent actor id, or location id, depending on Type. */
+	/** Item, quest, flag, actor, location, or attribute/skill/perk tag name, depending on Type. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition")
 	FName Id;
 
@@ -72,9 +78,9 @@ struct DEADCURRENT_API FDCGameplayCondition
 		meta=(EditCondition="Type==EDCConditionType::QuestStage", EditConditionHides))
 	FName Stage;
 
-	/** Minimum quantity for HasItem. */
+	/** Minimum for HasItem, AttributeAtLeast and SkillAtLeast. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Condition",
-		meta=(ClampMin="1", EditCondition="Type==EDCConditionType::HasItem", EditConditionHides))
+		meta=(ClampMin="1", EditCondition="Type==EDCConditionType::HasItem||Type==EDCConditionType::AttributeAtLeast||Type==EDCConditionType::SkillAtLeast", EditConditionHides))
 	int32 Quantity = 1;
 
 	/** Pass when the check fails instead. */

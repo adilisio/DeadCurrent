@@ -36,10 +36,11 @@ Tools\RunTests.bat -nomap       skip the in-map suite
 Tools\RunTests.bat -build       build DeadCurrentEditor first
 ```
 
-Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. 30 tests: 25 editor-context and 5 in-map; the full run takes about 2 minutes including editor start-up.
+Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes a few minutes including editor start-up. Count is recorded in `Design/CLAUDE_SESSION_REPORT.md`.
 
 | Group | Covers |
 | --- | --- |
+| `DeadCurrent.Progression.*` | Attribute, skill and perk lookup, point caps, effective skill, the three build conditions, check labels, a hidden dialogue choice, inspect variants, save/load and a pre-RPG save |
 | `DeadCurrent.Rules.*` | Every condition and consequence type, lists, empty contexts, reference validation |
 | `DeadCurrent.Quest.*` | Stages, start stage, outcomes, event-driven transitions (death, item), branch order, one quest moving another, save/restore of progress, stale stages |
 | `DeadCurrent.Dialogue.*` | Graph walking, conditional entries, hidden choices, choice consequences (quest, items, flags) |
@@ -49,7 +50,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. 30 tests: 25 editor
 | `DeadCurrent.Exploration.Container` | Prompt text, partial and full looting, slot round-trip into a fresh world, a container newer than the save |
 | `DeadCurrent.Exploration.WorldConditions` | Damage volume and flicker light switched by a world flag, including silent restore |
 | `DeadCurrent.Content.Exploration.MaraWreckLine` | The shipped dialogue: Mara's wreck exchange across Shore Watch states, offered once, survives save/reload |
-| `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. Scratch save slot |
+| `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. `BuildChecks`: the same actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks and the Sounder Chart, then a real F9 restores the build. Scratch save slot |
 | `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants (including per-variant verbs) and the first-playable systems |
 
 `Core/DCTestHelpers.h` has `FDCTestWorld`, a throwaway game world with subsystems and BeginPlay, for tests that need a registry, world state or component events. In-map tests (`EAutomationTestFlags::ClientContext` only) run under `-game`; with rendering enabled the coil-route test also saves `Saved/Screenshots/<platform>/DC_QuestHUD.png`.
@@ -86,7 +87,9 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. 30 tests: 25 editor
 | Sprint (hold, forward only) | Left Shift | Left stick click |
 | Crouch (toggle) | Left Ctrl, C | B / Circle |
 | Interact | E | X / Square |
-| Inventory (toggle) | Tab, I | View / Back |
+| Inventory and character sheet (toggle) | Tab, I | View / Back |
+| Build panel (toggle) | B | |
+| Raise attribute / skill / take perk / reset | F1–F3 / F4–F6 / F7–F9 / F10, while the build panel is open | |
 | Fire | Left mouse | Right trigger |
 | Reload | R | Y / Triangle |
 | Holster / draw (not while talking) | 1 | D-pad up |
@@ -132,13 +135,14 @@ An optional site on the west shore, not on any route and with no marker. Coordin
 
 - **Notice:** a west window in the boathouse back wall (inspect it: "Look out") mentions a mast and a light. Outside, a leaning mast (about 12.6 m) with a flickering amber lamp (`ADCFlickerLight`) shows above the boathouse roof from the path.
 - **Discovery:** an `ADCLocationVolume` (`shore.survey_launch`, "Wrecked Survey Launch") spanning X -2600..-700, Y -1850..450. Walking round the lake side of the boathouse and west triggers it about 7 m past the back wall.
-- **Clues** (all `ADCInspectableActor` with variants): name board, life jackets, depth sounder, survey log (verb "Read", sets `wreck.log_read`), breaker panel (changes after the log is read), battery bank (first inspect sets `wreck.battery_seen`; the verb then becomes "Pull the leads", which sets `wreck.power_cut`), emergency beacon (reacts to `shore.relay_inspected` and to the power being cut), dead fish, and the west window (changes after discovery and after the power is cut).
+- **Clues** (all `ADCInspectableActor` with variants): name board, life jackets, depth sounder, survey log (verb "Read", sets `wreck.log_read`), breaker panel (changes after the log is read; Engineering 2 adds a reading about the shore-power breaker and the mast lamp), battery bank (first inspect sets `wreck.battery_seen`; the verb then becomes "Pull the leads", which sets `wreck.power_cut`), emergency beacon (reacts to `shore.relay_inspected` and to the power being cut), dead fish (Pulse Read adds a one-shock reading), chalk warning (Fieldcraft 2 reads who wrote it), and the west window (changes after discovery and after the power is cut). Survival 2 changes the life jackets. The depth sounder changes when the player carries `survey_chart` and has Engineering 2 or Schematic Eye.
 - **Hazard:** the water is a permanent dark, no-collision `WaterSurface` slab. Over it, `LiveWater` is an `ADCDamageVolume` (X -2020..-980, Y -1780..-1000, 20/s, `ActiveConditions = [!wreck.power_cut]`) whose bright blue glow mesh is the "electric" layer, with six flickering spark lights. A ring of pale dead fish lies on the surface at its edge, and a chalked warning plank (`Chalk warning`) stands on the beach at the edge. Pulling the leads switches the damage, the glow and the sparks off and persists through saves; the water itself stays (playtest feedback: it must not vanish).
 - **Loot** (`ADCLootContainer`): `boat.wreck_locker` (survey locker in the wheelhouse: 12× 9mm, 3× Salvaged Wiring, 1× Field Dressing) and `boat.wreck_tender` (a small boat about 4 m off the stern, inside the live water, tied to the transom by a line: 1× Sounder Chart, 2× Field Dressing, 18× 9mm; the chart is the site's novel item). The log mentions the tender.
-- **Mara:** once `wreck.log_read` is set, her greeting, who, place, in-progress and epilogue nodes (never the turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." She answers; the player can ask "Was it a storm?" (sets `wreck.mara_told`). Offered once.
-- **World state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`. Never rename a shipped id.
+- **Mara:** once `wreck.log_read` is set, her greeting, who, place, in-progress and epilogue nodes (never the turn-ins) offer "There's a wrecked survey launch west of the boathouse. I read her log." She answers; the player can ask "Was it a storm?" (sets `wreck.mara_told`). Offered once. On that storm line, Persuasion 2 (effective) adds "You're leaving something out." (sets `wreck.mara_pressed`). PROVISIONAL: she saw two people leave the beach and did not follow.
+- **World state ids:** location `shore.survey_launch`; flags `wreck.log_read`, `wreck.battery_seen`, `wreck.power_cut`, `wreck.mara_told`, `wreck.mara_pressed`. Never rename a shipped id.
+- **Relay Ear:** after `shore.relay_inspected` is set (the first look still sets it for everyone), the perk adds a pinout reading. It does not skip the Shore Watch clue.
 
-The POI adds no items, quests or C++ specific to the wreck: it is built from the generic classes below. Shore Watch content and `ADCPlayerCharacter` are unchanged.
+The POI adds no quest and no wreck-specific C++. Build checks are shared conditions on the existing actors. Pulling the leads, both containers, and both Shore Watch routes still work with nothing invested.
 
 ## Interaction
 
@@ -240,6 +244,9 @@ The test gym includes a `NavMeshBoundsVolume` covering the floor. Nav rebuilds a
 | `WorldFlag(Id)` | world flag set |
 | `ActorDead(Id)` | the actor registered under persistent id Id has a dead health component |
 | `LocationDiscovered(Id)` | the location id has been discovered (see Exploration) |
+| `AttributeAtLeast(Id, Quantity)` | raw attribute tag `Id` (e.g. `Attribute.Grasp`) is at least Quantity |
+| `SkillAtLeast(Id, Quantity)` | **effective** skill tag `Id` (e.g. `Skill.Engineering`) is at least Quantity |
+| `HasPerk(Id)` | perk tag `Id` (e.g. `Perk.SchematicEye`) is owned |
 
 Every condition has `bNegate`. A list passes when every entry passes; an empty list passes.
 
@@ -250,7 +257,31 @@ Every condition has `bNegate`. A list passes when every entry passes; an empty l
 | `SetQuestStage(Id, Stage)` | move stage (to an outcome stage = complete) |
 | `SetWorldFlag` / `ClearWorldFlag(Id)` | world state |
 
-`FDCRuleContext` carries what rules read and write: instigator, its inventory and quest log, the world's `UDCWorldStateSubsystem` and `UDCPersistentRegistry`. Missing pieces fail conditions and skip consequences safely. `UDCGameplayRules::CheckConditionsFor` / `ApplyConsequencesFor` are the Blueprint entry points. `ValidateReferences` reports unknown quests, stages and items (used by `DeadCurrent.Content.Validate`).
+`FDCRuleContext` carries what rules read and write: instigator, its inventory, quest log and `UDCCharacterProgressionComponent`, the world's `UDCWorldStateSubsystem` and `UDCPersistentRegistry`. Missing pieces fail conditions and skip consequences safely. `UDCGameplayRules::CheckConditionsFor` / `ApplyConsequencesFor` are the Blueprint entry points. `ValidateReferences` reports unknown quests, stages, items, attributes, skills and perks (used by `DeadCurrent.Content.Validate`). `FormatCheckLabels` turns the build checks in a list into text such as `[Engineering 2] [Schematic Eye]`. Dialogue prepends that to a visible choice. An inspect prompt prepends it when the active variant required a build check.
+
+**Failed build checks are hidden.** A dialogue choice whose conditions fail is not shown. An inspect variant whose conditions fail is skipped and a later variant, or the default text, is used. There is no greyed-out row in this phase.
+
+## Character progression
+
+`UDCCharacterProgressionComponent` (`Character/`) on the player owns the build. `ADCPlayerCharacter` does not grow a field per skill. Lookup is by Gameplay Tag. Unknown tags read as 0 or not owned and cannot be spent.
+
+PROVISIONAL model, chosen because each attribute is the capacity behind one skill and a later skill is another row:
+
+| Attribute | Linked skill | Attribute is |
+| --- | --- | --- |
+| `Attribute.Grasp` | `Skill.Engineering` | reading made things |
+| `Attribute.Fieldcraft` | `Skill.Survival` | reading ground, animals, and how people moved |
+| `Attribute.Bearing` | `Skill.Persuasion` | pressing for what someone withheld |
+
+Effective skill = invested ranks + 1 when the linked attribute is at least 2, else + 0. `SkillAtLeast` uses the effective value. `AttributeAtLeast` uses the raw attribute. Perks are owned or not.
+
+Pools on a new game, and on any save from before version 5: 3 attribute points (max 2 each), 2 skill points (max 2 each), 1 perk. Unspent points are the pool minus what is invested; they are not stored separately. **F10** on the build panel refunds everything. That reset is a prototype so a playtest can try each orientation. It is not a respec feature.
+
+Perks, each used by an inspect variant: `Perk.SchematicEye` (Sounder Chart against the depth sounder), `Perk.PulseRead` (dead fish), `Perk.RelayEar` (relay housing, after it has been inspected).
+
+The catalog is the static table in `DCCharacterProgressionComponent.cpp`, next to the native tags. To add one later: add the tag, add a row (and the attribute link, for a skill), and author `SkillAtLeast` / `AttributeAtLeast` / `HasPerk` on existing content. Do not branch actors on a skill by name.
+
+Tags for this set live in `DCCharacterProgressionComponent.cpp` (`DCProgressionTags`), not `DCGameplayTags.h`, because nothing else should mention them except through the catalog and the rule conditions.
 
 **Adding a condition or consequence type** (skill check, reputation, companion present, discovered info): add the enum value and any field to `DCGameplayTypes.h` (use `EditCondition` so the editor shows only relevant fields), a case in `CheckCondition` / `ApplyConsequence` and in `ValidateReferences`, any new data the rule needs to `FDCRuleContext::ForActor`, and a test in `DCGameplayRulesTest.cpp`. Dialogue, quests and inspectables pick it up with no changes.
 
@@ -311,15 +342,15 @@ Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`,
 
 `UDCSaveGame` is the slot (`DeadCurrent`, user 0; tests switch to a scratch slot with `UDCSaveSubsystem::SetSlotName`). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, the quest log (quest id + stage), world flags (from `UDCWorldStateSubsystem`), and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`.
 
-F5 saves. Saving while dead is refused ("You can't save now."). F9 reads the slot, **reopens the saved map** (`MapPackage`, else `MapName`), and `ADCGameMode::StartPlay` calls `ApplyPendingLoad` once every actor has begun play. Loading therefore always starts from a fresh map (taken pickups come back, dead enemies are alive) and then applies the save, so a load inside a running session behaves exactly like a load after relaunching, loading while dead or mid-dialogue is clean, and loading an earlier save can never lose an item the world already destroyed. Apply order: world flags and discovered locations first (silently, so discovery volumes and world-conditioned hazards already see them and nothing is re-announced), then world actors (apply saved actor state, then destroy only ids in `RemovedPersistentIds`; restore deaths, which marks the health component dead so corpses stay lootable and `ActorDead` holds; then corpse and container inventory from the flat arrays), then the player (transform, health, inventory without a magazine refill), then the quest log. Restoring never re-runs stage `OnEnter` consequences.
+F5 saves. Saving while dead is refused ("You can't save now."). F9 reads the slot, **reopens the saved map** (`MapPackage`, else `MapName`), and `ADCGameMode::StartPlay` calls `ApplyPendingLoad` once every actor has begun play. Loading therefore always starts from a fresh map (taken pickups come back, dead enemies are alive) and then applies the save, so a load inside a running session behaves exactly like a load after relaunching, loading while dead or mid-dialogue is clean, and loading an earlier save can never lose an item the world already destroyed. Apply order: world flags and discovered locations first (silently, so discovery volumes and world-conditioned hazards already see them and nothing is re-announced), then world actors (apply saved actor state, then destroy only ids in `RemovedPersistentIds`; restore deaths, which marks the health component dead so corpses stay lootable and `ActorDead` holds; then corpse and container inventory from the flat arrays), then the player (transform, health, inventory without a magazine refill, character build), then the quest log. Restoring never re-runs stage `OnEnter` consequences.
 
 A persistent actor that is simply absent from `WorldActors` keeps its authored state. That is how a pickup or container added to the map after a save was written still appears. Removal is explicit: when a persistent actor is destroyed during play (`EndPlay` reason `Destroyed`), `UDCPersistentRegistry` records its id, and the save writes that list to `RemovedPersistentIds`. Map travel does not record removals.
 
-Save format version (`UDCSaveGame::SaveVersion`, current 4): 0/1 = first playable; 2 adds `MapPackage`, world flags owned by the world-state subsystem, and data-driven quest stages; 3 adds `DiscoveredLocations`; 4 adds `RemovedPersistentIds`. Older saves load with no discoveries when they predate version 3. Saves before version 4 have an empty removed list. For those, load still treats a *known* boathouse pickup as taken when it is absent from `WorldActors`: `boat.pickup_pistol`, `boat.pickup_ammo` and `boat.pickup_dressing` for every older save, plus `boat.pickup_coil` from version 2. Any other absent id (a pickup added to the map later) is left alone. A saved quest stage that no longer exists in the quest data is dropped with a warning so the quest can be taken again. `MapName`/`MapPackage` route the load to the right map; there is still only one production map.
+Save format version (`UDCSaveGame::SaveVersion`, current 5): 0/1 = first playable; 2 adds `MapPackage`, world flags owned by the world-state subsystem, and data-driven quest stages; 3 adds `DiscoveredLocations`; 4 adds `RemovedPersistentIds`; 5 adds `Attributes`, `Skills` and `Perks` (tag name + rank, or a perk tag name). Older saves load with no discoveries when they predate version 3. Saves before version 4 have an empty removed list. For those, load still treats a *known* boathouse pickup as taken when it is absent from `WorldActors`: `boat.pickup_pistol`, `boat.pickup_ammo` and `boat.pickup_dressing` for every older save, plus `boat.pickup_coil` from version 2. Any other absent id (a pickup added to the map later) is left alone. Saves before version 5, and a version 5 save that spent nothing, both restore the unspent build. Load replaces the build from those arrays; it does not merge. A saved quest stage that no longer exists in the quest data is dropped with a warning so the quest can be taken again. `MapName`/`MapPackage` route the load to the right map; there is still only one production map.
 
 Automation tests `DeadCurrent.Save.PersistentId`, `DeadCurrent.Save.InventoryRestore`, `DeadCurrent.Save.WorldInventorySlot`, and `DeadCurrent.Save.RemovedPickup` cover lookup, inventory snapshot restore, USaveGame round-trip of corpse loot, and the taken-versus-added-later pickup cases. `DeadCurrent.Quest.Persistence` covers the quest log and flags, and `DeadCurrent.Map.Boathouse.*` covers full F9 loads in the real map.
 
-`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel with the quest journal beside it, the weapon ammo readout, a health bar, the dialogue panel, and the tracked quest objective. It will be replaced by UMG widgets when the HUD grows.
+`ADCHUD` is a temporary canvas HUD: crosshair dot, interaction prompt, timed messages via `ADCHUD::ShowMessageFor`, the inventory panel with the quest journal beside it (quests, places, and a character block), the build panel (**B**), the weapon ammo readout, a health bar, the dialogue panel, and the tracked quest objective. It will be replaced by UMG widgets when the HUD grows. Dialogue choices that passed a build check show that check in front of the line.
 
 ## C++ vs Blueprint / data
 
@@ -335,7 +366,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | Folder | Owns |
 | --- | --- |
 | `Core/` | Game mode, Gameplay Tag declarations, the shared rule language (conditions/consequences), content loading, test helpers |
-| `Character/` | Player character, player controller, camera manager |
+| `Character/` | Player character, progression component, player controller, camera manager |
 | `Interaction/` | Interaction interface, detection, prompts |
 | `Items/` | Item definitions |
 | `Inventory/` | Inventory runtime |
@@ -406,8 +437,11 @@ Roots and their meaning:
 | `Actor.` | Actor disposition (`Actor.Hostile`, `Actor.Friendly`) |
 | `State.` | Transient actor state (`State.Dead`) |
 | `Interaction.` | Interaction kinds (`Interaction.Pickup`, `Interaction.Loot`, `Interaction.Talk`) |
+| `Attribute.` | Character attributes (`Attribute.Grasp`, `Attribute.Fieldcraft`, `Attribute.Bearing`) |
+| `Skill.` | Character skills (`Skill.Engineering`, `Skill.Survival`, `Skill.Persuasion`) |
+| `Perk.` | Character perks (`Perk.SchematicEye`, `Perk.PulseRead`, `Perk.RelayEar`) |
 
-Later roots from the long-term plan: `Faction.`, `Skill.`, `Status.`, `Quest.`, `WorldPower.`.
+Later roots from the long-term plan: `Faction.`, `Status.`, `Quest.`, `WorldPower.`. `Skill.` is in use.
 
 Rules: PascalCase segments, singular nouns, no tag without a consumer.
 

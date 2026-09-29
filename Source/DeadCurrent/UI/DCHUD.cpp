@@ -1,6 +1,8 @@
 #include "UI/DCHUD.h"
+#include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCFirearm.h"
+#include "Core/DCGameplayRules.h"
 #include "Combat/DCHealthComponent.h"
 #include "Dialogue/DCDialogueComponent.h"
 #include "Dialogue/DCDialogueTypes.h"
@@ -38,6 +40,11 @@ void ADCHUD::DrawHUD()
 	if (bShowInventory)
 	{
 		DrawInventory();
+	}
+
+	if (bShowBuild)
+	{
+		DrawBuild();
 	}
 
 	DrawWeapon();
@@ -299,6 +306,50 @@ void ADCHUD::DrawQuestLog(float X, float Top)
 		Rows.Add({ TEXT("(none)"), TextColor * 0.7f });
 	}
 
+	const UDCCharacterProgressionComponent* Build = Pawn->FindComponentByClass<UDCCharacterProgressionComponent>();
+	Rows.Add({ FString(), TextColor });
+	Rows.Add({ TEXT("CHARACTER"), TextColor });
+	if (!Build)
+	{
+		Rows.Add({ TEXT("(unavailable)"), TextColor * 0.7f });
+	}
+	else
+	{
+		Rows.Add({ FString::Printf(TEXT("Attributes  (%d left)"), Build->GetUnspentAttributePoints()), TextColor * 0.8f });
+		for (const FGameplayTag& Id : UDCCharacterProgressionComponent::AllAttributes())
+		{
+			Rows.Add({ FString::Printf(TEXT("%s  %d"), *UDCCharacterProgressionComponent::GetAttributeName(Id).ToString(), Build->GetAttribute(Id)), TextColor });
+		}
+		Rows.Add({ FString::Printf(TEXT("Skills  (%d left)"), Build->GetUnspentSkillPoints()), TextColor * 0.8f });
+		for (const FGameplayTag& Id : UDCCharacterProgressionComponent::AllSkills())
+		{
+			const int32 Raw = Build->GetSkill(Id);
+			const int32 Effective = Build->GetEffectiveSkill(Id);
+			FString Line = FString::Printf(TEXT("%s  %d"), *UDCCharacterProgressionComponent::GetSkillName(Id).ToString(), Raw);
+			if (Effective != Raw)
+			{
+				Line += FString::Printf(TEXT("  (effective %d)"), Effective);
+			}
+			Rows.Add({ Line, TextColor });
+		}
+		FString PerkLine = FString::Printf(TEXT("Perks  (%d left)"), Build->GetUnspentPerkPoints());
+		bool bAnyPerk = false;
+		for (const FGameplayTag& Id : UDCCharacterProgressionComponent::AllPerks())
+		{
+			if (Build->HasPerk(Id))
+			{
+				PerkLine += TEXT("  ") + UDCCharacterProgressionComponent::GetPerkName(Id).ToString();
+				bAnyPerk = true;
+			}
+		}
+		if (!bAnyPerk)
+		{
+			PerkLine += TEXT("  (none)");
+		}
+		Rows.Add({ PerkLine, TextColor });
+		Rows.Add({ TEXT("[B] Change build"), TextColor * 0.7f });
+	}
+
 	// Rows, plus half a line of spacing under each of the two headers.
 	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 2.0f);
 	DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.65f), X, Top, PanelWidth, PanelHeight);
@@ -310,6 +361,76 @@ void ADCHUD::DrawQuestLog(float X, float Top)
 	{
 		DrawText(Rows[Index].Text, Rows[Index].Color, X + Padding, Y, Font);
 		Y += Index == PlacesHeaderRow + 1 ? LineHeight * 1.5f : LineHeight;
+	}
+}
+
+void ADCHUD::DrawBuild()
+{
+	const APawn* Pawn = GetOwningPawn();
+	const UDCCharacterProgressionComponent* Build = Pawn ? Pawn->FindComponentByClass<UDCCharacterProgressionComponent>() : nullptr;
+	if (!Build)
+	{
+		return;
+	}
+
+	UFont* Font = GEngine->GetMediumFont();
+	const float LineHeight = Font->GetMaxCharHeight() + 4.0f;
+	const float Padding = 12.0f;
+	const float PanelWidth = 520.0f;
+
+	struct FRow { FString Text; FLinearColor Color; };
+	TArray<FRow> Rows;
+	Rows.Add({ FString::Printf(TEXT("ATTRIBUTES  (%d left)"), Build->GetUnspentAttributePoints()), FLinearColor(0.85f, 0.75f, 0.45f, 1.0f) });
+	const TCHAR* AttributeKeys[] = { TEXT("F1"), TEXT("F2"), TEXT("F3") };
+	const TArray<FGameplayTag>& Attributes = UDCCharacterProgressionComponent::AllAttributes();
+	for (int32 Index = 0; Index < Attributes.Num(); ++Index)
+	{
+		const FGameplayTag& Id = Attributes[Index];
+		const TCHAR* Key = Index < UE_ARRAY_COUNT(AttributeKeys) ? AttributeKeys[Index] : TEXT("?");
+		Rows.Add({ FString::Printf(TEXT("[%s]  %s  %d"), Key, *UDCCharacterProgressionComponent::GetAttributeName(Id).ToString(), Build->GetAttribute(Id)), TextColor });
+	}
+	Rows.Add({ FString::Printf(TEXT("SKILLS  (%d left)"), Build->GetUnspentSkillPoints()), FLinearColor(0.85f, 0.75f, 0.45f, 1.0f) });
+	const TCHAR* SkillKeys[] = { TEXT("F4"), TEXT("F5"), TEXT("F6") };
+	const TArray<FGameplayTag>& Skills = UDCCharacterProgressionComponent::AllSkills();
+	for (int32 Index = 0; Index < Skills.Num(); ++Index)
+	{
+		const FGameplayTag& Id = Skills[Index];
+		const TCHAR* Key = Index < UE_ARRAY_COUNT(SkillKeys) ? SkillKeys[Index] : TEXT("?");
+		const int32 Raw = Build->GetSkill(Id);
+		const int32 Effective = Build->GetEffectiveSkill(Id);
+		FString Line = FString::Printf(TEXT("[%s]  %s  %d"), Key, *UDCCharacterProgressionComponent::GetSkillName(Id).ToString(), Raw);
+		if (Effective != Raw)
+		{
+			Line += FString::Printf(TEXT("  (effective %d)"), Effective);
+		}
+		Rows.Add({ Line, TextColor });
+	}
+	Rows.Add({ FString::Printf(TEXT("PERK  (%d left)"), Build->GetUnspentPerkPoints()), FLinearColor(0.85f, 0.75f, 0.45f, 1.0f) });
+	const TCHAR* PerkKeys[] = { TEXT("F7"), TEXT("F8"), TEXT("F9") };
+	const TArray<FGameplayTag>& Perks = UDCCharacterProgressionComponent::AllPerks();
+	for (int32 Index = 0; Index < Perks.Num(); ++Index)
+	{
+		const FGameplayTag& Id = Perks[Index];
+		const TCHAR* Key = Index < UE_ARRAY_COUNT(PerkKeys) ? PerkKeys[Index] : TEXT("?");
+		const bool bOwned = Build->HasPerk(Id);
+		Rows.Add({ FString::Printf(TEXT("[%s]  %s%s"), Key, *UDCCharacterProgressionComponent::GetPerkName(Id).ToString(), bOwned ? TEXT("  (taken)") : TEXT("")),
+			bOwned ? TextColor : TextColor * 0.85f });
+		Rows.Add({ FString(TEXT("      ")) + UDCCharacterProgressionComponent::GetPerkDescription(Id).ToString(), TextColor * 0.7f });
+	}
+	Rows.Add({ TEXT("[F10]  Reset allocation (prototype)"), TextColor * 0.7f });
+	Rows.Add({ TEXT("[B]  Close"), TextColor * 0.7f });
+
+	const float PanelHeight = Padding * 2.0f + LineHeight * (Rows.Num() + 1.4f);
+	const float X = 40.0f;
+	const float Top = 60.0f;
+	DrawRect(FLinearColor(0.02f, 0.03f, 0.04f, 0.82f), X, Top, PanelWidth, PanelHeight);
+	float Y = Top + Padding;
+	DrawText(TEXT("BUILD"), TextColor, X + Padding, Y, Font);
+	Y += LineHeight * 1.4f;
+	for (const FRow& Row : Rows)
+	{
+		DrawText(Row.Text, Row.Color, X + Padding, Y, Font);
+		Y += LineHeight;
 	}
 }
 
@@ -468,7 +589,13 @@ void ADCHUD::DrawDialogue()
 	for (int32 VisibleIndex = 0; VisibleIndex < Visible.Num(); ++VisibleIndex)
 	{
 		const int32 ChoiceIndex = Visible[VisibleIndex];
-		const FString Choice = FString::Printf(TEXT("[%d]  %s"), VisibleIndex + 1, *Node->Choices[ChoiceIndex].Text.ToString());
+		FString ChoiceText = Node->Choices[ChoiceIndex].Text.ToString();
+		const FString CheckLabel = UDCGameplayRules::FormatCheckLabels(Node->Choices[ChoiceIndex].Conditions);
+		if (!CheckLabel.IsEmpty())
+		{
+			ChoiceText = CheckLabel + TEXT(" ") + ChoiceText;
+		}
+		const FString Choice = FString::Printf(TEXT("[%d]  %s"), VisibleIndex + 1, *ChoiceText);
 		TArray<FString> Wrapped;
 		WrapTextToWidth(Choice, Font, InnerWidth, Wrapped);
 		if (Wrapped.IsEmpty())

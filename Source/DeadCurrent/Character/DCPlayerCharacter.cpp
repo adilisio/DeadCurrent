@@ -1,4 +1,5 @@
 #include "Character/DCPlayerCharacter.h"
+#include "Character/DCCharacterProgressionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/DCFirearm.h"
 #include "Combat/DCHealthComponent.h"
@@ -11,6 +12,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "EnhancedInputComponent.h"
+#include "InputCoreTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
 #include "GameFramework/PlayerController.h"
@@ -49,6 +51,7 @@ ADCPlayerCharacter::ADCPlayerCharacter()
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 	DialogueComponent = CreateDefaultSubobject<UDCDialogueComponent>(TEXT("Dialogue"));
 	QuestComponent = CreateDefaultSubobject<UDCQuestComponent>(TEXT("Quest"));
+	ProgressionComponent = CreateDefaultSubobject<UDCCharacterProgressionComponent>(TEXT("Progression"));
 
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -88,6 +91,7 @@ void ADCPlayerCharacter::Tick(float DeltaSeconds)
 	UpdateSprint();
 	UpdateCrouchEyeHeight(DeltaSeconds);
 	UpdateRecoilRecovery(DeltaSeconds);
+	UpdateBuildInput();
 }
 
 void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -110,6 +114,11 @@ void ADCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoInteract);
 
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoToggleInventory);
+
+		if (BuildAction)
+		{
+			EnhancedInputComponent->BindAction(BuildAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoToggleBuild);
+		}
 
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoFire);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ADCPlayerCharacter::DoReload);
@@ -210,6 +219,78 @@ void ADCPlayerCharacter::DoToggleInventory()
 	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
 	{
 		HUD->ToggleInventory();
+	}
+}
+
+void ADCPlayerCharacter::DoToggleBuild()
+{
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		return;
+	}
+
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
+	{
+		HUD->ToggleBuild();
+	}
+}
+
+void ADCPlayerCharacter::UpdateBuildInput()
+{
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr;
+	if (!PC || !HUD || !HUD->IsBuildShown() || !ProgressionComponent)
+	{
+		return;
+	}
+
+	if (DialogueComponent && DialogueComponent->IsInDialogue())
+	{
+		HUD->SetBuildShown(false);
+		return;
+	}
+
+	const TArray<FGameplayTag>& Attributes = UDCCharacterProgressionComponent::AllAttributes();
+	const TArray<FGameplayTag>& Skills = UDCCharacterProgressionComponent::AllSkills();
+	const TArray<FGameplayTag>& Perks = UDCCharacterProgressionComponent::AllPerks();
+	const FKey AttributeKeys[] = { EKeys::F1, EKeys::F2, EKeys::F3 };
+	const FKey SkillKeys[] = { EKeys::F4, EKeys::F5, EKeys::F6 };
+	const FKey PerkKeys[] = { EKeys::F7, EKeys::F8, EKeys::F9 };
+
+	auto Spend = [HUD](bool bSpent)
+	{
+		if (!bSpent)
+		{
+			HUD->ShowMessage(NSLOCTEXT("DCBuild", "NoPoints", "Nothing left to spend, or that one is already at its cap."), 1.5f);
+		}
+	};
+
+	for (int32 Index = 0; Index < Attributes.Num() && Index < UE_ARRAY_COUNT(AttributeKeys); ++Index)
+	{
+		if (PC->WasInputKeyJustPressed(AttributeKeys[Index]))
+		{
+			Spend(ProgressionComponent->TryRaiseAttribute(Attributes[Index]));
+		}
+	}
+	for (int32 Index = 0; Index < Skills.Num() && Index < UE_ARRAY_COUNT(SkillKeys); ++Index)
+	{
+		if (PC->WasInputKeyJustPressed(SkillKeys[Index]))
+		{
+			Spend(ProgressionComponent->TryRaiseSkill(Skills[Index]));
+		}
+	}
+	for (int32 Index = 0; Index < Perks.Num() && Index < UE_ARRAY_COUNT(PerkKeys); ++Index)
+	{
+		if (PC->WasInputKeyJustPressed(PerkKeys[Index]))
+		{
+			Spend(ProgressionComponent->TryTakePerk(Perks[Index]));
+		}
+	}
+	if (PC->WasInputKeyJustPressed(EKeys::F10))
+	{
+		ProgressionComponent->ResetAllocation();
+		HUD->ShowMessage(NSLOCTEXT("DCBuild", "Reset", "Build reset."), 1.5f);
 	}
 }
 

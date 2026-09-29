@@ -164,12 +164,13 @@ def material_instance(name, parent_path, vectors):
     return mi
 
 
-def cond(type_name, id=None, stage=None, negate=False):
+def cond(type_name, id=None, stage=None, negate=False, quantity=1):
     c = unreal.DCGameplayCondition()
     c.set_editor_property("type", getattr(unreal.DCConditionType, type_name))
     c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
     c.set_editor_property("stage", unreal.Name(stage) if stage else unreal.Name())
     c.set_editor_property("negate", negate)
+    c.set_editor_property("quantity", quantity)
     return c
 
 
@@ -517,6 +518,10 @@ def build_scavenger():
                             "The coil hums against your fingers, and under the hum, almost, words.",
                             [cond("WORLD_FLAG", id="shore.relay_inspected", negate=True)],
                             [cons("SET_WORLD_FLAG", id="shore.relay_inspected")]),
+                    variant("The coil is seated on the right pins, taped the way a yard electrician tapes, not a "
+                            "scavenger in a hurry. Somebody who knew this housing put it back in service. "
+                            "The hum is the set running, not a short. You can hear it in the pinout.",
+                            [cond("HAS_PERK", id="Perk.RelayEar"), cond("WORLD_FLAG", id="shore.relay_inspected")]),
                 ])
     pickup("Pickup_RadioCoil", folder, "/Game/Items/DA_Item_RadioCoil", 1, 2520, -280, 20,
            persistent_id="boat.pickup_coil")
@@ -648,19 +653,39 @@ def build_survey_launch():
     ], action="Read", duration=14.0)
     sounder = hull.part("DepthSounder", folder, (-28, 100, 115), (40, 30, 40), material=interactable_mat,
                         actor_class=unreal.DCInspectableActor)
+    chart_item = cond("HAS_ITEM", id="survey_chart")
     setup_inspectable(sounder, "Depth sounder",
                       "A depth sounder, its paper roll still threaded. The bottom trace runs flat, then breaks into "
                       "tight, even spikes: too regular for rock, too regular for fish. Someone has circled them in "
-                      "grease pencil and written AGAIN.", duration=8.0)
+                      "grease pencil and written AGAIN.",
+                      variants=[
+                          variant("You hold the sounder chart up to the roll. The spikes match the chart's margin ticks, "
+                                  "and the ticks are numbered like a bearing, not a depth. The last tick is marked with a "
+                                  "cross and the words NOT A SHOAL. Same spacing on both. Whatever they were drawing, they "
+                                  "already knew it was not the bottom.",
+                                  [cond("HAS_PERK", id="Perk.SchematicEye"), chart_item]),
+                          variant("With the chart in hand the spikes line up with marks along its edge. Same spacing, "
+                                  "same count. The trace and the paper are the same pattern, copied down. It still does "
+                                  "not say what the pattern is.",
+                                  [cond("SKILL_AT_LEAST", id="Skill.Engineering", quantity=2), chart_item]),
+                      ], duration=10.0)
     panel = hull.part("BreakerPanel", folder, (-147, -60, 140), (6, 70, 90), material=interactable_mat,
                       actor_class=unreal.DCInspectableActor)
+    engineering = ("The cuts are clean, and they start at the shore-power breaker, not the mast. "
+                   "Whoever did this knew the panel. The mast lamp is not on these lugs. "
+                   "Cutting them could not be what is still flickering up there.")
     setup_inspectable(panel, "Breaker panel",
                       "The breaker panel has been gutted, but not by scavengers. The cables are cut clean and the "
                       "ends taped off, one by one. Careful work, done fast.",
                       variants=[
+                          variant(engineering + " The log says cutting them did not stop what they felt through their boots. "
+                                  "That matches the panel: this bank was never feeding the mast.",
+                                  [cond("SKILL_AT_LEAST", id="Skill.Engineering", quantity=2),
+                                   cond("WORLD_FLAG", id=WRECK_LOG_READ)]),
+                          variant(engineering, [cond("SKILL_AT_LEAST", id="Skill.Engineering", quantity=2)]),
                           variant("Every breaker thrown, every cable cut and taped. The crew did this themselves. "
                                   "The log says it didn't help.", [cond("WORLD_FLAG", id=WRECK_LOG_READ)]),
-                      ], duration=7.0)
+                      ], duration=8.0)
     locker = hull.part("SurveyLocker", folder, (-115, -140, 55), (60, 44, 110), material=interactable_mat,
                        actor_class=unreal.DCLootContainer)
     setup_container(locker, "Survey locker", "boat.wreck_locker",
@@ -706,7 +731,13 @@ def build_survey_launch():
     # Signs the crew left in a hurry, on the beach toward the boathouse.
     inspectable("LifeJackets", folder, (-1080, -380, 6), (64, 44, 12), "Life jackets",
                 "Two life jackets on the stones, still buckled. The straps were cut through, not unclipped. "
-                "Whoever wore them was in a hurry, and walked inland.", duration=7.0)
+                "Whoever wore them was in a hurry, and walked inland.",
+                variants=[
+                    variant("The straps are cut, not unclipped, and the two jackets lie in a line pointing off the "
+                            "stones toward the treeline, not back along the beach. They left inland, and they left "
+                            "together. The ground just under the treeline is the way they went.",
+                            [cond("SKILL_AT_LEAST", id="Skill.Survival", quantity=2)]),
+                ], duration=8.0)
 
     # The water itself: dark, always there, no collision. Pulling the leads must never remove it.
     surface = box("WaterSurface", folder, (-1500, -1390, 3), (1040, 780, 8), material=water_mat)
@@ -733,16 +764,32 @@ def build_survey_launch():
                 "Chalked on a plank stuck upright in the stones, in a hurried hand: KEEP OUT OF THE WATER. "
                 "IT'S STILL ON. Under it, smaller: cut the breakers, it doesn't matter.",
                 variants=[
+                    variant("The chalk is fresh enough to rub off, and the plank was driven in from the water side. "
+                            "Whoever wrote it was standing in the shallows, looking back at the boat, not warning "
+                            "people away from the shore. The water beyond it is only water now.",
+                            [cond("ATTRIBUTE_AT_LEAST", id="Attribute.Fieldcraft", quantity=2),
+                             cond("WORLD_FLAG", id=WRECK_POWER_CUT)]),
+                    variant("The chalk is fresh enough to rub off, and the plank was driven in from the water side. "
+                            "Whoever wrote it was standing in the shallows, looking back at the boat, not warning "
+                            "people away from the shore.",
+                            [cond("ATTRIBUTE_AT_LEAST", id="Attribute.Fieldcraft", quantity=2)]),
                     variant("The chalk warning is still on the plank. The water beyond it is only water now.",
                             [cond("WORLD_FLAG", id=WRECK_POWER_CUT)]),
-                ], duration=7.0)
+                ], duration=8.0)
     inspectable("DeadFish", folder, (-950, -1000, 12), (40, 14, 10), "Dead fish",
                 "Dead fish, belly-up, in a ring around the stern, every one the same distance out. "
                 "Inside the ring the water has a faint, crawling shimmer.",
                 variants=[
+                    variant("These fish did not drift here. The eyes are all burst the same way, and nothing has fed "
+                            "on them. One shock, all at once, standing off the hull. Not a tide. "
+                            "The shimmer has gone out of the water inside the ring.",
+                            [cond("HAS_PERK", id="Perk.PulseRead"), cond("WORLD_FLAG", id=WRECK_POWER_CUT)]),
+                    variant("These fish did not drift here. The eyes are all burst the same way, and nothing has fed "
+                            "on them. One shock, all at once, standing off the hull. Not a tide.",
+                            [cond("HAS_PERK", id="Perk.PulseRead")]),
                     variant("The ring of dead fish is still there. The shimmer has gone out of the water inside it.",
                             [cond("WORLD_FLAG", id=WRECK_POWER_CUT)]),
-                ], duration=7.0)
+                ], duration=8.0)
 
     # The crew's kit, in the tender tied off the stern: out in the live water.
     tender = box("Tender", folder, (-1500, -1650, 12), (120, 240, 45), material=interactable_mat,

@@ -27,6 +27,7 @@ HEARD_KILL = "shore.mara_heard_kill"         # Mara commented on a kill after th
 # Exploration Loop (the Wrecked Survey Launch, see build_boathouse.py). Not part of Shore Watch.
 WRECK_LOG_READ = "wreck.log_read"            # player read the survey log at the wreck
 WRECK_TOLD = "wreck.mara_told"               # player told Mara about the wreck (asked once)
+WRECK_PRESSED = "wreck.mara_pressed"         # Persuasion: she admitted she saw two people leave the beach
 
 COND = unreal.DCConditionType
 CONS = unreal.DCConsequenceType
@@ -97,6 +98,16 @@ MARA_INTRO = dict(
                   "last page once, and everybody decides it was a storm.",
              choices=[dict(text="Was it a storm?", next="wreck_storm", consequences=[cons("SET_WORLD_FLAG", id=WRECK_TOLD)])]),
         dict(id="wreck_storm", line="It's always a storm. Stay out of the water round her stern. It bites.",
+             choices=[
+                 dict(text="You're leaving something out.", next="wreck_pressed",
+                      conditions=[cond("SKILL_AT_LEAST", id="Skill.Persuasion", quantity=2)],
+                      consequences=[cons("SET_WORLD_FLAG", id=WRECK_PRESSED)]),
+                 BYE,
+             ]),
+        # PROVISIONAL. A limited admission. It does not explain the Current or decide who Mara is.
+        dict(id="wreck_pressed",
+             line="Two of them came up off that beach the night she grounded. They would not look at the water, "
+                  "and they would not say what they had heard. I didn't follow. Don't ask me to.",
              choices=[BYE]),
 
         # Offer. The route is not locked by the reply; what the player does in the world decides it.

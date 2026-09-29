@@ -31,7 +31,16 @@ const FDCInspectVariant* ADCInspectableActor::FindVariant(AActor* Interactor) co
 FDCInteractionPrompt ADCInspectableActor::GetInteractionPrompt_Implementation(AActor* Interactor) const
 {
 	const FDCInspectVariant* Variant = FindVariant(Interactor);
-	return { Variant && !Variant->Action.IsEmpty() ? Variant->Action : Action, DisplayName };
+	FText Verb = Variant && !Variant->Action.IsEmpty() ? Variant->Action : Action;
+	if (Variant)
+	{
+		const FString Label = UDCGameplayRules::FormatCheckLabels(Variant->Conditions);
+		if (!Label.IsEmpty())
+		{
+			Verb = FText::FromString(Label + TEXT("  ") + Verb.ToString());
+		}
+	}
+	return { Verb, DisplayName };
 }
 
 FGameplayTag ADCInspectableActor::GetInteractionType_Implementation() const

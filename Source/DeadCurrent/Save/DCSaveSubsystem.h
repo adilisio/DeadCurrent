@@ -5,6 +5,7 @@
 #include "DCSaveSubsystem.generated.h"
 
 class ADCPlayerCharacter;
+class UDCCharacterProgressionComponent;
 class UDCQuestComponent;
 class UDCSaveGame;
 class UDCWorldStateSubsystem;
@@ -53,6 +54,11 @@ public:
 	static void CaptureWorld(UDCSaveGame* Save, UWorld* World);
 
 	static void ApplyWorld(const UDCSaveGame* Save, UWorld* World);
+
+	/** Attribute ranks, skill ranks and owned perks. Empty arrays are the unspent default. */
+	static void CaptureBuild(UDCSaveGame* Save, const UDCCharacterProgressionComponent* Build);
+
+	static void ApplyBuild(const UDCSaveGame* Save, UDCCharacterProgressionComponent* Build);
 
 private:
 

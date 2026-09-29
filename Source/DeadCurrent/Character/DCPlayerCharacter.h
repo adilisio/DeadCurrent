@@ -14,6 +14,7 @@ class UDCInventoryComponent;
 class UDCHealthComponent;
 class UDCDialogueComponent;
 class UDCQuestComponent;
+class UDCCharacterProgressionComponent;
 class UInputAction;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -53,6 +54,9 @@ class DEADCURRENT_API ADCPlayerCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UDCQuestComponent* QuestComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UDCCharacterProgressionComponent* ProgressionComponent;
+
 protected:
 
 	UPROPERTY(EditAnywhere, Category="Input")
@@ -83,6 +87,10 @@ protected:
 	/** Pressed to show or hide the inventory */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* InventoryAction;
+
+	/** Pressed to show or hide the prototype build panel */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* BuildAction;
 
 	/** Pressed to fire the equipped weapon */
 	UPROPERTY(EditAnywhere, Category="Input")
@@ -158,6 +166,9 @@ protected:
 	virtual void DoToggleInventory();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoToggleBuild();
+
+	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoFire();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -195,6 +206,8 @@ public:
 
 	UDCQuestComponent* GetQuestComponent() const { return QuestComponent; }
 
+	UDCCharacterProgressionComponent* GetProgressionComponent() const { return ProgressionComponent; }
+
 	void BeginSaveRestore() { bRestoringSave = true; }
 
 	void EndSaveRestore() { bRestoringSave = false; }
@@ -206,6 +219,8 @@ public:
 	const UInputAction* GetReloadAction() const { return ReloadAction; }
 
 private:
+
+	void UpdateBuildInput();
 
 	void UpdateSprint();
 

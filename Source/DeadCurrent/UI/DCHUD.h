@@ -43,6 +43,15 @@ public:
 	UFUNCTION(BlueprintPure, Category="HUD")
 	bool IsInventoryShown() const { return bShowInventory; }
 
+	UFUNCTION(BlueprintCallable, Category="HUD")
+	void ToggleBuild() { bShowBuild = !bShowBuild; }
+
+	UFUNCTION(BlueprintCallable, Category="HUD")
+	void SetBuildShown(bool bShown) { bShowBuild = bShown; }
+
+	UFUNCTION(BlueprintPure, Category="HUD")
+	bool IsBuildShown() const { return bShowBuild; }
+
 protected:
 
 	UPROPERTY(EditAnywhere, Category="HUD")
@@ -74,6 +83,8 @@ private:
 	/** Journal beside the inventory panel: each quest with its status and objective or outcome, then discovered places. */
 	void DrawQuestLog(float X, float Top);
 
+	void DrawBuild();
+
 	static ADCHUD* FindFor(const AActor* Actor);
 
 	void DrawCenteredText(const FString& Text, float Y, UFont* Font, const FLinearColor& Color);
@@ -85,6 +96,8 @@ private:
 	FText CurrentMessage;
 
 	bool bShowInventory = false;
+
+	bool bShowBuild = false;
 
 	double MessageExpireTime = 0.0;
 

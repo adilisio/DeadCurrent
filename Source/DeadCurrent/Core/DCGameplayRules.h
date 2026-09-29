@@ -9,6 +9,7 @@ class UDCInventoryComponent;
 class UDCQuestComponent;
 class UDCWorldStateSubsystem;
 class UDCPersistentRegistry;
+class UDCCharacterProgressionComponent;
 
 /**
  *  Everything a condition can read and a consequence can change. Built from the instigating
@@ -22,6 +23,7 @@ struct DEADCURRENT_API FDCRuleContext
 	UDCQuestComponent* Quests = nullptr;
 	UDCWorldStateSubsystem* WorldState = nullptr;
 	UDCPersistentRegistry* Registry = nullptr;
+	UDCCharacterProgressionComponent* Progression = nullptr;
 
 	/** Fills the context from the actor's components and its world's subsystems. */
 	static FDCRuleContext ForActor(AActor* Instigator);
@@ -54,6 +56,13 @@ public:
 	/** Blueprint entry: apply consequences for Instigator (usually the player). */
 	UFUNCTION(BlueprintCallable, Category="Rules", meta=(DefaultToSelf="Instigator"))
 	static void ApplyConsequencesFor(AActor* Instigator, const TArray<FDCGameplayConsequence>& Consequences);
+
+	/**
+	 *  Labels for the attribute, skill and perk checks in Conditions, e.g. "[Engineering 2] [Schematic Eye]".
+	 *  Empty when none of the conditions are build checks. Failed checks are hidden by the caller;
+	 *  this only describes checks that are already being shown.
+	 */
+	static FString FormatCheckLabels(const TArray<FDCGameplayCondition>& Conditions);
 
 	/** Short readable form for logs and validation messages. */
 	static FString Describe(const FDCGameplayCondition& Condition);

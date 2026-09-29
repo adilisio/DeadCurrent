@@ -1,4 +1,5 @@
 #include "Save/DCSaveSubsystem.h"
+#include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCFirearm.h"
 #include "Combat/DCHealthComponent.h"
@@ -242,6 +243,7 @@ void UDCSaveSubsystem::CapturePlayer(UDCSaveGame* Save, const ADCPlayerCharacter
 	}
 
 	CaptureProgress(Save, Player->GetQuestComponent(), UDCWorldStateSubsystem::Get(Player));
+	CaptureBuild(Save, Player->GetProgressionComponent());
 }
 
 void UDCSaveSubsystem::ApplyPlayer(const UDCSaveGame* Save, ADCPlayerCharacter* Player) const
@@ -272,8 +274,25 @@ void UDCSaveSubsystem::ApplyPlayer(const UDCSaveGame* Save, ADCPlayerCharacter* 
 	}
 
 	ApplyProgress(Save, Player->GetQuestComponent(), UDCWorldStateSubsystem::Get(Player));
+	ApplyBuild(Save, Player->GetProgressionComponent());
 
 	Player->EndSaveRestore();
+}
+
+void UDCSaveSubsystem::CaptureBuild(UDCSaveGame* Save, const UDCCharacterProgressionComponent* Build)
+{
+	if (Save && Build)
+	{
+		Build->CaptureState(Save->Attributes, Save->Skills, Save->Perks);
+	}
+}
+
+void UDCSaveSubsystem::ApplyBuild(const UDCSaveGame* Save, UDCCharacterProgressionComponent* Build)
+{
+	if (Save && Build)
+	{
+		Build->RestoreState(Save->Attributes, Save->Skills, Save->Perks);
+	}
 }
 
 void UDCSaveSubsystem::CaptureWorld(UDCSaveGame* Save, UWorld* World)

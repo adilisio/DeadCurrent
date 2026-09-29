@@ -1,5 +1,6 @@
 #include "AI/DCFriendlyNPC.h"
 #include "AI/DCScavengerCharacter.h"
+#include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCHealthComponent.h"
 #include "Dialogue/DCDialogueComponent.h"
@@ -902,6 +903,122 @@ bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
 		Say(TEXT("You keep looking toward his camp."));
 		TestTrue(TEXT("Legacy: coil shortcut"), Say(TEXT("This coil? I already pulled it.")));
 		TestEqual(TEXT("Legacy: straight to turn-in"), Stage(), FName(TEXT("return_coil")));
+		return true;
+	}));
+
+	QueueCleanup();
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseBuildChecksTest, "DeadCurrent.Map.Boathouse.BuildChecks",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCBoathouseBuildChecksTest::RunTest(const FString& Parameters)
+{
+	using namespace DCBoathouseTest;
+	QueueFreshMap();
+
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		UDCCharacterProgressionComponent* Build = Player() ? Player()->GetProgressionComponent() : nullptr;
+		if (!TestNotNull(TEXT("Build component"), Build)
+			|| !TestNotNull(TEXT("Breaker"), Inspectable(TEXT("Breaker panel")))
+			|| !TestNotNull(TEXT("Jackets"), Inspectable(TEXT("Life jackets")))
+			|| !TestNotNull(TEXT("Chalk"), Inspectable(TEXT("Chalk warning")))
+			|| !TestNotNull(TEXT("Fish"), Inspectable(TEXT("Dead fish")))
+			|| !TestNotNull(TEXT("Sounder"), Inspectable(TEXT("Depth sounder")))
+			|| !TestNotNull(TEXT("Relay"), RelayRig()))
+		{
+			return true;
+		}
+
+		TestEqual(TEXT("Fresh build is unspent"), Build->GetUnspentSkillPoints(), UDCCharacterProgressionComponent::SkillPointPool);
+
+		Use(TEXT("Breaker panel"));
+		TestFalse(TEXT("Unspent breaker has no engineering reading"), Message().Contains(TEXT("mast lamp")));
+
+		Build->SetSkillValue(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Engineering")), 2);
+		Use(TEXT("Breaker panel"));
+		TestTrue(TEXT("Engineering reads the mast lamp"), Message().Contains(TEXT("mast lamp")));
+
+		Use(TEXT("Life jackets"));
+		TestFalse(TEXT("Engineering does not read the trail"), Message().Contains(TEXT("treeline")));
+
+		Build->ResetAllocation();
+		Build->SetAttributeValue(UDCCharacterProgressionComponent::AttributeTag(TEXT("Attribute.Fieldcraft")), 2);
+		Build->SetSkillValue(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Survival")), 2);
+		Use(TEXT("Life jackets"));
+		TestTrue(TEXT("Survival reads the treeline"), Message().Contains(TEXT("treeline")));
+		Use(TEXT("Chalk warning"));
+		TestTrue(TEXT("Fieldcraft reads the shallows"), Message().Contains(TEXT("shallows")));
+
+		Use(TEXT("Dead fish"));
+		TestFalse(TEXT("Fish stay ordinary without the perk"), Message().Contains(TEXT("One shock")));
+		Build->SetPerkOwned(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.PulseRead")), true);
+		Use(TEXT("Dead fish"));
+		TestTrue(TEXT("Pulse Read names one shock"), Message().Contains(TEXT("One shock")));
+
+		Build->ResetAllocation();
+		WorldState()->SetFlag(TEXT("wreck.log_read"));
+		TestEqual(TEXT("Mara greeting"), TalkToMara(), FName(TEXT("greeting")));
+		TestTrue(TEXT("Tell her about the log"), Say(TEXT("There's a wrecked survey launch west of the boathouse. I read her log.")));
+		TestTrue(TEXT("Ask about the storm"), Say(TEXT("Was it a storm?")));
+		TestFalse(TEXT("Press is hidden without Persuasion"), VisibleChoiceTexts().Contains(TEXT("You're leaving something out.")));
+		Build->SetAttributeValue(UDCCharacterProgressionComponent::AttributeTag(TEXT("Attribute.Bearing")), 2);
+		Build->SetSkillValue(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Persuasion")), 1);
+		TestTrue(TEXT("Press appears at effective Persuasion 2"), VisibleChoiceTexts().Contains(TEXT("You're leaving something out.")));
+		TestTrue(TEXT("Press her"), Say(TEXT("You're leaving something out.")));
+		TestTrue(TEXT("She admits she didn't follow"), Player()->GetDialogueComponent()->GetCurrentNode()->Line.ToString().Contains(TEXT("didn't follow")));
+		TestTrue(TEXT("Pressed flag"), WorldState()->HasFlag(TEXT("wreck.mara_pressed")));
+		Player()->GetDialogueComponent()->EndDialogue();
+
+		const UDCItemDefinition* Chart = UDCItemDefinition::FindByItemId(TEXT("survey_chart"));
+		TestNotNull(TEXT("Chart item"), Chart);
+		if (Chart)
+		{
+			Player()->GetInventoryComponent()->AddItem(Chart, 1);
+		}
+		Use(TEXT("Depth sounder"));
+		TestFalse(TEXT("Chart alone does not explain the trace"), Message().Contains(TEXT("Same spacing")));
+		Build->SetSkillValue(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Engineering")), 2);
+		Use(TEXT("Depth sounder"));
+		TestTrue(TEXT("Engineering compares the chart"), Message().Contains(TEXT("Same spacing")));
+		Build->SetPerkOwned(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.SchematicEye")), true);
+		Use(TEXT("Depth sounder"));
+		TestTrue(TEXT("Schematic Eye reads the margin"), Message().Contains(TEXT("NOT A SHOAL")));
+
+		Use(RelayRig());
+		TestTrue(TEXT("Relay clue still sets for everyone"), WorldState()->HasFlag(TEXT("shore.relay_inspected")));
+		TestFalse(TEXT("Relay Ear is not the first reading"), Message().Contains(TEXT("pinout")));
+		Build->SetPerkOwned(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.RelayEar")), true);
+		Use(RelayRig());
+		TestTrue(TEXT("Relay Ear hears the pinout"), Message().Contains(TEXT("pinout")));
+
+		Build->ResetAllocation();
+		Build->SetAttributeValue(UDCCharacterProgressionComponent::AttributeTag(TEXT("Attribute.Grasp")), 2);
+		Build->SetSkillValue(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Engineering")), 1);
+		Build->SetPerkOwned(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.SchematicEye")), true);
+		TestTrue(TEXT("Save the build"), Saves() && Saves()->SaveCurrentGame());
+		Build->ResetAllocation();
+		TestEqual(TEXT("Mutated before load"), Build->GetSkill(UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Engineering"))), 0);
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		UDCCharacterProgressionComponent* Build = Player() ? Player()->GetProgressionComponent() : nullptr;
+		if (!TestNotNull(TEXT("Build after load"), Build))
+		{
+			return true;
+		}
+		const FGameplayTag Engineering = UDCCharacterProgressionComponent::SkillTag(TEXT("Skill.Engineering"));
+		TestEqual(TEXT("Loaded Grasp"), Build->GetAttribute(UDCCharacterProgressionComponent::AttributeTag(TEXT("Attribute.Grasp"))), 2);
+		TestEqual(TEXT("Loaded Engineering rank"), Build->GetSkill(Engineering), 1);
+		TestEqual(TEXT("Loaded effective Engineering"), Build->GetEffectiveSkill(Engineering), 2);
+		TestTrue(TEXT("Loaded Schematic Eye"), Build->HasPerk(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.SchematicEye"))));
+		TestFalse(TEXT("Pulse Read was not saved"), Build->HasPerk(UDCCharacterProgressionComponent::PerkTag(TEXT("Perk.PulseRead"))));
+		TestEqual(TEXT("Shore Watch still available"), TalkToMara(), FName(TEXT("greeting")));
 		return true;
 	}));
 

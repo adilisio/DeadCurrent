@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/DCProgressionTypes.h"
 #include "GameFramework/SaveGame.h"
 #include "Save/DCPersistentTypes.h"
 #include "DCSaveGame.generated.h"
@@ -22,12 +23,13 @@ public:
 	/**
 	 *  1: first playable. 2: micro RPG (MapPackage, world flags owned by UDCWorldStateSubsystem,
 	 *  quest stages from data-driven quests). 3: exploration loop (DiscoveredLocations; loot
-	 *  containers use the existing world inventory arrays). 4: RemovedPersistentIds. Older saves
-	 *  still load. Quest stages that no longer exist are dropped. Saves before 3 have no
-	 *  discovered locations. Saves before 4 do not list removed actors; load treats only the
-	 *  boathouse pickups that existed at that version, and were absent from WorldActors, as taken.
+	 *  containers use the existing world inventory arrays). 4: RemovedPersistentIds. 5: character
+	 *  build (Attributes, Skills, Perks). Older saves still load. Quest stages that no longer
+	 *  exist are dropped. Saves before 3 have no discovered locations. Saves before 4 do not
+	 *  list removed actors; load treats only the boathouse pickups that existed at that version,
+	 *  and were absent from WorldActors, as taken. Saves before 5 load an unspent build.
 	 */
-	static constexpr int32 CurrentVersion = 4;
+	static constexpr int32 CurrentVersion = 5;
 
 	/** Short map name, e.g. Lvl_Boathouse. */
 	UPROPERTY()
@@ -110,4 +112,15 @@ public:
 	 */
 	UPROPERTY()
 	TArray<FName> RemovedPersistentIds;
+
+	/** Character build. Empty means the unspent default, including saves from before version 5. */
+	UPROPERTY()
+	TArray<FDCSavedRank> Attributes;
+
+	UPROPERTY()
+	TArray<FDCSavedRank> Skills;
+
+	/** Owned perk tag names, e.g. Perk.SchematicEye. */
+	UPROPERTY()
+	TArray<FName> Perks;
 };

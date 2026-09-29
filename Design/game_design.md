@@ -4,6 +4,12 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
+Phase 4, RPG Layer (implemented; awaiting Anthony's playtest):
+
+Allocate a small build > The same shore offers a reading or a line that another build does not get > The build survives save/load
+
+Three attributes (Grasp, Fieldcraft, Bearing), three skills (Engineering, Survival, Persuasion), three perks (Schematic Eye, Pulse Read, Relay Ear). Effective skill is invested ranks plus 1 when the linked attribute is 2 or higher. Failed checks are hidden. A visible check is labeled, for example `[Engineering 2]`. Nothing here replaces Shore Watch or the Survey Launch; a build only adds options. Press **B** to allocate. **F10** resets the prototype allocation. Tab shows the character block. See `RPGPhasePlan.txt`.
+
 Phase 3, Exploration Loop (accepted 2026-09-28 after playtest and fixes):
 
 Notice something odd > Leave the direct route > Discover a place > Read the clues > Infer what happened > Avoid or disable the danger > Take the reward > World remembers
@@ -58,4 +64,5 @@ Record design decisions here as they are made, with the date and the reason.
 - 2026-09-28: The wreck is optional and does not touch Shore Watch. Its only link to Shore Watch is flavour: the beacon hums like the scavenger's relay if the player has inspected it, and Mara has one deflecting line.
 - 2026-09-28: All wreck lore (the *Tern*, the crew, the "pattern", the live battery) is PROVISIONAL and unexplained on purpose; see the world bible. New deferred decisions: the boat's name, the loot balance at the wreck, and whether Mara's "storm" line should vary with the Shore Watch outcome.
 - 2026-09-28: First Exploration Loop playtest (Anthony). Kept: the pinging lamp works as a landmark, the reward is fine but wants something new, the *Tern* name and Mara's "storm" line are fine for now. Changed: (1) pulling the leads made the water disappear, because the live water's mesh was the water; the water is now a permanent surface and only the electric glow and sparks switch off. (2) The live water was a surprise; the dead fish had been placed below ground, so the ring was never visible. Fish are now pale and on the surface, the glow and sparks are stronger, and there is a chalk warning on the beach. (3) The tender now holds a novel item, the Sounder Chart. Deferred: audio and richer visuals (the clues are hard to piece together with greybox art and no sound); the plan scopes both out.
-- 2026-09-28: Exploration Loop accepted by Anthony after the second playtest pass (water persists, fish visible, novel item found). Next phase to plan: RPG Layer.
+- 2026-09-28: Exploration Loop accepted by Anthony after the second playtest pass (water persists, fish visible, novel item found).
+- 2026-09-28: Phase 4 attributes are Grasp, Fieldcraft and Bearing, each linked to one skill (Engineering, Survival, Persuasion). Not a SPECIAL clone. Effective skill = ranks + 1 if the linked attribute is at least 2, so both a skill point and a committed attribute can open a check. Pools are 3 / 2 / 1. Failed checks are hidden, matching dialogue. New wreck and Mara lines from those checks are PROVISIONAL and do not explain the Current.

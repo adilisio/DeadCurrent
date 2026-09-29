@@ -1,7 +1,9 @@
 #include "Core/DCGameplayRules.h"
+#include "Character/DCCharacterProgressionComponent.h"
 #include "Combat/DCHealthComponent.h"
 #include "DeadCurrent.h"
 #include "Engine/World.h"
+#include "GameplayTagContainer.h"
 #include "Inventory/DCInventoryComponent.h"
 #include "Items/DCItemDefinition.h"
 #include "Quest/DCQuestComponent.h"
@@ -20,6 +22,7 @@ FDCRuleContext FDCRuleContext::ForActor(AActor* Instigator)
 
 	Context.Inventory = Instigator->FindComponentByClass<UDCInventoryComponent>();
 	Context.Quests = Instigator->FindComponentByClass<UDCQuestComponent>();
+	Context.Progression = Instigator->FindComponentByClass<UDCCharacterProgressionComponent>();
 	if (UWorld* World = Instigator->GetWorld())
 	{
 		Context.WorldState = World->GetSubsystem<UDCWorldStateSubsystem>();
@@ -70,6 +73,26 @@ bool UDCGameplayRules::CheckCondition(const FDCGameplayCondition& Condition, con
 	case EDCConditionType::LocationDiscovered:
 		bPass = Context.WorldState && Context.WorldState->IsLocationDiscovered(Condition.Id);
 		break;
+	case EDCConditionType::AttributeAtLeast:
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(Condition.Id, false);
+		const int32 Value = Context.Progression ? Context.Progression->GetAttribute(Tag) : 0;
+		bPass = Value >= FMath::Max(1, Condition.Quantity);
+		break;
+	}
+	case EDCConditionType::SkillAtLeast:
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(Condition.Id, false);
+		const int32 Value = Context.Progression ? Context.Progression->GetEffectiveSkill(Tag) : 0;
+		bPass = Value >= FMath::Max(1, Condition.Quantity);
+		break;
+	}
+	case EDCConditionType::HasPerk:
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(Condition.Id, false);
+		bPass = Context.Progression && Context.Progression->HasPerk(Tag);
+		break;
+	}
 	default:
 		UE_LOG(LogDeadCurrent, Warning, TEXT("[DCRULES] unhandled condition type %d"), static_cast<int32>(Condition.Type));
 		bPass = false;
@@ -189,7 +212,42 @@ FString UDCGameplayRules::Describe(const FDCGameplayCondition& Condition)
 	{
 		Text += FString::Printf(TEXT(", %d"), Condition.Quantity);
 	}
+	else if (Condition.Type == EDCConditionType::AttributeAtLeast || Condition.Type == EDCConditionType::SkillAtLeast)
+	{
+		Text += FString::Printf(TEXT(", %d"), FMath::Max(1, Condition.Quantity));
+	}
 	return Text + TEXT(")");
+}
+
+FString UDCGameplayRules::FormatCheckLabels(const TArray<FDCGameplayCondition>& Conditions)
+{
+	TArray<FString> Labels;
+	for (const FDCGameplayCondition& Condition : Conditions)
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(Condition.Id, false);
+		FString Label;
+		switch (Condition.Type)
+		{
+		case EDCConditionType::AttributeAtLeast:
+			Label = FString::Printf(TEXT("[%s %d]"),
+				*UDCCharacterProgressionComponent::GetAttributeName(Tag).ToString(), FMath::Max(1, Condition.Quantity));
+			break;
+		case EDCConditionType::SkillAtLeast:
+			Label = FString::Printf(TEXT("[%s %d]"),
+				*UDCCharacterProgressionComponent::GetSkillName(Tag).ToString(), FMath::Max(1, Condition.Quantity));
+			break;
+		case EDCConditionType::HasPerk:
+			Label = FString::Printf(TEXT("[%s]"), *UDCCharacterProgressionComponent::GetPerkName(Tag).ToString());
+			break;
+		default:
+			break;
+		}
+		if (!Label.IsEmpty())
+		{
+			Labels.Add(Label);
+		}
+	}
+	return FString::Join(Labels, TEXT(" "));
 }
 
 FString UDCGameplayRules::Describe(const FDCGameplayConsequence& Consequence)
@@ -244,6 +302,24 @@ void UDCGameplayRules::ValidateReferences(const FDCGameplayCondition& Condition,
 			OutProblems.Add(FString::Printf(TEXT("%s: no stage"), *Describe(Condition)));
 		}
 		DCValidateQuestRef(Condition.Id, Condition.Stage, Describe(Condition), OutProblems);
+		break;
+	case EDCConditionType::AttributeAtLeast:
+		if (!UDCCharacterProgressionComponent::IsKnownAttribute(Condition.Id))
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: unknown attribute"), *Describe(Condition)));
+		}
+		break;
+	case EDCConditionType::SkillAtLeast:
+		if (!UDCCharacterProgressionComponent::IsKnownSkill(Condition.Id))
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: unknown skill"), *Describe(Condition)));
+		}
+		break;
+	case EDCConditionType::HasPerk:
+		if (!UDCCharacterProgressionComponent::IsKnownPerk(Condition.Id))
+		{
+			OutProblems.Add(FString::Printf(TEXT("%s: unknown perk"), *Describe(Condition)));
+		}
 		break;
 	default:
 		if (Condition.Id.IsNone())

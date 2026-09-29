@@ -41,7 +41,9 @@ To be defined. Three broad positions exist:
 - Sixty years on, the launch's battery bank is still live and electrifies the water round the stern (dead fish ring it). Pulling the battery leads stops it.
 - The masthead lamp flickers with no power at all.
 - The emergency beacon on the transom is dead, but hums like the scavenger's relay if the player has already inspected that relay.
-- **Mara** (and "everybody on this shore") treats the wreck as "a storm". She knows the *Tern*, tells the player to stay out of the water round her stern ("It bites"), and deflects. Whether she knows more is undecided.
+- **Mara** (and "everybody on this shore") treats the wreck as "a storm". She knows the *Tern*, tells the player to stay out of the water round her stern ("It bites"), and deflects.
+- **PROVISIONAL, RPG Layer:** pressed (Persuasion), she admits she saw two people come up off the beach the night the *Tern* grounded. They would not look at the water and would not say what they had heard. She did not follow. This does not decide her faction or explain the Current.
+- **PROVISIONAL, RPG Layer:** an Engineering reading of the breaker panel says the cuts start at the shore-power breaker and the mast lamp is not on those lugs. A Survival reading of the cut life jackets says they lie toward the treeline. A Fieldcraft reading of the chalk warning says it was written from the shallows, looking back at the boat. Pulse Read says the fish died in one shock. Relay Ear says the scavenger's coil was seated by someone who knew the housing. The Sounder Chart, compared to the depth sounder, repeats the trace; Schematic Eye adds a margin note whose last tick is marked not a shoal. None of this says what the pattern is.
 - **Nothing explains the Current.** The wreck is a symptom, not an answer. Do not add an explanation.
 
 ## Characters
