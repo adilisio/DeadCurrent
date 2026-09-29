@@ -4,7 +4,7 @@ Session date: 2026-09-28. Milestone: Phase 3, Exploration Loop. Work was split b
 
 ## Executive Summary
 
-The Exploration Loop is implemented, documented and passes all 30 automated tests. Anthony has done a first playtest and asked for fixes (below), which are applied. **The phase is not accepted yet**; it needs another playtest pass.
+The Exploration Loop is implemented, documented and passes all 30 automated tests. Anthony playtested it, asked for fixes (below), and after a second look **accepted the phase** on 2026-09-28.
 
 Phase 3 adds one small, optional, unmarked point of interest to `Lvl_Boathouse`: **the Wrecked Survey Launch**, on a new stretch of shore behind the boathouse. It is built from four small reusable pieces (location discovery, loot containers, inspectable verbs, switchable hazards) plus a flickering landmark light, and it uses the existing rule language, world state and save system. Shore Watch's content and `ADCPlayerCharacter` are unchanged.
 
@@ -98,6 +98,8 @@ Anthony's first playtest (no bugs, smooth frame rate, banner/PLACES/save-load/fi
 | The pinging lamp helped find it | Kept |
 | Haven't found Mara's wreck line | Not a bug: it only appears after you read the survey log (checklist G). Please try again |
 | *Tern* name and Mara's "storm" line | Fine for now; kept |
+
+**Result:** Anthony confirmed the water stays, the fish are closer and visible, and the novel item is found. Phase 3 accepted.
 
 Tests: the tender now has three stacks (chart, dressings, rounds) and the map tests were updated for it; all 30 pass.
 
@@ -204,4 +206,4 @@ Tests: the tender now has three stacks (chart, dressings, rounds) and the map te
 
 ## Recommended Next Step
 
-After Anthony accepts the Exploration Loop (and any fixes from the playtest): **plan Phase 4, the RPG Layer, as its own numbered checklist before building anything**, in the style of `FirstPhasePlan.txt` and `ExplorationLoopPlan.txt`. Consider fixing the pickup/older-save persistence issue first.
+The Exploration Loop is accepted. Next: **plan Phase 4, the RPG Layer, as its own numbered checklist before building anything**, in the style of `FirstPhasePlan.txt` and `ExplorationLoopPlan.txt`. Consider fixing the pickup/older-save persistence issue first.

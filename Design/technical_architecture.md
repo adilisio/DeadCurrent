@@ -24,7 +24,7 @@ Living document. Update it whenever a foundational system lands or a convention 
 
 First Playable (FirstPhasePlan §18 / §20) is accepted: boathouse loop, per-stack corpse loot, and F5/F9 world restore including remaining corpse stacks.
 
-Micro RPG (LongTermPlan Phase 2) is implemented and awaiting a human playtest: the Shore Watch quest in `Lvl_Boathouse` with a combat route and a coil (stealth) route, different outcomes, and save/load at every stage. Exploration Loop (LongTermPlan Phase 3) is implemented and awaiting a human playtest: the Wrecked Survey Launch, an optional point of interest west of the boathouse (location discovery, environmental clues, live-water hazard, two loot containers, one line from Mara). See `Design/CLAUDE_SESSION_REPORT.md` for the playtest checklist and `ExplorationLoopPlan.txt` for the scope.
+Micro RPG (LongTermPlan Phase 2) is implemented (Shore Watch played through in the Phase 3 playtest, no issues): the Shore Watch quest in `Lvl_Boathouse` with a combat route and a coil (stealth) route, different outcomes, and save/load at every stage. Exploration Loop (LongTermPlan Phase 3) is implemented and awaiting a human playtest: the Wrecked Survey Launch, an optional point of interest west of the boathouse (location discovery, environmental clues, live-water hazard, two loot containers, one line from Mara). See `Design/CLAUDE_SESSION_REPORT.md` for the playtest checklist and `ExplorationLoopPlan.txt` for the scope.
 
 ## Automated tests
 

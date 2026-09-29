@@ -4,7 +4,7 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
-Phase 3, Exploration Loop (implemented; first playtest done, fixes applied, NOT yet accepted):
+Phase 3, Exploration Loop (accepted 2026-09-28 after playtest and fixes):
 
 Notice something odd > Leave the direct route > Discover a place > Read the clues > Infer what happened > Avoid or disable the danger > Take the reward > World remembers
 
@@ -58,3 +58,4 @@ Record design decisions here as they are made, with the date and the reason.
 - 2026-09-28: The wreck is optional and does not touch Shore Watch. Its only link to Shore Watch is flavour: the beacon hums like the scavenger's relay if the player has inspected it, and Mara has one deflecting line.
 - 2026-09-28: All wreck lore (the *Tern*, the crew, the "pattern", the live battery) is PROVISIONAL and unexplained on purpose; see the world bible. New deferred decisions: the boat's name, the loot balance at the wreck, and whether Mara's "storm" line should vary with the Shore Watch outcome.
 - 2026-09-28: First Exploration Loop playtest (Anthony). Kept: the pinging lamp works as a landmark, the reward is fine but wants something new, the *Tern* name and Mara's "storm" line are fine for now. Changed: (1) pulling the leads made the water disappear, because the live water's mesh was the water; the water is now a permanent surface and only the electric glow and sparks switch off. (2) The live water was a surprise; the dead fish had been placed below ground, so the ring was never visible. Fish are now pale and on the surface, the glow and sparks are stronger, and there is a chalk warning on the beach. (3) The tender now holds a novel item, the Sounder Chart. Deferred: audio and richer visuals (the clues are hard to piece together with greybox art and no sound); the plan scopes both out.
+- 2026-09-28: Exploration Loop accepted by Anthony after the second playtest pass (water persists, fish visible, novel item found). Next phase to plan: RPG Layer.
