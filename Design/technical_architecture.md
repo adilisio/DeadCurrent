@@ -1,6 +1,6 @@
 # DEAD CURRENT - Technical Architecture
 
-Living document. Update it whenever a foundational system lands or a convention changes.
+Living document. Update it whenever a foundational system lands or a convention changes. Art, audio, the external asset library, and Meshy generation are in `Design/art_pipeline.md`.
 
 ## Engine and toolchain
 

@@ -190,4 +190,4 @@ Walk-in discovery, the name board, the log, the live water, pulling the leads, t
 
 ## Recommended Next Step
 
-Phase 5, World State: choices visibly alter locations and NPC behavior. Do not start it until that phase is opened on purpose.
+Superseded 2026-09-29. The RPG Layer is accepted, and Anthony chose a Presentation Pass on the existing shore before Phase 5 (see `Design/game_design.md` and `Design/art_pipeline.md`). Phase 5, World State, follows it. Do not start Phase 5 until that phase is opened on purpose.

@@ -4,6 +4,8 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
+Next: Presentation Pass (chosen 2026-09-29, not yet started). A bounded art, audio, and readability pass on the existing `Lvl_Boathouse` shore before Phase 5. No new gameplay, place, quest, or enemy. Its plan will be `PresentationPassPlan.txt`. Constraints and the asset library are in `Design/art_pipeline.md`.
+
 Phase 4, RPG Layer (accepted 2026-09-29 after playtest):
 
 Allocate a small build > The same shore offers a reading or a line that another build does not get > The build survives save/load
@@ -67,3 +69,4 @@ Record design decisions here as they are made, with the date and the reason.
 - 2026-09-28: Exploration Loop accepted by Anthony after the second playtest pass (water persists, fish visible, novel item found).
 - 2026-09-28: Phase 4 attributes are Grasp, Fieldcraft and Bearing, each linked to one skill (Engineering, Survival, Persuasion). Not a SPECIAL clone. Effective skill = ranks + 1 if the linked attribute is at least 2, so both a skill point and a committed attribute can open a check. Pools are 3 / 2 / 1. Failed checks are hidden, matching dialogue. New wreck and Mara lines from those checks are PROVISIONAL and do not explain the Current.
 - 2026-09-29: RPG Layer accepted by Anthony after playing the Engineering, Survival, and Persuasion builds on the existing shore. Playtest fixes kept with that pass: engine view modes no longer take F1–F5 or F9, and prompts plus inspect text sit on a dark plate.
+- 2026-09-29: A Presentation Pass comes before Phase 5 (World State). Every playtest so far has said the clues are hard to read in greybox with no sound, and Phase 5 is about choices *visibly* changing places. The pass is bounded to the existing shore: settle how hand-placed art coexists with the script-built map, replace greybox clue props and NPC bodies, add first audio, and keep every test green. Art may come from `C:\FO5_AssetLibrary` and from Meshy Pro (see `Design/art_pipeline.md`).
