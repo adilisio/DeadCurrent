@@ -2,6 +2,11 @@
 #include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Materials/MaterialInstance.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/OutputDevice.h"
+#include "Misc/ScopeLock.h"
 #include "DeadCurrent.h"
 #include "Dom/JsonObject.h"
 #include "Engine/GameInstance.h"
@@ -61,6 +66,63 @@ namespace DCReviewCapture
 		TArray<FLandmark> Landmarks;
 	};
 
+	class FReviewLogCapture : public FOutputDevice
+	{
+	public:
+		TArray<FString> Warnings;
+		TArray<FString> Errors;
+		TArray<FString> Pool;
+		bool bActive = false;
+		FCriticalSection Mutex;
+
+		void ResetLists()
+		{
+			FScopeLock Lock(&Mutex);
+			Warnings.Reset();
+			Errors.Reset();
+			Pool.Reset();
+		}
+
+		void SetActive(bool bInActive)
+		{
+			FScopeLock Lock(&Mutex);
+			bActive = bInActive;
+		}
+
+		virtual bool CanBeUsedOnAnyThread() const override { return true; }
+
+		virtual void Serialize(const TCHAR* V, ELogVerbosity::Type Verbosity, const FName& Category) override
+		{
+			FScopeLock Lock(&Mutex);
+			if (!bActive || !V)
+			{
+				return;
+			}
+			if (Verbosity != ELogVerbosity::Warning && Verbosity != ELogVerbosity::Error)
+			{
+				return;
+			}
+			const FString Line = FString::Printf(TEXT("%s: %s"), *Category.ToString(), V);
+			const bool bPool = Line.Contains(TEXT("over budget"), ESearchCase::IgnoreCase)
+				|| (Line.Contains(TEXT("pool"), ESearchCase::IgnoreCase) && Line.Contains(TEXT("budget"), ESearchCase::IgnoreCase));
+			if (bPool && Pool.Num() < 20)
+			{
+				Pool.Add(Line);
+			}
+			if (Verbosity == ELogVerbosity::Error)
+			{
+				if (Errors.Num() < 50)
+				{
+					Errors.Add(Line);
+				}
+			}
+			else if (Warnings.Num() < 50)
+			{
+				Warnings.Add(Line);
+			}
+		}
+	};
+
 	struct FRun
 	{
 		FAutomationTestBase* Test = nullptr;
@@ -80,6 +142,13 @@ namespace DCReviewCapture
 		TWeakObjectPtr<UWorld> PreviousWorld;
 		TArray<TSharedPtr<FJsonValue>> ViewpointResults;
 		TArray<TSharedPtr<FJsonValue>> RouteResults;
+		TSharedPtr<FReviewLogCapture> Log;
+		bool bLogAttached = false;
+		TArray<double> FrameSamples;
+		float PendingFrameMs = 0.0f;
+		TArray<FString> DefaultMaterials;
+		TArray<FString> MissingTextures;
+		TArray<TSharedPtr<FJsonValue>> LandmarkResults;
 
 		enum class EPhase : uint8
 		{
@@ -624,6 +693,241 @@ namespace DCReviewCapture
 		Object->SetArrayField(Field, Numbers);
 	}
 
+	void BeginViewpointCapture(FRun& Run)
+	{
+		Run.FrameSamples.Reset();
+		Run.DefaultMaterials.Reset();
+		Run.MissingTextures.Reset();
+		Run.LandmarkResults.Reset();
+		Run.PendingFrameMs = 0.0f;
+		if (!Run.Log.IsValid())
+		{
+			return;
+		}
+		Run.Log->ResetLists();
+		if (!Run.bLogAttached)
+		{
+			GLog->AddOutputDevice(Run.Log.Get());
+			Run.bLogAttached = true;
+		}
+		Run.Log->SetActive(true);
+	}
+
+	void StopViewpointCapture(FRun& Run)
+	{
+		if (Run.Log.IsValid())
+		{
+			Run.Log->SetActive(false);
+		}
+	}
+
+	void DetachViewpointCapture(FRun& Run)
+	{
+		StopViewpointCapture(Run);
+		if (Run.bLogAttached && Run.Log.IsValid())
+		{
+			GLog->RemoveOutputDevice(Run.Log.Get());
+			Run.bLogAttached = false;
+		}
+	}
+
+	float AverageFrameMs(const TArray<double>& Samples)
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0f;
+		}
+		double Sum = 0.0;
+		for (const double Sample : Samples)
+		{
+			Sum += Sample;
+		}
+		return static_cast<float>(Sum / Samples.Num() * 1000.0);
+	}
+
+	bool PointInFrustum(const FVector& WorldPoint)
+	{
+		ADCPlayerCharacter* Pawn = Player();
+		APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+		UCameraComponent* Camera = Pawn ? Pawn->GetFirstPersonCameraComponent() : nullptr;
+		if (!Controller || !Camera)
+		{
+			return false;
+		}
+		const FVector ToPoint = WorldPoint - Camera->GetComponentLocation();
+		if (FVector::DotProduct(ToPoint, Camera->GetForwardVector()) <= 0.0)
+		{
+			return false;
+		}
+		FVector2D Screen;
+		if (!Controller->ProjectWorldLocationToScreen(WorldPoint, Screen, true))
+		{
+			return false;
+		}
+		int32 SizeX = 0;
+		int32 SizeY = 0;
+		Controller->GetViewportSize(SizeX, SizeY);
+		return SizeX > 0 && SizeY > 0 && Screen.X >= 0.0 && Screen.Y >= 0.0 && Screen.X <= SizeX && Screen.Y <= SizeY;
+	}
+
+	bool IsDefaultOrGridMaterial(const UMaterialInterface* Material)
+	{
+		if (!Material)
+		{
+			return true;
+		}
+		const FString Path = Material->GetPathName();
+		return Path.Contains(TEXT("WorldGridMaterial"))
+			|| Path.Contains(TEXT("PrototypeGrid"))
+			|| Path.Contains(TEXT("DefaultMaterial"))
+			|| Path.Contains(TEXT("DefaultColorway"))
+			|| Path.Contains(TEXT("BasicShapeMaterial"));
+	}
+
+	bool OwnedByPlayer(const AActor* Actor)
+	{
+		for (const AActor* Cursor = Actor; Cursor; Cursor = Cursor->GetOwner())
+		{
+			if (Cursor->IsA<ADCPlayerCharacter>())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void NoteUnique(TArray<FString>& Lines, const FString& Line)
+	{
+		if (Lines.Num() >= 40 || Lines.Contains(Line))
+		{
+			return;
+		}
+		Lines.Add(Line);
+	}
+
+	void GatherSceneChecks(FRun& Run)
+	{
+		Run.DefaultMaterials.Reset();
+		Run.MissingTextures.Reset();
+		Run.LandmarkResults.Reset();
+		UWorld* World = GameWorld();
+		ADCPlayerCharacter* Pawn = Player();
+		if (!World || !Pawn || Run.Index >= Run.Shots.Num())
+		{
+			return;
+		}
+
+		for (TActorIterator<AActor> ActorIt(World); ActorIt; ++ActorIt)
+		{
+			if (OwnedByPlayer(*ActorIt))
+			{
+				continue;
+			}
+			TInlineComponentArray<UPrimitiveComponent*> Primitives;
+			ActorIt->GetComponents(Primitives);
+			for (UPrimitiveComponent* Primitive : Primitives)
+			{
+				if (!Primitive || !Primitive->IsVisible() || Primitive->bHiddenInGame)
+				{
+					continue;
+				}
+				if (!Primitive->WasRecentlyRendered(1.0f) || !PointInFrustum(Primitive->Bounds.Origin))
+				{
+					continue;
+				}
+				const int32 MaterialCount = FMath::Max(Primitive->GetNumMaterials(), 1);
+				for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
+				{
+					UMaterialInterface* Material = Primitive->GetMaterial(MaterialIndex);
+					if (IsDefaultOrGridMaterial(Material))
+					{
+						NoteUnique(Run.DefaultMaterials, Material ? Material->GetPathName() : TEXT("(null material)"));
+						continue;
+					}
+					if (!Material)
+					{
+						continue;
+					}
+					TArray<UTexture*> Textures;
+					Material->GetUsedTextures(Textures, EMaterialQualityLevel::Low);
+					for (UTexture* Texture : Textures)
+					{
+						if (!Texture)
+						{
+							NoteUnique(Run.MissingTextures, Material->GetPathName() + TEXT(" -> (null texture)"));
+							continue;
+						}
+						const FString TexturePath = Texture->GetPathName();
+						if (TexturePath.Contains(TEXT("DefaultTexture")) || TexturePath.Contains(TEXT("DefaultDiffuse"))
+							|| TexturePath.Contains(TEXT("DefaultNormal")))
+						{
+							NoteUnique(Run.MissingTextures, Material->GetPathName() + TEXT(" -> ") + TexturePath);
+						}
+					}
+					if (const UMaterialInstance* Instance = Cast<UMaterialInstance>(Material))
+					{
+						for (const FTextureParameterValue& Parameter : Instance->TextureParameterValues)
+						{
+							if (!Parameter.ParameterValue)
+							{
+								NoteUnique(Run.MissingTextures, Material->GetPathName() + TEXT(" -> ") + Parameter.ParameterInfo.Name.ToString());
+							}
+						}
+					}
+				}
+			}
+		}
+
+		const UCameraComponent* Camera = Pawn->GetFirstPersonCameraComponent();
+		const FVector CameraLocation = Camera ? Camera->GetComponentLocation() : Pawn->GetActorLocation();
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(ReviewLandmark), false);
+		Params.AddIgnoredActor(Pawn);
+		for (const FLandmark& Landmark : Run.Shots[Run.Index].Landmarks)
+		{
+			FHitResult Hit;
+			const bool bHit = World->LineTraceSingleByChannel(Hit, CameraLocation, Landmark.Location, ECC_Visibility, Params);
+			const float TargetDistance = FVector::Dist(CameraLocation, Landmark.Location);
+			const bool bUnblocked = !bHit || (TargetDistance - Hit.Distance) <= 150.0f;
+			TSharedRef<FJsonObject> Result = MakeShared<FJsonObject>();
+			Result->SetStringField(TEXT("id"), Landmark.Id);
+			Result->SetBoolField(TEXT("in_frustum"), PointInFrustum(Landmark.Location));
+			Result->SetBoolField(TEXT("trace_unblocked"), bUnblocked);
+			Run.LandmarkResults.Add(MakeShared<FJsonValueObject>(Result));
+		}
+	}
+
+	TArray<TSharedPtr<FJsonValue>> StringArray(const TArray<FString>& Lines)
+	{
+		TArray<TSharedPtr<FJsonValue>> Values;
+		for (const FString& Line : Lines)
+		{
+			Values.Add(MakeShared<FJsonValueString>(Line));
+		}
+		return Values;
+	}
+
+	TSharedRef<FJsonObject> BuildChecks(FRun& Run)
+	{
+		TSharedRef<FJsonObject> Checks = MakeShared<FJsonObject>();
+		Checks->SetArrayField(TEXT("default_or_grid_materials"), StringArray(Run.DefaultMaterials));
+		Checks->SetArrayField(TEXT("missing_textures"), StringArray(Run.MissingTextures));
+		TArray<FString> Pool;
+		TArray<FString> Warnings;
+		TArray<FString> Errors;
+		if (Run.Log.IsValid())
+		{
+			FScopeLock Lock(&Run.Log->Mutex);
+			Pool = Run.Log->Pool;
+			Warnings = Run.Log->Warnings;
+			Errors = Run.Log->Errors;
+		}
+		Checks->SetArrayField(TEXT("texture_pool_warnings"), StringArray(Pool));
+		Checks->SetArrayField(TEXT("warnings"), StringArray(Warnings));
+		Checks->SetArrayField(TEXT("errors"), StringArray(Errors));
+		Checks->SetArrayField(TEXT("landmarks"), Run.LandmarkResults);
+		return Checks;
+	}
+
 	void WriteManifest(const FRun& Run)
 	{
 		TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
@@ -662,6 +966,16 @@ namespace DCReviewCapture
 			Record->SetStringField(TEXT("error"), Error);
 		}
 		return Record;
+	}
+
+	void AddCaptureChecks(const TSharedRef<FJsonObject>& Record, float FrameTimeMs, const TSharedPtr<FJsonObject>& Checks)
+	{
+		if (!Checks.IsValid())
+		{
+			return;
+		}
+		Record->SetNumberField(TEXT("frame_time_ms"), FMath::RoundToDouble(FrameTimeMs * 10.0) / 10.0);
+		Record->SetObjectField(TEXT("checks"), Checks);
 	}
 
 	bool FileReady(const FString& Path)
@@ -766,22 +1080,27 @@ namespace DCReviewCapture
 			}
 			Run.Frames = 0;
 			Run.PhaseStart = Now;
+			BeginViewpointCapture(Run);
 			Run.Phase = FRun::EPhase::Settle;
 			return false;
 		}
 
 		case FRun::EPhase::Settle:
+			Run.FrameSamples.Add(FApp::GetDeltaTime());
 			++Run.Frames;
 			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < 0.5)
 			{
 				return false;
 			}
+			Run.PendingFrameMs = AverageFrameMs(Run.FrameSamples);
+			GatherSceneChecks(Run);
 			Run.Phase = FRun::EPhase::Shot;
 			return false;
 
 		case FRun::EPhase::RouteSettle:
 			if (Run.Frames == 0)
 			{
+				Run.FrameSamples.Reset();
 				FVector Eye;
 				FRotator Rotation;
 				if (!PlaceOnRoute(Run, Eye, Rotation))
@@ -791,11 +1110,13 @@ namespace DCReviewCapture
 					return false;
 				}
 			}
+			Run.FrameSamples.Add(FApp::GetDeltaTime());
 			++Run.Frames;
 			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < 0.5)
 			{
 				return false;
 			}
+			Run.PendingFrameMs = AverageFrameMs(Run.FrameSamples);
 			Run.Phase = FRun::EPhase::RouteShot;
 			return false;
 
@@ -854,6 +1175,7 @@ namespace DCReviewCapture
 			{
 				if (Now - Run.PhaseStart > ShotTimeoutSeconds)
 				{
+					StopViewpointCapture(Run);
 					const FString Message = FString::Printf(TEXT("Screenshot was not written: %s"), *ImagePath);
 					Fail(Run, Message);
 					if (bRoute)
@@ -885,6 +1207,7 @@ namespace DCReviewCapture
 				Frame->SetStringField(TEXT("image"), ImageName);
 				SetVectorArray(Frame, TEXT("location"), CameraLocation);
 				SetRotatorArray(Frame, TEXT("rotation"), CameraRotation);
+				Frame->SetNumberField(TEXT("frame_time_ms"), FMath::RoundToDouble(Run.PendingFrameMs * 10.0) / 10.0);
 				Run.RouteResults.Add(MakeShared<FJsonValueObject>(Frame));
 				UE_LOG(LogDeadCurrent, Display, TEXT("[DCREVIEW] route %d"), Run.RouteResults.Num() - 1);
 				const bool bAtEnd = Run.RouteDistance >= Run.RouteLength - 1.0f;
@@ -903,7 +1226,10 @@ namespace DCReviewCapture
 			else
 			{
 				const FShot& Shot = Run.Shots[Run.Index];
-				Run.ViewpointResults.Add(MakeShared<FJsonValueObject>(ShotRecord(Shot, ImageName, CameraLocation, CameraRotation, true, FString())));
+				StopViewpointCapture(Run);
+				TSharedRef<FJsonObject> Record = ShotRecord(Shot, ImageName, CameraLocation, CameraRotation, true, FString());
+				AddCaptureChecks(Record, Run.PendingFrameMs, BuildChecks(Run));
+				Run.ViewpointResults.Add(MakeShared<FJsonValueObject>(Record));
 				UE_LOG(LogDeadCurrent, Display, TEXT("[DCREVIEW] %s"), *Shot.Id);
 				++Run.Index;
 				if (Run.Index < Run.Shots.Num())
@@ -932,6 +1258,7 @@ namespace DCReviewCapture
 			return false;
 
 		case FRun::EPhase::Finish:
+			DetachViewpointCapture(Run);
 			WriteManifest(Run);
 			RestoreSlot();
 			if (!Run.bFailed)
@@ -961,6 +1288,7 @@ bool FDCReviewCaptureTest::RunTest(const FString& Parameters)
 
 	TSharedRef<FRun> Run = MakeShared<FRun>();
 	Run->Test = this;
+	Run->Log = MakeShared<FReviewLogCapture>();
 	Run->OutDir = OutputDirectory();
 	const FString ListPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Tools/Review/Lvl_Boathouse.json"));
 	FString Error;
