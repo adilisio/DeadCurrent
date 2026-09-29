@@ -53,6 +53,7 @@ SURFACES = [
          author="Amal Kumar",
          url="https://polyhaven.com/a/chipped_concrete",
          instance="MI_DC_Concrete", tile_cm=120.0, metallic=0.0,
+         tint=(0.58, 0.62, 0.66),
          maps=dict(color="chipped_concrete_diff_2k.jpg", normal="chipped_concrete_nor_dx_2k.jpg",
                    rough="chipped_concrete_rough_2k.jpg", ao="chipped_concrete_ao_2k.jpg")),
     dict(source="PolyHaven", asset_id="blue_plaster_weathered",
@@ -158,7 +159,7 @@ def div(material, a, b, x, y):
     return node
 
 
-def import_texture(filename, dest_path, dest_name, kind):
+def import_texture(filename, dest_path, dest_name, kind, max_size=MAX_SIZE):
     path = f"{dest_path}/{dest_name}"
     task = unreal.AssetImportTask()
     task.set_editor_property("filename", filename)
@@ -171,7 +172,7 @@ def import_texture(filename, dest_path, dest_name, kind):
     if not unreal.EditorAssetLibrary.does_asset_exist(path):
         raise RuntimeError(f"Import failed: {filename}")
     tex = unreal.load_asset(path)
-    tex.set_editor_property("max_texture_size", MAX_SIZE)
+    tex.set_editor_property("max_texture_size", max_size)
     if kind == "normal":
         tex.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_NORMALMAP)
         tex.set_editor_property("srgb", False)
@@ -473,6 +474,19 @@ def ensure_wreck_master():
     connect(grime, "", blend, "B")
     connect(amount, "", blend, "Alpha")
 
+    # The photo hull and the rust grime are both warm. Pull the blend toward grey, then cast it
+    # oxidized teal so the hull reads as faded maritime paint rather than salmon.
+    desat = make(material, unreal.MaterialExpressionDesaturation, 760, 160)
+    connect(blend, "", desat, "")
+    desat_amount = make(material, unreal.MaterialExpressionScalarParameter, 520, 300)
+    desat_amount.set_editor_property("parameter_name", "Desaturate")
+    desat_amount.set_editor_property("default_value", 0.85)
+    connect(desat_amount, "", desat, "Fraction")
+    cast = make(material, unreal.MaterialExpressionVectorParameter, 760, 320)
+    cast.set_editor_property("parameter_name", "PaintCast")
+    cast.set_editor_property("default_value", unreal.LinearColor(0.62, 0.86, 0.88, 1.0))
+    painted = mul(material, desat, cast, 1000, 200)
+
     rough = make(material, unreal.MaterialExpressionScalarParameter, 520, 420)
     rough.set_editor_property("parameter_name", "Roughness")
     rough.set_editor_property("default_value", 0.78)
@@ -481,7 +495,7 @@ def ensure_wreck_master():
     metal.set_editor_property("default_value", 0.1)
 
     mel = unreal.MaterialEditingLibrary
-    mel.connect_material_property(blend, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(painted, "", unreal.MaterialProperty.MP_BASE_COLOR)
     mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
     mel.connect_material_property(metal, "", unreal.MaterialProperty.MP_METALLIC)
     mel.recompile_material(material)
@@ -591,71 +605,272 @@ def sampled_texture_names(material):
     return names
 
 
+PROP_MASTER = ENV_MATERIALS + "/M_DC_Prop"
+MESHY_ROOT = r"C:\FO5_AssetLibrary\Meshy"
+# id, texture cap. Hand-held props are 1K, small pickups 512. PlayTest's texture pool is 400 MB.
+MESHY_PROPS = [
+    ("depth_sounder", 1024),
+    ("breaker_panel", 1024),
+    ("battery_bank", 1024),
+    ("emergency_beacon", 1024),
+    ("name_board_tern", 1024),
+    ("sounder_chart", 512),
+    ("radio_coil", 512),
+    ("dead_fish", 512),
+    ("field_dressing", 512),
+]
+# Meshy's metallic maps read near 1 on painted steel. PlayTest has no reflections, so a metal
+# surface renders black. This scale keeps the map's variation and keeps the prop lit.
+PROP_METALLIC_SCALE = 0.25
+
+
+def ensure_prop_master():
+    """One default-lit master for every Meshy prop: BaseColor, Normal, Roughness, Metallic, Tint."""
+    if unreal.EditorAssetLibrary.does_asset_exist(PROP_MASTER):
+        if not unreal.EditorAssetLibrary.delete_asset(PROP_MASTER):
+            raise RuntimeError(f"Could not replace {PROP_MASTER}")
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Prop", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {PROP_MASTER}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    material.set_editor_property("two_sided", True)
+    uv = make(material, unreal.MaterialExpressionTextureCoordinate, -500, 0)
+    base = sample_param(material, "BaseColor", uv, -60, -200)
+    tint = make(material, unreal.MaterialExpressionVectorParameter, -60, 0)
+    tint.set_editor_property("parameter_name", "Tint")
+    tint.set_editor_property("default_value", unreal.LinearColor(1.0, 1.0, 1.0, 1.0))
+    color = mul(material, base, tint, 260, -120)
+    normal = sample_param(material, "Normal", uv, -60, 200, unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL)
+    default_normal = unreal.load_asset("/Engine/EngineMaterials/DefaultNormal")
+    if not default_normal:
+        raise RuntimeError("Missing /Engine/EngineMaterials/DefaultNormal")
+    normal.set_editor_property("texture", default_normal)
+    rough = sample_param(material, "Roughness", uv, -60, 420, unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+    metal = sample_param(material, "Metallic", uv, -60, 640, unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+    scale = make(material, unreal.MaterialExpressionScalarParameter, 260, 700)
+    scale.set_editor_property("parameter_name", "MetallicScale")
+    scale.set_editor_property("default_value", PROP_METALLIC_SCALE)
+    scaled_metal = mul(material, mask(material, metal, "r", 120, 640), scale, 420, 660)
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(color, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(normal, "", unreal.MaterialProperty.MP_NORMAL)
+    mel.connect_material_property(mask(material, rough, "r", 120, 420), "", unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.connect_material_property(scaled_metal, "", unreal.MaterialProperty.MP_METALLIC)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {PROP_MASTER}")
+    log(f"created {PROP_MASTER}")
+    return material
+
+
+def set_prop_texture_kinds(base, normal, rough, metal, cap):
+    """Data maps are linear, the normal map is a normal map, and everything is capped for the pool."""
+    for tex, kind in ((base, "color"), (normal, "normal"), (rough, "data"), (metal, "data")):
+        tex.set_editor_property("max_texture_size", cap)
+        if kind == "normal":
+            tex.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_NORMALMAP)
+            tex.set_editor_property("srgb", False)
+            tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_WORLD_NORMAL_MAP)
+        elif kind == "data":
+            tex.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_MASKS)
+            tex.set_editor_property("srgb", False)
+            tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_WORLD)
+        else:
+            tex.set_editor_property("srgb", True)
+            tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_WORLD)
+        unreal.EditorAssetLibrary.save_loaded_asset(tex, only_if_is_dirty=False)
+
+
+def bind_prop_instance(instance, base, normal, rough, metal):
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(instance, unreal.load_asset(PROP_MASTER))
+    mel.set_material_instance_texture_parameter_value(instance, "BaseColor", base)
+    mel.set_material_instance_texture_parameter_value(instance, "Normal", normal)
+    mel.set_material_instance_texture_parameter_value(instance, "Roughness", rough)
+    mel.set_material_instance_texture_parameter_value(instance, "Metallic", metal)
+    mel.update_material_instance(instance)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {instance.get_path_name()}")
+
+
+def cap_copy(src, dest, cap):
+    """Write a capped PNG copy under Saved/. The Meshy maps are 4K and Unreal keeps the source."""
+    script = (
+        "from PIL import Image\n"
+        "import sys\n"
+        "im = Image.open(sys.argv[1])\n"
+        "im.thumbnail((int(sys.argv[3]), int(sys.argv[3])), Image.Resampling.LANCZOS)\n"
+        "im.save(sys.argv[2], 'PNG')\n"
+    )
+    import subprocess
+    result = subprocess.run(["py", "-3", "-c", script, src, dest, str(cap)],
+                            capture_output=True, text=True, check=False)
+    if result.returncode != 0 or not os.path.isfile(dest):
+        raise RuntimeError(f"Could not cap {src}: {result.stderr.strip()}")
+
+
+def write_letters_png():
+    """The flaked name on the Tern's board. Ours, not Meshy's: Meshy text is unreliable."""
+    out_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "Saved", "MeshyImport"))
+    os.makedirs(out_dir, exist_ok=True)
+    dest = os.path.join(out_dir, "name_board_letters.png")
+    script = r"""
+from PIL import Image, ImageDraw, ImageFont
+import random, sys
+w, h = 1024, 256
+im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+draw = ImageDraw.Draw(im)
+font = ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", 210)
+box = draw.textbbox((0, 0), "T_RN", font=font)
+draw.text(((w - (box[2] - box[0])) // 2 - box[0], (h - (box[3] - box[1])) // 2 - box[1]), "T_RN", font=font, fill=(22, 82, 90, 255))
+rng = random.Random(11)
+for _ in range(80):
+    x, y = rng.randint(0, w), rng.randint(0, h)
+    r = rng.randint(4, 16)
+    draw.ellipse((x - r, y - r * 0.6, x + r, y + r * 0.6), fill=(0, 0, 0, 0))
+im.save(sys.argv[1], "PNG")
+"""
+    import subprocess
+    result = subprocess.run(["py", "-3", "-c", script, dest], capture_output=True, text=True, check=False)
+    if result.returncode != 0 or not os.path.isfile(dest):
+        raise RuntimeError(f"Could not write the name board letters: {result.stderr.strip()}")
+    return dest
+
+
+def ensure_letters():
+    """T_NameBoardLetters plus a masked material for a thin plane in front of the board."""
+    tex = import_texture(write_letters_png(), "/Game/Art/Decals", "T_NameBoardLetters", "color", max_size=1024)
+    path = ENV_MATERIALS + "/M_DC_Letters"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        unreal.EditorAssetLibrary.delete_asset(path)
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Letters", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {path}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_MASKED)
+    material.set_editor_property("two_sided", True)
+    uv = make(material, unreal.MaterialExpressionTextureCoordinate, -400, 0)
+    sample = sample_param(material, "Letters", uv, -100, 0)
+    sample.set_editor_property("texture", tex)
+    rough = make(material, unreal.MaterialExpressionConstant, -100, 300)
+    rough.set_editor_property("r", 0.9)
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(sample, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(sample, "A", unreal.MaterialProperty.MP_OPACITY_MASK)
+    mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    log(f"created {path}")
+
+
+def import_meshy_prop(prop_id, cap):
+    """FBX without its embedded materials or 4K textures, plus capped maps and one instance of M_DC_Prop."""
+    dest = f"/Game/Art/Meshy/{prop_id}"
+    src_dir = os.path.join(MESHY_ROOT, prop_id)
+    fbx = os.path.join(src_dir, "model.fbx")
+    if not os.path.isfile(fbx):
+        raise RuntimeError(f"Missing {fbx}. Run Tools/generate_meshy.py {prop_id} first.")
+    if not unreal.EditorAssetLibrary.does_directory_exist(dest):
+        unreal.EditorAssetLibrary.make_directory(dest)
+    mesh_path = f"{dest}/SM_{prop_id}"
+    if not unreal.EditorAssetLibrary.does_asset_exist(mesh_path):
+        options = unreal.FbxImportUI()
+        options.set_editor_property("import_mesh", True)
+        options.set_editor_property("import_as_skeletal", False)
+        options.set_editor_property("import_animations", False)
+        options.set_editor_property("import_materials", False)
+        options.set_editor_property("import_textures", False)
+        options.static_mesh_import_data.set_editor_property("combine_meshes", True)
+        task = unreal.AssetImportTask()
+        task.set_editor_property("filename", fbx)
+        task.set_editor_property("destination_path", dest)
+        task.set_editor_property("destination_name", f"SM_{prop_id}")
+        task.set_editor_property("automated", True)
+        task.set_editor_property("replace_existing", True)
+        task.set_editor_property("save", True)
+        task.set_editor_property("options", options)
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        if not unreal.EditorAssetLibrary.does_asset_exist(mesh_path):
+            raise RuntimeError(f"Import produced no mesh at {mesh_path}")
+    mesh = unreal.load_asset(mesh_path)
+    out_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "Saved", "MeshyImport"))
+    os.makedirs(out_dir, exist_ok=True)
+    textures = {}
+    for key, filename, suffix, kind in (
+            ("base", "base_color.png", "BC", "color"), ("normal", "normal.png", "N", "normal"),
+            ("rough", "roughness.png", "R", "data"), ("metal", "metallic.png", "M", "data")):
+        name = f"T_{prop_id}_{suffix}"
+        path = f"{dest}/{name}"
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            textures[key] = unreal.load_asset(path)
+            continue
+        capped = os.path.join(out_dir, f"{prop_id}_{suffix}.png")
+        cap_copy(os.path.join(src_dir, filename), capped, cap)
+        textures[key] = import_texture(capped, dest, name, kind, max_size=cap)
+    set_prop_texture_kinds(textures["base"], textures["normal"], textures["rough"], textures["metal"], cap)
+    inst_path = f"{dest}/MI_{prop_id}"
+    if unreal.EditorAssetLibrary.does_asset_exist(inst_path):
+        instance = unreal.load_asset(inst_path)
+    else:
+        instance = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            f"MI_{prop_id}", dest, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        if not instance:
+            raise RuntimeError(f"Could not create {inst_path}")
+    bind_prop_instance(instance, textures["base"], textures["normal"], textures["rough"], textures["metal"])
+    # Slot 0 is the prop's material, so a placed actor or a pickup renders it without an override.
+    mesh.set_material(0, instance)
+    unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False)
+    bounds = mesh.get_bounding_box()
+    size = bounds.max - bounds.min
+    log(f"{prop_id} mesh {mesh_path} size=({size.x:.1f}, {size.y:.1f}, {size.z:.1f}) slots={len(mesh.get_editor_property('static_materials'))} cap={cap}")
+    return mesh
+
+
+def import_meshy_props():
+    ensure_prop_master()
+    for prop_id, cap in MESHY_PROPS:
+        import_meshy_prop(prop_id, cap)
+
+
 def ensure_relay_material():
-    """Material_001 is the FBX instance. It must sample texture_0 and the three data maps."""
+    """The relay's FBX instance samples nothing by default. Put it on the shared prop master."""
     folder = "/Game/Art/Meshy/relay_housing"
     instance = unreal.load_asset(folder + "/Material_001")
     if not isinstance(instance, unreal.MaterialInstanceConstant):
         raise RuntimeError(f"Material_001 is {type(instance)}, expected a MaterialInstanceConstant")
-    wanted = ("texture_0", "texture_0_normal", "texture_0_roughness", "texture_0_metallic")
-    textures = {}
-    for name in wanted:
+    found = {}
+    for key, name in (("base", "texture_0"), ("normal", "texture_0_normal"),
+                      ("rough", "texture_0_roughness"), ("metal", "texture_0_metallic")):
         tex = unreal.load_asset(f"{folder}/{name}")
         if not tex:
             raise RuntimeError(f"Missing {folder}/{name}")
-        textures[name] = tex
-        if name != "texture_0":
-            tex.set_editor_property("srgb", False)
-            unreal.EditorAssetLibrary.save_loaded_asset(tex, only_if_is_dirty=True)
-    before = sampled_texture_names(instance)
-    log(f"Material_001 before samples {before}")
-    parent_path = folder + "/M_DC_Relay"
-    if unreal.EditorAssetLibrary.does_asset_exist(parent_path):
-        unreal.EditorAssetLibrary.delete_asset(parent_path)
-    parent = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        "M_DC_Relay", folder, unreal.Material, unreal.MaterialFactoryNew())
-    if not parent:
-        raise RuntimeError(f"Could not create {parent_path}")
-    parent.set_editor_property("two_sided", True)
-    parent.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
-    uv = make(parent, unreal.MaterialExpressionTextureCoordinate, -500, 0)
-    pins = {
-        "texture_0": unreal.MaterialProperty.MP_BASE_COLOR,
-        "texture_0_normal": unreal.MaterialProperty.MP_NORMAL,
-        "texture_0_roughness": unreal.MaterialProperty.MP_ROUGHNESS,
-        "texture_0_metallic": unreal.MaterialProperty.MP_METALLIC,
-    }
-    mel = unreal.MaterialEditingLibrary
-    facing = make(parent, unreal.MaterialExpressionTwoSidedSign, 400, 200)
-    for index, (name, prop) in enumerate(pins.items()):
-        sampler = None
-        if "normal" in name:
-            sampler = unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL
-        elif name != "texture_0":
-            sampler = unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR
-        node = sample_param(parent, name, uv, -40, index * 200, sampler)
-        node.set_editor_property("texture", textures[name])
-        if prop == unreal.MaterialProperty.MP_NORMAL:
-            flipped = mul(parent, node, facing, 280, index * 200)
-            mel.connect_material_property(flipped, "", prop)
-        else:
-            mel.connect_material_property(node, "", prop)
-    mel.recompile_material(parent)
-    if not unreal.EditorAssetLibrary.save_loaded_asset(parent, only_if_is_dirty=False):
-        raise RuntimeError(f"Could not save {parent_path}")
-    mel = unreal.MaterialEditingLibrary
-    mel.set_material_instance_parent(instance, parent)
-    for name, tex in textures.items():
-        mel.set_material_instance_texture_parameter_value(instance, name, tex)
-    mel.update_material_instance(instance)
-    if not unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False):
-        raise RuntimeError("Could not save Material_001")
-    found = sampled_texture_names(instance)
-    log(f"Material_001 after samples {found}")
-    missing = [name for name in wanted if name not in found]
-    if missing:
-        raise RuntimeError(f"Material_001 still missing {missing}")
+        found[key] = tex
+    set_prop_texture_kinds(found["base"], found["normal"], found["rough"], found["metal"], 1024)
+    bind_prop_instance(instance, found["base"], found["normal"], found["rough"], found["metal"])
+    if unreal.EditorAssetLibrary.does_asset_exist(folder + "/M_DC_Relay"):
+        unreal.EditorAssetLibrary.delete_asset(folder + "/M_DC_Relay")
+    log(f"Material_001 samples {sampled_texture_names(instance)}")
     return instance
+
+
+def ensure_logbook_material():
+    """The survey log's FBX instance samples the engine default texture. Same fix as the relay:
+    the shared prop master, with the maps the FBX brought in (Image_0 base, Image_2 normal)."""
+    folder = "/Game/Art/Meshy/lighthouse_logbook"
+    instance = unreal.load_asset(folder + "/Material_001")
+    found = {}
+    for key, name in (("base", "Image_0"), ("normal", "Image_2"),
+                      ("rough", "texture_0_roughness"), ("metal", "texture_0_metallic")):
+        tex = unreal.load_asset(f"{folder}/{name}")
+        if not tex:
+            raise RuntimeError(f"Missing {folder}/{name}")
+        found[key] = tex
+    set_prop_texture_kinds(found["base"], found["normal"], found["rough"], found["metal"], 1024)
+    bind_prop_instance(instance, found["base"], found["normal"], found["rough"], found["metal"])
+    log(f"lighthouse_logbook Material_001 samples {sampled_texture_names(instance)}")
 
 
 def import_relay():
@@ -770,6 +985,9 @@ def main():
     ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
     import_clue_meshes()
     import_relay()
+    import_meshy_props()
+    ensure_logbook_material()
+    ensure_letters()
     ensure_chalk_board()
 
 

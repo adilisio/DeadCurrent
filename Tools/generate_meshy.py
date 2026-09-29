@@ -26,8 +26,121 @@ OUT_ROOT = r"C:\FO5_AssetLibrary\Meshy"
 POLL_SECONDS = 8
 TIMEOUT_SECONDS = 20 * 60
 
-# Only relay_housing is generated in this pass. The other nine wait on Anthony's review.
+# The Presentation Pass Meshy queue (PresentationPassPlan.txt section 6). Budget ceiling: 500 credits.
+# A preview costs about 20 and a refine about 10. Never refine a preview the thumbnail check rejected.
 PROPS = {
+    "depth_sounder": {
+        "prompt": (
+            "A 1970s boat depth sounder, a boxy painted steel housing about 28 centimeters wide, "
+            "18 deep, and 16 tall. Flat front panel with one round recessed dial, one large "
+            "knob, and a narrow slot on top where a paper roll would feed. Chunky, solid, "
+            "sitting flat on its base. No brand, no logo, no letters, no screen, no loose wires."
+        ),
+        "texture_prompt": (
+            "Faded grey-green marine enamel chipped to rust at the corners, freshwater stains, "
+            "one smeared white grease-pencil circle on the front panel, no logo, no lettering"
+        ),
+        "target_polycount": 10000,
+    },
+    "breaker_panel": {
+        "prompt": (
+            "A marine breaker panel, about 40 centimeters wide, 55 tall, and 8 deep. A flat steel "
+            "back plate with a hinged front cover swung open, two rows of chunky breaker "
+            "switches, and thick cut cables hanging from the bottom with taped ends. Solid, "
+            "chunky, oxidized steel. No logo, no brand, no letters, no screen."
+        ),
+        "texture_prompt": (
+            "Oxidized steel with faded pale grey maritime paint, freshwater rust stains, dull "
+            "black tape on the cable ends, no logo, no lettering"
+        ),
+        "target_polycount": 15000,
+    },
+    "battery_bank": {
+        "prompt": (
+            "A split wooden box of old marine batteries, about 50 centimeters wide, 35 deep, and "
+            "30 tall. Weathered planks, one side split open, showing three heavy battery cells "
+            "with corroded terminals and two thick heavy cables with clamps trailing out. "
+            "Solid and chunky, sitting flat on the ground. No logo, no brand, no letters."
+        ),
+        "texture_prompt": (
+            "Grey weathered wood, black battery cases with white and green corrosion crust on "
+            "the terminals, dull black cables, freshwater stains, no logo, no lettering"
+        ),
+        "target_polycount": 15000,
+    },
+    "emergency_beacon": {
+        "prompt": (
+            "A small boat emergency beacon, about 12 centimeters wide, 12 deep, and 22 tall. "
+            "Rounded oval body, a short stubby antenna, one large recessed on-off switch, and a "
+            "small bracket base. Solid and chunky, standing upright. No brand, no logo, no "
+            "letters, no screen."
+        ),
+        "texture_prompt": (
+            "White plastic gone yellow-grey, a crust of white battery corrosion around the "
+            "base, scuffed, freshwater stains, no logo, no lettering"
+        ),
+        "target_polycount": 8000,
+    },
+    "name_board_tern": {
+        "prompt": (
+            "A flat weathered wooden name board from a small boat, about 70 centimeters long, "
+            "20 tall, and 2 thick. A plain slab with slightly bevelled edges and two screw "
+            "holes near the ends, worn corners. Bare board, no letters, no text, no logo."
+        ),
+        "texture_prompt": (
+            "Peeling white and teal marine paint over grey weathered wood, flaked and stained, "
+            "bare wood showing at the edges, no letters, no text, no logo"
+        ),
+        "target_polycount": 5000,
+    },
+    "sounder_chart": {
+        "prompt": (
+            "A tightly closed roll of paper chart, about 6 centimeters across and 24 long, "
+            "lying on its side. A solid closed cylinder of wound paper with a thin band of tape "
+            "around the middle. No open sheet, no unrolled tail, no text."
+        ),
+        "texture_prompt": (
+            "Aged cream-yellow paper with water stains, faint pencil tick marks along the outer "
+            "edge, grey tape band, no letters, no text"
+        ),
+        "target_polycount": 4000,
+    },
+    "radio_coil": {
+        "prompt": (
+            "A hand-wound copper wire coil, about 10 centimeters across and 8 tall. Tightly "
+            "wound wire on a bare core, no case, no housing, two short stub wire ends. Solid "
+            "and chunky. No brand, no logo, no letters."
+        ),
+        "texture_prompt": (
+            "Dull oxidized copper with green verdigris, a wrap of black electrical tape, grime, "
+            "no lettering"
+        ),
+        "target_polycount": 8000,
+    },
+    "dead_fish": {
+        "prompt": (
+            "One small dead freshwater fish lying belly up, about 28 centimeters long, 8 tall, "
+            "and 6 wide. One burst clouded eye, mouth slightly open, fins limp. A perch-like "
+            "body. Solid single mesh, no water, no base."
+        ),
+        "texture_prompt": (
+            "Dull grey-green scales with dark bars, pale belly, cloudy white eye, wet dull "
+            "sheen, no letters"
+        ),
+        "target_polycount": 8000,
+    },
+    "field_dressing": {
+        "prompt": (
+            "A folded roll of grubby cloth bandage, about 10 centimeters long, 6 wide, and 4 "
+            "tall, with a short strip of tape wrapped around the middle. A compact thick roll "
+            "lying flat. No cross symbol, no logo, no letters."
+        ),
+        "texture_prompt": (
+            "Off-white cotton gone grey-yellow with stains, a cream tape strip, no cross, no "
+            "logo, no lettering"
+        ),
+        "target_polycount": 5000,
+    },
     "relay_housing": {
         "prompt": (
             "A single open steel relay box, about 40 centimeters wide, 28 deep, and 22 tall. "

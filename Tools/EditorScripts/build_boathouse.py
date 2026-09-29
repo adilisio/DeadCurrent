@@ -399,9 +399,26 @@ def build_lighting():
     # Lower than the first overcast pass. PlayTest has no bloom, so the sky and ground
     # have to sit under the emissives instead of competing with them.
     sun_comp.set_editor_property("intensity", 85.0)
-    sun_comp.set_editor_property("light_color", unreal.Color(r=170, g=186, b=200, a=255))
+    sun_comp.set_editor_property("light_color", unreal.Color(r=188, g=198, b=210, a=255))
     sun_comp.set_editor_property("temperature", 6800.0)
     sun_comp.set_editor_property("use_temperature", True)
+
+    # PlayTest has no GI and the SkyLight adds nothing to faces the sun does not reach: captures
+    # 1629 and 1638 showed ridge ends, the relay, and the lookout wall at RGB 1 to 6. A dim, shadowless
+    # fill from the opposite side stands in for sky bounce. It is not an atmosphere sun.
+    fill_dir = actors.spawn_actor_from_class(
+        unreal.DirectionalLight, unreal.Vector(0, 0, 1100),
+        unreal.Rotator(pitch=-28.0, yaw=315.0, roll=0.0))
+    fill_dir.set_actor_label("SkyFill")
+    fill_dir.set_folder_path(folder)
+    fill_dir_comp = fill_dir.get_component_by_class(unreal.DirectionalLightComponent)
+    fill_dir_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    fill_dir_comp.set_editor_property("atmosphere_sun_light", False)
+    fill_dir_comp.set_editor_property("forward_shading_priority", 0)
+    sun_comp.set_editor_property("forward_shading_priority", 1)
+    fill_dir_comp.set_editor_property("cast_shadows", False)
+    fill_dir_comp.set_editor_property("intensity", 24.0)
+    fill_dir_comp.set_editor_property("light_color", unreal.Color(r=150, g=172, b=205, a=255))
 
     sky = actors.spawn_actor_from_class(unreal.SkyLight, unreal.Vector(0, 0, 1000))
     sky.set_actor_label("SkyLight")
@@ -409,7 +426,11 @@ def build_lighting():
     sky_comp = sky.get_component_by_class(unreal.SkyLightComponent)
     sky_comp.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     sky_comp.set_editor_property("real_time_capture", True)
-    sky_comp.set_editor_property("intensity", 0.38)
+    # Sides facing away from the low sun read as black holes at 0.38. PlayTest has no GI or
+    # reflections, so this ambient is the only light those faces get.
+    sky_comp.set_editor_property("intensity", 0.9)
+    sky_comp.set_editor_property("lower_hemisphere_is_black", False)
+    sky_comp.set_editor_property("lower_hemisphere_color", unreal.LinearColor(0.11, 0.115, 0.125, 1.0))
 
     atmo = actors.spawn_actor_from_class(unreal.SkyAtmosphere, unreal.Vector(0, 0, 0))
     atmo.set_actor_label("SkyAtmosphere")
@@ -447,12 +468,29 @@ def build_lighting():
     settings.set_editor_property("auto_exposure_bias", -0.55)
     # Higher white balance is cooler. Saturation stays in the grade, which Low scalability does not strip.
     settings.set_editor_property("override_white_temp", True)
-    settings.set_editor_property("white_temp", 7000.0)
+    settings.set_editor_property("white_temp", 6500.0)
     settings.set_editor_property("override_color_saturation", True)
     settings.set_editor_property("color_saturation", unreal.Vector4(0.78, 0.82, 0.88, 1.0))
     settings.set_editor_property("override_color_contrast", True)
     settings.set_editor_property("color_contrast", unreal.Vector4(1.12, 1.12, 1.12, 1.0))
     pp.set_editor_property("settings", settings)
+
+    # PlayTest runs r.ShadowQuality=0, so the sun and the fill light the boathouse through its roof
+    # and the interior clipped to white (captures 1629, 1638). A bounded grade stands in for the
+    # missing shadow: the interior exposes darker and cooler, and the doorway blends back to daylight.
+    inner = actors.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(360.0, 0.0, 125.0))
+    inner.set_actor_label("InteriorGrade")
+    inner.set_folder_path(folder)
+    inner.set_editor_property("priority", 2.0)
+    inner.set_editor_property("blend_weight", 1.0)
+    inner.set_editor_property("blend_radius", 90.0)
+    inner.set_actor_scale3d(unreal.Vector(3.5, 3.1, 1.3))
+    inner_settings = inner.get_editor_property("settings")
+    inner_settings.set_editor_property("override_auto_exposure_bias", True)
+    inner_settings.set_editor_property("auto_exposure_bias", -1.7)
+    inner_settings.set_editor_property("override_color_gain", True)
+    inner_settings.set_editor_property("color_gain", unreal.Vector4(0.86, 0.92, 1.0, 1.0))
+    inner.set_editor_property("settings", inner_settings)
 
     # The sun does not reach the ceiling. A local fill, not a second sun.
     fill = actors.spawn_actor_from_class(unreal.PointLight, unreal.Vector(360.0, 0.0, 230.0))
@@ -460,7 +498,7 @@ def build_lighting():
     fill.set_folder_path(folder)
     fill_comp = fill.get_component_by_class(unreal.PointLightComponent)
     fill_comp.set_editor_property("intensity_units", unreal.LightUnits.CANDELAS)
-    fill_comp.set_editor_property("intensity", 1600.0)
+    fill_comp.set_editor_property("intensity", 900.0)
     fill_comp.set_editor_property("attenuation_radius", 1600.0)
     fill_comp.set_editor_property("light_color", unreal.Color(r=186, g=196, b=204, a=255))
     fill_comp.set_editor_property("cast_shadows", False)
@@ -491,8 +529,11 @@ def find_largest_mesh(dest):
     return best
 
 
-def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False):
-    """Swap a greybox for an imported mesh. Uniform scale. Bounds center stays on center."""
+def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False, rotation=None, stretch=None):
+    """Swap a greybox for an imported mesh. Uniform scale. Bounds center stays on center.
+
+    rotation is (pitch, yaw, roll) in degrees and replaces yaw when given. stretch is a per-axis
+    multiplier in mesh space for a mesh whose proportions are wrong (a plate that should be a board)."""
     comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     comp.set_static_mesh(mesh)
     # inspectable() overrides every slot with the greybox material. An empty override list
@@ -517,9 +558,11 @@ def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False):
     extent = bounds.max - bounds.min
     longest = max(extent.x, extent.y, extent.z, 1.0)
     scale = longest_cm / max(longest, 1.0)
-    actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+    mult = stretch or (1.0, 1.0, 1.0)
+    actor.set_actor_scale3d(unreal.Vector(scale * mult[0], scale * mult[1], scale * mult[2]))
     if not keep_rotation:
-        actor.set_actor_rotation(unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0), False)
+        pitch, yaw, roll = rotation if rotation else (0.0, yaw, 0.0)
+        actor.set_actor_rotation(unreal.Rotator(pitch=pitch, yaw=yaw, roll=roll), False)
     origin, _extent = actor.get_actor_bounds(False)
     loc = actor.get_actor_location()
     actor.set_actor_location(
@@ -1044,6 +1087,83 @@ def dress_library_clues():
     wear_mesh(hull_actor, boat, 220.0, (1200.0, -280.0, 40.0), yaw=90.0)
     assign_tern_materials(hull_actor.get_component_by_class(unreal.StaticMeshComponent), boat)
     seat(hull_actor)
+    dress_meshy_clues()
+
+
+# Meshy prop placement: label -> (prop id, longest side in cm, (pitch, yaw, roll)).
+# The size is the readable footprint the trace already hits, not the real-world size. The rotation
+# turns the mesh's front toward the way the player meets it. Tuned against the Tools\ReviewCapture.bat clue shots.
+MESHY_CLUES = {
+    "DepthSounder": ("depth_sounder", 34.0, (0.0, 0.0, 0.0), None),
+    "BreakerPanel": ("breaker_panel", 70.0, (0.0, 270.0, 0.0), None),
+    "BatteryBank": ("battery_bank", 76.0, (0.0, 0.0, 0.0), None),
+    "Beacon": ("emergency_beacon", 32.0, (0.0, 0.0, 0.0), None),
+    # Meshy made a square plate. Stand it on its edge, and squeeze it into a board.
+    "NameBoard": ("name_board_tern", 120.0, (0.0, 180.0, 90.0), (1.0, 0.28, 0.2)),
+    "DeadFish": ("dead_fish", 36.0, (0.0, 0.0, 0.0), None),
+}
+FISH_RING = 9
+
+
+def place_name_letters():
+    """The flaked T_RN on the bow board: a thin NoCollision plane just off the board's bow face.
+    The board's own UVs are not one face, so the letters cannot ride on its texture."""
+    board = actor_by_label("NameBoard")
+    origin, extent = board.get_actor_bounds(False)
+    material = unreal.load_asset("/Game/Environment/Materials/M_DC_Letters")
+    plane_mesh = unreal.load_asset("/Engine/BasicShapes/Plane")
+    if not material or not plane_mesh:
+        raise RuntimeError("Missing M_DC_Letters or the engine plane. Run import_art.py first.")
+    plane = actors.spawn_actor_from_class(
+        unreal.StaticMeshActor, unreal.Vector(origin.x, origin.y + extent.y + 0.6, origin.z + 1.0),
+        unreal.Rotator(pitch=LETTER_ROT[0], yaw=LETTER_ROT[1], roll=LETTER_ROT[2]))
+    plane.set_actor_label("NameBoardLetters")
+    plane.set_folder_path("SurveyLaunch")
+    comp = plane.get_component_by_class(unreal.StaticMeshComponent)
+    comp.set_static_mesh(plane_mesh)
+    comp.set_material(0, material)
+    comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    comp.set_editor_property("cast_shadow", False)
+    # The plane is 100 x 100 cm. The board is about 120 x 34 cm; the name fills the middle of it.
+    plane.set_actor_scale3d(unreal.Vector(LETTER_SCALE[0], LETTER_SCALE[1], 1.0))
+
+
+LETTER_ROT = (0.0, 0.0, -90.0)
+LETTER_SCALE = (0.96, -0.24)
+
+
+def meshy_mesh(prop_id):
+    path = f"/Game/Art/Meshy/{prop_id}/SM_{prop_id}"
+    mesh = unreal.load_asset(path)
+    if not mesh:
+        raise RuntimeError(f"Missing {path}. Run import_art.py first.")
+    return mesh
+
+
+def dress_meshy_clues():
+    """Bespoke Meshy meshes on the greybox clue actors. Same actors, ids, and variants; the mesh keeps
+    the greybox's center and sits on the greybox's bottom, so the trace still lands on it."""
+    for label, (prop_id, longest, rotation, stretch) in MESHY_CLUES.items():
+        actor = actor_by_label(label)
+        origin, extent = actor.get_actor_bounds(False)
+        bottom = origin.z - extent.z
+        wear_mesh(actor, meshy_mesh(prop_id), longest, (origin.x, origin.y, origin.z),
+                  rotation=rotation, stretch=stretch)
+        seat(actor, bottom)
+    # The ring of dead fish is scenery, so it lies on the water at the greybox's height.
+    fish = meshy_mesh("dead_fish")
+    for index in range(FISH_RING):
+        actor = actor_by_label(f"Fish_{index}")
+        origin, extent = actor.get_actor_bounds(False)
+        bottom = origin.z - extent.z
+        wear_mesh(actor, fish, 32.0, (origin.x, origin.y, origin.z), rotation=(0.0, 40.0 * index + 65.0, 0.0))
+        seat(actor, bottom)
+    place_name_letters()
+    # Steel and painted board rather than the prototype grid: no library mesh fits these two.
+    for label, name in (("SurveyLocker", "MI_DC_RustPaint"), ("KeepOut", "MI_DC_Plaster")):
+        comp = actor_by_label(label).get_component_by_class(unreal.StaticMeshComponent)
+        for slot in range(comp.get_num_materials()):
+            comp.set_material(slot, surface(name))
 
 
 def editor_world():

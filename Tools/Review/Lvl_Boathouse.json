@@ -97,8 +97,8 @@
       "location": [-1567, -820, 250],
       "rotation": [0, 180, 0],
       "subject": "Breaker panel",
-      "view_offset": [110, 0, 15],
-      "view_offset_space": "local",
+      "view_offset": [130, 0, 10],
+      "view_offset_space": "world",
       "expectation": "The breaker panel reads as a gutted marine panel, with careful cuts and taped ends, not a grey box.",
       "source": "PresentationPassPlan.txt §6 breaker_panel; Design/art_pipeline.md art direction"
     },
@@ -128,9 +128,36 @@
       "rotation": [-10, -90, 0],
       "subject": "Name board",
       "view_offset": [0, 140, 20],
-      "view_offset_space": "local",
+      "view_offset_space": "world",
       "expectation": "The name board reads as a flaked painted board, peeling white and teal, with the letters T_RN still readable.",
       "source": "PresentationPassPlan.txt §6 name_board_tern; Design/game_design.md Wrecked Survey Launch"
+    },
+    {
+      "id": "clue_beacon",
+      "location": [-1500, -1330, 130],
+      "rotation": [0, 90, 0],
+      "subject": "Emergency beacon",
+      "view_offset": [30, -110, 20],
+      "view_offset_space": "world",
+      "expectation": "The emergency beacon reads as a small boat beacon with a white crust at the base, not a grey box, and it is not lost against the transom.",
+      "source": "PresentationPassPlan.txt §6 emergency_beacon; Design/game_design.md Wrecked Survey Launch"
+    },
+    {
+      "id": "clue_fish",
+      "location": [-880, -940, 80],
+      "rotation": [-15, 200, 0],
+      "subject": "Dead fish",
+      "view_offset": [70, 50, 50],
+      "view_offset_space": "world",
+      "expectation": "The dead fish reads as a small pale fish on the stones with the ring of others beyond it, not a white block.",
+      "source": "PresentationPassPlan.txt §6 dead_fish; Design/game_design.md Wrecked Survey Launch"
+    },
+    {
+      "id": "bench",
+      "location": [340, 150, 150],
+      "rotation": [-22, 20, 0],
+      "expectation": "The bench pickups (pistol, rounds, dressing) read as small objects a person would take, not grey boxes.",
+      "source": "PresentationPassPlan.txt §6 and §9 step 1"
     },
     {
       "id": "clue_chalk",

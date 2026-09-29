@@ -100,6 +100,10 @@ Lessons already recorded in the earlier `source.json` files:
 
 Prompting for DEAD CURRENT: the earlier prompts said "post-apocalyptic wasteland ... photorealistic". Our look is **grounded, stylized, cold, maritime, and industrial**. Name the materials and palette instead: oxidized steel, faded maritime paint, freshwater stains, Great Lakes, 1970s–2000s municipal and maritime hardware. Leave out "wasteland", Fallout-isms, and brands. The Maritime Authority's look is PROVISIONAL, so ask Anthony before fixing a logo or livery on a prop.
 
+### Presentation Pass spend (2026-09-29)
+
+Budget 500. Spent **330** on the ten `PresentationPassPlan.txt` §6 props: `relay_housing` 50 (including one rejected preview), `depth_sounder` 40, and `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` 30 each. Per-asset figures are in each `source.json`. 170 credits of the pass budget remain unspent, and no further generation is planned for this pass.
+
 ### Record keeping
 
 For every generated asset, keep the raw output outside the repo, in `C:\FO5_AssetLibrary\Meshy\<snake_case_id>\` (same layout as the existing folders). That includes `source.json` with: `id`, `date`, `ai_model`, `target_polycount`, every prompt tried (mark failures and why), `texture_prompt`, `task_ids`, `credits_used`, and `generated_with: "generated with the owner's Meshy Pro account"`. Only the imported, downsized result enters `Content/`.
@@ -160,6 +164,8 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `life_jacket` | `CC0/polyhaven/life_jacket` | CC0 | Poly Haven |
 | `lighthouse_logbook` (survey log) | `Meshy/lighthouse_logbook` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `relay_housing` | `Meshy/relay_housing` | Meshy Pro | generated with the owner's Meshy Pro account |
+| `depth_sounder`, `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` | `Meshy/<id>` (2026-09-29) | Meshy Pro | generated with the owner's Meshy Pro account |
+| `T_NameBoardLetters`, `M_DC_Letters` | authored in `import_art.py` (the `T_RN` letters are a texture, not Meshy text) | project | DEAD CURRENT |
 | `T_ChalkKeepOut`, `M_DC_Chalk` | authored in `import_art.py` | project | DEAD CURRENT |
 
 URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 0.35).

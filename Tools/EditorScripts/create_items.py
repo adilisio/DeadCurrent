@@ -8,12 +8,14 @@ import unreal
 ITEMS_PATH = "/Game/Items"
 
 # size_cm: for placeholder meshes, the item's real-world size; the mesh is scaled to fit.
+# fit_cm: for an imported prop, the longest side. The scale is uniform so the mesh keeps its shape.
 # None keeps the mesh at its authored scale.
+CRATE = "/Game/Art/PolyHaven/wooden_crate_01/wooden_crate_01_2k/StaticMeshes/wooden_crate_01"
 ITEMS = [
     dict(asset="DA_Item_Ammo9mm", item_id="ammo_9mm", name="9mm Rounds",
          description="Loose pistol rounds, some hand-reloaded.",
          category="Item.Ammo", weight=0.01, value=1, stack=999,
-         mesh="/Game/LevelPrototyping/Meshes/SM_ChamferCube", size_cm=(12, 8, 5)),
+         mesh=CRATE, size_cm=None, fit_cm=14),
     dict(asset="DA_Item_Pistol", item_id="pistol_service", name="Service Pistol",
          description="A pre-collapse sidearm. Worn, but it still cycles.",
          category="Item.Weapon.Firearm", weight=1.2, value=120, stack=1,
@@ -26,7 +28,7 @@ ITEMS = [
     dict(asset="DA_Item_FieldDressing", item_id="field_dressing", name="Field Dressing",
          description="Boiled cloth and a strip of tape. Stops bleeding, mostly.",
          category="Item.Consumable.Medical", weight=0.1, value=15, stack=10,
-         mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(8, 8, 10)),
+         mesh="/Game/Art/Meshy/field_dressing/SM_field_dressing", size_cm=None, fit_cm=10),
     dict(asset="DA_Item_SalvagedWiring", item_id="salvage_wiring", name="Salvaged Wiring",
          description="Copper wire stripped from dead machinery.",
          category="Item.Salvage", weight=0.25, value=4, stack=50,
@@ -34,11 +36,11 @@ ITEMS = [
     dict(asset="DA_Item_RadioCoil", item_id="radio_coil", name="Relay Coil",
          description="A hand-wound copper coil from a Maritime Authority relay. It is warm, and it hums when you hold it close.",
          category="Item.Quest", weight=0.2, value=8, stack=1,
-         mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(10, 10, 8)),
+         mesh="/Game/Art/Meshy/radio_coil/SM_radio_coil", size_cm=None, fit_cm=12),
     dict(asset="DA_Item_SurveyChart", item_id="survey_chart", name="Sounder Chart",
          description="A roll of the Tern's depth-sounder paper, torn off at the mark. Regular spikes, evenly spaced, and someone has pencilled AGAIN beside the last one.",
          category="Item.Quest", weight=0.05, value=6, stack=1,
-         mesh="/Game/LevelPrototyping/Meshes/SM_Cylinder", size_cm=(5, 5, 22)),
+         mesh="/Game/Art/Meshy/sounder_chart/SM_sounder_chart", size_cm=None, fit_cm=18),
 ]
 
 
@@ -54,11 +56,14 @@ def make_tag(name):
     return tag
 
 
-def mesh_scale(mesh, size_cm):
-    if size_cm is None:
-        return unreal.Vector(1, 1, 1)
+def mesh_scale(mesh, size_cm, fit_cm=None):
     bounds = mesh.get_bounding_box()
     extent = bounds.max - bounds.min
+    if fit_cm:
+        uniform = fit_cm / max(extent.x, extent.y, extent.z, 1.0)
+        return unreal.Vector(uniform, uniform, uniform)
+    if size_cm is None:
+        return unreal.Vector(1, 1, 1)
     return unreal.Vector(size_cm[0] / extent.x, size_cm[1] / extent.y, size_cm[2] / extent.z)
 
 
@@ -82,6 +87,8 @@ def main():
     for spec in ITEMS:
         item = get_or_create(spec["asset"])
         mesh = unreal.load_asset(spec["mesh"])
+        if not mesh:
+            raise RuntimeError(f"Missing {spec['mesh']} for {spec['asset']}. Run import_art.py first.")
         item.set_editor_property("item_id", spec["item_id"])
         item.set_editor_property("display_name", unreal.Text(spec["name"]))
         item.set_editor_property("description", unreal.Text(spec["description"]))
@@ -90,7 +97,7 @@ def main():
         item.set_editor_property("value", spec["value"])
         item.set_editor_property("max_stack_size", spec["stack"])
         item.set_editor_property("world_mesh", mesh)
-        item.set_editor_property("world_mesh_scale", mesh_scale(mesh, spec["size_cm"]))
+        item.set_editor_property("world_mesh_scale", mesh_scale(mesh, spec["size_cm"], spec.get("fit_cm")))
         if "firearm" in spec:
             gun = spec["firearm"]
             item.set_editor_property("ammo_item", unreal.load_asset(gun["ammo"]))
