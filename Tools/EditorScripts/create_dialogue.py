@@ -24,6 +24,9 @@ RELAY_INSPECTED = "shore.relay_inspected"    # player inspected the live relay (
 VOICE_DISCUSSED = "shore.voice_discussed"    # player told Mara the relay speaks
 RELAY_RECOVERED = "shore.relay_recovered"    # Mara has the coil (quest outcome, or handed over later)
 HEARD_KILL = "shore.mara_heard_kill"         # Mara commented on a kill after the coil route
+# Exploration Loop (the Wrecked Survey Launch, see build_boathouse.py). Not part of Shore Watch.
+WRECK_LOG_READ = "wreck.log_read"            # player read the survey log at the wreck
+WRECK_TOLD = "wreck.mara_told"               # player told Mara about the wreck (asked once)
 
 COND = unreal.DCConditionType
 CONS = unreal.DCConsequenceType
@@ -62,6 +65,9 @@ ASK_PLACE = ("What is this place?", "place")
 ASK_OFFER = dict(text="You keep looking toward his camp.", next="offer", conditions=[NOT_STARTED])
 TELL_VOICE = dict(text="I looked at his relay. It's saying words.", next="voice",
                   conditions=[cond("WORLD_FLAG", id=RELAY_INSPECTED), cond("WORLD_FLAG", id=VOICE_DISCUSSED, negate=True)])
+# Offered in Mara's everyday nodes (never in Shore Watch turn-ins) once the survey log has been read.
+TELL_WRECK = dict(text="There's a wrecked survey launch west of the boathouse. I read her log.", next="wreck",
+                  conditions=[cond("WORLD_FLAG", id=WRECK_LOG_READ), cond("WORLD_FLAG", id=WRECK_TOLD, negate=True)])
 
 MARA_INTRO = dict(
     asset="DA_Dialogue_MaraIntro",
@@ -79,11 +85,19 @@ MARA_INTRO = dict(
     ],
     nodes=[
         dict(id="greeting", line="Keep your voice down. That scavenger still works this stretch of shore.",
-             choices=[ASK_WHO, ASK_PLACE, ASK_OFFER, BYE]),
+             choices=[ASK_WHO, ASK_PLACE, ASK_OFFER, TELL_WRECK, BYE]),
         dict(id="who", line="Name's Mara. I watch the shore for people who still listen before they shoot.",
-             choices=[ASK_PLACE, ASK_OFFER, BYE]),
+             choices=[ASK_PLACE, ASK_OFFER, TELL_WRECK, BYE]),
         dict(id="place", line="Great Lakes Maritime ground, once. The boathouse still stands. The shore doesn't stay empty for long.",
-             choices=[ASK_WHO, ASK_OFFER, BYE]),
+             choices=[ASK_WHO, ASK_OFFER, TELL_WRECK, BYE]),
+
+        # The survey launch (Exploration Loop). One exchange, then it's done. She doesn't explain it.
+        dict(id="wreck",
+             line="The Tern. She's been on those stones since the lights went out. Everybody on this shore reads that "
+                  "last page once, and everybody decides it was a storm.",
+             choices=[dict(text="Was it a storm?", next="wreck_storm", consequences=[cons("SET_WORLD_FLAG", id=WRECK_TOLD)])]),
+        dict(id="wreck_storm", line="It's always a storm. Stay out of the water round her stern. It bites.",
+             choices=[BYE]),
 
         # Offer. The route is not locked by the reply; what the player does in the world decides it.
         dict(id="offer",
@@ -104,7 +118,7 @@ MARA_INTRO = dict(
 
         # In progress.
         dict(id="inprogress", line="Still hear it? Every night it comes in a little clearer.",
-             choices=[("Remind me what you need.", "recap"), TELL_VOICE, BYE]),
+             choices=[("Remind me what you need.", "recap"), TELL_VOICE, TELL_WRECK, BYE]),
         dict(id="recap", line="His relay goes quiet. Kill him, or pull the coil from the rig at his camp. Your choice. Just make it quiet.",
              choices=[BYE]),
         dict(id="voice", line="...Yeah. I've heard them too. Don't say them out loud, and don't repeat them on the boats.",
@@ -139,7 +153,7 @@ MARA_INTRO = dict(
                  dict(text="I pulled the coil from his relay, too.", next="coil_after_kill",
                       conditions=[cond("HAS_ITEM", id=COIL)],
                       consequences=[cons("REMOVE_ITEM", id=COIL, quantity=1), cons("SET_WORLD_FLAG", id=RELAY_RECOVERED)]),
-                 ASK_WHO, ASK_PLACE, BYE,
+                 ASK_WHO, ASK_PLACE, TELL_WRECK, BYE,
              ]),
         dict(id="coil_after_kill", line="Better in my hands than rusting on his shore. I'll see what it has left to say.",
              choices=[BYE]),
@@ -149,7 +163,7 @@ MARA_INTRO = dict(
                  dict(text="He won't be walking anywhere now.", next="went_back",
                       conditions=[cond("ACTOR_DEAD", id=SCAV), cond("WORLD_FLAG", id=HEARD_KILL, negate=True)],
                       consequences=[cons("SET_WORLD_FLAG", id=HEARD_KILL)]),
-                 ASK_WHO, ASK_PLACE, BYE,
+                 ASK_WHO, ASK_PLACE, TELL_WRECK, BYE,
              ]),
         dict(id="went_back", line="You went back for him anyway. ...I suppose that's one way to keep a shore quiet.",
              choices=[BYE]),

@@ -305,6 +305,67 @@ bool FDCShoreWatchShortcutTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCMaraWreckLineTest, "DeadCurrent.Content.Exploration.MaraWreckLine",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCMaraWreckLineTest::RunTest(const FString& Parameters)
+{
+	using namespace DCShoreWatchTest;
+	LoadContent();
+	const FString TellWreck = TEXT("There's a wrecked survey launch west of the boathouse. I read her log.");
+	const FName LogRead = TEXT("wreck.log_read");
+	const FName Told = TEXT("wreck.mara_told");
+
+	// Before the log is read, Mara never mentions the wreck.
+	{
+		FShore Shore;
+		if (!TestTrue(TEXT("Shipped content loaded"), Shore.IsValid()))
+		{
+			return false;
+		}
+		Shore.Talk();
+		TestFalse(TEXT("No wreck line before the log"), Shore.Can(TellWreck));
+
+		// After it: one exchange, from her ordinary greeting, without touching Shore Watch.
+		Shore.WorldState->SetFlag(LogRead);
+		TestEqual(TEXT("Greeting"), Shore.Talk(), FName(TEXT("greeting")));
+		TestTrue(TEXT("Tell her about the wreck"), Shore.Say(TellWreck));
+		TestEqual(TEXT("Her answer"), Shore.Dialogue->GetCurrentNodeId(), FName(TEXT("wreck")));
+		TestTrue(TEXT("Ask"), Shore.Say(TEXT("Was it a storm?")));
+		TestEqual(TEXT("Her deflection"), Shore.Dialogue->GetCurrentNodeId(), FName(TEXT("wreck_storm")));
+		TestTrue(TEXT("Remembered"), Shore.WorldState->HasFlag(Told));
+		TestTrue(TEXT("Shore Watch untouched"), Shore.Quests->GetQuestStatus(Quest) == EDCQuestStatus::NotStarted);
+		Shore.Talk();
+		TestFalse(TEXT("Asked once"), Shore.Can(TellWreck));
+		TestTrue(TEXT("Shore Watch offer still there"), Shore.Can(TEXT("You keep looking toward his camp.")));
+
+		// Save/load keeps it told.
+		TUniquePtr<FShore> Reloaded = Shore.SaveAndReload();
+		Reloaded->Talk();
+		TestFalse(TEXT("Reload: still asked once"), Reloaded->Can(TellWreck));
+	}
+
+	// While Shore Watch runs: offered in her in-progress and epilogue talk, never in the turn-in.
+	{
+		FShore Shore;
+		Shore.Talk();
+		Shore.Say(TEXT("You keep looking toward his camp."));
+		Shore.Say(TEXT("I'll put him down."));
+		Shore.WorldState->SetFlag(LogRead);
+		TestEqual(TEXT("In progress"), Shore.Talk(), FName(TEXT("inprogress")));
+		TestTrue(TEXT("Offered mid-quest"), Shore.Can(TellWreck));
+
+		Shore.KillScavenger();
+		TestEqual(TEXT("Turn-in"), Shore.Talk(), FName(TEXT("turnin_kill")));
+		TestFalse(TEXT("Not in the turn-in"), Shore.Can(TellWreck));
+		TestTrue(TEXT("Turn in"), Shore.Say(TEXT("He's dead. His relay has no one to tend it.")));
+		TestEqual(TEXT("Epilogue"), Shore.Talk(), FName(TEXT("done_killed")));
+		TestTrue(TEXT("Offered after the quest"), Shore.Say(TellWreck));
+		TestEqual(TEXT("Outcome unchanged"), Shore.Stage(), FName(TEXT("done_killed")));
+	}
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCInspectVariantTest, "DeadCurrent.World.InspectVariants",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
 
@@ -342,6 +403,21 @@ bool FDCInspectVariantTest::RunTest(const FString& Parameters)
 	WorldState->SetFlag(TEXT("test.other"));
 	IDCInteractable::Execute_Interact(Rig, Player);
 	TestTrue(TEXT("Variant runs again when its condition passes again"), WorldState->HasFlag(TEXT("test.seen")));
+
+	// Verbs: a variant can rename the prompt ("Pull the leads"), and falls back to the actor's verb.
+	TestEqual(TEXT("Default verb"), IDCInteractable::Execute_GetInteractionPrompt(Rig, Player).Action.ToString(), FString(TEXT("Inspect")));
+	FDCInspectVariant Pull;
+	Pull.Action = FText::FromString(TEXT("Pull the leads"));
+	Pull.Conditions = { NotSeen };
+	Pull.Consequences = { MarkSeen };
+	FDCInspectVariant Done;
+	Done.Description = FText::FromString(TEXT("Loose leads."));
+	*VariantsProperty->ContainerPtrToValuePtr<TArray<FDCInspectVariant>>(Rig) = { Pull, Done };
+	WorldState->ClearFlag(TEXT("test.seen"));
+	TestEqual(TEXT("Variant verb"), IDCInteractable::Execute_GetInteractionPrompt(Rig, Player).Action.ToString(), FString(TEXT("Pull the leads")));
+	IDCInteractable::Execute_Interact(Rig, Player);
+	TestTrue(TEXT("Pulling set the flag"), WorldState->HasFlag(TEXT("test.seen")));
+	TestEqual(TEXT("Next variant falls back to the actor verb"), IDCInteractable::Execute_GetInteractionPrompt(Rig, Player).Action.ToString(), FString(TEXT("Inspect")));
 	return true;
 }
 

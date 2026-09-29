@@ -16,7 +16,11 @@
 #include "Tests/AutomationCommon.h"
 #include "UI/DCHUD.h"
 #include "UnrealClient.h"
+#include "World/DCDamageVolume.h"
+#include "World/DCFlickerLight.h"
 #include "World/DCInspectableActor.h"
+#include "World/DCLocationVolume.h"
+#include "World/DCLootContainer.h"
 #include "World/DCWorldStateSubsystem.h"
 #include "Misc/AutomationTest.h"
 
@@ -183,6 +187,139 @@ namespace DCBoathouseTest
 			}
 			return true;
 		}));
+	}
+
+	// Exploration Loop: the Wrecked Survey Launch west of the boathouse (see build_boathouse.py).
+	const FName WreckLocation = TEXT("shore.survey_launch");
+	const FName Locker = TEXT("boat.wreck_locker");
+	const FName Tender = TEXT("boat.wreck_tender");
+	const FVector Beach(-1100.0, -250.0, 100.0);        // inside the discovery volume, dry
+	const FVector LiveWater(-1250.0, -1300.0, 100.0);   // in the water off the stern
+	const FVector StartArea(300.0, 0.0, 100.0);         // inside the boathouse, far from the POI
+
+	TArray<FString> VisibleChoiceTexts()
+	{
+		TArray<FString> Texts;
+		UDCDialogueComponent* Dialogue = Player() ? Player()->GetDialogueComponent() : nullptr;
+		if (const FDCDialogueNode* Node = Dialogue ? Dialogue->GetCurrentNode() : nullptr)
+		{
+			for (const int32 Index : Dialogue->GetVisibleChoiceIndices())
+			{
+				Texts.Add(Node->Choices[Index].Text.ToString());
+			}
+		}
+		return Texts;
+	}
+
+	ADCInspectableActor* Inspectable(const TCHAR* DisplayName)
+	{
+		for (TActorIterator<ADCInspectableActor> It(GameWorld()); It; ++It)
+		{
+			if (It->GetDisplayName().ToString() == DisplayName)
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
+	/** Nearest actor of class T whose bounds center (greybox boxes pivot at a corner) is within MaxDistance. */
+	template <class T>
+	T* Nearest(const FVector& Where, double MaxDistance = 400.0)
+	{
+		T* Best = nullptr;
+		for (TActorIterator<T> It(GameWorld()); It; ++It)
+		{
+			FVector Center, Extent;
+			It->GetActorBounds(false, Center, Extent);
+			const double Dist = FVector::Dist2D(Center, Where);
+			if (Dist < MaxDistance)
+			{
+				Best = *It;
+				MaxDistance = Dist;
+			}
+		}
+		return Best;
+	}
+
+	ADCLocationVolume* WreckVolume()
+	{
+		for (TActorIterator<ADCLocationVolume> It(GameWorld()); It; ++It)
+		{
+			if (It->GetLocationId() == WreckLocation)
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
+	ADCDamageVolume* LiveWaterHazard() { return Nearest<ADCDamageVolume>(FVector(-1500.0, -1390.0, 0.0)); }
+
+	ADCFlickerLight* Sparks() { return Nearest<ADCFlickerLight>(FVector(-1230.0, -1470.0, 0.0)); }
+
+	ADCLootContainer* Container(FName Id) { return Cast<ADCLootContainer>(Find(Id)); }
+
+	/** Every POI actor the tests touch exists (so later steps can use them without null checks). */
+	bool SurveyLaunchPlaced(FAutomationTestBase* Test)
+	{
+		return Test->TestNotNull(TEXT("Player"), Player())
+			&& Test->TestNotNull(TEXT("Discovery volume placed"), WreckVolume())
+			&& Test->TestNotNull(TEXT("Survey locker placed"), Container(Locker))
+			&& Test->TestNotNull(TEXT("Tender placed"), Container(Tender))
+			&& Test->TestNotNull(TEXT("Live water placed"), LiveWaterHazard())
+			&& Test->TestNotNull(TEXT("Sparks placed"), Sparks())
+			&& Test->TestNotNull(TEXT("Battery placed"), Inspectable(TEXT("Battery bank")));
+	}
+
+	int32 StacksIn(FName Id)
+	{
+		const ADCLootContainer* C = Container(Id);
+		return C ? C->GetInventoryComponent()->GetStacks().Num() : -1;
+	}
+
+	bool Discovered()
+	{
+		return WorldState() && WorldState()->IsLocationDiscovered(WreckLocation);
+	}
+
+	void Use(AActor* Target)
+	{
+		if (Target && Player())
+		{
+			IDCInteractable::Execute_Interact(Target, Player());
+		}
+	}
+
+	void Use(const TCHAR* InspectableName) { Use(Inspectable(InspectableName)); }
+
+	void Teleport(const FVector& Where)
+	{
+		if (ADCPlayerCharacter* P = Player())
+		{
+			P->GetDialogueComponent()->EndDialogue();
+			P->SetActorLocation(Where, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+	}
+
+	ADCHUD* HUD()
+	{
+		const APlayerController* PC = Player() ? Cast<APlayerController>(Player()->GetController()) : nullptr;
+		return PC ? PC->GetHUD<ADCHUD>() : nullptr;
+	}
+
+	FString Message() { return HUD() ? HUD()->GetActiveMessage().ToString() : FString(); }
+
+	FString Banner() { return HUD() ? HUD()->GetActiveBannerSubtitle().ToString() : FString(); }
+
+	float Health() { return Player() ? Player()->GetHealthComponent()->GetHealth() : -1.0f; }
+
+	void SwitchSlot(const FString& Slot)
+	{
+		if (UDCSaveSubsystem* S = Saves())
+		{
+			S->SetSlotName(Slot);
+		}
 	}
 }
 
@@ -382,6 +519,334 @@ bool FDCBoathouseCombatRouteTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ *  The Exploration Loop in the real map: find the wreck, get the discovery once, read it, get hurt by
+ *  the live water, loot, cut the power, take the hidden kit, save, diverge, F9, and find it all as it was.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseSurveyLaunchTest, "DeadCurrent.Map.Boathouse.SurveyLaunch",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCBoathouseSurveyLaunchTest::RunTest(const FString& Parameters)
+{
+	using namespace DCBoathouseTest;
+	QueueFreshMap();
+	TSharedRef<int32> Announcements = MakeShared<int32>(0);
+	TSharedRef<float> HealthBefore = MakeShared<float>(0.0f);
+
+	// The POI is placed and untouched, and nothing leads the player to it.
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Announcements]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		for (const TCHAR* Clue : { TEXT("Survey log"), TEXT("Depth sounder"), TEXT("Breaker panel"), TEXT("Battery bank"),
+			TEXT("Emergency beacon"), TEXT("Name board"), TEXT("Life jackets"), TEXT("Dead fish"), TEXT("West window") })
+		{
+			TestNotNull(*FString::Printf(TEXT("Clue placed: %s"), Clue), Inspectable(Clue));
+		}
+		TestEqual(TEXT("Display name"), WreckVolume()->GetDisplayName().ToString(), FString(TEXT("Wrecked Survey Launch")));
+		TestFalse(TEXT("Start: not discovered"), Discovered());
+		TestFalse(TEXT("Start: spawn is outside the POI"), WreckVolume()->ContainsPoint(Player()->GetActorLocation()));
+		TestEqual(TEXT("Start: locker full"), StacksIn(Locker), 3);
+		TestEqual(TEXT("Start: tender full"), StacksIn(Tender), 2);
+		TestTrue(TEXT("Start: water live"), LiveWaterHazard()->IsHazardActive());
+		TestTrue(TEXT("Start: no quest involved"), Player()->GetQuestComponent()->GetQuestLog().IsEmpty());
+
+		WorldState()->OnLocationDiscovered.AddLambda([Announcements](FName) { ++*Announcements; });
+		Teleport(Beach);
+		return true;
+	}));
+
+	// Walking in discovers it (the volume polls a few times a second).
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.8f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Announcements, HealthBefore]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		TestTrue(TEXT("Discovered by walking in"), Discovered());
+		TestEqual(TEXT("Banner"), Banner(), FString(TEXT("Wrecked Survey Launch")));
+		TestEqual(TEXT("Announced once"), *Announcements, 1);
+
+		// Step into the live water.
+		*HealthBefore = Health();
+		Teleport(LiveWater);
+		return true;
+	}));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.0f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Announcements, HealthBefore]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		TestTrue(TEXT("Live water hurts"), Health() < *HealthBefore - 5.0f);
+		TestTrue(TEXT("Live water warns"), Message().Contains(TEXT("live")));
+		TestTrue(TEXT("Still alive after a second"), Health() > 0.0f);
+		Teleport(Beach);
+		TestEqual(TEXT("Leaving and re-entering does not rediscover"), *Announcements, 1);
+
+		// Read the place.
+		Use(TEXT("Survey log"));
+		TestTrue(TEXT("Log read"), WorldState()->HasFlag(TEXT("wreck.log_read")));
+		TestTrue(TEXT("Log points at the tender"), Message().Contains(TEXT("tender")));
+		Use(TEXT("Breaker panel"));
+		TestTrue(TEXT("Panel reads differently after the log"), Message().Contains(TEXT("The log says")));
+		Use(TEXT("Emergency beacon"));
+		TestTrue(TEXT("Beacon, power still on"), Message().Contains(TEXT("dead for decades")));
+
+		// Loot the obvious locker, but not all of it.
+		Use(Container(Locker));
+		TestEqual(TEXT("Took the rounds"), Count(TEXT("ammo_9mm")), 12);
+		TestEqual(TEXT("Locker partly looted"), StacksIn(Locker), 2);
+
+		// Inspect, then pull, the battery leads.
+		ADCInspectableActor* Battery = Inspectable(TEXT("Battery bank"));
+		TestEqual(TEXT("Battery verb before"), IDCInteractable::Execute_GetInteractionPrompt(Battery, Player()).Action.ToString(), FString(TEXT("Inspect")));
+		Use(Battery);
+		TestEqual(TEXT("Battery verb after inspecting"), IDCInteractable::Execute_GetInteractionPrompt(Battery, Player()).Action.ToString(), FString(TEXT("Pull the leads")));
+		TestTrue(TEXT("Water still live until pulled"), LiveWaterHazard()->IsHazardActive());
+		Use(Battery);
+		TestTrue(TEXT("Power cut"), WorldState()->HasFlag(TEXT("wreck.power_cut")));
+		TestFalse(TEXT("Water dead"), LiveWaterHazard()->IsHazardActive());
+		TestFalse(TEXT("Sparks out"), Sparks()->IsLightActive());
+		Use(TEXT("Emergency beacon"));
+		TestTrue(TEXT("Beacon notices the lamp"), Message().Contains(TEXT("still flickering")));
+
+		*HealthBefore = Health();
+		Teleport(LiveWater);
+		return true;
+	}));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.0f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, HealthBefore]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		TestEqual(TEXT("Dead water does not hurt"), Health(), *HealthBefore);
+
+		// The hidden kit in the tender.
+		Use(Container(Tender));
+		Use(Container(Tender));
+		TestTrue(TEXT("Tender emptied"), Container(Tender)->IsEmpty());
+		TestEqual(TEXT("Kit dressings"), Count(TEXT("field_dressing")), 2);
+		TestEqual(TEXT("All the rounds"), Count(TEXT("ammo_9mm")), 30);
+
+		Teleport(Beach);
+		TestTrue(TEXT("Save at the wreck"), Saves()->SaveCurrentGame());
+
+		// Diverge after the save.
+		Use(Container(Locker));
+		Use(Container(Locker));
+		TestTrue(TEXT("Diverged: locker empty"), Container(Locker)->IsEmpty());
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.8f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		if (!TestNotNull(TEXT("Player after load"), Player()) || !TestNotNull(TEXT("Locker after load"), Container(Locker)))
+		{
+			return true;
+		}
+		TestTrue(TEXT("Load: still discovered"), Discovered());
+		TestTrue(TEXT("Load: loaded inside the POI"), WreckVolume()->ContainsPoint(Player()->GetActorLocation()));
+		TestEqual(TEXT("Load: not re-announced"), Banner(), FString());
+		for (const TCHAR* Flag : { TEXT("wreck.log_read"), TEXT("wreck.battery_seen"), TEXT("wreck.power_cut") })
+		{
+			TestTrue(*FString::Printf(TEXT("Load: %s"), Flag), WorldState()->HasFlag(Flag));
+		}
+		TestEqual(TEXT("Load: locker keeps exactly what was left"), StacksIn(Locker), 2);
+		const UDCInventoryComponent* LockerInventory = Container(Locker)->GetInventoryComponent();
+		TestEqual(TEXT("Load: locker wiring"), LockerInventory->GetQuantityByItemId(TEXT("salvage_wiring")), 3);
+		TestEqual(TEXT("Load: locker dressing"), LockerInventory->GetQuantityByItemId(TEXT("field_dressing")), 1);
+		TestEqual(TEXT("Load: locker rounds stay taken"), LockerInventory->GetQuantityByItemId(TEXT("ammo_9mm")), 0);
+		TestTrue(TEXT("Load: tender stays empty"), Container(Tender)->IsEmpty());
+		TestEqual(TEXT("Load: player rounds"), Count(TEXT("ammo_9mm")), 30);
+		TestEqual(TEXT("Load: player dressings"), Count(TEXT("field_dressing")), 2);
+		TestFalse(TEXT("Load: water stays dead"), LiveWaterHazard()->IsHazardActive());
+		TestFalse(TEXT("Load: sparks stay out"), Sparks()->IsLightActive());
+		TestEqual(TEXT("Load: battery remembers"), IDCInteractable::Execute_GetInteractionPrompt(Inspectable(TEXT("Battery bank")), Player()).Action.ToString(), FString(TEXT("Inspect")));
+		Use(TEXT("West window"));
+		TestTrue(TEXT("Load: the boathouse window knows"), Message().Contains(TEXT("nothing left to power it")));
+		return true;
+	}));
+
+	QueueCleanup();
+	return true;
+}
+
+/**
+ *  Save/load combinations of the POI with Shore Watch at the same time, across several slots:
+ *  undiscovered + quest active, discovered + partial tender + quest active, and both complete.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseSurveyLaunchSavesTest, "DeadCurrent.Map.Boathouse.SurveyLaunchSaves",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCBoathouseSurveyLaunchSavesTest::RunTest(const FString& Parameters)
+{
+	using namespace DCBoathouseTest;
+	const FString SlotA = FString(TestSlot) + TEXT("_A");
+	const FString SlotB = FString(TestSlot) + TEXT("_B");
+	const FString SlotC = FString(TestSlot) + TEXT("_C");
+	QueueFreshMap();
+
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, SlotA]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		if (!TestNotNull(TEXT("Player"), Player()) || !TestNotNull(TEXT("Tender"), Container(Tender)))
+		{
+			return true;
+		}
+		// A: Shore Watch accepted, the wreck never seen.
+		TalkToMara();
+		Say(TEXT("You keep looking toward his camp."));
+		TestTrue(TEXT("Accept"), Say(TEXT("I'll put him down.")));
+		Player()->GetDialogueComponent()->EndDialogue();
+		SwitchSlot(SlotA);
+		TestTrue(TEXT("Save A"), Saves()->SaveCurrentGame());
+
+		Teleport(Beach);
+		return true;
+	}));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.8f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, SlotB]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		// B: discovered, log read, tender half looted, locker untouched, quest still active.
+		TestTrue(TEXT("Discovered"), Discovered());
+		Use(TEXT("Survey log"));
+		Use(Container(Tender));
+		TestEqual(TEXT("Tender partly looted"), StacksIn(Tender), 1);
+		SwitchSlot(SlotB);
+		TestTrue(TEXT("Save B"), Saves()->SaveCurrentGame());
+
+		// Diverge: finish Shore Watch.
+		FDCDamageInfo Damage;
+		Damage.Amount = 1000.0f;
+		Damage.Instigator = Player();
+		UDCHealthComponent::ApplyDamageToActor(Find(TEXT("boat.scavenger")), Damage);
+		TestEqual(TEXT("Diverged: quest advanced"), Stage(), FName(TEXT("return_killed")));
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, SlotC]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		const ADCScavengerCharacter* Scav = Cast<ADCScavengerCharacter>(Find(TEXT("boat.scavenger")));
+		if (!TestNotNull(TEXT("Player after B"), Player()) || !TestNotNull(TEXT("Scavenger after B"), Scav))
+		{
+			return true;
+		}
+		TestEqual(TEXT("B: quest still accepted"), Stage(), FName(TEXT("accepted")));
+		TestFalse(TEXT("B: scavenger alive"), Scav->GetHealthComponent()->IsDead());
+		TestTrue(TEXT("B: discovered"), Discovered());
+		TestTrue(TEXT("B: log read"), WorldState()->HasFlag(TEXT("wreck.log_read")));
+		TestEqual(TEXT("B: tender keeps its last stack"), StacksIn(Tender), 1);
+		TestEqual(TEXT("B: that stack is the rounds"), Container(Tender)->GetInventoryComponent()->GetQuantityByItemId(TEXT("ammo_9mm")), 18);
+		TestEqual(TEXT("B: locker untouched"), StacksIn(Locker), 3);
+		TestTrue(TEXT("B: water still live"), LiveWaterHazard()->IsHazardActive());
+
+		// C: finish Shore Watch and tell Mara about the wreck.
+		FDCDamageInfo Damage;
+		Damage.Amount = 1000.0f;
+		Damage.Instigator = Player();
+		UDCHealthComponent::ApplyDamageToActor(Find(TEXT("boat.scavenger")), Damage);
+		TestEqual(TEXT("Turn-in"), TalkToMara(), FName(TEXT("turnin_kill")));
+		TestTrue(TEXT("Turn in"), Say(TEXT("He's dead. His relay has no one to tend it.")));
+		TestEqual(TEXT("Epilogue"), TalkToMara(), FName(TEXT("done_killed")));
+		TestTrue(TEXT("Tell Mara about the wreck"), Say(TEXT("There's a wrecked survey launch west of the boathouse. I read her log.")));
+		TestTrue(TEXT("Ask"), Say(TEXT("Was it a storm?")));
+		Player()->GetDialogueComponent()->EndDialogue();
+		TestTrue(TEXT("Mara told"), WorldState()->HasFlag(TEXT("wreck.mara_told")));
+		SwitchSlot(SlotC);
+		TestTrue(TEXT("Save C"), Saves()->SaveCurrentGame());
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, SlotA]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		if (!TestNotNull(TEXT("Player after C"), Player()))
+		{
+			return true;
+		}
+		TestEqual(TEXT("C: Shore Watch complete"), Stage(), FName(TEXT("done_killed")));
+		TestTrue(TEXT("C: path cleared"), WorldState()->HasFlag(TEXT("shore.path_cleared")));
+		TestTrue(TEXT("C: discovered"), Discovered());
+		TestEqual(TEXT("C: tender still partial"), StacksIn(Tender), 1);
+		TalkToMara();
+		TestFalse(TEXT("C: wreck line used up"), VisibleChoiceTexts().Contains(TEXT("There's a wrecked survey launch west of the boathouse. I read her log.")));
+		Player()->GetDialogueComponent()->EndDialogue();
+
+		// Back to A: before any of it.
+		SwitchSlot(SlotA);
+		return true;
+	}));
+
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.5f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		if (!TestNotNull(TEXT("Player after A"), Player()))
+		{
+			return true;
+		}
+		TestEqual(TEXT("A: quest accepted"), Stage(), FName(TEXT("accepted")));
+		TestFalse(TEXT("A: not discovered"), Discovered());
+		TestEqual(TEXT("A: tender full again"), StacksIn(Tender), 2);
+		TestEqual(TEXT("A: locker full"), StacksIn(Locker), 3);
+		TestFalse(TEXT("A: log unread"), WorldState()->HasFlag(TEXT("wreck.log_read")));
+		TestFalse(TEXT("A: loaded outside the POI"), WreckVolume()->ContainsPoint(Player()->GetActorLocation()));
+		Teleport(Beach);
+		return true;
+	}));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.8f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, SlotA, SlotB, SlotC]()
+	{
+		if (!SurveyLaunchPlaced(this))
+		{
+			return true;
+		}
+		TestTrue(TEXT("A: can be discovered again"), Discovered());
+		TestEqual(TEXT("A: with its banner"), Banner(), FString(TEXT("Wrecked Survey Launch")));
+		for (const FString& Slot : { SlotA, SlotB, SlotC })
+		{
+			UGameplayStatics::DeleteGameInSlot(Slot, 0);
+		}
+		return true;
+	}));
+
+	QueueCleanup();
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCBoathouseLegacySaveTest, "DeadCurrent.Map.Boathouse.LegacySave",
 	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
 
@@ -423,6 +888,12 @@ bool FDCBoathouseLegacySaveTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Legacy: coil restored"), Count(TEXT("radio_coil")), 1);
 		TestNull(TEXT("Legacy: coil pickup gone"), Find(TEXT("boat.pickup_coil")));
 		TestFalse(TEXT("Legacy: unknown stage dropped"), Player()->GetQuestComponent()->HasQuest(Quest));
+
+		// The Exploration Loop POI postdates this save: it keeps its authored state.
+		TestFalse(TEXT("Legacy: wreck undiscovered"), Discovered());
+		TestEqual(TEXT("Legacy: locker full"), StacksIn(Locker), 3);
+		TestEqual(TEXT("Legacy: tender full"), StacksIn(Tender), 2);
+		TestTrue(TEXT("Legacy: water live"), LiveWaterHazard() && LiveWaterHazard()->IsHazardActive());
 
 		// The quest can be picked up again, and the coil shortcut applies.
 		TestEqual(TEXT("Legacy: greeting"), TalkToMara(), FName(TEXT("greeting")));
