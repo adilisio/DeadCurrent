@@ -491,7 +491,7 @@ def find_largest_mesh(dest):
     return best
 
 
-def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0):
+def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0, keep_rotation=False):
     """Swap a greybox for an imported mesh. Uniform scale. Bounds center stays on center."""
     comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     comp.set_static_mesh(mesh)
@@ -500,14 +500,14 @@ def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0):
     longest = max(extent.x, extent.y, extent.z, 1.0)
     scale = longest_cm / max(longest, 1.0)
     actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
-    actor.set_actor_rotation(unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0), False)
+    if not keep_rotation:
+        actor.set_actor_rotation(unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0), False)
     origin, _extent = actor.get_actor_bounds(False)
     loc = actor.get_actor_location()
     actor.set_actor_location(
         unreal.Vector(loc.x + (center[0] - origin.x), loc.y + (center[1] - origin.y), loc.z + (center[2] - origin.z)),
         False, True)
     comp.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
-    assign_tern_materials(comp, mesh)
     log(f"{actor.get_actor_label()} wears {mesh.get_name()} scale={scale:.3f}")
 
 
@@ -938,6 +938,7 @@ def build_survey_launch():
     boat_mesh = find_largest_mesh("/Game/Art/Fab/motorboat_wreck")
     if boat_mesh:
         wear_mesh(tender, boat_mesh, 240.0, (-1500.0, -1650.0, 24.0), yaw=0.0)
+        assign_tern_materials(tender.get_component_by_class(unreal.StaticMeshComponent), boat_mesh)
     setup_container(tender, "Tender", "boat.wreck_tender", [(ITEM_CHART, 1), (ITEM_DRESSING, 2), (ITEM_AMMO, 18)])
     stern = hull.world((0, -500, -20))
     rope_run = stern[1] - (-1530.0)
@@ -951,7 +952,48 @@ def build_survey_launch():
     discovery.set_editor_property("location_id", WRECK_LOCATION)
     discovery.set_editor_property("display_name", unreal.Text("Wrecked Survey Launch"))
     discovery.get_editor_property("bounds").set_box_extent(unreal.Vector(950.0, 1150.0, 500.0))
+    dress_library_clues()
     log(f"survey launch: deck gap at {top}, lamp at {lamp}")
+
+
+def first_mesh(dest):
+    if not unreal.EditorAssetLibrary.does_directory_exist(dest):
+        raise RuntimeError(f"Missing {dest}. Run import_art.py first.")
+    for asset_path in unreal.EditorAssetLibrary.list_assets(dest, recursive=True, include_folder=False):
+        asset = unreal.load_asset(asset_path)
+        if isinstance(asset, unreal.StaticMesh):
+            return asset
+    raise RuntimeError(f"No static mesh in {dest}")
+
+
+def actor_by_label(label):
+    for actor in actors.get_all_level_actors():
+        if actor.get_actor_label() == label:
+            return actor
+    raise RuntimeError(f"Missing actor {label}")
+
+
+def dress_library_clues():
+    """Library meshes on the existing clue actors. No ammo box in the library; the rounds stay a small stack."""
+    log_actor = actor_by_label("SurveyLog")
+    origin, _extent = log_actor.get_actor_bounds(False)
+    wear_mesh(log_actor, first_mesh("/Game/Art/Meshy/lighthouse_logbook"), 28.0,
+              (origin.x, origin.y, origin.z), keep_rotation=True)
+
+    jackets = actor_by_label("LifeJackets")
+    wear_mesh(jackets, first_mesh("/Game/Art/PolyHaven/life_jacket"), 70.0, (-1080.0, -380.0, 16.0), yaw=25.0)
+    origin, extent = jackets.get_actor_bounds(False)
+    loc = jackets.get_actor_location()
+    jackets.set_actor_location(
+        unreal.Vector(loc.x, loc.y, loc.z - (origin.z - extent.z) + 2.0), False, True)
+
+    chalk = actor_by_label("ChalkWarning")
+    board = unreal.load_asset("/Game/Environment/Materials/M_DC_Chalk")
+    if not board:
+        raise RuntimeError("Missing M_DC_Chalk. Run import_art.py first.")
+    comp = chalk.get_component_by_class(unreal.StaticMeshComponent)
+    for slot in range(comp.get_num_materials()):
+        comp.set_material(slot, board)
 
 
 def editor_world():

@@ -157,5 +157,8 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `tree_stump_01` | `CC0/polyhaven/tree_stump_01` | CC0 | Rob Tuytel |
 | `wooden_crate_01`, `Lantern_01`, `hanging_industrial_lamp`, `can_rusted` | `CC0/polyhaven/` | CC0 | Poly Haven |
 | `tires2` (*Tern* and the tender mesh) | `Fab/motorboat_wreck` | Fab Standard | Anthony's Fab account |
+| `life_jacket` | `CC0/polyhaven/life_jacket` | CC0 | Poly Haven |
+| `lighthouse_logbook` (survey log) | `Meshy/lighthouse_logbook` | Meshy Pro | generated with the owner's Meshy Pro account |
+| `T_ChalkKeepOut`, `M_DC_Chalk` | authored in `import_art.py` | project | DEAD CURRENT |
 
 URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 0.35).

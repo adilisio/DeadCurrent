@@ -512,6 +512,129 @@ def ensure_wreck_instance(name, diffuse, grime):
     return mi
 
 
+def find_static_mesh(dest):
+    if not unreal.EditorAssetLibrary.does_directory_exist(dest):
+        return None
+    for asset_path in unreal.EditorAssetLibrary.list_assets(dest, recursive=True, include_folder=False):
+        asset = unreal.load_asset(asset_path)
+        if isinstance(asset, unreal.StaticMesh):
+            return asset
+    return None
+
+
+def import_mesh(filename, dest):
+    existing = find_static_mesh(dest)
+    if existing:
+        log(f"reuse mesh {existing.get_path_name()}")
+        return existing
+    if not os.path.isfile(filename):
+        raise RuntimeError(f"Missing {filename}")
+    if not unreal.EditorAssetLibrary.does_directory_exist(dest):
+        unreal.EditorAssetLibrary.make_directory(dest)
+    task = unreal.AssetImportTask()
+    task.set_editor_property("filename", filename)
+    task.set_editor_property("destination_path", dest)
+    task.set_editor_property("automated", True)
+    task.set_editor_property("replace_existing", True)
+    task.set_editor_property("save", True)
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    mesh = find_static_mesh(dest)
+    if not mesh:
+        raise RuntimeError(f"Import produced no static mesh in {dest}")
+    for asset_path in unreal.EditorAssetLibrary.list_assets(dest, recursive=True, include_folder=False):
+        asset = unreal.load_asset(asset_path)
+        if isinstance(asset, unreal.Texture):
+            asset.set_editor_property("max_texture_size", MAX_SIZE)
+            unreal.EditorAssetLibrary.save_loaded_asset(asset, only_if_is_dirty=False)
+            log(f"{asset.get_name()} {asset.blueprint_get_size_x()}x{asset.blueprint_get_size_y()} cap {MAX_SIZE}")
+    log(f"imported {mesh.get_path_name()}")
+    return mesh
+
+
+def import_clue_meshes():
+    """Library meshes for the clue actors. Not Meshy. The pistol stays on SM_Pistol."""
+    import_mesh(
+        r"C:\FO5_AssetLibrary\CC0\polyhaven\life_jacket\life_jacket_2k.gltf",
+        "/Game/Art/PolyHaven/life_jacket")
+    import_mesh(
+        r"C:\FO5_AssetLibrary\Meshy\lighthouse_logbook\model.fbx",
+        "/Game/Art/Meshy/lighthouse_logbook")
+
+
+def write_chalk_png():
+    out_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "Saved", "Chalk"))
+    os.makedirs(out_dir, exist_ok=True)
+    dest = os.path.join(out_dir, "chalk_keep_out.png")
+    script = r"""
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import random, sys
+w = h = 1024
+im = Image.new("RGB", (w, h), (78, 64, 48))
+px = im.load()
+rng = random.Random(7)
+for y in range(h):
+    for x in range(w):
+        n = rng.randint(-18, 18)
+        r, g, b = px[x, y]
+        px[x, y] = (max(0, min(255, r + n)), max(0, min(255, g + n - 4)), max(0, min(255, b + n - 8)))
+draw = ImageDraw.Draw(im)
+font = ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", 86)
+chalk = (214, 214, 206)
+draw.text((70, 360), "KEEP OUT OF", font=font, fill=chalk)
+draw.text((110, 500), "THE WATER", font=font, fill=chalk)
+im = im.filter(ImageFilter.GaussianBlur(radius=0.6))
+im.save(sys.argv[1], "PNG")
+print(sys.argv[1])
+"""
+    import subprocess
+    result = subprocess.run(["py", "-3", "-c", script, dest], capture_output=True, text=True, check=False)
+    if result.returncode != 0 or not os.path.isfile(dest):
+        raise RuntimeError(f"Could not write the chalk board: {result.stderr.strip()}")
+    log(f"chalk board {dest}")
+    return dest
+
+
+def ensure_chalk_board():
+    tex = import_texture(write_chalk_png(), "/Game/Art/Decals", "T_ChalkKeepOut", "color")
+    path = ENV_MATERIALS + "/M_DC_Chalk"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        unreal.EditorAssetLibrary.delete_asset(path)
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Chalk", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {path}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    material.set_editor_property("two_sided", True)
+    # The prototype cube's UV0 is a point, so the words never land on the face.
+    # This plank stands in world YZ at about y=-960..-900, z=0..60.
+    world = make(material, unreal.MaterialExpressionWorldPosition, -700, 0)
+    y0 = make(material, unreal.MaterialExpressionConstant, -700, 160)
+    y0.set_editor_property("r", 960.0)
+    z0 = make(material, unreal.MaterialExpressionConstant, -700, 240)
+    z0.set_editor_property("r", 0.0)
+    span = make(material, unreal.MaterialExpressionConstant, -700, 320)
+    span.set_editor_property("r", 60.0)
+    # Capture 1401 showed the words mirrored and upside down from the interaction side.
+    y_raw = div(material, add(material, mask(material, world, "g", -480, 40), y0, -300, 40), span, -80, 0)
+    z_raw = div(material, add(material, mask(material, world, "b", -480, 140), z0, -300, 140), span, -80, 120)
+    y_uv = make(material, unreal.MaterialExpressionOneMinus, 40, 0)
+    connect(y_raw, "", y_uv, "")
+    z_uv = make(material, unreal.MaterialExpressionOneMinus, 40, 120)
+    connect(z_raw, "", z_uv, "")
+    uv = append(material, y_uv, z_uv, 200, 40)
+    sample = sample_param(material, "Board", uv, 280, 0)
+    sample.set_editor_property("texture", tex)
+    rough = make(material, unreal.MaterialExpressionConstant, 200, 200)
+    rough.set_editor_property("r", 0.9)
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(sample, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    log(f"created {path}")
+
+
 def main():
     before = 0
     for spec in SURFACES:
@@ -538,6 +661,8 @@ def main():
         raise RuntimeError("Missing rusty_painted_metal base color for the Tern grime blend")
     ensure_wreck_instance("MI_DC_TernU1", boat[0], grime)
     ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
+    import_clue_meshes()
+    ensure_chalk_board()
 
 
 main()
