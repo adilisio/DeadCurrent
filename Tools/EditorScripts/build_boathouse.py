@@ -21,8 +21,10 @@ MAT_FLOOR = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray"
 MAT_BLOCK = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_TopDark"
 MAT_INTERACTABLE = "/Game/LevelPrototyping/Materials/MI_DefaultColorway"
 MAT_FLAT = "/Game/LevelPrototyping/Materials/M_FlatCol"
-MAT_GLOW = "/Game/LevelPrototyping/Interactable/JumpPad/Assets/Materials/M_SimpleGlow"
 ENV_MATERIALS = "/Game/Environment/Materials"
+# Our own unlit translucent glow (parameter "Color": rgb = emissive, a = opacity). The prototype's M_SimpleGlow
+# multiplies by particle color, which is black on a static mesh, so it can't be used here.
+MAT_GLOW = ENV_MATERIALS + "/M_DC_Glow"
 
 ITEM_AMMO = "/Game/Items/DA_Item_Ammo9mm"
 ITEM_DRESSING = "/Game/Items/DA_Item_FieldDressing"
@@ -114,6 +116,30 @@ class Frame:
 
     def part(self, label, folder, local_center, size, material=None, actor_class=unreal.StaticMeshActor):
         return box_rot(label, folder, self.world(local_center), size, self.rot, material, actor_class)
+
+
+def ensure_glow_material():
+    """Create (once) M_DC_Glow: unlit, translucent, emissive = Color.rgb, opacity = Color.a."""
+    if unreal.EditorAssetLibrary.does_asset_exist(MAT_GLOW):
+        return
+    if not unreal.EditorAssetLibrary.does_directory_exist(ENV_MATERIALS):
+        unreal.EditorAssetLibrary.make_directory(ENV_MATERIALS)
+    mel = unreal.MaterialEditingLibrary
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Glow", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {MAT_GLOW}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
+    material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
+    material.set_editor_property("two_sided", True)
+    color = mel.create_material_expression(material, unreal.MaterialExpressionVectorParameter, -300, 0)
+    color.set_editor_property("parameter_name", "Color")
+    color.set_editor_property("default_value", unreal.LinearColor(1.0, 1.0, 1.0, 1.0))
+    mel.connect_material_property(color, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.connect_material_property(color, "A", unreal.MaterialProperty.MP_OPACITY)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {MAT_GLOW}")
 
 
 def material_instance(name, parent_path, vectors):
@@ -559,9 +585,10 @@ def build_survey_launch():
     folder = "SurveyLaunch"
     hull_mat = material_instance("MI_DC_WreckHull", MAT_FLAT, {"Base Color": (0.13, 0.19, 0.23, 1.0)})
     trim_mat = material_instance("MI_DC_WreckRust", MAT_FLAT, {"Base Color": (0.36, 0.16, 0.07, 1.0)})
+    ensure_glow_material()
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
-    live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.12, 0.4, 1.0, 0.35)})
+    live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.25, 1.1, 3.2, 0.6)})
     live = [cond("WORLD_FLAG", id=WRECK_POWER_CUT, negate=True)]
 
     # Hull frame: local X = beam (+X is the east side, toward the boathouse), local Y = length (+Y is the
@@ -602,7 +629,7 @@ def build_survey_launch():
     hull.part("Mast", folder, (0, -24, wall_h + 20 + 450), (16, 16, 900), material=trim_mat)
     hull.part("Mast_Yard", folder, (0, -24, wall_h + 20 + 780), (160, 10, 10), material=trim_mat)
     lamp = hull.world((0, -24, wall_h + 20 + 915))
-    flicker_light("MastLamp", folder, lamp, (255, 170, 80), 60.0, 1400.0, glow_cm=34.0, glow_material=amber,
+    flicker_light("MastLamp", folder, lamp, (255, 170, 80), 60.0, 1400.0, glow_cm=60.0, glow_material=amber,
                   min_brightness=0.35, dropout=0.18, interval=(0.06, 0.9))
 
     # Inside the wheelhouse.
