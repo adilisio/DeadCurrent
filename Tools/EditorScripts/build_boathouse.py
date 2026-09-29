@@ -23,6 +23,16 @@ import unreal
 MAP_PATH = "/Game/Maps/Lvl_Boathouse"
 ART_MAP = "/Game/Maps/Lvl_Boathouse_Art"
 ART_SENTINEL = "ArtLayerSentinel"
+# Created by import_art.py. Resolved here so a rebuild without that script fails before it saves a map.
+REQUIRED_SURFACES = [
+    "/Game/Environment/Materials/MI_DC_CoastRock",
+    "/Game/Environment/Materials/MI_DC_LandRock",
+    "/Game/Environment/Materials/MI_DC_CoastSand",
+    "/Game/Environment/Materials/MI_DC_Mud",
+    "/Game/Environment/Materials/MI_DC_Concrete",
+    "/Game/Environment/Materials/MI_DC_Plaster",
+    "/Game/Environment/Materials/MI_DC_Steel",
+]
 CUBE = "/Game/LevelPrototyping/Meshes/SM_Cube"
 MAT_FLOOR = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray"
 MAT_BLOCK = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_TopDark"
@@ -944,7 +954,14 @@ def build_nav():
     log("nav mesh rebuild requested")
 
 
+def require_surfaces():
+    missing = [path for path in REQUIRED_SURFACES if not unreal.EditorAssetLibrary.does_asset_exist(path)]
+    if missing:
+        raise RuntimeError("Missing surface materials from import_art.py: " + ", ".join(missing))
+
+
 def main():
+    require_surfaces()
     if unreal.EditorAssetLibrary.does_asset_exist(MAP_PATH):
         levels.load_level(MAP_PATH)
         destroy_persistent_actors()

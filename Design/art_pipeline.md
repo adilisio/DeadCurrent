@@ -2,7 +2,7 @@
 
 Living document. Read it before importing, generating, or placing any art or audio. Update it when the first real asset lands and a convention below stops being a proposal.
 
-Status (2026-09-29): the art-layer decision is in force. `Lvl_Boathouse_Art` is an always-loaded streaming sublevel; `build_boathouse.py` re-links it and does not rewrite it. No library mesh or sound has been imported yet. The persistent map is still greybox. Conventions marked **Proposed** have not been exercised.
+Status (2026-09-29): the art-layer decision is in force (`Lvl_Boathouse_Art`). `import_art.py` has brought in the CC0 shore surfaces and `M_DC_Surface`. The persistent map is still greybox until those instances are assigned. No audio yet. Conventions still marked **Proposed** have not been exercised.
 
 ## Art direction (from `LongTermPlan.txt` §18)
 
@@ -120,9 +120,28 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 - **Collision is gameplay.** Firearm hitscan traces WorldStatic/WorldDynamic, AI navigation is rebuilt at runtime, and location discovery is polled (not collision-based) for exactly this reason. Dressing meshes change cover, sightlines, and nav. Rerun `Tools\RunTests.bat` (the `Map` suite walks real routes) after dressing a playable space.
 - **Clue actors are inspectables** (`ADCInspectableActor`) with persistent ids and world-state variants. Replace their greybox mesh; keep the actor, id, and variants. The glow and live-water visuals switch from world flags (`M_DC_Glow`, `ADCDamageVolume.ActiveConditions`). A new material must keep that switch working.
 
-### Import (Proposed)
+### Import
 
-- UE-pack assets: Migrate from the library project (above).
-- Raw FBX/glTF/texture sets (Fab raw, CC0, Meshy): import through a re-runnable Python script in `Tools/EditorScripts/` (same pattern as `create_items.py`), so an import can be redone at a different size without hand work.
-- Destination for raw imports: `/Game/Art/<Source>/<AssetId>/` (`Source` = `Megascans`, `PolyHaven`, `AmbientCG`, `Meshy`, `Freesound`). Asset names use the prefixes in `technical_architecture.md` (`SM_`, `T_`, `MI_`, `S_`).
-- Record provenance for anything imported (source path, license, author) in a table in this doc. CC0 needs no credit, but we keep the trail. Fab and Meshy assets are licensed to Anthony's accounts.
+- UE-pack assets: Migrate from the library project (above). Not started.
+- Raw FBX/glTF/texture sets: `Tools/EditorScripts/import_art.py`, re-runnable, registered first in `Tools\RebuildContent.bat`. A second run replaces textures in place (27 surface textures before and after).
+- Destination: `/Game/Art/<Source>/<AssetId>/` (`PolyHaven`, `AmbientCG`, and later `Megascans`, `Meshy`, `Freesound`). Names use `T_` / `MI_` / `SM_`.
+- `M_DC_Surface` is a default-lit master. Base color and roughness are triplanar in world space so a scaled greybox cube does not stretch them. `TileSizeCm` is the repeat, in centimeters. `PackedORM` uses an ARM texture (R occlusion, G roughness, B metal), which matches the Poly Haven layout. Unpacked sets use a roughness texture and the `Metallic` scalar. The normal map is sampled in world XY and faded out on vertical faces, so floors keep detail and walls keep the mesh normal.
+- The boathouse script resolves `MI_DC_CoastRock`, `MI_DC_LandRock`, `MI_DC_CoastSand`, `MI_DC_Mud`, `MI_DC_Concrete`, `MI_DC_Plaster`, and `MI_DC_Steel` before it saves. It does not assign them yet.
+- Fab meshes (the *Tern*) are imported by the same script when they are placed. They are not in the repo until then.
+- Baseline screenshots are not in this step. `UnrealEditor-Cmd` crashes in `take_high_res_screenshot` (null RHI, and again with `-AllowCommandletRendering`). The six cameras are listed in `Tools/EditorScripts/capture_presentation.py`. They get captured from the game window at the start of the mood task, before the lights change.
+
+### Provenance
+
+CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arrive, are licensed to Anthony's accounts.
+
+| Asset | Source path | License | Author |
+| --- | --- | --- | --- |
+| `T_coast_rocks_01_*`, `MI_DC_CoastRock` | `CC0/polyhaven/coast_rocks_01` | CC0 | Rob Tuytel, Rico Cilliers |
+| `T_coast_land_rocks_02_*`, `MI_DC_LandRock` | `CC0/polyhaven/coast_land_rocks_02` | CC0 | Rob Tuytel, Rico Cilliers |
+| `T_coast_sand_02_*`, `MI_DC_CoastSand` | `CC0/polyhaven/coast_sand_02` | CC0 | Rob Tuytel |
+| `T_brown_mud_02_*`, `MI_DC_Mud` | `CC0/polyhaven/brown_mud_02` | CC0 | Rob Tuytel |
+| `T_chipped_concrete_*`, `MI_DC_Concrete` | `CC0/polyhaven/chipped_concrete` | CC0 | Amal Kumar |
+| `T_blue_plaster_weathered_*`, `MI_DC_Plaster` | `CC0/polyhaven/blue_plaster_weathered` | CC0 | Amal Kumar |
+| `T_CorrugatedSteel009_*`, `MI_DC_Steel` | `CC0/ambientcg/CorrugatedSteel009` | CC0 | ambientCG |
+
+URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 1).
