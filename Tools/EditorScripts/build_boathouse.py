@@ -78,7 +78,7 @@ def rotate_pitch(v, pitch_deg):
     return unreal.Vector(v.x * math.cos(p) - v.z * math.sin(p), v.y, v.x * math.sin(p) + v.z * math.cos(p))
 
 
-def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unreal.StaticMeshActor):
+def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unreal.StaticMeshActor, hidden=False):
     scale = unreal.Vector(size[0] / CUBE_SIZE.x, size[1] / CUBE_SIZE.y, size[2] / CUBE_SIZE.z)
     scaled_center = unreal.Vector(CUBE_CENTER.x * scale.x, CUBE_CENTER.y * scale.y, CUBE_CENTER.z * scale.z)
     offset = rotate_pitch(scaled_center, pitch)
@@ -92,6 +92,8 @@ def box(label, folder, center, size, pitch=0.0, material=None, actor_class=unrea
     chosen = material or block_mat
     for slot in range(mesh_comp.get_num_materials()):
         mesh_comp.set_material(slot, chosen)
+    if hidden:
+        mesh_comp.set_visibility(False)
     return actor
 
 
@@ -107,7 +109,7 @@ def rotate(v, pitch=0.0, yaw=0.0, roll=0.0):
                          v.x * ax[2] + v.y * ay[2] + v.z * az[2])
 
 
-def box_rot(label, folder, center, size, rot=(0.0, 0.0, 0.0), material=None, actor_class=unreal.StaticMeshActor):
+def box_rot(label, folder, center, size, rot=(0.0, 0.0, 0.0), material=None, actor_class=unreal.StaticMeshActor, hidden=False):
     """Like box(), with a full (pitch, yaw, roll) rotation about the box center."""
     scale = unreal.Vector(size[0] / CUBE_SIZE.x, size[1] / CUBE_SIZE.y, size[2] / CUBE_SIZE.z)
     scaled_center = unreal.Vector(CUBE_CENTER.x * scale.x, CUBE_CENTER.y * scale.y, CUBE_CENTER.z * scale.z)
@@ -122,6 +124,8 @@ def box_rot(label, folder, center, size, rot=(0.0, 0.0, 0.0), material=None, act
     chosen = material or block_mat
     for slot in range(mesh_comp.get_num_materials()):
         mesh_comp.set_material(slot, chosen)
+    if hidden:
+        mesh_comp.set_visibility(False)
     return actor
 
 
@@ -136,8 +140,8 @@ class Frame:
         v = rotate(unreal.Vector(*local), *self.rot)
         return (self.origin[0] + v.x, self.origin[1] + v.y, self.origin[2] + v.z)
 
-    def part(self, label, folder, local_center, size, material=None, actor_class=unreal.StaticMeshActor):
-        return box_rot(label, folder, self.world(local_center), size, self.rot, material, actor_class)
+    def part(self, label, folder, local_center, size, material=None, actor_class=unreal.StaticMeshActor, hidden=False):
+        return box_rot(label, folder, self.world(local_center), size, self.rot, material, actor_class, hidden)
 
 
 def ensure_glow_material():
@@ -380,7 +384,7 @@ def build_lighting():
     folder = "Lighting"
     sun = actors.spawn_actor_from_class(
         unreal.DirectionalLight, unreal.Vector(0, 0, 1000),
-        unreal.Rotator(pitch=-58.0, yaw=20.0, roll=0.0))
+        unreal.Rotator(pitch=-58.0, yaw=135.0, roll=0.0))
     sun.set_actor_label("Sun")
     sun.set_folder_path(folder)
     sun_comp = sun.get_component_by_class(unreal.DirectionalLightComponent)
@@ -451,8 +455,8 @@ def build_lighting():
     fill.set_folder_path(folder)
     fill_comp = fill.get_component_by_class(unreal.PointLightComponent)
     fill_comp.set_editor_property("intensity_units", unreal.LightUnits.CANDELAS)
-    fill_comp.set_editor_property("intensity", 280.0)
-    fill_comp.set_editor_property("attenuation_radius", 900.0)
+    fill_comp.set_editor_property("intensity", 1600.0)
+    fill_comp.set_editor_property("attenuation_radius", 1600.0)
     fill_comp.set_editor_property("light_color", unreal.Color(r=186, g=196, b=204, a=255))
     fill_comp.set_editor_property("cast_shadows", False)
 
@@ -463,6 +467,42 @@ def surface(name):
     if not asset:
         raise RuntimeError(f"Missing {path}. Run import_art.py first.")
     return asset
+
+
+def find_largest_mesh(dest):
+    if not unreal.EditorAssetLibrary.does_directory_exist(dest):
+        return None
+    best = None
+    best_size = -1.0
+    for asset_path in unreal.EditorAssetLibrary.list_assets(dest, recursive=True, include_folder=False):
+        asset = unreal.load_asset(asset_path)
+        if not isinstance(asset, unreal.StaticMesh):
+            continue
+        bounds = asset.get_bounding_box()
+        size = (bounds.max - bounds.min).length()
+        if size > best_size:
+            best = asset
+            best_size = size
+    return best
+
+
+def wear_mesh(actor, mesh, longest_cm, center, yaw=0.0):
+    """Swap a greybox for an imported mesh. Uniform scale. Bounds center stays on center."""
+    comp = actor.get_component_by_class(unreal.StaticMeshComponent)
+    comp.set_static_mesh(mesh)
+    bounds = mesh.get_bounding_box()
+    extent = bounds.max - bounds.min
+    longest = max(extent.x, extent.y, extent.z, 1.0)
+    scale = longest_cm / max(longest, 1.0)
+    actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+    actor.set_actor_rotation(unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0), False)
+    origin, _extent = actor.get_actor_bounds(False)
+    loc = actor.get_actor_location()
+    actor.set_actor_location(
+        unreal.Vector(loc.x + (center[0] - origin.x), loc.y + (center[1] - origin.y), loc.z + (center[2] - origin.z)),
+        False, True)
+    comp.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
+    log(f"{actor.get_actor_label()} wears {mesh.get_name()} scale={scale:.3f}")
 
 
 def build_ground():
@@ -486,29 +526,32 @@ def build_boathouse():
     wall_h = 280
     door_h = 210
     door_half = 50
+    plaster = surface("MI_DC_Plaster")
+    steel = surface("MI_DC_Steel")
+    concrete = surface("MI_DC_Concrete")
 
     # Back (west) wall with a window: the survey launch's mast and lamp show through it (Exploration Loop).
-    block("Wall_Back_North", folder, 0, 20, -110, 320, 0, wall_h)
-    block("Wall_Back_South", folder, 0, 20, -320, -250, 0, wall_h)
-    block("Wall_Back_Sill", folder, 0, 20, -250, -110, 0, 100)
-    block("Wall_Back_Head", folder, 0, 20, -250, -110, 230, wall_h)
-    block("Wall_Right", folder, 0, 720, 300, 320, 0, wall_h)
-    block("Ceiling", folder, 0, 720, -320, 320, wall_h, wall_h + 20)
+    block("Wall_Back_North", folder, 0, 20, -110, 320, 0, wall_h, material=plaster)
+    block("Wall_Back_South", folder, 0, 20, -320, -250, 0, wall_h, material=plaster)
+    block("Wall_Back_Sill", folder, 0, 20, -250, -110, 0, 100, material=plaster)
+    block("Wall_Back_Head", folder, 0, 20, -250, -110, 230, wall_h, material=plaster)
+    block("Wall_Right", folder, 0, 720, 300, 320, 0, wall_h, material=plaster)
+    block("Ceiling", folder, 0, 720, -320, 320, wall_h, wall_h + 20, material=plaster)
 
     # Shore-side wall with a window looking at the lake.
-    block("Wall_Left_West", folder, 0, 250, -320, -300, 0, wall_h)
-    block("Wall_Left_East", folder, 400, 720, -320, -300, 0, wall_h)
-    block("Wall_Left_Sill", folder, 250, 400, -320, -300, 0, 110)
-    block("Wall_Left_Head", folder, 250, 400, -320, -300, 200, wall_h)
+    block("Wall_Left_West", folder, 0, 250, -320, -300, 0, wall_h, material=plaster)
+    block("Wall_Left_East", folder, 400, 720, -320, -300, 0, wall_h, material=plaster)
+    block("Wall_Left_Sill", folder, 250, 400, -320, -300, 0, 110, material=concrete)
+    block("Wall_Left_Head", folder, 250, 400, -320, -300, 200, wall_h, material=plaster)
 
     dx = 700
-    block("Wall_Front_Left", folder, dx, dx + 20, -320, -door_half, 0, wall_h)
-    block("Wall_Front_Right", folder, dx, dx + 20, door_half, 320, 0, wall_h)
-    block("Wall_Front_Lintel", folder, dx, dx + 20, -door_half, door_half, door_h, wall_h)
+    block("Wall_Front_Left", folder, dx, dx + 20, -320, -door_half, 0, wall_h, material=plaster)
+    block("Wall_Front_Right", folder, dx, dx + 20, door_half, 320, 0, wall_h, material=plaster)
+    block("Wall_Front_Lintel", folder, dx, dx + 20, -door_half, door_half, door_h, wall_h, material=steel)
     door("Door", folder, (dx + 10, -door_half, 0), door_half * 2 - 2, door_h - 2, 6, "Boathouse Door", "boat.door")
 
     bench_top = 75
-    block("Workbench", folder, 400, 520, 160, 260, 0, bench_top)
+    block("Workbench", folder, 400, 520, 160, 260, 0, bench_top, material=concrete)
     pickup("Pickup_Pistol", folder, "/Game/Items/DA_Item_Pistol", 1, 440, 200, bench_top,
            yaw=90.0, persistent_id="boat.pickup_pistol")
     pickup("Pickup_Ammo9mm", folder, "/Game/Items/DA_Item_Ammo9mm", 24, 490, 220, bench_top,
@@ -598,9 +641,11 @@ def build_cover_and_npc():
     block("RidgeEnd", folder, 3380, 3480, 550, 1500, 0, 280, material=surface("MI_DC_LandRock"))
 
     folder = "NPC"
-    block("Shed_Back", folder, 3040, 3220, 1480, 1500, 0, 220)
-    block("Shed_Left", folder, 3040, 3060, 1180, 1500, 0, 220)
-    block("Shed_Roof", folder, 3040, 3220, 1180, 1500, 220, 240)
+    plaster = surface("MI_DC_Plaster")
+    steel = surface("MI_DC_Steel")
+    block("Shed_Back", folder, 3040, 3220, 1480, 1500, 0, 220, material=plaster)
+    block("Shed_Left", folder, 3040, 3060, 1180, 1500, 0, 220, material=plaster)
+    block("Shed_Roof", folder, 3040, 3220, 1180, 1500, 220, 240, material=steel)
 
     npc = actors.spawn_actor_from_class(
         unreal.DCFriendlyNPC, unreal.Vector(3100.0, 1280.0, 96.0),
@@ -669,8 +714,8 @@ def build_survey_launch():
     # Hull frame: local X = beam (+X is the east side, toward the boathouse), local Y = length (+Y is the
     # bow, pointing inland), Z = up from the deck. Bow raised on the stones, listing toward the east side.
     hull = Frame((-1500.0, -760.0, 95.0), pitch=-4.0, roll=-3.0)
-    hull.part("Hull", folder, (0, 0, -80), (360, 1000, 160), material=hull_mat)
-    hull.part("Bow", folder, (0, 540, -70), (220, 80, 180), material=hull_mat)
+    hull.part("Hull", folder, (0, 0, -80), (360, 1000, 160), material=hull_mat, hidden=True)
+    hull.part("Bow", folder, (0, 540, -70), (220, 80, 180), material=hull_mat, hidden=True)
     hull.part("Rail_West", folder, (-174, 0, 30), (12, 1000, 60), material=trim_mat)
     # Gap in the east rail where the plank comes aboard (local Y 180..320).
     hull.part("Rail_East_Aft", folder, (174, -160, 30), (12, 680, 60), material=trim_mat)
@@ -859,8 +904,12 @@ def build_survey_launch():
                 ], duration=8.0)
 
     # The crew's kit, in the tender tied off the stern: out in the live water.
+    # The box stays the container (class, id, contents). The mesh is the same wreck, scaled down.
     tender = box("Tender", folder, (-1500, -1650, 12), (120, 240, 45), material=interactable_mat,
                  actor_class=unreal.DCLootContainer)
+    boat_mesh = find_largest_mesh("/Game/Art/Fab/motorboat_wreck")
+    if boat_mesh:
+        wear_mesh(tender, boat_mesh, 240.0, (-1500.0, -1650.0, 24.0), yaw=0.0)
     setup_container(tender, "Tender", "boat.wreck_tender", [(ITEM_CHART, 1), (ITEM_DRESSING, 2), (ITEM_AMMO, 18)])
     stern = hull.world((0, -500, -20))
     rope_run = stern[1] - (-1530.0)
