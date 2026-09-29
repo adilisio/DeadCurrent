@@ -86,6 +86,11 @@ FText ADCHUD::GetActiveBannerSubtitle() const
 	return GetWorld() && GetWorld()->GetTimeSeconds() <= BannerExpireTime ? BannerSubtitle : FText::GetEmpty();
 }
 
+FText ADCHUD::GetActiveMessage() const
+{
+	return GetWorld() && GetWorld()->GetTimeSeconds() <= MessageExpireTime ? CurrentMessage : FText::GetEmpty();
+}
+
 void ADCHUD::DrawCrosshair()
 {
 	const float Half = CrosshairSize * 0.5f;

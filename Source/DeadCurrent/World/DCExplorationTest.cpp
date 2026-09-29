@@ -7,6 +7,8 @@
 #include "Save/DCPersistentIdComponent.h"
 #include "Save/DCSaveGame.h"
 #include "Save/DCSaveSubsystem.h"
+#include "World/DCDamageVolume.h"
+#include "World/DCFlickerLight.h"
 #include "World/DCLocationVolume.h"
 #include "World/DCLootContainer.h"
 #include "World/DCWorldStateSubsystem.h"
@@ -210,6 +212,55 @@ bool FDCLootContainerTest::RunTest(const FString& Parameters)
 		TestTrue(TEXT("Full: stays empty"), Cache->IsEmpty());
 		TestEqual(TEXT("Container newer than the save keeps its contents"), AddedLater->GetInventoryComponent()->GetStacks().Num(), 3);
 	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCWorldConditionedHazardTest, "DeadCurrent.Exploration.WorldConditions",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCWorldConditionedHazardTest::RunTest(const FString& Parameters)
+{
+	FDCTestWorld World;
+	UDCWorldStateSubsystem* WorldState = World.Get()->GetSubsystem<UDCWorldStateSubsystem>();
+
+	// "Live until the power is cut": the pattern the survey launch's water and sparks use.
+	FDCGameplayCondition Live;
+	Live.Type = EDCConditionType::WorldFlag;
+	Live.Id = TEXT("test.power_cut");
+	Live.bNegate = true;
+
+	auto SetConditions = [this, Live](AActor* Actor)
+	{
+		FArrayProperty* Property = CastField<FArrayProperty>(Actor->GetClass()->FindPropertyByName(TEXT("ActiveConditions")));
+		if (TestNotNull(TEXT("ActiveConditions property"), Property))
+		{
+			*Property->ContainerPtrToValuePtr<TArray<FDCGameplayCondition>>(Actor) = { Live };
+		}
+	};
+
+	ADCDamageVolume* Always = World.Get()->SpawnActor<ADCDamageVolume>();
+	ADCDamageVolume* Water = World.Get()->SpawnActor<ADCDamageVolume>();
+	ADCFlickerLight* Sparks = World.Get()->SpawnActor<ADCFlickerLight>();
+	SetConditions(Water);
+	SetConditions(Sparks);
+
+	TestTrue(TEXT("No conditions: always active"), Always->IsHazardActive());
+	TestTrue(TEXT("Water live before"), Water->IsHazardActive());
+	TestTrue(TEXT("Sparks on before"), Sparks->IsLightActive());
+
+	WorldState->SetFlag(TEXT("test.power_cut"));
+	TestFalse(TEXT("Water dead after the flag"), Water->IsHazardActive());
+	TestFalse(TEXT("Sparks off after the flag"), Sparks->IsLightActive());
+	TestTrue(TEXT("Unconditioned hazard unaffected"), Always->IsHazardActive());
+
+	// A save restore replaces flags without broadcasting; the actors re-check every tick.
+	WorldState->ReplaceFlags({});
+	TestTrue(TEXT("Water live again after a restore without the flag"), Water->IsHazardActive());
+	Sparks->Tick(0.1f);
+	TestTrue(TEXT("Lit sparks tick without the flag"), Sparks->IsLightActive());
+	WorldState->ReplaceFlags({ TEXT("test.power_cut") });
+	Sparks->Tick(0.1f);
+	TestEqual(TEXT("Sparks dark after a restore with the flag"), Sparks->GetBrightness(), 0.0f);
 	return true;
 }
 

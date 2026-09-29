@@ -1,6 +1,7 @@
 #include "World/DCDamageVolume.h"
 #include "Combat/DCHealthComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Core/DCGameplayRules.h"
 #include "Core/DCGameplayTags.h"
 #include "GameFramework/Pawn.h"
 #include "UI/DCHUD.h"
@@ -16,11 +17,25 @@ ADCDamageVolume::ADCDamageVolume()
 	Mesh->SetCanEverAffectNavigation(false);
 }
 
+bool ADCDamageVolume::IsHazardActive() const
+{
+	return ActiveConditions.IsEmpty()
+		|| UDCGameplayRules::CheckConditions(ActiveConditions, FDCRuleContext::ForActor(const_cast<ADCDamageVolume*>(this)));
+}
+
 void ADCDamageVolume::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (DamagePerSecond <= 0.0f)
+	// Checked every tick rather than on change events: a save restore replaces world flags silently.
+	const bool bActive = IsHazardActive();
+	if (bActive != bShownActive)
+	{
+		bShownActive = bActive;
+		Mesh->SetVisibility(bActive);
+	}
+
+	if (!bActive || DamagePerSecond <= 0.0f)
 	{
 		return;
 	}

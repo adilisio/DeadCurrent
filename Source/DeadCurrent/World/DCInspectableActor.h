@@ -20,6 +20,10 @@ struct DEADCURRENT_API FDCInspectVariant
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect")
 	TArray<FDCGameplayCondition> Conditions;
 
+	/** Prompt verb while this variant applies ("Read", "Pull the leads"). Empty uses the actor's Action. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect")
+	FText Action;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect", meta=(MultiLine="true"))
 	FText Description;
 
@@ -29,7 +33,8 @@ struct DEADCURRENT_API FDCInspectVariant
 
 /**
  *  A world prop that shows a short description when inspected. Variants let the text react to
- *  quests and world state, and let inspecting change them (clues).
+ *  quests and world state, and let inspecting change them (clues). The prompt verb can differ per
+ *  variant, so the same actor covers notes ("Read") and simple switches ("Pull the leads").
  */
 UCLASS()
 class DEADCURRENT_API ADCInspectableActor : public AActor, public IDCInteractable
@@ -44,13 +49,23 @@ public:
 	virtual FGameplayTag GetInteractionType_Implementation() const override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
+	UFUNCTION(BlueprintPure, Category="Inspect")
+	FText GetDisplayName() const { return DisplayName; }
+
 protected:
+
+	/** The first variant whose conditions pass for Interactor, or null. */
+	const FDCInspectVariant* FindVariant(AActor* Interactor) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect")
 	FText DisplayName;
+
+	/** Prompt verb when no variant overrides it. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect")
+	FText Action;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inspect", meta=(MultiLine="true"))
 	FText Description;

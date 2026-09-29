@@ -34,6 +34,9 @@ public:
 	/** Subtitle of the banner on screen now, or empty. */
 	FText GetActiveBannerSubtitle() const;
 
+	/** Message on screen now, or empty. */
+	FText GetActiveMessage() const;
+
 	UFUNCTION(BlueprintCallable, Category="HUD")
 	void ToggleInventory() { bShowInventory = !bShowInventory; }
 

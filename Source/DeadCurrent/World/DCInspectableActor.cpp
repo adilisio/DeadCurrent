@@ -10,6 +10,8 @@ ADCInspectableActor::ADCInspectableActor()
 {
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
+
+	Action = LOCTEXT("InspectAction", "Inspect");
 }
 
 bool ADCInspectableActor::CanInteract_Implementation(AActor* Interactor) const
@@ -17,9 +19,19 @@ bool ADCInspectableActor::CanInteract_Implementation(AActor* Interactor) const
 	return !Description.IsEmpty() || !Variants.IsEmpty();
 }
 
+const FDCInspectVariant* ADCInspectableActor::FindVariant(AActor* Interactor) const
+{
+	const FDCRuleContext Context = FDCRuleContext::ForActor(Interactor);
+	return Variants.FindByPredicate([&Context](const FDCInspectVariant& Variant)
+	{
+		return UDCGameplayRules::CheckConditions(Variant.Conditions, Context);
+	});
+}
+
 FDCInteractionPrompt ADCInspectableActor::GetInteractionPrompt_Implementation(AActor* Interactor) const
 {
-	return { LOCTEXT("InspectAction", "Inspect"), DisplayName };
+	const FDCInspectVariant* Variant = FindVariant(Interactor);
+	return { Variant && !Variant->Action.IsEmpty() ? Variant->Action : Action, DisplayName };
 }
 
 FGameplayTag ADCInspectableActor::GetInteractionType_Implementation() const
@@ -29,15 +41,11 @@ FGameplayTag ADCInspectableActor::GetInteractionType_Implementation() const
 
 void ADCInspectableActor::Interact_Implementation(AActor* Interactor)
 {
-	const FDCRuleContext Context = FDCRuleContext::ForActor(Interactor);
-	for (const FDCInspectVariant& Variant : Variants)
+	if (const FDCInspectVariant* Variant = FindVariant(Interactor))
 	{
-		if (UDCGameplayRules::CheckConditions(Variant.Conditions, Context))
-		{
-			ADCHUD::ShowMessageFor(Interactor, Variant.Description, DescriptionDuration);
-			UDCGameplayRules::ApplyConsequences(Variant.Consequences, Context);
-			return;
-		}
+		ADCHUD::ShowMessageFor(Interactor, Variant->Description, DescriptionDuration);
+		UDCGameplayRules::ApplyConsequences(Variant->Consequences, FDCRuleContext::ForActor(Interactor));
+		return;
 	}
 
 	if (!Description.IsEmpty())
