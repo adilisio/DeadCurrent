@@ -1,0 +1,260 @@
+# DEAD CURRENT — Phase 4: RPG Layer Plan
+
+## Mission
+
+Prove that the character the player builds changes how they experience the same world.
+
+The loop is:
+
+**Allocate a small build → walk into content that already exists → a check opens an option someone else does not get → the build is still there after save/load**
+
+This phase is not a character system. It adds the smallest Attributes → Skills → Perks chain, wires it into the shared rule language, and spends it on Shore Watch, the Wrecked Survey Launch, and the Sounder Chart. No new place, no new quest, no new enemy.
+
+The target feeling is:
+
+"I made a person, and that person can see or say something here that another person cannot."
+
+---
+
+# 1. Starting Point
+
+- Phase 1 (Walking Skeleton): accepted.
+- Phase 2 (Micro RPG, Shore Watch): accepted. Playtested with the Exploration Loop.
+- Phase 3 (Exploration Loop): accepted 2026-09-28 after human playtest. 30 automated tests were passing on `54686bf` before this phase.
+- Shore Watch and the Survey Launch are regression targets. Their existing solutions stay available to a character with nothing invested. A build adds options. It does not lock the baseline.
+
+---
+
+# 2. Player-Facing Target
+
+One prototype allocation screen and the existing canvas journal.
+
+The player spends a small pool:
+
+- 3 attribute points, each attribute 0–2
+- 2 skill points, each skill 0–2
+- 1 perk, chosen from 3
+
+Three orientations are enough to test:
+
+- Grasp + Engineering
+- Fieldcraft + Survival
+- Bearing + Persuasion
+
+Each orientation opens different information or a different line in content that is already on `Lvl_Boathouse`. Tab shows the build. F5 / F9 restores it. An older save loads as an unspent build, so the player can still allocate.
+
+---
+
+# 3. Scope Lock
+
+In scope:
+
+- three attributes, three skills, three perks
+- one progression component on the player
+- three shared conditions: `AttributeAtLeast`, `SkillAtLeast`, `HasPerk`
+- a prototype build panel and a character block on the existing journal
+- check labels on dialogue choices and inspect prompts that the player qualifies for
+- one Engineering reading, one Survival reading, one Persuasion line, one attribute reading, and perk readings, all on existing actors
+- the Sounder Chart becoming readable only with the right build
+- save/load of the build, including a default for older saves
+- automated tests for the above
+
+Explicitly out of scope (do not start):
+
+- XP, levels, level caps, respec as a product feature (the panel may reset only because this is a prototype)
+- a character creator, appearance, backgrounds
+- more than three attributes, three skills, or three perks
+- a second check framework, Gameplay Ability System, Focus
+- crafting, factions, reputation, companions
+- a new area, quest, settlement, or enemy
+- World Partition, PCG, settlement building
+- explaining the Current, or deciding Mara's faction or backstory
+- Phase 5 world-state expansion
+
+---
+
+# 4. Model (PROVISIONAL)
+
+Not Fallout SPECIAL. Each attribute is the capacity behind one skill, so the chain is obvious and a later skill is another row, not a rewrite.
+
+| Attribute | What it is | Linked skill |
+| --- | --- | --- |
+| Grasp | reading made things: panels, housings, wiring | Engineering |
+| Fieldcraft | reading ground, animals, and how people moved | Survival |
+| Bearing | holding a conversation and pressing for what was withheld | Persuasion |
+
+**Effective skill** = invested skill ranks + 1 if the linked attribute is 2 or higher, otherwise + 0.
+
+Checks that say `SkillAtLeast` compare the effective skill. Checks that say `AttributeAtLeast` compare the raw attribute. A perk is owned or not; perks are not ranks.
+
+Why this shape: a skill point and an attribute point are both ways to reach a check, and neither is a percent. With only 2 skill points, one skill can be raised to 2. Raising its attribute to 2 adds a further +1, which is how attributes matter without a second math system. A character who spreads every attribute to 1 gets no bonus. Specializing is the point.
+
+Failed checks are **hidden**. A choice or inspect variant whose conditions fail does not appear. There is no greyed-out row in this phase. When a visible choice or the active inspect variant required an attribute, skill, or perk, the prompt shows that requirement in DEAD CURRENT's own form: `[Engineering 2]`, `[Fieldcraft 2]`, `[Schematic Eye]`. The label is generated from the condition. Authors do not type it into the line.
+
+New story text from these checks is PROVISIONAL.
+
+---
+
+# 5. Architecture
+
+- `UDCCharacterProgressionComponent` on `ADCPlayerCharacter` owns ranks and perks. The character class does not grow a field per skill.
+- Lookup is by Gameplay Tag (`Attribute.Grasp`, `Skill.Engineering`, `Perk.SchematicEye`). The condition's `Id` is that tag's name. `Quantity` is the minimum for attribute and skill checks.
+- `FDCRuleContext` carries the component. `UDCGameplayRules` evaluates the new conditions. Dialogue, quests, and inspectables do not grow a second API.
+- Validation rejects an attribute, skill, or perk id that is not in the catalog.
+- The catalog is a small C++ table (tag, display name, link, perk text). Adding a later entry is a row plus a tag. Consumers keep using the condition.
+- The build panel is canvas HUD, same as inventory. Key **B** opens it. **F1–F3** raise attributes, **F4–F6** skills, **F7–F9** take a perk, **F10** resets the prototype allocation. Digit keys stay with dialogue.
+- Save version 5 stores attribute ranks, skill ranks, and owned perks. Empty means the default unspent build, which is what a save from before this phase receives.
+
+No actor branches on `if Engineering >= 2 && TalkingToMara`. Content authors a condition.
+
+---
+
+# 6. Implementation Order
+
+## RP-00 — Plan
+
+- this document
+
+**Done when:** committed before the systems land.
+
+---
+
+## RP-01 — Character state
+
+- Gameplay tags for the three attributes, three skills, and three perks.
+- `UDCCharacterProgressionComponent`: get/set, effective skill, perk ownership, point pools, unknown ids rejected, prototype reset.
+- Tests with no map and no UI.
+
+**Done when:** a test can raise Grasp and Engineering and read effective Engineering as 3, and an unknown tag does not change state.
+
+---
+
+## RP-02 — Shared rules
+
+- `AttributeAtLeast`, `SkillAtLeast`, `HasPerk` on the existing condition enum.
+- `SkillAtLeast` uses effective skill. Missing progression fails the check.
+- `FormatCheckLabels` builds the `[Engineering 2]` text from conditions.
+- Validation of the three ids.
+- Dialogue choices that pass a check show the label. Inspect prompts for the active variant do the same.
+- Failed checks stay hidden, which is already how dialogue conditions work.
+
+**Done when:** tests cover pass, fail, negate, unknown id, and a dialogue choice that appears only when the skill is high enough.
+
+---
+
+## RP-03 — Prototype build panel and character sheet
+
+- **B** toggles the build panel. Spending uses the pools. **F10** refunds, labeled as a prototype reset, not a respec feature.
+- Tab's journal lists attributes, skills (raw and effective when they differ), perks, and unspent points.
+
+**Done when:** a player can make the three orientations without editing code, and Tab shows the result.
+
+---
+
+## RP-04 — Engineering, Survival, Persuasion, attribute
+
+All of these are extra variants or one extra Mara reply. The previous text remains the fallback.
+
+- **Breaker panel** (`Skill.Engineering` effective ≥ 2): the cuts start at the shore-power breaker; the mast lamp is not on those lugs, so cutting them cannot be what still flickers. Pulling the battery leads still works for everyone.
+- **Life jackets** (`Skill.Survival` effective ≥ 2): the cut jackets lie toward the treeline, not back along the beach. They left inland together.
+- **Chalk warning** (`Attribute.Fieldcraft` ≥ 2): the plank was driven from the water side. Whoever wrote it was standing in the shallows, looking back at the boat.
+- **Mara**, after her storm deflection (`Skill.Persuasion` effective ≥ 2): she can be pressed once. She admits she saw two people come up off that beach and would not follow. She does not explain the Current, and her faction stays undecided. Sets `wreck.mara_pressed`.
+
+**Done when:** each check is authored only as shared conditions, and a character with nothing spent still gets the old text and the old Shore Watch routes.
+
+---
+
+## RP-05 — Perk proof and the Sounder Chart
+
+One perk point, three perks, each consumed by an inspect variant:
+
+- **Schematic Eye** (`Perk.SchematicEye`): with the Sounder Chart in inventory, the depth sounder yields the margin note (the last tick marked not a shoal). This is the chart hook.
+- **Engineering** effective ≥ 2, also with the chart, and without the perk: a lesser reading, that the trace and the chart are the same spacing. The perk variant is listed first and includes that fact so it is not lost.
+- **Pulse Read** (`Perk.PulseRead`): the dead fish took one shock together, not a tide.
+- **Relay Ear** (`Perk.RelayEar`): after the relay has already been inspected (the Shore Watch clue still happens for everyone), the housing was seated by someone who knew the pinout.
+
+**Done when:** at least the chart perk is reachable in play, and the other two perks are real variants rather than unused tags.
+
+---
+
+## RP-06 — Save/load
+
+- Version 5 writes attributes, skills, and perks.
+- Load restores that exact build.
+- A save from before version 5 restores the unspent default.
+- Changing the build after a save, then loading, returns the saved build.
+
+**Done when:** an editor test covers default, custom, mutate, reload, and a pre-phase-4 save; a map test saves a build on `Lvl_Boathouse` and gets it back from a real F9.
+
+---
+
+## RP-07 — Stabilize
+
+- Docs: this plan, `game_design.md`, `technical_architecture.md`, `world_bible.md` (new lines marked PROVISIONAL).
+- Full test suite green, including Shore Watch and Survey Launch.
+- Development Win64 cook/package smoke test.
+- Session report replaced with Anthony's checklist.
+- Stop. Do not start Phase 5.
+
+---
+
+# 7. Where the checks live
+
+| Check | Actor | Fallback if the check fails |
+| --- | --- | --- |
+| Engineering ≥ 2 | Breaker panel | The existing gutted-panel text, including the log follow-up |
+| Survival ≥ 2 | Life jackets | Cut straps, walked inland |
+| Fieldcraft ≥ 2 | Chalk warning | KEEP OUT OF THE WATER |
+| Persuasion ≥ 2 | Mara, after the storm line | Goodbye, as today |
+| Engineering ≥ 2 and carrying `survey_chart` | Depth sounder | The existing circled trace |
+| Schematic Eye and carrying `survey_chart` | Depth sounder | The engineering reading, or the old trace |
+| Pulse Read | Dead fish | The existing ring |
+| Relay Ear, after `shore.relay_inspected` | Relay rig | The existing hum |
+
+The battery bank, the leads, both containers, and both Shore Watch routes are unchanged.
+
+---
+
+# 8. Testing
+
+Editor context:
+
+- attribute, skill, and perk lookup; unknown ids; point caps; effective skill
+- `AttributeAtLeast`, `SkillAtLeast`, `HasPerk`, including fail and a missing component
+- validation rejects a bad id and accepts the catalog
+- dialogue hides a skill choice until the skill is high enough, and the label function matches the condition
+- an inspectable selects the skill variant and the perk variant, and the prompt carries the label
+- save/load of a build; empty arrays (old save) leave the default
+
+Game context (`Lvl_Boathouse`):
+
+- the breaker, jackets, chalk, Mara, sounder, fish, and relay actually change with the build
+- a real F9 restores the build and does not disturb Shore Watch or the Survey Launch
+- existing map tests still pass
+
+**Done when:** every test passes via `Tools\RunTests.bat`.
+
+---
+
+# 9. Acceptance Scenario (manual, for Anthony)
+
+1. Launch `Lvl_Boathouse`. Press **B**. Spend Grasp 2 and Engineering 2. Take Schematic Eye.
+2. Tab shows that build.
+3. At the wreck, the breaker panel offers an Engineering reading the unspent character does not get. Pulling the leads still works.
+4. Loot the Sounder Chart from the tender. The depth sounder now says more, including the Schematic Eye margin.
+5. Reset with **F10** (prototype only). Spend Fieldcraft 2 and Survival 2. Take Pulse Read.
+6. The life jackets and the chalk warning say more. The dead fish say more. The breaker does not.
+7. Reset again. Spend Bearing 2 and Persuasion 2.
+8. Read the survey log, talk to Mara, ask about the storm, and press her. She gives one limited admission and will not repeat it.
+9. F5, quit, relaunch, F9. The build is unchanged. Shore Watch and the wreck still play as before.
+
+---
+
+# 10. Definition of Done
+
+- RP-01..RP-07 are implemented.
+- `DeadCurrentEditor` builds.
+- All tests pass.
+- A Development Win64 package cooks.
+- Docs and the session report are updated.
+- Stop before Phase 5.
