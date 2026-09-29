@@ -1,0 +1,361 @@
+# DEAD CURRENT — Presentation Pass Plan
+
+Status: in progress. Started 2026-09-29 from `45986af`. Phases 1–4 are accepted. This pass adds no gameplay.
+
+## Mission
+
+Make the existing `Lvl_Boathouse` shore look and sound like DEAD CURRENT, so the clues a player is meant to read can actually be read.
+
+The loop is:
+
+**Walk the same shore → the place reads as cold, maritime, industrial, and strange → the same clues, routes, and builds still work**
+
+No new place, quest, NPC, enemy, item, dialogue line, or lore. Every actor, persistent id, world flag, and inspect variant stays. Art replaces what those actors look like, and sound is added beside them.
+
+The target feeling is:
+
+"I'd stop and look at that even if it didn't glow."
+
+---
+
+# 1. Starting Point
+
+- Phase 1 (Walking Skeleton), Phase 2 (Shore Watch), Phase 3 (Wrecked Survey Launch), and Phase 4 (RPG Layer) are accepted.
+- 36 automated tests were passing at the end of Phase 4. Baseline for this pass is HEAD `45986af` (agent orientation and the choice of this pass). The count is re-measured with `Tools\RunTests.bat -build` before any content task, and that measured count is the floor.
+- `Lvl_Boathouse` is greybox: `LevelPrototyping` cubes, `M_FlatCol` / `M_DC_Glow`, mannequin bodies, no shore audio. The pistol still uses the template grenade-launcher shot.
+- `build_boathouse.py` loads the map and destroys every actor except world settings and the builder brush, then rebuilds. A hand edit in `Lvl_Boathouse` does not survive `Tools\RebuildContent.bat`.
+- Playtest overrides (`Tools\PlayTest.bat`): DX11, scalability 0, no Lumen, no volumetric fog or clouds, bloom / motion blur / DOF / lens flare / AO off, 400 MB texture pool, 70% screen percentage, 60 FPS cap. The look has to carry on a directional light, SkyAtmosphere, non-volumetric height fog, and post-process color grading.
+
+---
+
+# 2. Scope Lock
+
+In scope, on `Lvl_Boathouse` only:
+
+- the art-layer decision, proved against a content rebuild
+- overcast cold-lake mood that still reads under the PlayTest overrides
+- ground, shore, and the ridge
+- the boathouse, the *Tern*, the tender, the scavenger camp, Mara's lookout
+- real meshes on the existing inspectables and pickups
+- a real material on the permanent water slab; the live-water glow and sparks still follow `wreck.power_cut`
+- Mara and the scavenger on `Survival_Character`
+- first audio: pistol shot and dry-fire, UI and pickup, shore ambience, live-water hum, live-relay hum
+- docs, tests, a Development Win64 cook, screenshots, and the session report
+
+Explicitly out of scope (do not start):
+
+- any new place, quest, NPC, enemy, item, dialogue line, or lore
+- changes to the rule language, save format, quests, progression, or AI behavior
+- a UMG HUD replacement (canvas stays; a sound on an existing action is fine)
+- the lighthouse and settlement vertical slice
+- World Partition, PCG, landscape rework beyond the existing playable area
+- the Water plugin, Lumen-dependent looks, and Phase 5
+- renaming a shipped persistent id, flag, quest stage, or saved asset
+- importing a whole marketplace pack
+
+If a visual change seems to need a gameplay change, stop and write it down for Anthony. Don't make the change.
+
+---
+
+# 3. Art-Layer Decision
+
+`Lvl_Boathouse_Art` is a hand-authored streaming sublevel. `build_boathouse.py` re-links it on every rebuild and never loads it for editing, never destroys its actors, and never saves it.
+
+Why this and not script-placed dressing for everything:
+
+- The persistent map is generated. Dressing that is not a gameplay actor (driftwood, camp scrap, shore stones, the visual hull of the *Tern*) is level art. Putting it in the script would mean a coordinate for every rock, and the next layout tweak would be a Python edit. A separate `.umap` is the file the script does not own.
+- Gameplay actors cannot move to that sublevel. Inspectables, containers, the door, the water slab, the damage volume, the sparks, the NPCs, and the pickups are what the map tests find by class, label, and persistent id. They stay in `Lvl_Boathouse`. Their meshes and materials are assigned by the script, from assets under `/Game/Art` and migrated pack paths, so a rebuild restores their look.
+- Mood stays in the script too. `build_lighting()` already recreates the sun, sky light, atmosphere, height fog, and post process. A second sun in the art level would double them. The art level does not add a directional light, sky light, height fog, sky atmosphere, or unbound post-process volume.
+
+What the rebuild must do, specifically:
+
+1. Consider only actors in the persistent level when it destroys and rebuilds. `get_all_level_actors()` includes a loaded sublevel. Filtering on the actor's level is the difference between a surviving art layer and an empty one.
+2. If `/Game/Maps/Lvl_Boathouse_Art` does not exist, create it once, empty except a sentinel actor tagged `ArtLayerSentinel`, and save that level. On every later run, do not open it.
+3. Add it back as `LevelStreamingAlwaysLoaded` on the persistent map after the rebuild, so the game and the map tests load it with `Lvl_Boathouse`.
+4. Save the persistent map only.
+
+Proof: a sentinel actor lives only in the art level. `Tools\RebuildContent.bat` runs. The sentinel is still in `Lvl_Boathouse_Art`, and a map test on `Lvl_Boathouse` finds the tag `ArtLayerSentinel`. A second rebuild does not duplicate the sublevel reference.
+
+Collision rule for everything placed in the art level: **NoCollision**, unless a later task writes down why a specific mesh needs simple collision and the map tests are rerun. Hitscan traces WorldStatic and WorldDynamic. Decorative clutter that blocks a trace eats bullets. The scavenger's patrol square (X 2000..2700, Y -350..350), the ridge that hides Mara (Y 550..650), the boathouse doorway, the wheelhouse, the boarding plank, and the live water (X -2020..-980, Y -1780..-1000) stay as the script built them.
+
+Walkable ground, walls, the ridge, and the hull stay the existing blocks. They get real materials. The blocks are the collision. Art meshes dress them. They are not replaced by a landscape.
+
+---
+
+# 4. Look and Sound
+
+Mood, under the PlayTest cvars (no volumetric fog, no bloom, no Lumen):
+
+- Directional light: low, cool, overcast. The scene reads by light color and intensity, not by bloom.
+- SkyAtmosphere: grey-blue, high scattering, no heroic sunset.
+- Exponential height fog: a cold grey density and color. Volumetric fog stays off. If scalability 0 strips the fog, the light color and the post-process grade still carry the cold.
+- Post process: white balance toward cold, pulled-down saturation, a slight contrast. No DOF, no vignette that depends on a quality level the cvars disable. Auto-exposure stays bounded so the interior and the shore are both readable.
+- Palette, used and not canonized: black rock, wet sand, mud, oxidized teal hull paint, rust, faded white, birch grey. No tropical green. No brand color.
+
+Water: a project material on the existing `WaterSurface` slab (unlit or default-lit translucent, dark freshwater, a slow normal). Not the engine Water plugin. `LiveWater` stays an `ADCDamageVolume` on `M_DC_Glow` with `ActiveConditions = [!wreck.power_cut]`. The slab has no collision. The glow mesh hides when the hazard is inactive, which is already how the leads work. A loop on that same active check is the electrical hum. The slab does not disappear.
+
+Clue actors keep their classes, ids, variants, actions, and consequences. The script swaps the static mesh (and, where the mesh has no material of its own, the material). Scale stays in the same footprint the trace already hits, so **E** still finds them. Simple collision, bounds close to the old box.
+
+NPC bodies: `assign_mannequin` points Mara and the scavenger at `Survival_Character` skeletal meshes on the mannequin skeleton, with the existing unarmed anim blueprint. Classes, AI, dialogue, and ids stay. Modules are the pack's cold-weather jacket and jeans. That is a costume, not a decision about Mara's face or history.
+
+Audio that has to follow state uses existing conditions. It does not set flags.
+
+- Pistol: `FireSound` and `DryFireSound` on `DA_Item_Pistol`, already played by `ADCFirearm`. Point them at CC0 shots from the library. No new fire logic.
+- Pickup and UI: play a sound from `Interface_And_Item_Sounds` when a pickup is taken and when the inventory opens. Missing assets no-op, the way an empty firearm sound already no-ops.
+- Shore bed: looping wind and water lap, placed in the art level, no conditions, no collision.
+- Live water: a loop that starts and stops with `ADCDamageVolume`'s existing active check (`!wreck.power_cut`). Same tick that already shows and hides the glow.
+- Relay: a cosmetic actor, `ADCConditionalAudio`, that loops while its conditions pass and is silent otherwise. Conditions match the rig's silent variants: the player is not holding `radio_coil`, `shore.relay_recovered` is unset, `boat.scavenger` is alive. Inspecting the rig does not stop the hum. The actor sets nothing.
+
+`ADCConditionalAudio` evaluates the same `FDCGameplayCondition` list the rest of the game uses, against the player when one exists, so `HAS_ITEM` and `ACTOR_DEAD` work. It is presentation, the same kind of actor as `ADCFlickerLight`. No new condition type, no new flag, no save field.
+
+Anything not in the library is CC0 or royalty-free, with the file, author, and URL in the provenance table. If a sound cannot be sourced legally, it is listed as a gap in `Design/art_pipeline.md`. It is not skipped silently and it is not replaced with a ripped clip.
+
+---
+
+# 5. Assets
+
+Library root: `C:\FO5_AssetLibrary`. Bring only what is placed.
+
+- UE pack assets migrate to the same `/Game/<Pack>/...` path. Never a whole pack.
+- Raw FBX, glTF, and textures import through `Tools/EditorScripts/import_art.py` into `/Game/Art/<Source>/<AssetId>/` (`Megascans`, `PolyHaven`, `AmbientCG`, `Meshy`, `Freesound`). Textures 2K max, 1K for small props. Never the 8K Megascans maps at full size. The script is safe to re-run and is registered in `Tools\RebuildContent.bat` ahead of `build_boathouse.py`, because the map references those assets.
+- Provenance for every import goes in `Design/art_pipeline.md`: asset, source path, license, author.
+
+Used from the library (fit already recorded there):
+
+| Need | Source |
+| --- | --- |
+| Ground, shore, ridge | CC0 `coast_rocks_01`, `coast_sand_02`, `brown_mud_02`, `coast_land_rocks_02` |
+| Boathouse and shed | CC0 `CorrugatedSteel009`, `blue_plaster_weathered`, `chipped_concrete`; Fab harbor props if a trim piece earns its place |
+| *Tern* visual | `Fab/motorboat_wreck`, no collision, aligned to the existing hull |
+| Tender, camp, driftwood | `DriftWoodPack` pieces, `Scene_Junkyard` scrap, Fab `wood_debris_pack` / `rubble_pack`, CC0 `wooden_crate_01`, `can_rusted` |
+| Life jackets | CC0 `life_jacket` |
+| Survey log | existing Meshy `lighthouse_logbook`, or CC0 `binder_notebook` if the logbook will not sit on the console |
+| Paper notes | `SM_Notes` only if a placed page needs it |
+| Bodies | `Survival_Character` modules on the mannequin skeleton |
+| Gunshots | `Audio/Gunshots/` CC0 WAVs |
+| UI and pickup | individual cues from `Interface_And_Item_Sounds` |
+
+Not used: `Smugglers_cove` plants, `Megaplant_Library`, Cleveland reference photos, `EuropeanBeech` as a hero tree. Birch and pine are not in the strong set. Distant trees are out of this pass unless a CC0 dead trunk (`dead_tree_trunk`) dresses the ridge without blocking the sightline. No new forest.
+
+---
+
+# 6. Meshy Prop List
+
+Credit budget: **500**. Earlier props cost about 30–50 credits each (preview + refine). Estimate **40 each**. Ten props is 400. The remaining 100 is for one retry if a preview is wrong. A retry past 500 stops the queue and asks Anthony.
+
+Generate only these, and only after the import script can ingest an FBX. Generic dressing is not generated.
+
+| Id | What | Real-world size in the prompt | Estimate |
+| --- | --- | --- | --- |
+| `relay_housing` | Open Maritime Authority relay box, truck-battery scale, taped coil lugs, oxidized steel, freshwater grime | 40 × 28 × 22 cm | 40 |
+| `depth_sounder` | 1970s boat depth sounder, paper roll, grease-pencil circle, no brand | 28 × 18 × 16 cm | 40 |
+| `breaker_panel` | Open marine breaker panel, cut cables, taped ends, faded paint | 40 × 8 × 55 cm | 40 |
+| `battery_bank` | Split wooden box of old marine cells, two heavy leads | 50 × 35 × 30 cm | 40 |
+| `emergency_beacon` | Small boat EPIRB, switch, white battery crust, no brand | 12 × 12 × 22 cm | 40 |
+| `name_board_tern` | Flaked painted board. Geometry only: bare board, peeling white and teal. Letters are a texture we author (`T_RN`), not Meshy text | 70 × 2 × 20 cm | 40 |
+| `sounder_chart` | Closed roll of paper, pencil ticks on the outside edge. Not an open sheet | 6 × 6 × 24 cm | 40 |
+| `radio_coil` | Hand-wound copper coil, no body, no brand | 10 × 10 × 8 cm | 40 |
+| `dead_fish` | One small freshwater fish, belly up, burst eye. Instanced for the ring | 28 × 8 × 6 cm | 40 |
+| `field_dressing` | Folded cloth roll and a strip of tape | 10 × 6 × 4 cm | 40 |
+
+Not generated: life jackets, the survey log, rocks, crates, the boat, the boathouse, ammo boxes if a junkyard box fits, the pistol (template mesh stays).
+
+Prompt rules: grounded, cold, maritime, industrial, oxidized steel, faded maritime paint, freshwater stains, 1970s–2000s municipal hardware. No "wasteland", no brands, no Maritime Authority logo. State the size. Hand-held props 6k–10k triangles. Larger inspectables up to about 20k. If a preview is wrong, rewrite the prompt. Do not refine it.
+
+Raw output and `source.json` go to `C:\FO5_AssetLibrary\Meshy\<id>\`. The key is read at runtime from `C:\FO5_AssetLibrary\Meshy\meshy_key.txt` or `MESHY_API_KEY`. It is never printed, logged, committed, or copied into this repo.
+
+---
+
+# 7. Implementation Order
+
+## PP-00 — Plan
+
+- this document
+
+**Done when:** committed before any content work.
+
+---
+
+## PP-01 — Art layer
+
+- Create `Lvl_Boathouse_Art` with the sentinel tagged `ArtLayerSentinel`.
+- Teach `build_boathouse.py` the relink rules in §3. Update its header comment: the persistent map is still regenerated; the art level is not.
+- Map test: loading `Lvl_Boathouse` finds `ArtLayerSentinel`.
+- Run `Tools\RebuildContent.bat`. The sentinel is still there, and the streaming reference is not duplicated.
+- Record the decision in `Design/art_pipeline.md` (the "Proposed" art-layer paragraph becomes the decision) and `Design/technical_architecture.md` (editor scripts and the first-playable map).
+
+**Done when:** a content rebuild leaves the art level intact and the new map test passes with the rest of the suite.
+
+---
+
+## PP-02 — Import path and surfaces
+
+- `import_art.py` imports the CC0 surfaces and the Fab meshes this pass places, at 2K / 1K, idempotent, into `/Game/Art/...`.
+- A small default-lit surface master, `M_DC_Surface`, with base color, normal, and roughness. Instances for rock, sand, mud, steel, concrete. Packed ORM where the source has the maps.
+- Register the script in `RebuildContent.bat` before `build_boathouse.py`.
+- Provenance rows for everything this task imports.
+- Baseline screenshots from the six viewpoints in §9, written to `Saved/Screenshots/PresentationPass/Before_*.png`, before the mood task changes the lighting. `Saved/` is gitignored; the session report references the files on this machine.
+
+**Done when:** a second run of the import script does not duplicate assets, and the boathouse script can resolve the new material paths.
+
+---
+
+## PP-03 — Mood
+
+- Retune `build_lighting()` to the overcast cold lake in §4. No volumetric fog, no Lumen settings, no second sky in the art level.
+- Capture the same six viewpoints with the PlayTest cvars applied (`scalability 0` and the `-dpcvars` list) so the grade is judged the way Anthony plays it.
+
+**Done when:** the six shots read as cold and overcast with those cvars, the interior is not black, and the shore is not blown out.
+
+---
+
+## PP-04 — Ground, shore, ridge
+
+- Floor, west floor, curb, and ridge blocks use the rock, sand, and mud instances. The ridge stays the line-of-sight wall.
+- Art level: NoCollision stones, driftwood, and rubble along the waterline and the ridge. Nothing in the doorway, on the plank, or inside the scavenger's patrol square that has collision.
+- Map tests for both Shore Watch routes and the Survey Launch.
+
+**Done when:** those tests pass, and the walk from the door to Mara and from the door to the wreck is not blocked by dressing.
+
+---
+
+## PP-05 — Structures
+
+- Boathouse and lookout shed: steel, plaster, and concrete materials on the existing blocks. A few NoCollision trim pieces in the art level (crate, lamp, debris). The door, windows, and workbench stay where they are.
+- *Tern*: `motorboat_wreck` in the art level, NoCollision, lined up with the hull blocks (bow near (-1500, -300), stern toward the water). Hull and wheelhouse blocks keep their collision. Hide a block's mesh only when the wreck mesh covers it and the wheelhouse clues stay visible and reachable. Do not move the breaker, sounder, log, battery, beacon, or name board to fit the mesh.
+- Tender: a small boat mesh, or the wreck mesh scaled down if a separate tender is not in the library, on the existing `boat.wreck_tender` actor. The container class, id, and contents stay. The line to the transom stays.
+- Camp: NoCollision junkyard scrap outside the patrol square, around the relay. The coil pickup stays reachable.
+- Lookout: the shed reads as timber and scrap. Mara's spot and the lookout crate stay.
+
+**Done when:** the Survey Launch map test still pulls the leads, loots both containers, and reads the log, and the combat and coil routes still pass.
+
+---
+
+## PP-06 — Clue props
+
+- Library meshes first: life jackets, survey log, chalk plank (a board or crate from debris, not a new actor), ammo box if one fits, pistol left on `SM_Pistol`.
+- Then the Meshy list in §6, in that order, stopping at 500 credits.
+- `import_art.py` ingests each finished FBX. `build_boathouse.py` assigns it on the existing actor. `create_items.py` assigns world meshes for the coil, the chart, the dressing, and ammo. Item ids are unchanged.
+- The name board's flaked `T_RN` is a texture on the board mesh. No logo.
+
+**Done when:** every inspectable listed in the mission has a non-prototype mesh, persistent ids and variant counts are unchanged, and the build-check map test still sees the Engineering, Survival, Persuasion, and perk readings.
+
+---
+
+## PP-07 — Water
+
+- `M_DC_Lake` (or an instance) on `WaterSurface`. Dark, slow, no collision.
+- `LiveWater` and the six sparks are untouched in behavior: same actor class, same conditions, same damage. Only the slab's material changes.
+- Confirm in a map test, or by the existing Survey Launch save test, that `wreck.power_cut` still hides the glow.
+
+**Done when:** the water slab is still there after the leads are pulled, and the glow and sparks are not.
+
+---
+
+## PP-08 — Bodies
+
+- Migrate the `Survival_Character` meshes actually assigned (not the whole pack) to their original `/Game/Survival_Character/...` paths.
+- Point `assign_mannequin` at those meshes for Mara and the scavenger. Keep `ABP_Unarmed` (or the mannequin anim blueprint the script already finds).
+- Different modules if the pack has them, so the two reads apart. No custom face, no new skeleton, no AI edit.
+
+**Done when:** both actors still patrol, talk, and die as before, and the combat-route and coil-route map tests pass.
+
+---
+
+## PP-09 — Audio
+
+- Import the chosen CC0 gunshots and any CC0 wind, lap, and hum that the library does not have. Record provenance the same day. Gaps are written down, not invented.
+- Wire the pistol shot and dry-fire through `create_items.py`.
+- Pickup sound and an inventory-open sound. No change to what those actions do.
+- Shore bed in the art level.
+- Live-water loop on the damage volume's existing active check.
+- `ADCConditionalAudio` on the relay, conditions as in §4. A small editor test: the sound follows a world flag and does not set one.
+- Ambience and hums are quiet enough that the pistol and Mara's lines still read.
+
+**Done when:** the firearm test still passes, the new audio test passes, and a content rebuild does not drop the art-level ambience.
+
+---
+
+## PP-10 — Stabilize
+
+- Docs: this plan's status, `Design/art_pipeline.md` (decision, conventions that are no longer proposals, provenance, Meshy spend), `Design/technical_architecture.md` (art layer, import script, conditional audio), `Design/game_design.md` decisions log, `CLAUDE.md` status.
+- Full suite via `Tools\RunTests.bat`. Count at least the baseline.
+- `Tools\RebuildContent.bat` clean, art still present.
+- Development Win64 cook, and a smoke launch that loads `Lvl_Boathouse`.
+- Frame time at the six viewpoints with the PlayTest cvars, before (from PP-02) and after. 60 FPS or the shortfall and its cause.
+- After screenshots beside the before set. Session report replaced, including the walkthrough in §9.
+- Stop. Do not start Phase 5.
+
+**Done when:** the Definition of Done in §11 is true.
+
+---
+
+# 8. Testing
+
+Editor context, existing suite, plus:
+
+- `ADCConditionalAudio` follows a world-flag condition and does not write world state
+- item definitions still validate after the sound and mesh pointers change
+
+Game context (`Lvl_Boathouse`):
+
+- `ArtLayerSentinel` is present after a rebuild
+- Shore Watch combat route and coil route
+- Survey Launch, including pulling the leads, both containers, and save/load
+- RPG build checks (breaker, jackets, chalk, Mara, sounder, fish, relay, chart)
+- legacy save load
+
+Collision and nav are the risk. Any task that places a mesh with collision reruns the map suite before it is pushed.
+
+**Done when:** `Tools\RunTests.bat` is green and the count is at least the measured baseline.
+
+---
+
+# 9. Viewpoints and Acceptance Scenario (manual, for Anthony)
+
+Screenshots, 1280×720, PlayTest cvars. Camera in cm, yaw in degrees, +X out the boathouse door, lake at -Y:
+
+| File | Where | Camera (x, y, z) | Yaw |
+| --- | --- | --- | --- |
+| `Interior` | Boathouse, toward the bench | 220, 0, 170 | 70 |
+| `Door` | Doorway, onto the path | 760, 0, 170 | 0 |
+| `Camp` | Scavenger camp and the relay | 2100, -500, 180 | 20 |
+| `Lookout` | Mara's shed | 2900, 1100, 180 | 40 |
+| `Wreck` | Survey Launch from the beach | -900, -200, 180 | 180 |
+| `Water` | Live water off the stern | -1040, -700, 160 | -100 |
+
+Launch with `Tools\PlayTest.bat`. For a clean run, delete `Saved\SaveGames\DeadCurrent.sav` first.
+
+1. You wake in the boathouse. It should read as a cold shed, not a grey room. Take the pistol. Fire once, then dry-fire. Both sound like a pistol. The bench pickups make a sound when taken.
+2. Step out the door. Wind and water are already there. The path, the stones, and the lake read before anything glows.
+3. Shore Watch, coil route: sneak the ridge, take the coil, the relay hum stops, bring it to Mara. Her lookout still reads as a person watching the path.
+4. New game or F10. Shore Watch, combat route: the scavenger still patrols and chases. Killing him still silences the rig.
+5. Survey Launch: the *Tern* from the beach, the name board, the log, the life jackets, the live water's hum and glow. Pull the leads. The glow, the sparks, and the hum stop. The water stays. Loot the locker and the tender.
+6. One RPG build. Engineering: the breaker panel's extra reading, then the chart from the tender and the sounder. The mesh changed. The words did not.
+7. F5, quit, relaunch, F9. The build, the cut power, and the quest are as saved. The shore still sounds and looks the same.
+
+---
+
+# 10. Open Questions for Anthony
+
+These stay open. This pass does not decide them.
+
+- Is the cold grade too blue, too grey, or about right?
+- What does Maritime Authority hardware look like, if it ever gets a mark? Props stay unlabeled.
+- What does Mara look like, beyond a survivor jacket on the mannequin?
+- The *Tern*'s walkable interior is still the blockout, because the motorboat mesh must not move the clues. If the mesh and the deck disagree, which one wins later?
+- Birch and pine are not in the library's strong set. The ridge gets rock and dead wood, not a forest.
+
+---
+
+# 11. Definition of Done
+
+- PP-01..PP-10 are implemented.
+- `DeadCurrentEditor` builds.
+- All tests pass via `Tools\RunTests.bat`, count at least the baseline.
+- `Tools\RebuildContent.bat` leaves the art layer in place.
+- A Development Win64 package cooks, and a smoke launch loads `Lvl_Boathouse`.
+- 60 FPS under `Tools\PlayTest.bat`, or the measured shortfall and its cause, are in the session report.
+- `Design/art_pipeline.md`, `Design/technical_architecture.md`, `Design/game_design.md`, and `CLAUDE.md` are updated.
+- `Design/CLAUDE_SESSION_REPORT.md` is replaced with this pass's report, including the screenshots and the §9 walkthrough, marked **READY FOR ANTHONY TO TEST**.
+- Stop. Do not start Phase 5.
