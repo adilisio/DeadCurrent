@@ -1,4 +1,5 @@
 #include "World/DCLootContainer.h"
+#include "Audio/DCAudioCues.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
 #include "Engine/CollisionProfile.h"
@@ -66,6 +67,7 @@ void ADCLootContainer::Interact_Implementation(AActor* Interactor)
 	{
 		return;
 	}
+	DCAudioCues::PlayUI(this, DCAudioCues::Pickup);
 
 	FText Message;
 	if (IsEmpty())

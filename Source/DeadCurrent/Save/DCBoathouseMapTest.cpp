@@ -17,6 +17,7 @@
 #include "Tests/AutomationCommon.h"
 #include "UI/DCHUD.h"
 #include "UnrealClient.h"
+#include "World/DCConditionalAudio.h"
 #include "World/DCDamageVolume.h"
 #include "World/DCFlickerLight.h"
 #include "World/DCInspectableActor.h"
@@ -259,6 +260,19 @@ namespace DCBoathouseTest
 
 	ADCFlickerLight* Sparks() { return Nearest<ADCFlickerLight>(FVector(-1230.0, -1470.0, 0.0)); }
 
+	/** The audio actor has no mesh, so it is matched by its own location rather than by bounds. */
+	ADCConditionalAudio* RelayHum()
+	{
+		for (TActorIterator<ADCConditionalAudio> It(GameWorld()); It; ++It)
+		{
+			if (FVector::Dist2D(It->GetActorLocation(), FVector(2480.0, -220.0, 0.0)) < 100.0)
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
 	/** The permanent water sheet under the live-water glow (tagged WaterSurface by build_boathouse.py). */
 	AActor* WaterSlab()
 	{
@@ -358,6 +372,13 @@ bool FDCBoathouseCoilRouteTest::RunTest(const FString& Parameters)
 		IDCInteractable::Execute_Interact(RelayRig(), Player());
 		TestTrue(TEXT("Rig clue flag"), WorldState()->HasFlag(TEXT("shore.relay_inspected")));
 
+		// The relay hums until the player holds the coil. Inspecting the rig did not stop it.
+		if (TestNotNull(TEXT("Relay hum placed"), RelayHum()))
+		{
+			RelayHum()->Evaluate();
+			TestTrue(TEXT("Relay hums while live, even after the rig was inspected"), RelayHum()->IsAudible());
+		}
+
 		// Accept from Mara.
 		TestEqual(TEXT("Greeting"), TalkToMara(), FName(TEXT("greeting")));
 		TestTrue(TEXT("Ask"), Say(TEXT("You keep looking toward his camp.")));
@@ -368,6 +389,11 @@ bool FDCBoathouseCoilRouteTest::RunTest(const FString& Parameters)
 		// Take the coil through the real pickup.
 		IDCInteractable::Execute_Interact(Find(TEXT("boat.pickup_coil")), Player());
 		TestEqual(TEXT("Coil in inventory"), Count(TEXT("radio_coil")), 1);
+		if (RelayHum())
+		{
+			RelayHum()->Evaluate();
+			TestFalse(TEXT("Relay hum stops when the coil is taken"), RelayHum()->IsAudible());
+		}
 		TestEqual(TEXT("Quest advanced by pickup"), Stage(), FName(TEXT("return_coil")));
 
 		// With rendering (not -nullrhi), capture the objective line and quest journal for review:
@@ -1067,6 +1093,16 @@ bool FDCBoathouseArtLayerTest::RunTest(const FString& Parameters)
 			}
 		}
 		TestEqual(TEXT("Art layer sentinel loaded with the boathouse"), Sentinels, 1);
+
+		int32 Beds = 0;
+		int32 AudioActors = 0;
+		for (TActorIterator<ADCConditionalAudio> It(GameWorld()); It; ++It)
+		{
+			++AudioActors;
+			Beds += It->Tags.Contains(TEXT("ShoreAudio")) ? 1 : 0;
+		}
+		TestEqual(TEXT("Shore ambience in the art level survives a rebuild"), Beds, 2);
+		TestEqual(TEXT("Beds, live-water hum, relay hum, and breaker throw"), AudioActors, 5);
 		return true;
 	}));
 

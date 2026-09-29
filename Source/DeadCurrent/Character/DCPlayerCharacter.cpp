@@ -1,5 +1,6 @@
 #include "Character/DCPlayerCharacter.h"
 #include "Character/DCCharacterProgressionComponent.h"
+#include "Audio/DCAudioCues.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/DCFirearm.h"
 #include "Combat/DCHealthComponent.h"
@@ -219,6 +220,10 @@ void ADCPlayerCharacter::DoToggleInventory()
 	if (ADCHUD* HUD = PC ? PC->GetHUD<ADCHUD>() : nullptr)
 	{
 		HUD->ToggleInventory();
+		if (HUD->IsInventoryShown())
+		{
+			DCAudioCues::PlayUI(this, DCAudioCues::InventoryOpen);
+		}
 	}
 }
 

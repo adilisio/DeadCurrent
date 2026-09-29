@@ -1,4 +1,5 @@
 #include "Items/DCItemPickup.h"
+#include "Audio/DCAudioCues.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayTags.h"
 #include "Engine/CollisionProfile.h"
@@ -77,6 +78,7 @@ void ADCItemPickup::Interact_Implementation(AActor* Interactor)
 		? FText::Format(LOCTEXT("TakenQuantity", "Took {0} ({1})"), Item->DisplayName, Taken)
 		: FText::Format(LOCTEXT("Taken", "Took {0}"), Item->DisplayName);
 	ADCHUD::ShowMessageFor(Interactor, Message, 2.0f);
+	DCAudioCues::PlayUI(this, DCAudioCues::Pickup);
 
 	Quantity -= Taken;
 	if (Quantity <= 0)

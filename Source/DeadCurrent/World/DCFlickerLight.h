@@ -7,6 +7,8 @@
 
 class UMaterialInstanceDynamic;
 class UPointLightComponent;
+class USoundAttenuation;
+class USoundBase;
 class UStaticMeshComponent;
 
 /**
@@ -69,6 +71,20 @@ protected:
 	/** World conditions that must all pass for the light to be on. Evaluated against the world, like hazards. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flicker")
 	TArray<FDCGameplayCondition> ActiveConditions;
+
+	/** Optional one-shot snaps. One is picked at random when the light flashes on. Cosmetic only. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flicker|Audio")
+	TArray<TSoftObjectPtr<USoundBase>> FlashSounds;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flicker|Audio")
+	TSoftObjectPtr<USoundAttenuation> FlashAttenuation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flicker|Audio", meta=(ClampMin="0"))
+	float FlashVolume = 0.22f;
+
+	/** Chance that a flash-on plays a snap, so six lights are not a machine gun. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flicker|Audio", meta=(ClampMin="0", ClampMax="1"))
+	float FlashSoundChance = 0.3f;
 
 private:
 

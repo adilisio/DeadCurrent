@@ -283,6 +283,30 @@ def flicker_light(label, folder, location, color, candelas, radius, glow_cm=0.0,
     return actor
 
 
+def audio_asset(path):
+    """A sound or attenuation asset from import_audio.py. Missing means that script did not run: fail before saving."""
+    asset = unreal.load_asset(path)
+    if not asset:
+        raise RuntimeError(f"Missing {path}. Run import_audio.py first.")
+    return asset
+
+
+def conditional_audio(label, folder, location, sound_path, volume, conditions=(), attenuation=None, once=False):
+    """Cosmetic sound that follows the rule language. Sets no flag. attenuation=None is a 2D sound."""
+    actor = actors.spawn_actor_from_class(unreal.DCConditionalAudio, unreal.Vector(*location), unreal.Rotator(0.0, 0.0, 0.0))
+    actor.set_actor_label(label)
+    actor.set_folder_path(folder)
+    actor.set_editor_property("sound", audio_asset(sound_path))
+    if attenuation:
+        actor.set_editor_property("attenuation", audio_asset(f"/Game/Audio/{attenuation}"))
+    actor.set_editor_property("volume_multiplier", volume)
+    actor.set_editor_property("mode", unreal.DCConditionalAudioMode.ONCE_WHEN_TRUE if once
+                              else unreal.DCConditionalAudioMode.WHILE_TRUE)
+    if conditions:
+        actor.set_editor_property("conditions", list(conditions))
+    return actor
+
+
 def block(label, folder, x0, x1, y0, y1, z0, z1, material=None):
     return box(label, folder,
                ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2),
@@ -738,6 +762,13 @@ def build_scavenger():
                 ])
     pickup("Pickup_RadioCoil", folder, "/Game/Items/DA_Item_RadioCoil", 1, 2520, -280, 20,
            persistent_id="boat.pickup_coil")
+    # The hum matches the rig's silent variants: it stops when the player holds the coil, when the relay is
+    # recovered, or when the scavenger is dead. Inspecting the rig does not stop it, and the actor sets nothing.
+    conditional_audio("Audio_RelayHum", folder, (2480, -220, 60), "/Game/Audio/Ambience/S_DC_HumRelay", 0.06,
+                      conditions=[cond("HAS_ITEM", id="radio_coil", negate=True),
+                                  cond("WORLD_FLAG", id="shore.relay_recovered", negate=True),
+                                  cond("ACTOR_DEAD", id="boat.scavenger", negate=True)],
+                      attenuation="SA_DC_Hum")
 
 
 def build_cover_and_npc():
@@ -984,8 +1015,18 @@ def build_survey_launch():
     for name, (sx, sy), interval in [("Sparks_A", (-1230, -1470), (0.03, 0.25)), ("Sparks_B", (-1760, -1600), (0.03, 0.3)),
                                      ("Sparks_C", (-1120, -1180), (0.04, 0.35)), ("Sparks_D", (-1900, -1250), (0.03, 0.4)),
                                      ("Sparks_E", (-1700, -1730), (0.05, 0.3)), ("Sparks_F", (-1300, -1650), (0.03, 0.25))]:
-        flicker_light(name, folder, (sx, sy, 24), (160, 200, 255), 40.0, 700.0, glow_cm=16.0,
-                      glow_material=spark, conditions=live, min_brightness=0.0, dropout=0.4, interval=interval)
+        snap = flicker_light(name, folder, (sx, sy, 24), (160, 200, 255), 40.0, 700.0, glow_cm=16.0,
+                             glow_material=spark, conditions=live, min_brightness=0.0, dropout=0.4, interval=interval)
+        snap.set_editor_property("flash_sounds", [audio_asset(f"/Game/Audio/SFX/S_DC_Spark0{n}") for n in range(1, 7)])
+        snap.set_editor_property("flash_attenuation", audio_asset("/Game/Audio/SA_DC_Snap"))
+    # The live water hums while it is live, and the breaker clunks once when the leads come off.
+    # Levels are the starting points in C:\FO5_AssetLibrary\Audio\SOURCING_NOTES.md.
+    conditional_audio("Audio_LiveWaterHum", folder, (-1500, -1390, 60), "/Game/Audio/Ambience/S_DC_HumLiveWater", 0.02,
+                      conditions=live, attenuation="SA_DC_Hum")
+    bank = battery.get_actor_location()
+    conditional_audio("Audio_BreakerThrow", folder, (bank.x, bank.y, bank.z),
+                      "/Game/Audio/SFX/S_DC_BreakerPull", 0.56,
+                      conditions=[cond("WORLD_FLAG", id=WRECK_POWER_CUT)], attenuation="SA_DC_Clunk", once=True)
     # Pale dead fish ring the edge, lying on the surface where they can be seen.
     for index, (fx, fy) in enumerate([(-960, -990), (-960, -1250), (-960, -1520), (-1200, -1795), (-1500, -1795),
                                       (-1800, -1795), (-2040, -1560), (-2040, -1280), (-2040, -1010)]):

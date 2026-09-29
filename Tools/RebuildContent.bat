@@ -1,7 +1,7 @@
 @echo off
 rem Regenerate every script-generated asset, in dependency order:
 rem items -> quests -> dialogue (references items) -> test gym -> boathouse map.
-rem import_art brings in the CC0 surfaces the boathouse materials resolve.
+rem import_art brings in the CC0 surfaces the boathouse materials resolve; import_audio the CC0 sounds.
 rem   Tools\RebuildContent.bat              all of them
 rem   Tools\RebuildContent.bat create_quest run one script from Tools\EditorScripts
 rem Close the editor first. Rebuild DeadCurrentEditor after C++ changes before running this.
@@ -23,7 +23,7 @@ if not "%~1"=="" (
 	exit /b %errorlevel%
 )
 
-for %%S in (import_art create_items create_quest create_dialogue build_test_gym build_boathouse) do (
+for %%S in (import_art import_audio create_items create_quest create_dialogue build_test_gym build_boathouse) do (
 	call :run %%S
 	if errorlevel 1 exit /b 1
 )

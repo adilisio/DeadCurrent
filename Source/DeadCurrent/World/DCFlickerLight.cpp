@@ -2,7 +2,10 @@
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/DCGameplayRules.h"
+#include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Sound/SoundAttenuation.h"
+#include "Sound/SoundBase.h"
 
 ADCFlickerLight::ADCFlickerLight()
 {
@@ -67,7 +70,16 @@ void ADCFlickerLight::Tick(float DeltaSeconds)
 
 void ADCFlickerLight::ApplyBrightness(float NewBrightness)
 {
+	const bool bFlashedOn = Brightness <= 0.0f && NewBrightness > 0.0f;
 	Brightness = NewBrightness;
+	if (bFlashedOn && !FlashSounds.IsEmpty() && FMath::FRand() < FlashSoundChance)
+	{
+		if (USoundBase* Snap = FlashSounds[FMath::RandRange(0, FlashSounds.Num() - 1)].LoadSynchronous())
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, Snap, GetActorLocation(), FlashVolume, 1.0f, 0.0f,
+				FlashAttenuation.LoadSynchronous());
+		}
+	}
 	Light->SetIntensity(BaseIntensity * Brightness);
 	Glow->SetVisibility(Brightness > 0.0f);
 	if (GlowMaterial)

@@ -24,7 +24,8 @@ ITEMS = [
                       range=10000.0, fire_interval=0.18, reload=1.3,
                       recoil_pitch=1.4, recoil_yaw=0.4, recoil_recovery=12.0,
                       equip_offset=(38.0, 12.0, -20.0), equip_rot=(6.0, -90.0, 4.0),
-                      fire_sound="/Game/Weapons/GrenadeLauncher/Audio/FirstPersonTemplateWeaponFire02")),
+                      fire_sound="/Game/Audio/Weapons/S_DC_PistolShot",
+                      dry_fire_sound="/Game/Audio/Weapons/S_DC_PistolDry")),
     dict(asset="DA_Item_FieldDressing", item_id="field_dressing", name="Field Dressing",
          description="Boiled cloth and a strip of tape. Stops bleeding, mostly.",
          category="Item.Consumable.Medical", weight=0.1, value=15, stack=10,
@@ -113,6 +114,7 @@ def main():
             item.set_editor_property("equipped_rotation", unreal.Rotator(
                 pitch=gun["equip_rot"][0], yaw=gun["equip_rot"][1], roll=gun["equip_rot"][2]))
             item.set_editor_property("fire_sound", unreal.load_asset(gun["fire_sound"]))
+            item.set_editor_property("dry_fire_sound", unreal.load_asset(gun["dry_fire_sound"]))
         if not unreal.EditorAssetLibrary.save_loaded_asset(item, only_if_is_dirty=False):
             raise RuntimeError(f"Could not save {spec['asset']} (is the file read-only?)")
         log(f"{spec['asset']}: {spec['item_id']} '{spec['name']}' {spec['category']}")
