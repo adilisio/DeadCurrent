@@ -130,6 +130,12 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 - Fab meshes (the *Tern*) are imported by the same script when they are placed. They are not in the repo until then.
 - Baseline screenshots are not in this step. `UnrealEditor-Cmd` crashes in `take_high_res_screenshot` (null RHI, and again with `-AllowCommandletRendering`). The six cameras are listed in `Tools/EditorScripts/capture_presentation.py`. They get captured from the game window at the start of the mood task, before the lights change.
 
+## Review before playtest
+
+Every visual change is captured and reviewed before a session report is marked **READY FOR ANTHONY TO TEST**.
+
+Run `Tools\ReviewCapture.bat` (close the editor first). It writes PNGs and `manifest.json` to `Saved/Review/<yyyy-mm-dd_hhmm>/`, from the viewpoints and expectations in `Tools/Review/Lvl_Boathouse.json`, at the same settings as `Tools\PlayTest.bat`. A review reads those captures against the written expectations and the automatic checks. That happens before Anthony is asked to play. His time is for how the shore feels.
+
 ### Provenance
 
 CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arrive, are licensed to Anthony's accounts.
