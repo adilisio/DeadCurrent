@@ -36,6 +36,8 @@ REQUIRED_SURFACES = [
     "/Game/Environment/Materials/MI_DC_Gravel",
     "/Game/Environment/Materials/MI_DC_TernU1",
     "/Game/Environment/Materials/MI_DC_TernU2",
+    "/Game/Environment/Materials/MI_DC_OpenLake",
+    "/Game/Environment/Materials/MI_DC_Water",
 ]
 CUBE = "/Game/LevelPrototyping/Meshes/SM_Cube"
 MAT_FLOOR = "/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray"
@@ -596,7 +598,7 @@ def build_ground():
     folder = "Ground"
     sand = surface("MI_DC_CoastSand")
     gravel = surface("MI_DC_Gravel")
-    lake = material_instance("MI_DC_OpenLake", MAT_FLAT, {"Base Color": (0.012, 0.022, 0.028, 1.0)})
+    lake = surface("MI_DC_OpenLake")
     block("Floor", folder, -200, 3600, -600, 1800, -50, 0, material=sand)
     block("ShoreCurb", folder, -200, 3600, -600, -580, 0, 18, material=gravel)
     # A thin sheet. A deep slab's vertical face read as an untextured black wall at the far breakwater.
@@ -805,7 +807,7 @@ def build_survey_launch():
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
     live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.2, 1.4, 4.0, 0.5)})
-    water_mat = material_instance("MI_DC_Water", MAT_FLAT, {"Base Color": (0.008, 0.018, 0.024, 1.0)})
+    water_mat = surface("MI_DC_Water")
     fish_mat = material_instance("MI_DC_DeadFish", MAT_FLAT, {"Base Color": (0.78, 0.8, 0.72, 1.0)})
     live = [cond("WORLD_FLAG", id=WRECK_POWER_CUT, negate=True)]
 
@@ -951,9 +953,13 @@ def build_survey_launch():
                 ], duration=8.0)
 
     # The water itself: dark, always there, no collision. Pulling the leads must never remove it.
-    water_sheet = box("WaterSurface", folder, (-1500, -1390, 3), (1040, 780, 8), material=water_mat)
+    # Top face 0.25 cm above the open lake (z -6) so its edge is not a visible step, and the same material so it
+    # has no seam.
+    water_sheet = box("WaterSurface", folder, (-1500, -1390, -6.25), (1040, 780, 1), material=water_mat)
     water_sheet.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(
         unreal.CollisionEnabled.NO_COLLISION)
+    # The map test finds the slab by this tag to prove the water is still there after the power is cut.
+    water_sheet.set_editor_property("tags", [unreal.Name("WaterSurface")])
     # The electricity: a bright glow layer over the water that is also the damage volume. It (and the
     # sparks) go out with the power; the water stays.
     hazard = box("LiveWater", folder, (-1500, -1390, 8), (1040, 780, 20), material=live_water,

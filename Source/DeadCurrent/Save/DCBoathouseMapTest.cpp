@@ -259,6 +259,19 @@ namespace DCBoathouseTest
 
 	ADCFlickerLight* Sparks() { return Nearest<ADCFlickerLight>(FVector(-1230.0, -1470.0, 0.0)); }
 
+	/** The permanent water sheet under the live-water glow (tagged WaterSurface by build_boathouse.py). */
+	AActor* WaterSlab()
+	{
+		for (TActorIterator<AActor> It(GameWorld()); It; ++It)
+		{
+			if (It->Tags.Contains(TEXT("WaterSurface")))
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
 	ADCLootContainer* Container(FName Id) { return Cast<ADCLootContainer>(Find(Id)); }
 
 	/** Every POI actor the tests touch exists (so later steps can use them without null checks). */
@@ -270,6 +283,7 @@ namespace DCBoathouseTest
 			&& Test->TestNotNull(TEXT("Tender placed"), Container(Tender))
 			&& Test->TestNotNull(TEXT("Live water placed"), LiveWaterHazard())
 			&& Test->TestNotNull(TEXT("Sparks placed"), Sparks())
+			&& Test->TestNotNull(TEXT("Water surface placed"), WaterSlab())
 			&& Test->TestNotNull(TEXT("Battery placed"), Inspectable(TEXT("Battery bank")));
 	}
 
@@ -613,6 +627,8 @@ bool FDCBoathouseSurveyLaunchTest::RunTest(const FString& Parameters)
 		TestTrue(TEXT("Power cut"), WorldState()->HasFlag(TEXT("wreck.power_cut")));
 		TestFalse(TEXT("Water dead"), LiveWaterHazard()->IsHazardActive());
 		TestFalse(TEXT("Sparks out"), Sparks()->IsLightActive());
+		TestTrue(TEXT("The water itself stays"), WaterSlab() && !WaterSlab()->IsHidden()
+			&& WaterSlab()->GetRootComponent() && WaterSlab()->GetRootComponent()->IsVisible());
 		Use(TEXT("Emergency beacon"));
 		TestTrue(TEXT("Beacon notices the lamp"), Message().Contains(TEXT("still flickering")));
 
@@ -677,6 +693,7 @@ bool FDCBoathouseSurveyLaunchTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Load: player dressings"), Count(TEXT("field_dressing")), 2);
 		TestFalse(TEXT("Load: water stays dead"), LiveWaterHazard()->IsHazardActive());
 		TestFalse(TEXT("Load: sparks stay out"), Sparks()->IsLightActive());
+		TestTrue(TEXT("Load: the water is still there"), WaterSlab() && !WaterSlab()->IsHidden());
 		TestEqual(TEXT("Load: battery remembers"), IDCInteractable::Execute_GetInteractionPrompt(Inspectable(TEXT("Battery bank")), Player()).Action.ToString(), FString(TEXT("Inspect")));
 		Use(TEXT("West window"));
 		TestTrue(TEXT("Load: the boathouse window knows"), Message().Contains(TEXT("nothing left to power it")));

@@ -957,6 +957,109 @@ def ensure_chalk_board():
     log(f"created {path}")
 
 
+LAKE_MASTER = ENV_MATERIALS + "/M_DC_Lake"
+# Engine example content. Cooked with any material that references it.
+LAKE_NORMAL = "/Engine/Functions/Engine_MaterialFunctions02/ExampleContent/Textures/water_n"
+
+
+def ensure_lake():
+    """M_DC_Lake: dark freshwater, default-lit, opaque, two slow normal layers in world XY.
+
+    Not the Water plugin and not Lumen-dependent: it reads under the PlayTest cvars on a directional
+    light and the sky capture. The open lake and the basin slab are instances (DeepColor, tiles).
+    """
+    if unreal.EditorAssetLibrary.does_asset_exist(LAKE_MASTER):
+        if not unreal.EditorAssetLibrary.delete_asset(LAKE_MASTER):
+            raise RuntimeError(f"Could not replace {LAKE_MASTER}")
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Lake", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {LAKE_MASTER}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    material.set_editor_property("two_sided", True)
+
+    world = make(material, unreal.MaterialExpressionWorldPosition, -1400, 0)
+    xy = mask(material, world, "rg", -1160, 0)
+    time = make(material, unreal.MaterialExpressionTime, -1400, 300)
+
+    def scalar(name, value, x, y):
+        node = make(material, unreal.MaterialExpressionScalarParameter, x, y)
+        node.set_editor_property("parameter_name", name)
+        node.set_editor_property("default_value", value)
+        return node
+
+    tile = scalar("TileCm", 900.0, -1160, 160)
+    pan = scalar("PanPerSecond", 0.006, -1160, 320)
+    strength = scalar("NormalStrength", 0.35, -400, 640)
+    scaled = div(material, xy, tile, -900, 0)
+
+    def layer(direction, tile_mult, y):
+        drift = append(
+            material,
+            mul(material, mul(material, time, pan, -900, y + 200), scalar(f"DriftX{y}", direction[0], -1160, y + 400), -700, y + 200),
+            mul(material, mul(material, time, pan, -900, y + 300), scalar(f"DriftY{y}", direction[1], -1160, y + 480), -700, y + 300),
+            -520, y + 240)
+        # The multiplier makes the second layer a different scale from the first.
+        mult = scalar(f"Tile{y}", tile_mult, -900, y + 100)
+        uv = add(material, mul(material, scaled, mult, -700, y), drift, -300, y)
+        sample = sample_param(material, f"Normal{y}", uv, -60, y, unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL)
+        normal = unreal.load_asset(LAKE_NORMAL)
+        if not normal:
+            raise RuntimeError(f"Missing {LAKE_NORMAL}")
+        sample.set_editor_property("texture", normal)
+        return sample
+
+    a = layer((1.0, 0.45), 1.0, 0)
+    b = layer((-0.6, 1.0), 1.7, 700)
+    both = add(material, a, b, 200, 300)
+    half = make(material, unreal.MaterialExpressionConstant, 200, 460)
+    half.set_editor_property("r", 0.5)
+    mixed = mul(material, both, half, 380, 340)
+    flat = make(material, unreal.MaterialExpressionConstant3Vector, 380, 520)
+    flat.set_editor_property("constant", unreal.LinearColor(0.0, 0.0, 1.0, 0.0))
+    lerp = make(material, unreal.MaterialExpressionLinearInterpolate, 560, 400)
+    connect(flat, "", lerp, "A")
+    connect(mixed, "", lerp, "B")
+    connect(strength, "", lerp, "Alpha")
+    unit = make(material, unreal.MaterialExpressionNormalize, 740, 400)
+    connect(lerp, "", unit, "")
+
+    deep = make(material, unreal.MaterialExpressionVectorParameter, 200, -200)
+    deep.set_editor_property("parameter_name", "DeepColor")
+    deep.set_editor_property("default_value", unreal.LinearColor(0.012, 0.03, 0.038, 1.0))
+    rough = scalar("Roughness", 0.14, 200, -60)
+    spec = scalar("Specular", 0.5, 200, 60)
+
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(deep, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.connect_material_property(spec, "", unreal.MaterialProperty.MP_SPECULAR)
+    mel.connect_material_property(unit, "", unreal.MaterialProperty.MP_NORMAL)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {LAKE_MASTER}")
+    log(f"created {LAKE_MASTER}")
+
+
+def ensure_lake_instance(name, deep_color, tile_cm):
+    path = f"{ENV_MATERIALS}/{name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        mi = unreal.load_asset(path)
+    else:
+        mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            name, ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        if not mi:
+            raise RuntimeError(f"Could not create {path}")
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(mi, unreal.load_asset(LAKE_MASTER))
+    mel.set_material_instance_vector_parameter_value(mi, "DeepColor", unreal.LinearColor(*deep_color))
+    mel.set_material_instance_scalar_parameter_value(mi, "TileCm", tile_cm)
+    mel.update_material_instance(mi)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    log(f"instance {path}")
+
+
 def main():
     before = 0
     for spec in SURFACES:
@@ -983,6 +1086,10 @@ def main():
         raise RuntimeError("Missing rusty_painted_metal base color for the Tern grime blend")
     ensure_wreck_instance("MI_DC_TernU1", boat[0], grime)
     ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
+    ensure_lake()
+    ensure_lake_instance("MI_DC_OpenLake", (0.010, 0.024, 0.030, 1.0), 1400.0)
+    # Same look as the open lake so the basin slab does not read as a lighter rectangle.
+    ensure_lake_instance("MI_DC_Water", (0.010, 0.024, 0.030, 1.0), 1400.0)
     import_clue_meshes()
     import_relay()
     import_meshy_props()
