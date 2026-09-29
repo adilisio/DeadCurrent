@@ -366,7 +366,14 @@ def first_of_class(asset_class, *paths):
     return None, None
 
 
-def assign_mannequin(actor, *mesh_paths):
+SURVIVAL_MESH = "/Game/Survival_Character/Meshes/SK_Survival_Character"
+SURVIVAL_JACKET_SLOT = 7
+SURVIVAL_JEANS_SLOT = 8
+
+
+def assign_mannequin(actor, *mesh_paths, costume=None):
+    """Point an actor at the first skeletal mesh that loads. costume=("MI_DC_XJacket", "MI_DC_XJeans") tints the
+    Survival_Character mesh; it is ignored for a fallback mannequin."""
     mesh_path, mesh_asset = first_of_class(unreal.SkeletalMesh, *mesh_paths)
     abp_path = first_existing(
         "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
@@ -377,6 +384,9 @@ def assign_mannequin(actor, *mesh_paths):
     if mesh_asset:
         mesh_comp.set_skeletal_mesh_asset(mesh_asset)
         log(f"{actor.get_actor_label()} mesh {mesh_path}")
+        if costume and mesh_path == SURVIVAL_MESH:
+            for slot, name in zip((SURVIVAL_JACKET_SLOT, SURVIVAL_JEANS_SLOT), costume):
+                mesh_comp.set_material(slot, surface(name))
     else:
         log(f"{actor.get_actor_label()} no mannequin skeletal mesh found")
     if abp_path:
@@ -700,8 +710,10 @@ def build_scavenger():
     ])
     assign_mannequin(
         scav,
+        SURVIVAL_MESH,
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        costume=("MI_DC_ScavJacket", "MI_DC_ScavJeans"),
     )
     set_persistent_id(scav, "boat.scavenger")
 
@@ -747,8 +759,10 @@ def build_cover_and_npc():
     npc.set_folder_path(folder)
     assign_mannequin(
         npc,
+        SURVIVAL_MESH,
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+        costume=("MI_DC_MaraJacket", "MI_DC_MaraJeans"),
     )
     set_persistent_id(npc, "boat.mara")
 

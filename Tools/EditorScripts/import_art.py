@@ -1060,6 +1060,48 @@ def ensure_lake_instance(name, deep_color, tile_cm):
     log(f"instance {path}")
 
 
+SURVIVAL = "/Game/Survival_Character"
+SURVIVAL_MESH = SURVIVAL + "/Meshes/SK_Survival_Character"
+# Jacket and jeans tints for the two costumes. Faded, cold, and different enough to read apart at a distance.
+# A costume, not a decision about anyone's face or history.
+COSTUMES = {
+    "MI_DC_MaraJacket": ("MI_Survival_Character_Jacket", (3.2, 5.2, 5.4, 1.0)),
+    "MI_DC_MaraJeans": ("MI_Survival_Character_Jeans", (2.4, 2.8, 3.4, 1.0)),
+    "MI_DC_ScavJacket": ("MI_Survival_Character_Jacket", (5.6, 2.6, 1.3, 1.0)),
+    "MI_DC_ScavJeans": ("MI_Survival_Character_Jeans", (1.6, 1.5, 1.3, 1.0)),
+}
+
+
+def ensure_survival_costumes():
+    """The migrated pack skeleton plays the mannequin's animations, and each actor gets its own tints."""
+    skeleton = unreal.load_asset(SURVIVAL + "/Meshes/SKEL_Survival_Character")
+    mannequin = unreal.load_asset("/Game/Characters/Mannequins/Meshes/SK_Mannequin")
+    if not skeleton or not mannequin:
+        log("Survival_Character or the mannequin skeleton is missing. Run Tools\\ImportSurvivalCharacter.ps1.")
+        return
+    if not list(skeleton.get_editor_property("compatible_skeletons")):
+        skeleton.add_compatible_skeleton(mannequin)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(skeleton, only_if_is_dirty=False):
+            raise RuntimeError("Could not save the Survival_Character skeleton")
+        log("Survival_Character skeleton now accepts the mannequin animation blueprint")
+    for name, (parent, tint) in COSTUMES.items():
+        path = f"{ENV_MATERIALS}/{name}"
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            mi = unreal.load_asset(path)
+        else:
+            mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+                name, ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+            if not mi:
+                raise RuntimeError(f"Could not create {path}")
+        mel = unreal.MaterialEditingLibrary
+        mel.set_material_instance_parent(mi, unreal.load_asset(f"{SURVIVAL}/Materials/{parent}"))
+        mel.set_material_instance_vector_parameter_value(mi, "Tint", unreal.LinearColor(*tint))
+        mel.update_material_instance(mi)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+            raise RuntimeError(f"Could not save {path}")
+        log(f"instance {path}")
+
+
 def main():
     before = 0
     for spec in SURFACES:
@@ -1090,6 +1132,7 @@ def main():
     ensure_lake_instance("MI_DC_OpenLake", (0.010, 0.024, 0.030, 1.0), 1400.0)
     # Same look as the open lake so the basin slab does not read as a lighter rectangle.
     ensure_lake_instance("MI_DC_Water", (0.010, 0.024, 0.030, 1.0), 1400.0)
+    ensure_survival_costumes()
     import_clue_meshes()
     import_relay()
     import_meshy_props()

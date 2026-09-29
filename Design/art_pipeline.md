@@ -126,7 +126,7 @@ For every generated asset, keep the raw output outside the repo, in `C:\FO5_Asse
 
 ### Import
 
-- UE-pack assets: Migrate from the library project (above). Not started.
+- UE-pack assets: migrate from the library project to the same `/Game/<Pack>/...` path, only what a placed asset needs, never the pack's Demo folder. **First used for `Survival_Character` (PP-08).** The pack's textures are 4K and 8K (about 770 MB) and must not enter the repo at that size, so `Tools\ImportSurvivalCharacter.ps1` copies the closure, exports the textures to PNG, cuts them to 1K, and reimports them over the originals with the same compression and sRGB settings (49 MB result, 43 textures). It is a one-time tool; the migrated assets are committed and `RebuildContent.bat` does not run it. Use the same shape for the next pack: closure from the package name tables, downsize, reimport, commit small. `SKEL_Survival_Character` is its own skeleton, so `import_art.py` adds the mannequin skeleton to its compatible skeletons, which is what lets `ABP_Unarmed` drive it. That step is idempotent and runs every content rebuild.
 - Raw FBX/glTF/texture sets: `Tools/EditorScripts/import_art.py`, re-runnable, registered first in `Tools\RebuildContent.bat`. A second run replaces textures in place (27 surface textures before and after).
 - Destination: `/Game/Art/<Source>/<AssetId>/` (`PolyHaven`, `AmbientCG`, and later `Megascans`, `Meshy`, `Freesound`). Names use `T_` / `MI_` / `SM_`.
 - `M_DC_Surface` is a default-lit master. Base color and roughness are triplanar in world space so a scaled greybox cube does not stretch them. `TileSizeCm` is the repeat, in centimeters. `PackedORM` uses an ARM texture (R occlusion, G roughness, B metal), which matches the Poly Haven layout. Unpacked sets use a roughness texture and the `Metallic` scalar. The normal map is sampled in world XY and faded out on vertical faces, so floors keep detail and walls keep the mesh normal.
@@ -165,6 +165,9 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `lighthouse_logbook` (survey log) | `Meshy/lighthouse_logbook` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `relay_housing` | `Meshy/relay_housing` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `depth_sounder`, `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` | `Meshy/<id>` (2026-09-29) | Meshy Pro | generated with the owner's Meshy Pro account |
+| `Survival_Character` (`SK_Survival_Character`, skeleton, physics asset, 11 material instances, 43 textures cut to 1K) | `FO5_AssetLibrary/Content/Survival_Character` | marketplace pack owned by Anthony (from the earlier project) | pack author |
+| `MI_DC_MaraJacket`, `MI_DC_MaraJeans`, `MI_DC_ScavJacket`, `MI_DC_ScavJeans` | tints on the pack's jacket and jeans instances, in `import_art.py` | project | DEAD CURRENT |
+| `M_DC_Lake`, `MI_DC_OpenLake`, `MI_DC_Water` | authored in `import_art.py`; normal map is engine example content `water_n` | project (engine content) | DEAD CURRENT |
 | `T_NameBoardLetters`, `M_DC_Letters` | authored in `import_art.py` (the `T_RN` letters are a texture, not Meshy text) | project | DEAD CURRENT |
 | `T_ChalkKeepOut`, `M_DC_Chalk` | authored in `import_art.py` | project | DEAD CURRENT |
 
