@@ -17,14 +17,14 @@ First-person action RPG in a post-collapse Great Lakes archipelago. Unreal Engin
 | Building a new POI, or handing work to another agent | `Design/POIs/README.md`, `TEMPLATE.md`, `AGENT_HANDOFF_TEMPLATE.md` |
 | Anthony's live return checklist (where work stopped) | `Design/ANTHONY_CHECKLIST.md` |
 
-## Where we are (2026-09-30, Phase 6 planned)
+## Where we are (2026-09-30, Phase 6 started)
 
 - Phases 1–4 are **accepted**: Walking Skeleton, Micro RPG (Shore Watch), Exploration Loop (Wrecked Survey Launch), and RPG Layer (3 attributes / 3 skills / 3 perks as shared rule conditions on existing actors, accepted 2026-09-29).
 - Everything is on one map, `Lvl_Boathouse`. The **Presentation Pass** (PP-00..PP-10) has dressed it: real materials and meshes, an overcast cold-lake grade, rippled water, Meshy clue props, `Survival_Character` bodies on Mara and the scavenger, and first audio. The canvas HUD is still temporary.
 - Phase 4.5, the **Presentation Pass, is accepted** (Anthony, 2026-09-29, after two playtests). Real materials, meshes, water, bodies, and first audio are on `Lvl_Boathouse`. Plan: `PresentationPassPlan.txt`. Results and known issues (including the 54 FPS shortfall, cause not found) are in `Design/CLAUDE_SESSION_REPORT.md`. Constraints and the asset library: `Design/art_pipeline.md`. `Design/content_production_strategy.md` is the approved direction for making content cheaper without making it generic; it does not expand any phase. `Design/POIs/PRODUCTION_PILOT.md` is approved (2026-09-30) and runs inside Phase 5.
 - **Phase 5, World State, is accepted** (Anthony, 2026-09-30). Plan: `WorldStatePhasePlan.txt`. It added `ADCConditionalPresence` (actors present, absent, or placed by shared conditions; saves nothing) and the Landing Stage, the production pilot, which reads the Shore Watch outcome from the same spot. Acceptance playtests also changed Shore Watch: a clear sneak route, a scavenger who warns first and sees 12 m, and Mara as a one-piece placeholder model. 45 tests.
-- **Phase 6, Vertical Slice, is PLANNED, NOT STARTED, and awaiting Anthony's approval** (VS-00, 2026-09-30). Plan: `VerticalSlicePhasePlan.txt`. It builds "The Wrong Characteristic" on a new map, `Lvl_PointeSombre`, with in-map interior cells. It also proves a settlement kit and a rocky-shoreline recipe. The prologue additions are not part of it. Live status: `Design/ANTHONY_CHECKLIST.md`.
-- **Anthony chooses and accepts phases.** Don't start a phase, or a task in a planned one, unless he has said to.
+- **Phase 6, Vertical Slice, is STARTED** (Anthony approved the plan, 2026-09-30; VS-01 complete, VS-02 in progress). Plan: `VerticalSlicePhasePlan.txt`; live status and the current task: `Design/ANTHONY_CHECKLIST.md`. It builds "The Wrong Characteristic" on a new map, `Lvl_PointeSombre`, with in-map interior cells. It also proves a settlement kit and a rocky-shoreline recipe. The prologue additions are not part of it.
+- **Anthony chooses and accepts phases.** Don't start a phase, or a task in an approved plan beyond the one assigned, unless he has said to.
 
 ## How work is done here
 

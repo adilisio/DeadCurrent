@@ -4,7 +4,7 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
-**Phase 6, Vertical Slice: planned, not started, awaiting Anthony's approval** (`VerticalSlicePhasePlan.txt`, 2026-09-30).
+**Phase 6, Vertical Slice: started** (plan approved by Anthony 2026-09-30; `VerticalSlicePhasePlan.txt`). VS-01 (baseline) is complete; VS-02 (production foundations) is in progress.
 
 **Phase 5, World State: accepted by Anthony (2026-09-30).** Choices visibly alter locations and NPC behavior. One new reusable capability (conditional presence: an actor is here, somewhere else, or absent, by conditions) and one small place that uses it, the Landing Stage, which is also the approved production pilot. See `WorldStatePhasePlan.txt` and `Design/POIs/PRODUCTION_PILOT.md`.
 
