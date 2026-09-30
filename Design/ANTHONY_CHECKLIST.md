@@ -53,6 +53,8 @@ Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for 
 
 ## Decisions Needed From Anthony
 
+Status (2026-09-30): the frame-time shortfall is deferred, the production pilot is pending Anthony's approval, and Anthony is running a narrative phase next and will check the pilot plan there. Nothing here is being worked on.
+
 Open, for whenever you want to decide (none blocks anything):
 
 - Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` §12).
@@ -94,4 +96,4 @@ Also in `Design/content_production_strategy.md` §5.
 
 ## Next Autonomous Task
 
-None. Wait for Anthony to choose the next step (Phase 5, the production pilot, or the frame-time investigation). Do not start Phase 5 without his go-ahead.
+None. Anthony is doing a narrative phase. Do not start Phase 5, the production pilot, or the frame-time investigation without his go-ahead.
