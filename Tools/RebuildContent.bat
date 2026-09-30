@@ -4,8 +4,12 @@ rem items -> quests -> dialogue (references items) -> test gym -> boathouse map.
 rem import_art brings in the CC0 surfaces the boathouse materials resolve; import_audio the CC0 sounds.
 rem   Tools\RebuildContent.bat              all of them
 rem   Tools\RebuildContent.bat create_quest run one script from Tools\EditorScripts
+rem   Tools\RebuildContent.bat kit\build_kit_gym   a script in a subfolder of Tools\EditorScripts (a slash also works)
+rem Items, quests, and dialogue are not defined in their create_*.py scripts: they load one spec file per asset group
+rem from Tools\ContentSpecs (see its README.md).
 rem Close the editor first. Rebuild DeadCurrentEditor after C++ changes before running this.
-rem Logs: Saved\Logs\RebuildContent_<script>.log. Set UE_ROOT to override the engine location.
+rem Logs: Saved\Logs\RebuildContent_<script>.log (a subfolder's slash becomes an underscore).
+rem Set UE_ROOT to override the engine location.
 
 setlocal
 if not defined UE_ROOT set "UE_ROOT=C:\Program Files\Epic Games\UE_5.8"
@@ -31,12 +35,15 @@ echo All content regenerated.
 exit /b 0
 
 :run
-set "LOG=%~dp0..\Saved\Logs\RebuildContent_%1.log"
-echo Running %1...
-"%UE_CMD%" "%PROJECT%" -run=pythonscript -script="%SCRIPTS%\%1.py" -unattended -nullrhi -nosplash -log -abslog="%LOG%" >nul 2>&1
+set "NAME=%~1"
+set "NAME=%NAME:/=\%"
+set "LOGNAME=%NAME:\=_%"
+set "LOG=%~dp0..\Saved\Logs\RebuildContent_%LOGNAME%.log"
+echo Running %NAME%...
+"%UE_CMD%" "%PROJECT%" -run=pythonscript -script="%SCRIPTS%\%NAME%.py" -unattended -nullrhi -nosplash -log -abslog="%LOG%" >nul 2>&1
 findstr /C:"Traceback (most recent call last)" "%LOG%" >nul
 if not errorlevel 1 (
-	echo %1 FAILED. See %LOG%
+	echo %NAME% FAILED. See %LOG%
 	findstr /C:"LogPython: Error" "%LOG%"
 	exit /b 1
 )

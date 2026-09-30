@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` = `origin/main` = the VS-01 commit (see `git log -1`), on top of the approved plan commits `24d3e0d` and `034cbc7` (pushed 2026-09-30 after `git fetch` showed `origin/main` still at `9640c05`: a clean fast-forward).
+- `main` (see `git log -3`): the VS-02 commit on top of the VS-01 commit `00d8d22`, on top of the approved plan commits `24d3e0d` and `034cbc7`. The plan and VS-01 are pushed (`origin/main` was a clean fast-forward from `9640c05`).
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
@@ -14,8 +14,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | Task | State |
 | --- | --- |
 | VS-00 Plan | complete, approved |
-| **VS-01 Baseline** | **COMPLETE** (this commit) |
-| VS-02 Production foundations | in progress |
+| **VS-01 Baseline** | **COMPLETE** (`00d8d22`) |
+| **VS-02 Production foundations** | **COMPLETE** (this commit) |
 | VS-03 onward | not started |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
@@ -31,6 +31,26 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
   - Average view time **35.67 ms** (1924) and 35.50 ms (1920), so run-to-run noise is about 0.2 ms. Route frames (17): 23.6 and 22.2 ms.
   - This machine is slower today than on the Phase 5 run days. Only same-session A/B comparisons count (plan §20): every Phase 6 gate is measured against a capture taken in the same session as the change it judges. This folder is only the start-of-phase record.
 - **Stale status:** `CLAUDE.md`, `Design/game_design.md`, and `Design/technical_architecture.md` now say Phase 6 has started. The Phase 5 session report is left as history (its "not pushed" line carries a dated correction from VS-00).
+
+## VS-02 Record: Production Foundations (the factory is safe for several builders)
+
+- **Content specs are one file per owner.** `create_items.py`, `create_quest.py`, and `create_dialogue.py` now hold no content; they load every file in `Tools/ContentSpecs/{items,quests,dialogue}/` (`content_specs.py`; contract in `Tools/ContentSpecs/README.md`). The accepted Shore content moved unchanged into `items/shore.py`, `quests/shore_watch.py`, and `dialogue/mara_intro.py`.
+  - **Proof it is behavior-preserving:** `Tools\DumpContent.bat` (new, read-only) dumps every generated asset's properties. The dump before the move (from the committed assets) and after regenerating through the new loader are **byte-identical**, and regeneration left every `.uasset` byte-identical (no binary churn in `git status`).
+  - **Isolation probes:** a second spec file defining an existing asset fails loudly and names both files; a brand-new dialogue file in its own file generated a new asset, resolved an item defined in another folder, and left Mara's dialogue identical (then removed). A future agent adds `dialogue/sombre_varga.py` without touching Mara's.
+- **Multi-map tooling.** One registry, `Tools/Maps.bat`, feeds every tool. Adding Pointe Sombre needs no new scripts.
+  - `Tools\RunTests.bat [-build] [Map.<Group>[.<Test>]]`: each map's tests run on that map (`Map.Sombre...` on `Lvl_PointeSombre`); no argument runs the editor suite, then every production map that exists. Logs: `RunTests_Map.log` for `Lvl_Boathouse`, `RunTests_Map_<Group>.log` otherwise.
+  - `Tools\ReviewCapture.bat [map]`: the test reads `-ReviewMap=` (no map is hard-coded in C++). A map's views are `Tools/Review/<map>.json` plus `Tools/Review/<map>/*.json` (one file per cell; ids unique, exactly one route, optional `art_sentinels`). The manifest now records the map, the view files, and per-view cost numbers: visible primitive components, material slots, instances, and the RHI's peak draw calls and primitives.
+  - `Tools\Package.bat`: cooks the registered production maps explicitly (`-map=`) and smoke-loads each (`PackageSmoke.log` for `Lvl_Boathouse`, `PackageSmoke_<map>.log` otherwise). `Tools\PlayTest.bat [map]`. `Tools\RebuildContent.bat` accepts scripts in subfolders (`kit\build_kit_gym`).
+  - **Not created:** `Lvl_PointeSombre` (the registry knows it; every tool says "registered but not built yet" until VS-04 builds it). `Lvl_KitGym` is registered as a *development* map for the kit package.
+  - **Checked:** a temporary placeholder map file (removed) showed the list, the `-map=` join, and the test routing/log name for a second map all work.
+- **Shared map-test helpers.** `Core/DCMapTestHelpers.h` (namespace `DCMapTest`) holds the generic harness extracted from `DCBoathouseMapTest.cpp`: find by persistent id or display name, talk and pick a reply, teleport, F5/F9 with a scratch slot, wait for a condition (new), and more. `DCBoathouseMapTest.cpp` uses it; all 12 of its tests pass with unchanged behavior. `DeadCurrent.Map.Boathouse.TestHelpers` is a new infrastructure test and the smallest worked example of a map test. (`DCLandingStageMapTest.cpp` keeps its own copies on purpose: an accepted file, left unchanged.)
+- **Docs:** `Design/POIs/README.md` (how ownership works, branches and worktrees, what is Integrator-owned) and `Design/technical_architecture.md` (helpers, tooling, content specs) describe only what now exists.
+- **Verification (all after the last code change):**
+  - `Tools\RunTests.bat -build`: **46 of 46** (33 editor, 13 map), 0 failures (the 45 accepted tests plus `TestHelpers`).
+  - `DeadCurrent.Content.Validate` is part of that run (green).
+  - `Tools\ReviewCapture.bat Lvl_Boathouse` through the new parameterised path: the same 36 views in the same order, 17 route frames, every view captured, no default material, missing texture, or error. Average view time **33.6 ms vs the 35.7 ms same-session reference**: no regression. Draw-call peaks per view: 67 to 487. (`Saved/Review/2026-09-30_1939`; reference `..._1924`.)
+  - `Tools\Package.bat` with the new explicit `-map=`: cooked, packaged, `Lvl_Boathouse` smoke-loaded, all 8 presence rules evaluated, 0 errors.
+- **Problems found and fixed on the way (recorded, not hidden):** a batch `shift` had broken `%~dp0` in `RunTests.bat` (caught by an error-path test before any run); `PlayTest.bat` originally called the map resolver inside a parenthesised block, so cmd expanded its variables too early and **launched the game with no map while I was testing its error paths**. I killed those two stray game windows, rewrote that section with `goto` labels, and re-tested both the error paths (no launch) and the happy paths (map passed; no-argument form unchanged).
 
 ## Decisions
 
@@ -68,12 +88,12 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Automated Baseline
 
-- Build: `DeadCurrentEditor` builds.
-- Tests: **45 of 45** (33 editor, 12 map). Phase 6 expects about 70 by the end; that is an estimate, not a target.
-- Package: the Development Win64 cook and the smoke launch of `Lvl_Boathouse` succeeded on the VS-01 baseline.
-- Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only.
-- Meshy: 460 of the earlier 500 spent; balance 437.
+- Build: `DeadCurrentEditor` builds (with the new `RHI` module dependency for the review capture's draw-call counts).
+- Tests: **46 of 46** (33 editor, 13 map). Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Package: the Development Win64 cook (explicit `-map=`) and the smoke launch of `Lvl_Boathouse` succeeded.
+- Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only (the VS-02 capture was 2 ms faster than the reference).
+- Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350.
 
 ## Next
 
-VS-02 (production foundations): per-file content specs, multi-map tooling, shared map-test helpers. Then the first parallel wave (VS-03 portal, VS-05 kit, the kit research), prepared but not launched until VS-02 is green.
+The first parallel wave (VS-03 portal, VS-05 kit, the kit research): handoffs are prepared in the commit after this one, and launched only by you.

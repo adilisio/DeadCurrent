@@ -2,12 +2,15 @@
 #include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "CollisionShape.h"
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/OutputDevice.h"
+#include "Misc/PackageName.h"
 #include "Misc/ScopeLock.h"
+#include "RHIStats.h"
 #include "DeadCurrent.h"
 #include "Dom/JsonObject.h"
 #include "Engine/GameInstance.h"
@@ -45,11 +48,28 @@
  *
  *  Game-context tool, not part of Tools\RunTests.bat. Run it with Tools\ReviewCapture.bat
  *  (UnrealEditor -game, PlayTest cvars). It fails only when a frame could not be captured.
- *  Viewpoints live in Tools/Review/Lvl_Boathouse.json.
+ *  The map is `-ReviewMap=/Game/Maps/<name>` (Tools\ReviewCapture.bat passes it; the default is Lvl_Boathouse).
+ *  Viewpoints live in Tools/Review/<name>.json plus every Tools/Review/<name>/*.json (one file per content cell,
+ *  each owned by one builder). A file may set "art_sentinels" (how many ArtLayerSentinel actors mark the art
+ *  sublevels as loaded; default 1, 0 to not wait) and, in exactly one file, the "route".
  */
 namespace DCReviewCapture
 {
-	const TCHAR* MapPath = TEXT("/Game/Maps/Lvl_Boathouse");
+	/** The map under review, from the command line; Lvl_Boathouse when none is given. */
+	const FString& MapPath()
+	{
+		static const FString Path = []()
+		{
+			FString Value;
+			if (!FParse::Value(FCommandLine::Get(), TEXT("ReviewMap="), Value) || Value.IsEmpty())
+			{
+				Value = TEXT("/Game/Maps/Lvl_Boathouse");
+			}
+			return Value;
+		}();
+		return Path;
+	}
+
 	const TCHAR* TestSlot = TEXT("DeadCurrent_Review");
 	const TCHAR* ArtTag = TEXT("ArtLayerSentinel");
 	const int32 SettleFrames = 8;
@@ -141,6 +161,9 @@ namespace DCReviewCapture
 	{
 		FAutomationTestBase* Test = nullptr;
 		TArray<FShot> Shots;
+		TArray<FString> ViewFiles;
+		int32 ExpectedSentinels = 1;
+		bool bSentinelsSet = false;
 		TArray<FVector> RoutePoints;
 		FString RouteExpectation;
 		FString RouteSource;
@@ -163,6 +186,13 @@ namespace DCReviewCapture
 		TArray<FString> DefaultMaterials;
 		TArray<FString> MissingTextures;
 		TArray<TSharedPtr<FJsonValue>> LandmarkResults;
+		// Cost of the current view (Phase 6, VS-02): what the scene scan saw on screen, and the highest per-frame
+		// RHI draw-call and primitive counts sampled while the frame settled (0 when the RHI keeps no counts).
+		int32 VisiblePrimitiveComponents = 0;
+		int32 VisibleMaterialSlots = 0;
+		int32 VisibleInstances = 0;
+		int32 PeakRhiDrawCalls = 0;
+		int32 PeakRhiPrimitives = 0;
 
 		enum class EPhase : uint8
 		{
@@ -219,7 +249,8 @@ namespace DCReviewCapture
 		return true;
 	}
 
-	bool LoadList(const FString& Path, FRun& Run, FString& Error)
+	/** Reads one review file into the run: its viewpoints are appended, its route (if any) is taken. */
+	bool LoadViewFile(const FString& Path, FRun& Run, FString& Error)
 	{
 		FString Text;
 		if (!FFileHelper::LoadFileToString(Text, *Path))
@@ -236,10 +267,23 @@ namespace DCReviewCapture
 			return false;
 		}
 
+		double Sentinels = 0.0;
+		if (Root->TryGetNumberField(TEXT("art_sentinels"), Sentinels))
+		{
+			if (Run.bSentinelsSet && Run.ExpectedSentinels != static_cast<int32>(Sentinels))
+			{
+				Error = FString::Printf(TEXT("%s sets art_sentinels to %d but another review file set %d"),
+					*Path, static_cast<int32>(Sentinels), Run.ExpectedSentinels);
+				return false;
+			}
+			Run.ExpectedSentinels = static_cast<int32>(Sentinels);
+			Run.bSentinelsSet = true;
+		}
+
 		const TArray<TSharedPtr<FJsonValue>>* Viewpoints = nullptr;
 		if (!Root->TryGetArrayField(TEXT("viewpoints"), Viewpoints) || !Viewpoints || Viewpoints->Num() == 0)
 		{
-			Error = TEXT("Review list has no viewpoints");
+			Error = FString::Printf(TEXT("Review file %s has no viewpoints"), *Path);
 			return false;
 		}
 
@@ -253,8 +297,16 @@ namespace DCReviewCapture
 				|| !Object->TryGetStringField(TEXT("expectation"), Shot.Expectation)
 				|| !Object->TryGetStringField(TEXT("source"), Shot.Source))
 			{
-				Error = TEXT("A viewpoint is missing id, location, rotation, expectation, or source");
+				Error = FString::Printf(TEXT("A viewpoint in %s is missing id, location, rotation, expectation, or source"), *Path);
 				return false;
+			}
+			for (const FShot& Existing : Run.Shots)
+			{
+				if (Existing.Id == Shot.Id)
+				{
+					Error = FString::Printf(TEXT("Viewpoint id %s is defined twice (second time in %s)"), *Shot.Id, *Path);
+					return false;
+				}
 			}
 			Object->TryGetStringField(TEXT("focus"), Shot.Focus);
 			Object->TryGetStringField(TEXT("subject"), Shot.Subject);
@@ -311,7 +363,11 @@ namespace DCReviewCapture
 		const TSharedPtr<FJsonObject>* Route = nullptr;
 		if (!Root->TryGetObjectField(TEXT("route"), Route) || !Route || !Route->IsValid())
 		{
-			Error = TEXT("Review list has no route");
+			return true;   // a cell's file may have views only; LoadReviewSet requires one route in the whole set
+		}
+		if (Run.RoutePoints.Num() > 0)
+		{
+			Error = FString::Printf(TEXT("%s defines a route, but another review file already did"), *Path);
 			return false;
 		}
 		(*Route)->TryGetStringField(TEXT("expectation"), Run.RouteExpectation);
@@ -340,6 +396,48 @@ namespace DCReviewCapture
 		for (int32 PointIndex = 1; PointIndex < Run.RoutePoints.Num(); ++PointIndex)
 		{
 			Run.RouteLength += FVector::Dist2D(Run.RoutePoints[PointIndex - 1], Run.RoutePoints[PointIndex]);
+		}
+		return true;
+	}
+
+	/**
+	 *  Loads a map's whole review set: Tools/Review/<name>.json (if present), then every Tools/Review/<name>/*.json in
+	 *  file-name order. Viewpoint ids are unique across the set and exactly one file defines the route.
+	 */
+	bool LoadReviewSet(const FString& ShortMapName, FRun& Run, FString& Error)
+	{
+		const FString ReviewDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Tools/Review"));
+		TArray<FString> Files;
+		const FString Base = ReviewDir / (ShortMapName + TEXT(".json"));
+		if (IFileManager::Get().FileExists(*Base))
+		{
+			Files.Add(Base);
+		}
+		TArray<FString> CellFiles;
+		IFileManager::Get().FindFiles(CellFiles, *(ReviewDir / ShortMapName / TEXT("*.json")), true, false);
+		CellFiles.Sort();
+		for (const FString& CellFile : CellFiles)
+		{
+			Files.Add(ReviewDir / ShortMapName / CellFile);
+		}
+		if (Files.IsEmpty())
+		{
+			Error = FString::Printf(TEXT("No review views for %s: add Tools/Review/%s.json or Tools/Review/%s/<cell>.json"),
+				*ShortMapName, *ShortMapName, *ShortMapName);
+			return false;
+		}
+		for (const FString& File : Files)
+		{
+			if (!LoadViewFile(File, Run, Error))
+			{
+				return false;
+			}
+			Run.ViewFiles.Add(File.RightChop(ReviewDir.Len() + 1));
+		}
+		if (Run.RoutePoints.IsEmpty())
+		{
+			Error = FString::Printf(TEXT("The review set for %s has no route (one file must define it)"), *ShortMapName);
+			return false;
 		}
 		return true;
 	}
@@ -884,6 +982,8 @@ namespace DCReviewCapture
 		Run.MissingTextures.Reset();
 		Run.LandmarkResults.Reset();
 		Run.PendingFrameMs = 0.0f;
+		Run.PeakRhiDrawCalls = 0;
+		Run.PeakRhiPrimitives = 0;
 		if (!Run.Log.IsValid())
 		{
 			return;
@@ -994,6 +1094,9 @@ namespace DCReviewCapture
 		Run.DefaultMaterials.Reset();
 		Run.MissingTextures.Reset();
 		Run.LandmarkResults.Reset();
+		Run.VisiblePrimitiveComponents = 0;
+		Run.VisibleMaterialSlots = 0;
+		Run.VisibleInstances = 0;
 		UWorld* World = GameWorld();
 		ADCPlayerCharacter* Pawn = Player();
 		if (!World || !Pawn || Run.Index >= Run.Shots.Num())
@@ -1024,6 +1127,12 @@ namespace DCReviewCapture
 					continue;
 				}
 				const int32 MaterialCount = FMath::Max(Primitive->GetNumMaterials(), 1);
+				++Run.VisiblePrimitiveComponents;
+				Run.VisibleMaterialSlots += MaterialCount;
+				if (const UInstancedStaticMeshComponent* Instanced = Cast<UInstancedStaticMeshComponent>(Primitive))
+				{
+					Run.VisibleInstances += Instanced->GetInstanceCount();
+				}
 				for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
 				{
 					UMaterialInterface* Material = Primitive->GetMaterial(MaterialIndex);
@@ -1136,6 +1245,13 @@ namespace DCReviewCapture
 		Checks->SetArrayField(TEXT("warnings"), StringArray(Warnings));
 		Checks->SetArrayField(TEXT("errors"), StringArray(Errors));
 		Checks->SetArrayField(TEXT("landmarks"), Run.LandmarkResults);
+		// Cost measurements (Phase 6, VS-02), for same-session A/B gates: the scene scan counts what is visible and in the
+		// frustum; the RHI peaks are the highest per-frame counts sampled while the frame settled.
+		Checks->SetNumberField(TEXT("visible_primitive_components"), Run.VisiblePrimitiveComponents);
+		Checks->SetNumberField(TEXT("visible_material_slots"), Run.VisibleMaterialSlots);
+		Checks->SetNumberField(TEXT("visible_instances"), Run.VisibleInstances);
+		Checks->SetNumberField(TEXT("rhi_draw_calls_peak"), Run.PeakRhiDrawCalls);
+		Checks->SetNumberField(TEXT("rhi_primitives_peak"), Run.PeakRhiPrimitives);
 		return Checks;
 	}
 
@@ -1292,7 +1408,13 @@ namespace DCReviewCapture
 	void WriteManifest(const FRun& Run)
 	{
 		TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
-		Root->SetStringField(TEXT("map"), MapPath);
+		Root->SetStringField(TEXT("map"), MapPath());
+		TArray<TSharedPtr<FJsonValue>> ViewFileValues;
+		for (const FString& ViewFile : Run.ViewFiles)
+		{
+			ViewFileValues.Add(MakeShared<FJsonValueString>(ViewFile));
+		}
+		Root->SetArrayField(TEXT("view_files"), ViewFileValues);
 		Root->SetStringField(TEXT("render"), TEXT("Tools/PlayTest.bat cvars, scalability 0, 1280x720"));
 		Root->SetStringField(TEXT("contact_sheet"), TEXT("contact_sheet.png"));
 		Root->SetArrayField(TEXT("viewpoints"), Run.ViewpointResults);
@@ -1351,7 +1473,7 @@ namespace DCReviewCapture
 		Run.PreviousWorld = GameWorld();
 		if (UWorld* World = GameWorld(); World && GEngine)
 		{
-			GEngine->Exec(World, *FString::Printf(TEXT("Open %s"), MapPath));
+			GEngine->Exec(World, *FString::Printf(TEXT("Open %s"), *MapPath()));
 		}
 		Run.PhaseStart = FPlatformTime::Seconds();
 	}
@@ -1360,7 +1482,7 @@ namespace DCReviewCapture
 	{
 		UWorld* World = GameWorld();
 		return World && World != Run.PreviousWorld.Get() && World->HasBegunPlay() && Player() != nullptr
-			&& CountArtSentinels(World) == 1;
+			&& (Run.ExpectedSentinels == 0 || CountArtSentinels(World) == Run.ExpectedSentinels);
 	}
 
 	bool Tick(TSharedRef<FRun> RunRef)
@@ -1409,7 +1531,7 @@ namespace DCReviewCapture
 				{
 					const int32 Sentinels = CountArtSentinels(GameWorld());
 					Fail(Run, FString::Printf(TEXT("Timed out loading %s (art sentinels=%d, player=%s)"),
-						MapPath, Sentinels, Player() ? TEXT("yes") : TEXT("no")));
+						*MapPath(), Sentinels, Player() ? TEXT("yes") : TEXT("no")));
 					Run.Phase = FRun::EPhase::Finish;
 				}
 				return false;
@@ -1467,6 +1589,8 @@ namespace DCReviewCapture
 
 		case FRun::EPhase::Settle:
 			Run.FrameSamples.Add(FApp::GetDeltaTime());
+			Run.PeakRhiDrawCalls = FMath::Max(Run.PeakRhiDrawCalls, GNumDrawCallsRHI[0]);
+			Run.PeakRhiPrimitives = FMath::Max(Run.PeakRhiPrimitives, GNumPrimitivesDrawnRHI[0]);
 			++Run.Frames;
 			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < 0.5)
 			{
@@ -1672,9 +1796,8 @@ bool FDCReviewCaptureTest::RunTest(const FString& Parameters)
 	Run->Test = this;
 	Run->Log = MakeShared<FReviewLogCapture>();
 	Run->OutDir = OutputDirectory();
-	const FString ListPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Tools/Review/Lvl_Boathouse.json"));
 	FString Error;
-	if (!LoadList(ListPath, Run.Get(), Error))
+	if (!LoadReviewSet(FPackageName::GetShortName(MapPath()), Run.Get(), Error))
 	{
 		AddError(Error);
 		return false;

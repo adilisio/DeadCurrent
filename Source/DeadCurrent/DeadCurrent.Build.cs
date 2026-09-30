@@ -23,7 +23,8 @@ public class DeadCurrent : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"AssetRegistry",
 			"Json",
-			"ImageWrapper"
+			"ImageWrapper",
+			"RHI"   // the review capture reads the RHI's per-frame draw-call counts (DCReviewCaptureTest.cpp)
 		});
 
 		// Module root is public so systems include each other as "Folder/File.h".

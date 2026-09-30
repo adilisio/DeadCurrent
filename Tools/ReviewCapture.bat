@@ -1,15 +1,35 @@
 @echo off
-rem Capture Lvl_Boathouse from the review viewpoints and write PNGs plus manifest.json.
+rem Capture a map from its review viewpoints and write PNGs plus manifest.json.
+rem   Tools\ReviewCapture.bat                      Lvl_Boathouse (the default, as always)
+rem   Tools\ReviewCapture.bat Lvl_PointeSombre     another production map (also accepts Sombre), once that map exists
 rem This is a tool, not part of Tools\RunTests.bat. It fails only when a frame could not be captured.
-rem Output: Saved\Review\<yyyy-mm-dd_hhmm>\
+rem Output: Saved\Review\<yyyy-mm-dd_hhmm>\ for Lvl_Boathouse, Saved\Review\<yyyy-mm-dd_hhmm>_<map>\ for any other map.
+rem The views come from Tools\Review\<map>.json plus every Tools\Review\<map>\*.json (one file per content cell).
 rem Uses the same window and -dpcvars as Tools\PlayTest.bat. Close the editor first.
 rem Set UE_ROOT to override the engine location.
 
 setlocal
+set "TOOLS=%~dp0"
 if not defined UE_ROOT set "UE_ROOT=C:\Program Files\Epic Games\UE_5.8"
 set "UE_EXE=%UE_ROOT%\Engine\Binaries\Win64\UnrealEditor.exe"
-set "PROJECT=%~dp0..\DeadCurrent.uproject"
-set "LOG=%~dp0..\Saved\Logs\ReviewCapture.log"
+set "PROJECT=%TOOLS%..\DeadCurrent.uproject"
+
+call "%TOOLS%Maps.bat" %~1
+if "%MAP_OK%"=="0" (
+	echo Unknown map "%~1". Registered in Tools\Maps.bat: Lvl_Boathouse, Lvl_PointeSombre, Lvl_KitGym ^(development^).
+	exit /b 1
+)
+if "%MAP_EXISTS%"=="0" (
+	echo %MAP_NAME% is registered but not built yet.
+	exit /b 1
+)
+if not exist "%TOOLS%Review\%MAP_NAME%.json" if not exist "%TOOLS%Review\%MAP_NAME%\*.json" (
+	echo No review views for %MAP_NAME%: add Tools\Review\%MAP_NAME%.json or Tools\Review\%MAP_NAME%\^<cell^>.json
+	exit /b 1
+)
+
+set "LOG=%TOOLS%..\Saved\Logs\ReviewCapture.log"
+if /I not "%MAP_NAME%"=="Lvl_Boathouse" set "LOG=%TOOLS%..\Saved\Logs\ReviewCapture_%MAP_NAME%.log"
 
 if not exist "%UE_EXE%" (
 	echo Unreal Engine not found at "%UE_EXE%". Set UE_ROOT to your UE 5.8 install.
@@ -17,14 +37,16 @@ if not exist "%UE_EXE%" (
 )
 
 for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm"') do set "STAMP=%%i"
-for %%I in ("%~dp0..\Saved\Review\%STAMP%") do set "OUT=%%~fI"
+set "SUFFIX="
+if /I not "%MAP_NAME%"=="Lvl_Boathouse" set "SUFFIX=_%MAP_NAME%"
+for %%I in ("%TOOLS%..\Saved\Review\%STAMP%%SUFFIX%") do set "OUT=%%~fI"
 if not exist "%OUT%" mkdir "%OUT%"
 
 rem Same low-spec overrides as PlayTest.bat, applied before the first frame.
 set "CVARS=r.DynamicGlobalIlluminationMethod=0,r.ReflectionMethod=0,r.Shadow.Virtual.Enable=0,r.VolumetricCloud=0,r.VolumetricFog=0,r.RayTracing=0,r.Lumen.DiffuseIndirect.Allow=0,r.AntiAliasingMethod=0,r.BloomQuality=0,r.MotionBlurQuality=0,r.DepthOfFieldQuality=0,r.LensFlareQuality=0,r.AmbientOcclusionLevels=0,r.DefaultFeature.Bloom=0,r.DefaultFeature.MotionBlur=0,r.ShadowQuality=0,r.Streaming.PoolSize=400,r.ScreenPercentage=70"
 
-echo Review capture: %OUT%
-"%UE_EXE%" "%PROJECT%" /Game/Maps/Lvl_Boathouse -game -windowed -ResX=1280 -ResY=720 -prefernvidia -dx11 -nosplash -novsync -unattended -dpcvars="%CVARS%" -ReviewDir=%OUT% ^
+echo Review capture of %MAP_NAME%: %OUT%
+"%UE_EXE%" "%PROJECT%" %MAP_PATH% -game -windowed -ResX=1280 -ResY=720 -prefernvidia -dx11 -nosplash -novsync -unattended -dpcvars="%CVARS%" -ReviewDir=%OUT% -ReviewMap=%MAP_PATH% ^
 	"-ExecCmds=Automation RunTests DeadCurrent.Review.Capture; Quit" -TestExit="Automation Test Queue Empty" -abslog="%LOG%"
 
 findstr /C:"Test Completed. Result={Success}" "%LOG%" >nul

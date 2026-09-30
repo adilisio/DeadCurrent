@@ -3,6 +3,7 @@
 #include "Character/DCCharacterProgressionComponent.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCHealthComponent.h"
+#include "Core/DCMapTestHelpers.h"
 #include "Dialogue/DCDialogueComponent.h"
 #include "Engine/GameInstance.h"
 #include "EngineUtils.h"
@@ -38,35 +39,31 @@ namespace DCBoathouseTest
 	const TCHAR* TestSlot = TEXT("DeadCurrent_MapTest");
 	const FName Quest = TEXT("shore.watch");
 
-	UWorld* GameWorld()
-	{
-		return AutomationCommon::GetAnyGameWorld();
-	}
+	// The generic harness is shared (Core/DCMapTestHelpers.h, extracted from this file in Phase 6, VS-02).
+	using DCMapTest::Banner;
+	using DCMapTest::Count;
+	using DCMapTest::Find;
+	using DCMapTest::GameWorld;
+	using DCMapTest::Health;
+	using DCMapTest::HUD;
+	using DCMapTest::Inspectable;
+	using DCMapTest::Message;
+	using DCMapTest::Nearest;
+	using DCMapTest::Player;
+	using DCMapTest::QueueLoad;
+	using DCMapTest::Saves;
+	using DCMapTest::Say;
+	using DCMapTest::SwitchSlot;
+	using DCMapTest::Teleport;
+	using DCMapTest::Use;
+	using DCMapTest::VisibleChoiceTexts;
+	using DCMapTest::WorldState;
 
-	ADCPlayerCharacter* Player()
-	{
-		UWorld* World = GameWorld();
-		return World ? Cast<ADCPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)) : nullptr;
-	}
-
-	AActor* Find(FName PersistentId)
-	{
-		UWorld* World = GameWorld();
-		const UDCPersistentRegistry* Registry = World ? World->GetSubsystem<UDCPersistentRegistry>() : nullptr;
-		return Registry ? Registry->FindActor(PersistentId) : nullptr;
-	}
-
-	UDCSaveSubsystem* Saves()
-	{
-		UWorld* World = GameWorld();
-		UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
-		return GI ? GI->GetSubsystem<UDCSaveSubsystem>() : nullptr;
-	}
-
-	UDCWorldStateSubsystem* WorldState()
-	{
-		return GameWorld() ? GameWorld()->GetSubsystem<UDCWorldStateSubsystem>() : nullptr;
-	}
+	// Thin wrappers that bind the shared helpers to this map's scratch slot, its quest, and Mara's id.
+	FName TalkToMara() { return DCMapTest::TalkTo(TEXT("boat.mara")); }
+	FName Stage() { return DCMapTest::Stage(Quest); }
+	void QueueFreshMap() { DCMapTest::QueueFreshMap(MapPath, TestSlot); }
+	void QueueCleanup() { DCMapTest::QueueCleanup(TestSlot); }
 
 	/** The relay rig at the scavenger camp (inspectables have no persistent id). */
 	ADCInspectableActor* RelayRig()
@@ -85,112 +82,6 @@ namespace DCBoathouseTest
 		return Best;
 	}
 
-	bool Say(const FString& Text)
-	{
-		UDCDialogueComponent* Dialogue = Player() ? Player()->GetDialogueComponent() : nullptr;
-		const FDCDialogueNode* Node = Dialogue ? Dialogue->GetCurrentNode() : nullptr;
-		if (!Node)
-		{
-			return false;
-		}
-		const TArray<int32> Visible = Dialogue->GetVisibleChoiceIndices();
-		for (int32 Index = 0; Index < Visible.Num(); ++Index)
-		{
-			if (Node->Choices[Visible[Index]].Text.ToString() == Text)
-			{
-				return Dialogue->SelectChoice(Index);
-			}
-		}
-		return false;
-	}
-
-	FName TalkToMara()
-	{
-		ADCPlayerCharacter* P = Player();
-		AActor* Mara = Find(TEXT("boat.mara"));
-		if (!P || !Mara)
-		{
-			return NAME_None;
-		}
-		P->GetDialogueComponent()->EndDialogue();
-		IDCInteractable::Execute_Interact(Mara, P);
-		return P->GetDialogueComponent()->GetCurrentNodeId();
-	}
-
-	int32 Count(FName ItemId)
-	{
-		return Player() ? Player()->GetInventoryComponent()->GetQuantityByItemId(ItemId) : -1;
-	}
-
-	FName Stage()
-	{
-		return Player() ? Player()->GetQuestComponent()->GetStage(Quest) : NAME_None;
-	}
-
-	/** Waits until a different world than Previous has begun play with a player in it. */
-	class FWaitForReload : public IAutomationLatentCommand
-	{
-	public:
-		explicit FWaitForReload(TSharedRef<TWeakObjectPtr<UWorld>> InPrevious) : Previous(InPrevious) {}
-
-		virtual bool Update() override
-		{
-			UWorld* World = GameWorld();
-			if (!World || World == Previous->Get() || !World->HasBegunPlay() || !Player())
-			{
-				return FPlatformTime::Seconds() - StartTime > 30.0;
-			}
-			return true;
-		}
-
-	private:
-		TSharedRef<TWeakObjectPtr<UWorld>> Previous;
-	};
-
-	/** Presses F9: remembers the current world, loads, then waits for the reopened map. */
-	void QueueLoad(FAutomationTestBase* Test)
-	{
-		TSharedRef<TWeakObjectPtr<UWorld>> Previous = MakeShared<TWeakObjectPtr<UWorld>>();
-		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([Test, Previous]()
-		{
-			*Previous = GameWorld();
-			Test->TestTrue(TEXT("Load requested"), Saves() && Saves()->LoadCurrentGame());
-			return true;
-		}));
-		ADD_LATENT_AUTOMATION_COMMAND(FWaitForReload(Previous));
-		ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.5f));
-	}
-
-	void QueueFreshMap()
-	{
-		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([]()
-		{
-			if (UDCSaveSubsystem* S = Saves())
-			{
-				S->SetSlotName(TestSlot);
-			}
-			UGameplayStatics::DeleteGameInSlot(TestSlot, 0);
-			GEngine->Exec(GameWorld(), *FString::Printf(TEXT("Open %s"), MapPath));
-			return true;
-		}));
-		ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.5f));
-		ADD_LATENT_AUTOMATION_COMMAND(FWaitForMapToLoadCommand());
-		ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.5f));
-	}
-
-	void QueueCleanup()
-	{
-		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([]()
-		{
-			UGameplayStatics::DeleteGameInSlot(TestSlot, 0);
-			if (UDCSaveSubsystem* S = Saves())
-			{
-				S->SetSlotName(UDCSaveSubsystem::DefaultSlotName);
-			}
-			return true;
-		}));
-	}
-
 	// Exploration Loop: the Wrecked Survey Launch west of the boathouse (see build_boathouse.py).
 	const FName WreckLocation = TEXT("shore.survey_launch");
 	const FName Locker = TEXT("boat.wreck_locker");
@@ -198,51 +89,6 @@ namespace DCBoathouseTest
 	const FVector Beach(-1100.0, -250.0, 100.0);        // inside the discovery volume, dry
 	const FVector LiveWater(-1250.0, -1300.0, 100.0);   // in the water off the stern
 	const FVector StartArea(300.0, 0.0, 100.0);         // inside the boathouse, far from the POI
-
-	TArray<FString> VisibleChoiceTexts()
-	{
-		TArray<FString> Texts;
-		UDCDialogueComponent* Dialogue = Player() ? Player()->GetDialogueComponent() : nullptr;
-		if (const FDCDialogueNode* Node = Dialogue ? Dialogue->GetCurrentNode() : nullptr)
-		{
-			for (const int32 Index : Dialogue->GetVisibleChoiceIndices())
-			{
-				Texts.Add(Node->Choices[Index].Text.ToString());
-			}
-		}
-		return Texts;
-	}
-
-	ADCInspectableActor* Inspectable(const TCHAR* DisplayName)
-	{
-		for (TActorIterator<ADCInspectableActor> It(GameWorld()); It; ++It)
-		{
-			if (It->GetDisplayName().ToString() == DisplayName)
-			{
-				return *It;
-			}
-		}
-		return nullptr;
-	}
-
-	/** Nearest actor of class T whose bounds center (greybox boxes pivot at a corner) is within MaxDistance. */
-	template <class T>
-	T* Nearest(const FVector& Where, double MaxDistance = 400.0)
-	{
-		T* Best = nullptr;
-		for (TActorIterator<T> It(GameWorld()); It; ++It)
-		{
-			FVector Center, Extent;
-			It->GetActorBounds(false, Center, Extent);
-			const double Dist = FVector::Dist2D(Center, Where);
-			if (Dist < MaxDistance)
-			{
-				Best = *It;
-				MaxDistance = Dist;
-			}
-		}
-		return Best;
-	}
 
 	ADCLocationVolume* WreckVolume()
 	{
@@ -310,45 +156,6 @@ namespace DCBoathouseTest
 	bool Discovered()
 	{
 		return WorldState() && WorldState()->IsLocationDiscovered(WreckLocation);
-	}
-
-	void Use(AActor* Target)
-	{
-		if (Target && Player())
-		{
-			IDCInteractable::Execute_Interact(Target, Player());
-		}
-	}
-
-	void Use(const TCHAR* InspectableName) { Use(Inspectable(InspectableName)); }
-
-	void Teleport(const FVector& Where)
-	{
-		if (ADCPlayerCharacter* P = Player())
-		{
-			P->GetDialogueComponent()->EndDialogue();
-			P->SetActorLocation(Where, false, nullptr, ETeleportType::TeleportPhysics);
-		}
-	}
-
-	ADCHUD* HUD()
-	{
-		const APlayerController* PC = Player() ? Cast<APlayerController>(Player()->GetController()) : nullptr;
-		return PC ? PC->GetHUD<ADCHUD>() : nullptr;
-	}
-
-	FString Message() { return HUD() ? HUD()->GetActiveMessage().ToString() : FString(); }
-
-	FString Banner() { return HUD() ? HUD()->GetActiveBannerSubtitle().ToString() : FString(); }
-
-	float Health() { return Player() ? Player()->GetHealthComponent()->GetHealth() : -1.0f; }
-
-	void SwitchSlot(const FString& Slot)
-	{
-		if (UDCSaveSubsystem* S = Saves())
-		{
-			S->SetSlotName(Slot);
-		}
 	}
 }
 

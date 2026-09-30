@@ -4,76 +4,21 @@ Safe to re-run. Run with:
 UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> -unattended -nullrhi
 
 Quest ids and stage ids are stored in saves. Do not rename them once a quest has shipped.
+
+The quests themselves are not defined here: every file in Tools/ContentSpecs/quests/ defines QUESTS
+(see Tools/ContentSpecs/README.md) and content_specs.py loads them.
 """
+import os
+import sys
+
 import unreal
 
+_SCRIPTS = os.path.join(unreal.SystemLibrary.get_project_directory(), "Tools", "EditorScripts")
+if _SCRIPTS not in sys.path:
+    sys.path.insert(0, _SCRIPTS)
+import content_specs
+
 QUEST_PATH = "/Game/Quests"
-
-COND = unreal.DCConditionType
-CONS = unreal.DCConsequenceType
-
-
-def cond(type_name, id=None, stage=None, quantity=1, negate=False):
-    c = unreal.DCGameplayCondition()
-    c.set_editor_property("type", getattr(COND, type_name))
-    c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
-    c.set_editor_property("stage", unreal.Name(stage) if stage else unreal.Name())
-    c.set_editor_property("quantity", quantity)
-    c.set_editor_property("negate", negate)
-    return c
-
-
-def cons(type_name, id=None, stage=None, quantity=1):
-    c = unreal.DCGameplayConsequence()
-    c.set_editor_property("type", getattr(CONS, type_name))
-    c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
-    c.set_editor_property("stage", unreal.Name(stage) if stage else unreal.Name())
-    c.set_editor_property("quantity", quantity)
-    return c
-
-
-# Shore Watch: Mara wants the scavenger's rigged relay silenced.
-#   accepted --(boat.scavenger dead)--> return_killed --(Mara)--> done_killed   flag shore.path_cleared
-#            --(carrying radio_coil)--> return_coil   --(Mara)--> done_coil     flag shore.relay_recovered
-# Mara's dialogue moves the return stages to the outcome stages and hands out the rewards.
-SHORE_WATCH = dict(
-    asset="DA_Quest_ShoreWatch",
-    quest_id="shore.watch",
-    name="Shore Watch",
-    start="accepted",
-    stages=[
-        dict(
-            id="accepted",
-            objective="Silence the relay at the scavenger's camp: kill him, or pull the coil from his rig without a fight.",
-            transitions=[
-                dict(next="return_killed", conditions=[cond("ACTOR_DEAD", id="boat.scavenger")]),
-                dict(next="return_coil", conditions=[cond("HAS_ITEM", id="radio_coil")]),
-            ],
-        ),
-        dict(
-            id="return_killed",
-            objective="The scavenger is dead. Tell Mara the relay has no one to tend it.",
-        ),
-        dict(
-            id="return_coil",
-            objective="You have the relay coil. Bring it to Mara.",
-        ),
-        dict(
-            id="done_killed",
-            completes=True,
-            objective="You killed the scavenger. The shore path is clear and his relay has gone cold.",
-            on_enter=[cons("SET_WORLD_FLAG", id="shore.path_cleared")],
-        ),
-        dict(
-            id="done_coil",
-            completes=True,
-            objective="You took the relay coil without a fight. Mara is listening to it. The scavenger still walks the shore.",
-            on_enter=[cons("SET_WORLD_FLAG", id="shore.relay_recovered")],
-        ),
-    ],
-)
-
-QUESTS = [SHORE_WATCH]
 
 
 def log(msg):
@@ -125,7 +70,7 @@ def write_quest(spec):
 
 
 def main():
-    for quest in QUESTS:
+    for quest in content_specs.load_specs("quests", "QUESTS"):
         write_quest(quest)
 
 
