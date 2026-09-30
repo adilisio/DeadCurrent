@@ -17,22 +17,24 @@ MAP_PATH = "/Game/Maps/Lvl_Boathouse"
 ART_MAP = "/Game/Maps/Lvl_Boathouse_Art"
 TAG = "LandingDress"
 
-BRANCH = "/Game/Art/PolyHaven/dead_quiver_branch_01"
 TRUNK = "/Game/Art/PolyHaven/dead_tree_trunk"
 CAN = "/Game/Art/PolyHaven/can_rusted"
-POLE = "/Game/Smugglers_cove/meshes/structures/SM_wooden_pier_poles"
+PILE = "/Game/LevelPrototyping/Meshes/SM_Cylinder"
+PILE_MATERIAL = "/Game/Environment/Materials/MI_DC_Pile"
 
-# mesh, x, y, bottom z, (pitch, yaw, roll), longest-axis cm
+# mesh, x, y, bottom z, (pitch, yaw, roll), longest-axis cm, optional (sx, sy, sz) stretch after the uniform scale
 PLACEMENTS = [
-    # Driftwood fetched up either side of the gangway root, below the curb line.
-    (BRANCH, 880.0, -585.0, 0.0, (0.0, 70.0, 90.0), 150.0),
+    # A drowned trunk half in the water beside the gangway root. (The stage's lying branch was removed after the
+    # Visual Critic's V-02: its fork hung in the air over the curb.)
     (TRUNK, 1215.0, -650.0, -8.0, (0.0, -15.0, 0.0), 190.0),
     # A spare tin on the deck by the lean-to post, a second one fallen off the gangway.
     (CAN, 1245.0, -1060.0, 30.0, (0.0, 30.0, 0.0), 15.0),
     (CAN, 1085.0, -760.0, -6.0, (0.0, 10.0, 80.0), 15.0),
-    # Two older piles standing in the water east of the stage: an earlier landing that went.
-    (POLE, 1360.0, -1010.0, -60.0, (3.0, 0.0, -4.0), 170.0),
-    (POLE, 1430.0, -1190.0, -60.0, (-6.0, 0.0, 5.0), 140.0),
+    # Three older piles standing up out of the lake bed east of the stage: an earlier landing that went. They start
+    # well under the surface so nothing shows a gap at the waterline (V-03).
+    (PILE, 1360.0, -1010.0, -90.0, (3.0, 0.0, -4.0), 190.0, (0.1, 0.1, 1.0)),
+    (PILE, 1430.0, -1190.0, -90.0, (-6.0, 0.0, 5.0), 160.0, (0.12, 0.12, 1.0)),
+    (PILE, 1395.0, -1110.0, -90.0, (0.0, 0.0, 9.0), 130.0, (0.11, 0.11, 1.0)),
 ]
 
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -72,17 +74,20 @@ def clear_dressing():
     log(f"cleared {len(doomed)} previous landing dressing actors")
 
 
-def place(mesh, x, y, bottom_z, rotation, longest_cm):
+def place(mesh, x, y, bottom_z, rotation, longest_cm, stretch=None):
     box = mesh.get_bounding_box()
     extent = box.max - box.min
     scale = longest_cm / max(extent.x, extent.y, extent.z, 1.0)
+    sx, sy, sz = stretch or (1.0, 1.0, 1.0)
     actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x, y, 0.0),
                                           unreal.Rotator(pitch=rotation[0], yaw=rotation[1], roll=rotation[2]))
-    actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+    actor.set_actor_scale3d(unreal.Vector(scale * sx, scale * sy, scale * sz))
     actor.set_actor_label(f"LandingDress_{actor.get_name()}")
     actor.set_editor_property("tags", [unreal.Name(TAG)])
     comp = actor.get_component_by_class(unreal.StaticMeshComponent)
     comp.set_static_mesh(mesh)
+    if mesh.get_path_name().startswith(PILE):
+        comp.set_material(0, unreal.load_asset(PILE_MATERIAL))
     comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
     actor.set_actor_enable_collision(False)
     origin, ext = actor.get_actor_bounds(False)
@@ -102,12 +107,12 @@ def main():
         raise RuntimeError("Could not edit Lvl_Boathouse_Art. Run build_boathouse.py first.")
     clear_dressing()
     placed = []
-    for path, x, y, z, rot, longest in PLACEMENTS:
+    for path, x, y, z, rot, longest, *stretch in PLACEMENTS:
         mesh = find_mesh(path)
         if not mesh:
             log(f"skip {path}: not in the project (run Tools\\ImportPackAssets.ps1 -Name landing)")
             continue
-        placed.append(place(mesh, x, y, z, rot, longest))
+        placed.append(place(mesh, x, y, z, rot, longest, stretch[0] if stretch else None))
     if not placed:
         raise RuntimeError("Nothing placed")
     package = placed[0].get_outer().get_outermost()

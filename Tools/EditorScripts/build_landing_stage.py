@@ -65,7 +65,7 @@ LANTERN_POST_HEIGHT = 175.0
 # Moored along the deck's west side, the side that faces the boathouse door, so it reads from the path.
 SKIFF_AT = (765.0, -985.0, 38.0)                  # bounds center; the floor stays above the lake sheet
 SKIFF_YAW = 90.0
-SKIFF_ADRIFT = ((1720.0, -2080.0, 38.0), (0.0, 35.0, 0.0))
+SKIFF_ADRIFT = ((1720.0, -2080.0, 18.0), (0.0, 35.0, 0.0))  # deeper than moored: no draft reads as hovering (V-01)
 MARA_ON_STAGE = ((960.0, -990.0, DECK_TOP + 96.0), (0.0, 100.0, 0.0))
 PACK_AT_LOOKOUT = (3205.0, 1335.0, 0.0)
 PACK_ON_STAGE = (1085.0, -895.0, DECK_TOP)
@@ -73,6 +73,8 @@ CLEAT_AT = (858.0, -930.0, DECK_TOP + 3.0)
 
 BOAT_MESH = "/Game/Smugglers_cove/meshes/ships/SM_boat_dutch_small_02"
 PLANK_MESH = "/Game/Smugglers_cove/meshes/structures/SM_wooden_pier_planks"
+CYLINDER_MESH = "/Game/LevelPrototyping/Meshes/SM_Cylinder"
+BULB_Z = DECK_TOP + 205.0  # the bulb string hangs above a standing player's head (capsule top about DECK_TOP + 188)
 
 T = None  # build_boathouse.py's helpers, set by build()
 
@@ -136,6 +138,18 @@ def mesh_actor(label, mesh, scale=1.0):
     comp.set_static_mesh(mesh)
     actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
     return tag(actor)
+
+
+def roll(label, center, length, diameter, material, yaw=0.0):
+    """A NoCollision cylinder lying on its side: a rolled blanket, a duffel, a bedroll."""
+    mesh = unreal.load_asset(CYLINDER_MESH)
+    bounds = mesh.get_bounding_box()
+    ext = bounds.max - bounds.min
+    actor = no_collision(mesh_actor(label, mesh))
+    actor.set_actor_scale3d(unreal.Vector(diameter / ext.x, diameter / ext.y, length / ext.z))
+    actor.get_component_by_class(unreal.StaticMeshComponent).set_material(0, material)
+    pose(actor, center, (90.0, yaw, 0.0))
+    return actor
 
 
 def pose(actor, center, rotation):
@@ -228,9 +242,10 @@ def build_structure(timber, pile, tarp):
     for index, (x, y) in enumerate([(x0 + 10, y0 + 10), (x1 - 10, y0 + 10), (x0 + 10, y1 - 10), (x1 - 10, y1 - 10)]):
         dressing_box(f"Landing_Pile_{index}", (x, y, (DECK_TOP - 12.0 - 90.0) / 2.0), (18, 18, 90 + DECK_TOP - 12.0), pile)
     # The lean-to over the crate: four posts and a tarp roof falling toward the water.
-    for index, (x, y, h) in enumerate([(1120, -845, 190), (1262, -845, 190), (1120, -1005, 150), (1262, -1005, 150)]):
+    # The front posts are tall enough to carry the bulb string above head height.
+    for index, (x, y, h) in enumerate([(1120, -845, 218), (1262, -845, 218), (1120, -1005, 165), (1262, -1005, 165)]):
         dressing_box(f"Landing_LeanToPost_{index}", (x, y, DECK_TOP + h / 2.0), (9, 9, h), pile)
-    dressing_box("Landing_LeanToRoof", (1191.0, -925.0, DECK_TOP + 172.0), (170, 185, 4), tarp, rot=(0.0, 0.0, 13.0))
+    dressing_box("Landing_LeanToRoof", (1191.0, -925.0, DECK_TOP + 194.0), (170, 185, 4), tarp, rot=(0.0, 0.0, 16.0))
     # The lantern post at the head of the gangway, tall enough that the lantern shows against the water from the path.
     dressing_box("Landing_LanternPost", (LANTERN_POST[0], LANTERN_POST[1], DECK_TOP + LANTERN_POST_HEIGHT / 2.0),
                  (12, 12, LANTERN_POST_HEIGHT), pile)
@@ -280,48 +295,58 @@ def build_crate(cloth, rope):
     latch.set_actor_transform(closed, False, False)
     no_collision(latch)
 
+    origin, extent = crate.get_actor_bounds(False)
     lid = mesh_actor("Landing_CrateLid", lid_mesh, scale)
     no_collision(lid)
-    pose(lid, (1005.0, -1050.0, DECK_TOP + 3.0), (0.0, 28.0, 4.0))  # combat: thrown down on the boards
-    rest_on(lid, DECK_TOP)
+    # Combat: thrown flat on the boards, resting just above the plank tops so no edge dips into them (V-08).
+    pose(lid, (1005.0, -1050.0, DECK_TOP + 3.0), (0.0, 28.0, 0.0))
+    rest_on(lid, DECK_TOP + 1.0)
     thrown = (lid.get_actor_location(), lid.get_actor_rotation())
-    pose(lid, (x, y + 36.0, DECK_TOP + 24.0), (0.0, 0.0, -74.0))  # default: leaning on the crate's north face
-    rest_on(lid, DECK_TOP)
+    # Default: stood against the crate's west end, its face toward the gangway, so it reads as a lid (V-05).
+    pose(lid, (origin.x - extent.x - 9.0, y, DECK_TOP + 24.0), (0.0, 90.0, -72.0))
+    rest_on(lid, DECK_TOP + 0.5)
 
-    # Contents, seen with the lid off: two tins and a rolled blanket.
+    # Contents, seen with the lid off: a folded tarp filling the bottom, three tins and a rolled blanket on top of it,
+    # high enough to show over the rim (V-05).
     can = unreal.load_asset(CAN_MESH)
-    contents = []
-    for index, (dx, dy) in enumerate([(-30.0, -6.0), (-12.0, 8.0)]):
+    fill_top = DECK_TOP + 22.0
+    contents = [dressing_box("Landing_CrateFill", (x, y, (DECK_TOP + 3.0 + fill_top) / 2.0),
+                             (extent.x * 2.0 - 14.0, extent.y * 2.0 - 12.0, fill_top - DECK_TOP - 3.0), cloth)]
+    for index, (dx, dy) in enumerate([(-34.0, -8.0), (-18.0, 7.0), (-6.0, -9.0)]):
         tin = no_collision(mesh_actor(f"Landing_CrateTin_{index}", can, 1.1))
-        pose(tin, (x + dx, y + dy, DECK_TOP + 12.0), (0.0, 20.0 * index, 0.0))
-        rest_on(tin, DECK_TOP + 3.0)
+        pose(tin, (x + dx, y + dy, fill_top + 9.0), (0.0, 25.0 * index, 0.0))
+        rest_on(tin, fill_top)
         contents.append(tin)
-    contents.append(dressing_box("Landing_CrateBlanket", (x + 25.0, y, DECK_TOP + 14.0), (46, 20, 20), cloth))
+    contents.append(roll("Landing_CrateBlanket", (x + 24.0, y, fill_top + 10.0), 46.0, 20.0,
+                         flat("MI_DC_BlanketRoll", (0.10, 0.035, 0.03, 1.0)), yaw=90.0))
 
-    # Packed for a boat: two rope bands round the shut crate.
-    origin, extent = crate.get_actor_bounds(False)
+    # Packed for a boat: two rope bands round the shut crate, thick and dark enough to read against the lid (V-06).
     lashing = [dressing_box(f"Landing_CrateLashing_{index}", (x + dx, origin.y, origin.z),
-                            (3.0, extent.y * 2.0 + 2.0, extent.z * 2.0 + 2.0), rope)
-               for index, dx in enumerate([-28.0, 28.0])]
+                            (5.0, extent.y * 2.0 + 3.0, extent.z * 2.0 + 3.0), rope)
+               for index, dx in enumerate([-30.0, 30.0])]
     return lid, closed, thrown, contents, lashing
 
 
 def build_bulbs(cable_mat):
-    glow = T.material_instance("MI_DC_GlowBulb", T.MAT_GLOW, {"Color": (4.5, 5.0, 6.5, 1.0)})
-    dressing_box("Landing_BulbCable", (1272.0, -978.0, DECK_TOP + 168.0), (2, 270, 2), cable_mat, rot=(0.0, 0.0, 4.0))
-    dressing_box("Landing_BulbCableDrop", (1276.0, -1117.0, (DECK_TOP + 160.0 - 6.0) / 2.0), (2, 2, DECK_TOP + 166.0),
-                 cable_mat)
+    """The bulb string hangs along the lean-to's front eave, the side that faces the door and the path, so the
+    power cut reads as a change from there (V-04). The cable drops off the east end into the lake."""
+    glow = T.material_instance("MI_DC_GlowBulb", T.MAT_GLOW, {"Color": (11.0, 12.0, 15.0, 1.0)})
+    x0, x1, y = 1120.0, 1262.0, -841.0
+    dressing_box("Landing_BulbCable", ((x0 + x1) / 2.0, y, BULB_Z + 9.0), (x1 - x0, 2, 2), cable_mat)
+    dressing_box("Landing_BulbCableDrop", (x1 + 8.0, y, (BULB_Z + 9.0 - 30.0) / 2.0), (2, 2, BULB_Z + 39.0), cable_mat)
     unpowered = [T.cond("WORLD_FLAG", id=POWER_CUT, negate=True)]
-    for index, y in enumerate([-900.0, -978.0, -1056.0]):
-        light = T.flicker_light(f"Landing_Bulb_{index}", FOLDER, (1272.0, y, DECK_TOP + 160.0), (205, 222, 255),
-                                30.0 if index == 1 else 0.0, 600.0, glow_cm=7.0, glow_material=glow,
-                                conditions=unpowered, min_brightness=0.55, dropout=0.06, interval=(0.05, 0.5))
+    count = 5
+    for index in range(count):
+        bx = x0 + 12.0 + (x1 - x0 - 24.0) * index / (count - 1)
+        light = T.flicker_light(f"Landing_Bulb_{index}", FOLDER, (bx, y, BULB_Z), (205, 222, 255),
+                                45.0 if index == count // 2 else 0.0, 700.0, glow_cm=9.0, glow_material=glow,
+                                conditions=unpowered, min_brightness=0.6, dropout=0.05, interval=(0.05, 0.5))
         tag(light)
-    bulbs = T.box("Landing_Bulbs", FOLDER, (1272.0, -978.0, DECK_TOP + 162.0), (10, 190, 12),
+    bulbs = T.box("Landing_Bulbs", FOLDER, ((x0 + x1) / 2.0, y, BULB_Z + 4.0), (x1 - x0, 10, 14),
                   actor_class=unreal.DCInspectableActor, hidden=True)
     T.setup_inspectable(bulbs, "Bulbs", TEXT_BULBS, variants=[T.variant(TEXT_BULBS_CUT, [T.cond("WORLD_FLAG", id=POWER_CUT)])])
     tag(bulbs)
-    hum = T.conditional_audio("Landing_BulbHum", FOLDER, (1272.0, -978.0, DECK_TOP + 160.0), HUM, 0.08,
+    hum = T.conditional_audio("Landing_BulbHum", FOLDER, ((x0 + x1) / 2.0, y, BULB_Z), HUM, 0.08,
                               conditions=unpowered, attenuation="SA_DC_Hum")
     tag(hum)
 
@@ -362,11 +387,12 @@ def build_tackle(rust):
 
 
 def build_pack(cloth_dark, cloth):
-    """Mara's pack: a canvas bag with a bedroll strapped across the top. Two pieces that move as one."""
+    """Mara's pack: a canvas duffel with a bedroll strapped along the top. Two pieces that move as one. The owned
+    library has no backpack mesh; whether to generate one is parked for Anthony (V-06)."""
     x, y, z = PACK_AT_LOOKOUT
     return [
-        dressing_box("Landing_MaraPack", (x, y, z + 21.0), (36, 24, 42), cloth_dark),
-        dressing_box("Landing_MaraBedroll", (x, y, z + 48.0), (44, 15, 15), cloth),
+        roll("Landing_MaraPack", (x, y, z + 16.0), 62.0, 32.0, cloth_dark),
+        roll("Landing_MaraBedroll", (x, y, z + 40.0), 50.0, 16.0, cloth),
     ]
 
 
@@ -389,7 +415,7 @@ def build(map_tools):
     timber_dark = flat("MI_DC_TimberDark", (0.03, 0.025, 0.02, 1.0))
     pile = flat("MI_DC_Pile", (0.025, 0.021, 0.018, 1.0))
     tarp = flat("MI_DC_Tarp", (0.030, 0.036, 0.026, 1.0))
-    rope = flat("MI_DC_Rope", (0.13, 0.10, 0.065, 1.0))
+    rope = flat("MI_DC_Rope", (0.05, 0.038, 0.022, 1.0))
     cloth = flat("MI_DC_Blanket", (0.08, 0.05, 0.035, 1.0))
     cloth_dark = flat("MI_DC_PackCanvas", (0.035, 0.040, 0.025, 1.0))
     cable = flat("MI_DC_Cable", (0.02, 0.02, 0.02, 1.0))
@@ -425,6 +451,6 @@ def build(map_tools):
              pivot_on_origin=True)
     pack_rule = presence("MaraPack", pack, [
         state("combat", combat()),
-        state("coil", coil(), place=placement((PACK_ON_STAGE[0], PACK_ON_STAGE[1], PACK_ON_STAGE[2] + 22.0), (0.0, 15.0, 0.0))),
+        state("coil", coil(), place=placement((PACK_ON_STAGE[0], PACK_ON_STAGE[1], PACK_ON_STAGE[2] + 16.0), (90.0, 15.0, 0.0))),  # lying, like at the lookout
     ])
     log(f"built {LOCATION_ID}: pack pivot {pack_rule.get_actor_location()}")

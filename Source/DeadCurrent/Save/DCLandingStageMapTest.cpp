@@ -159,7 +159,7 @@ namespace DCLandingStageTest
 	{
 		for (TActorIterator<ADCFlickerLight> It(GameWorld()); It; ++It)
 		{
-			if (It->Tags.Contains(TEXT("LandingStage")) && FVector::Dist2D(It->GetActorLocation(), FVector(1272.0, -978.0, 0.0)) < 20.0)
+			if (It->Tags.Contains(TEXT("LandingStage")) && FVector::Dist2D(It->GetActorLocation(), FVector(1191.0, -841.0, 0.0)) < 20.0)
 			{
 				return *It;
 			}
