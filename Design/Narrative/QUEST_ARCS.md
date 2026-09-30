@@ -99,6 +99,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 ### 2.1 Where it sits and why the player comes
 - **Story position:** Act I, directly after the prologue shore. It is the first place the player follows Liv to, and the first place the player learns she hurt someone.
 - **Why the player arrives:** the *Tern*'s bearing and Mara point to Pointe Sombre, and the *Ida* is due there on its dues run. The slice **opens in the storm crossing**: the *Ida* makes for a light on the headland, but it is the wrong light (a false one). The real tower is dark. The *Ida* grazes the reef, limps into the harbor, and will not sail again while the point is dark. The player's way onward is stuck until the light is settled. That is the slice's clock, and it is personal.
+- **Faction pacing inside the slice:** the two factions arrive one at a time. Sigrun is there from the start as a harmless "copper buyer"; the player learns she is the Local's only by finding the cut cable. Hale's Compact cutter arrives after the storm, about halfway through, with a key and a deadline. The player meets a person first and a faction second.
 - **Standalone framing for the demo:** a short letter-and-map intro recaps the prologue in one screen. Mara is aboard. The slice works for players who never saw the Authority Shore.
 
 ### 2.2 What the lighthouse is really doing (author truth)
@@ -129,7 +130,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 1. **Harbor and settlement** (hub): Marthe's store, Odette's cottage, the Pruitts' "salvage" shed, the infirmary shack, the smokehouse, the net loft where the settlement meets.
 2. **The lighthouse**: tower, lamp room (lens, clockwork, the old oil lamp), gallery.
 3. **The storm vault** (dungeon 1): Authority node room, section panel, direction-finding loop, the Authority keeper's log, a flooded lower level with **live water** (reuses the *Tern*'s hazard grammar), Liv's traces (her chart, a pencil stub, her note to Odette).
-4. **The *Ashland Grey*** on the reef (dungeon 2, a wreck interior): cargo hold half under water, the Pruitts' cache, the laker's log (for Hale's Loss Book).
+4. **The *Ashland Grey*** on the reef. **In the slice:** a wilderness site seen from the shore and walkable at low water (her deck, the Pruitts' cache, her log for Hale). **In initial production:** her interior becomes the region's second dungeon (the cargo hold half under water).
 5. **The false-light headland**: the Pruitts' lantern post and a hide.
 6. **The cable hut**: where Sigrun cut the feed; **mussel lines** run from it into the water.
 7. **Remy's boat** on the rocks, and his marker. Environmental story only.
@@ -192,7 +193,7 @@ The **physical** decision is made in the vault and the lamp room. **Exposure** i
 | Expose Odette / the Pruitts / Liv / Sigrun | Shifts who leads and who keeps | Who stays in the settlement | Returning later, different faces | Who holds Pointe Sombre's vote under the Commons |
 
 ### 2.10 Kept deliberately small
-No new faction HQ, no companion recruitment scene beyond Mara, no Sounding presence beyond the children's ticks, no Kenning. One settlement, three wilderness sites, two dungeons, two factions, one companion. See `AUDITS.md` §4.
+No new faction HQ, no companion recruitment scene beyond Mara, no Sounding presence beyond the children's ticks, no Kenning. **The slice itself:** one settlement, the lighthouse, **one dungeon (the vault)**, two or three small wilderness sites, two factions (through Hale and Sigrun), one companion, and three quests (The Wrong Characteristic, False Light, a trimmed Copper Buyer). **The initial production region** around it adds the *Ashland Grey* interior as the second dungeon, Loss Book, Storm-Waking, a full Copper Buyer, and about fifteen encounters: one settlement, three wilderness sites, two dungeons, two factions, one companion, about six quests (`LongTermPlan.txt` §24). See `AUDITS.md` §4.
 
 ---
 
@@ -252,7 +253,7 @@ The thread must never disappear for more than one region. Each stop has **an obj
 - **Act I:** at Pointe Sombre she sees the Leclair children's ticks and goes quiet. If the player exposes Liv as their sister at the net loft, Mara tells them about the promise that night.
 - **Act II, Tall Masts:** June Okafor, the last *Tern* crew member, and Mara: the woman who walked up the beach and the girl who didn't follow. With high Persuasion and Mara present, June says one sentence. On the Mourners' list, Mara finds her brother's name, entered decades ago by someone else.
 - **Decision (by doing):** her **book** (decades of transcripts, the most complete protocol record outside the Sounding): burn it, give it to the Readers, give it to the Answerers, or carry it to the Crib.
-- **Endgame:** at the Crib Mara can read the one phrase that **stands a section down** (it is in her book, if it survives), refuse, or, if the player has pushed her toward it, **answer**.
+- **Endgame:** at the Crib Mara can call the **stand-down sequence** (the call-and-response for each section breaker, in order; it is in her book, if it survives), refuse, or, if the player has pushed her toward it, **answer**.
 - **Opinion triggers:** she approves of hand-lit lights, returned charts, protected children, and listening first. She disapproves of speaking protocol casually, of using the children, and of lying to her about Liv.
 - **Ending states:** see `CHARACTERS.md` §2.
 
@@ -329,7 +330,7 @@ Each is a human story first, and each touches the Line in one concrete way.
 | Kestrel Light | Lit on the Line, by hand, or dark | Island stays or leaves | Board or Open Water at Kenning | Kestrel on the census tables or not |
 | The Floor vote | Wing leads the Local | Aubin's posture | Charges, seizure crew, or no one at Kenning | Severance ending prepared or blocked |
 | The Vigil reply | Every relit light flashes | Readers or Answerers ascendant | Who comes to the Crib | Open Channel ending available or not |
-| Mara's book | Burned or given | Mara's trust | The stand-down phrase at the Crib | Whether the Crib can be stood down safely |
+| Mara's book | Burned or given | Mara's trust | The stand-down sequence at the Crib | Whether the Crib can be stood down safely |
 | Pumping station | Squatters' heat cut, or a table rewritten | Squatters ally or enemy | Squatters in the tunnel, or not | First proof the tables can be edited |
 | Who comes through the tunnel | The team | Tunnel route and cost | Who stands in the Crib | Which endings are physically possible |
 | What goes on the census | Places added or struck | n/a | The tables | Who gets power, heat, and light in the census endings |
@@ -347,3 +348,31 @@ Each is a human story first, and each touches the Line in one concrete way.
 | Which facility they disable | The vault's exchange; the salt-mine cable; the Crib's trunk cables |
 | Whom they bring to a location | The vigil (Mara); the Floor (evidence); the Crib (the team) |
 | What evidence they preserve or destroy | Vault data before the sea cock; the Severance record; the tape |
+
+---
+
+## 10. Quiet human stories, one per region (added after the pacing audit)
+
+Every region needs at least one scene with no combat, no infrastructure decision, and no lore delivery: just people.
+
+| Region | Quiet story |
+| --- | --- |
+| Authority Shore | Mara sitting up with the coil (existing, coil route). |
+| Pointe Sombre | Odette at Remy's marker. The player can stand there with her, say nothing, and leave. |
+| Port Carrow | The **November reading of the Loss Book** in the Captains' Hall: every name lost that year read aloud, and a bell for each. If Pointe Sombre was left dark, Remy's name is on it. If the player's choices cost a ship, that ship is too. |
+| Aubin | Kowalczyk's granddaughter asks the player what a school is like. There is no right answer. |
+| Tall Masts | June Okafor mending sounder paper, not speaking, while the children sleep, if the storm has passed. |
+| The islands | The Grand Harmon's wedding announcement; Dead Letters; Mayfly Night (§6). |
+| Kenning | The squatters' spokesperson showing the player the one working clock in the city, kept by hand. |
+| The Crib | Liv asleep at the console for four minutes while the player watches the resync requests stack up. |
+
+## 11. Exploration shortcuts (the main path rewards curiosity)
+
+Places where a player who wandered gets something the direct path does not give:
+
+- **The mark off the point** (prologue shore, clear water): following the mussel line gives the *Tern*'s bearing even without the Sounder Chart and Schematic Eye.
+- **The *Ashland Grey*'s log** (Pointe Sombre): gives Hale's trust without relighting on the Line, and names the laker's dead for the Loss Book.
+- **The sealed Authority depot** (reached only on the automatic ferry): holds a spare **section key**, one fewer key the player must beg or steal.
+- **The lockkeeper's descendant** (Dead Letters): knows the dam's old maintenance ladder, the Stealth route for Lock Passage without Engineering.
+- **Kenning's rail yard** (off the main route): a second, half-collapsed intake shaft; a fifth route into the tunnel that no faction knows.
+- **Every settlement discovered** is a line the player can add to Liv's census (§4). The census endings reward the explorer directly.

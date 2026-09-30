@@ -2,6 +2,8 @@
 
 Canon for setting, factions, characters and places. See `LongTermPlan.txt` sections 2 and 3 for the premise.
 
+A full provisional story draft (arc, mystery ledger, factions, cast, quest arcs, endings) is in `Design/Narrative/`; start with `STORY_REVIEW.md`. **None of it is canon** until Anthony confirms it here.
+
 ## Setting
 
 A post-collapse Great Lakes archipelago, roughly sixty years after a cascading infrastructure disaster ended long-distance power, shipping, communications and centralized government.

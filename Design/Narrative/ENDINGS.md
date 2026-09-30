@@ -28,12 +28,12 @@ A round stone intake crib four miles off Kenning, three levels, reached by the f
 | Present if | Wants | Can do in the room |
 | --- | --- | --- |
 | **Liv** (always) | Keep holding until the tables are right; possibly hand the player the chair | Operate either console; lock bulkheads; refuse to leave |
-| **The companion** (Mara, proposed) | Listen first; not answer | Read the stand-down phrase (if her book survives); refuse; answer |
+| **The companion** (Mara, proposed) | Listen first; not answer | Call the stand-down sequence (if her book survives); refuse; answer |
 | **Hale** and a Compact crew (if the player allied with him, or he forced the lock) | Seize and black-start on lights-first tables | Seat Compact keys; hold the room at gunpoint; kill Liv if she won't move |
 | **Sobczak** and Cutters (if the Floor went to the Cutters, or the player brought them) | Burn the Line | Set charges in the trunk gallery |
 | **Tolliver** and Stewards (if the Floor went to the Stewards) | Seize the keys and lock the Line shut from Aubin | Pull keys; hold the key wall |
 | **Reyes** and Answerers (if the Answerers rose at the Vigil) | Open the governors | Unlock the cabinet; key the Crib's transmitter |
-| **A Reader recorder** (if the Readers held) | Record everything; stop anyone answering | Witness; stand-down phrase from the Lexicon |
+| **A Reader recorder** (if the Readers held) | Record everything; stop anyone answering | Witness; call the stand-down sequence from the Lexicon |
 | **Odile** (if the player asked the Post for passage) | Carry what the player decides to send | Take keys or documents to every harbor |
 
 The player can also arrive **alone** (the forced tunnel route), with the fewest options and nobody to stop them.
@@ -66,17 +66,17 @@ It splits by **whose tables** it runs on:
 
 ### 3.2 The Second Severance: "Burn the Line"
 
-**What the player physically does:** sets charges on the trunk cables in the gallery (with Sobczak, or alone), floods the key wall, and throws the Crib's main breakers. If the Sounding's **stand-down phrase** is read first (Mara's book or the Lexicon), the sections fall silent in order. If not, the Line's firebreak logic islands **every** section at once, Aubin's powerhouse included, in November.
+**What the player physically does:** sets charges on the trunk cables in the gallery (with Sobczak, or alone), floods the key wall, and throws the Crib's main breakers. If the Sounding's **stand-down sequence** is worked first, breaker by breaker (Mara's book or the Lexicon), the sections fall silent in order. If not, the Line's firebreak logic islands **every** section at once, Aubin's powerhouse included, in November.
 
-- **Requires:** access to the gallery; charges (the Cutters' or the player's Engineering); the stand-down phrase to do it safely.
+- **Requires:** access to the gallery; charges (the Cutters' or the player's Engineering); the stand-down sequence to do it safely.
 - **Who benefits:** anyone who feared a single hand on the lakes. The Local's dam becomes the only power that matters.
 - **Who pays:** sailors (no warnings, no Authority lights, only hand-lit lights), the islands (no reconnection, ever), the Compact (routes shrink to what can be lit by hand). If done without the phrase, Aubin itself goes dark for a winter.
 - **Trade:** contracts to hand-lit routes. The Post and the Compact's convoys become the only connection.
 - **Communities:** stay islanded. Some thrive on their own; small ones slowly empty.
 - **Infrastructure:** the Line is gone. The relit lights keep working **only if they were relit by hand** (Pointe Sombre path 2 becomes the model the whole region needs).
 - **What remains unknown:** **the Current does not end.** The relays go quiet in most places. The *Tern*'s unwired mast lamp still flickers. The children still don't sleep. Readers note that the pattern is now weaker in some places and stronger in others (C7, again).
-- **Liv:** refuses to leave. The player can carry her out through the tunnel before the charges go (a sequence), or leave her. If carried out, she does not speak to the player for a long time.
-- **Companion (Mara):** if the phrase was hers, she burns her book afterward. If not, she says nothing on the long walk back.
+- **Liv:** refuses to leave. The player can carry her out through the tunnel before the charges go (a timed escape), or leave her. If carried out, she does not speak to the player for a long time.
+- **Companion (Mara):** if the sequence came from her book, she burns her book afterward. If there was no sequence, she says nothing on the long walk back.
 - **Future uncertainty:** the Local now holds the only large power source in the region, and the Cutters are the heroes of the Floor.
 
 ### 3.3 Open Channel: "Answer"
@@ -99,10 +99,10 @@ It splits by **whose tables** it runs on:
 
 **What the player physically does:** black-starts the Line on the **census tables**, then **redistributes the section keys** at the key wall so that the table console and the governors need **three of four keyholders** to act. The keys leave the Crib with their holders, carried by the Post.
 
-- **Requires:** Liv's census; the Local's dam (so the Floor, or at least the Hands, must trust the player); the stand-down phrase (a Reader or Mara's book); at least two factions' trust; Odile to carry the keys; four holders willing to take them (typically the Compact, the Local, the Sounding, and **an unaligned holder**: Pointe Sombre, the lockkeeper's descendant from Dead Letters, or the Post itself).
+- **Requires:** Liv's census; the Local's dam (so the Floor, or at least the Hands, must trust the player); the protocol, to operate the Crib without tripping a firebreak (a Reader, or Mara's book); at least two factions' trust; Odile to carry the keys; four holders willing to take them (typically the Compact, the Local, the Sounding, and **an unaligned holder**: Pointe Sombre, the lockkeeper's descendant from Dead Letters, or the Post itself).
 - **Who benefits:** most people, slowly. Warnings, lights, and medicine move; no one can switch off a town alone.
 - **Who pays:** **speed.** The first winter under the Commons, a vote on power for a freezing island fails for eleven days because two keyholders cannot agree. People die in those eleven days. Every future crisis depends on people who distrust each other agreeing fast enough.
-- **Also pays:** whoever sits at the resync console, because **someone must stay at the Crib** to operate it. Liv (by choice), Mara (by choice), or the player (the player's own last act can be to take the chair).
+- **Also pays:** whoever sits at the resync console, because **someone must stay at the Crib** to operate it. Liv (by choice), Mara (by choice), or the player, who can choose to stay. Liv never offers the chair; if the player takes it, it is over her objection.
 - **Trade:** recovers steadily; the Compact is powerful but not sovereign.
 - **Communities:** every place on the census is on the tables. Places the player never found are not, until someone adds them, which requires three keys.
 - **Infrastructure:** restored and fragmented on purpose.

@@ -27,7 +27,7 @@ A deliberately small cast: eight major characters, a handful of supporting ones,
 | **Personal stake** | The player. The tape. A drowned boy at Pointe Sombre she has not let herself think about. |
 | **Relationship to the Current** | Hears it better than anyone alive. Believes "it's asking". Has not slept a full night in weeks. Hum-ear in her left ear. |
 | **Relationship to the missing person** | She is the missing person. |
-| **What she wants from the player** | At first: to go home. Then: help. Finally: possibly, to take her place at the console. |
+| **What she wants from the player** | At first: to go home. Then: help holding the Line. Never succession: she refuses to hand the chair to anyone, the player included. |
 | **What changes the relationship** | What the player has learned about her on the way (Pointe Sombre, the Compact money, the traded key, Tam Reyes's death in the tunnel), and whom the player brings into the Crib. |
 | **Where she can oppose the player** | In the Crib. If the player moves to burn the Line, hand it to Hale, or open it to the Answerers, Liv will try to stop them: at the console, by locking bulkheads, by refusing to leave. She will not shoot her sibling. She will make them choose. |
 | **Ending states** | Stays as the Crib's operator (alone, or under the Commons); comes home with the player; tried by the Compact; walks into the tunnel with a lantern and is not seen again; dies in the Crib (if the player burns it and does not carry her out). See `ENDINGS.md`. |
@@ -61,7 +61,7 @@ Her pressed line is first-person, about a night about sixty years ago. Options: 
 | **Relationship to Liv** | Liked her. Kept her secret. Blames herself a little for the *Tern*. |
 | **What she wants from the player** | At first: quiet on her shore (Shore Watch). Then: that the player not follow Liv. Then: that someone sensible goes with them. |
 | **What changes the relationship** | Shore Watch's route (the coil route earns trust; the combat route makes her colder, and "went back for him anyway" colder still). Whether the player reads the *Tern* and asks honestly. Whether the player treats the words as tools. |
-| **Where she can oppose the player** | If the player means to **speak the words** at the lock or the Crib, or hand her book to the Answerers, she objects and can leave. At the Crib she can refuse, or read the one phrase that stands a section down. |
+| **Where she can oppose the player** | If the player means to **speak the words** at the lock or the Crib, or hand her book to the Answerers, she objects and can leave. At the Crib she can refuse, or call the stand-down sequence that shuts a section down in order. |
 | **Ending states** | Returns to her shore, and to a landing stage that looks like whatever the player made of it; stays at the Crib as keeper (if the player leaves Liv free to go); burns her book; gives her book to Tall Masts; leaves the player's company after a betrayal; dies in the tunnel (only if the player takes her there without the pumps or the protocol, and chooses to go on). |
 
 **Why Mara is the proposed companion:** she is already built, liked in playtest, holds the coil and the transcripts (the Lexicon's missing pages), witnessed the Sounding's founding, and can travel to Pointe Sombre in the vertical slice. An alternative companion, if Anthony wants Mara to stay put, is **Sigrun Dahl** (§9).

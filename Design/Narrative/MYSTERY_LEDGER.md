@@ -78,7 +78,7 @@ These are **load-bearing**. Do not resolve them in content without Anthony.
 | C2 | The *Tern*'s battery bank is **still live after sixty years** (existing). Old cells do not hold charge that long; induced charging needs a long conductor the boat no longer has. | Pure physics |
 | C3 | The **fish ring is one shock from a point source** (existing, Pulse Read) under the stern, where there is nothing. | Battery leakage alone |
 | C4 | **"Kallio at the Crib"** was Liv's private speech, aired on every relay. Nothing in the Crib was keyed to transmit. | Archive replay; Liv as broadcaster |
-| C5 | A transmission in **Liv's voice repeats something the player said privately** at Pointe Sombre, far from any relay, before the player had any radio. (PROPOSAL; use once only.) | Everything; it is meant to be unsettling and unexplained |
+| C5 | The Authority voice reads the position of **the rowboat the player took ashore** at Pointe Sombre, separately from the *Ida*. The rowboat has no transponder, is not on any Compact roster, and has never been near a node. (PROPOSAL; use once only. Replaces an earlier draft in which Liv's voice repeated the player's private words; that device is too close to Oxenfree. See `AUDITS.md` §1.) | "It only knows what transponders tell it" (E8) |
 | C6 | Holt's code was entered **forty minutes after her launch was found capsized**, at a crib evacuated three hours earlier. | "Holt did it" and "nobody did it" both |
 | C7 | After the Severance, Current activity **fell in some islanded sections and rose in others**. | "Cutting the Line starves it" and "the Line is its body" |
 | C8 | A wireless log from a **November gale generations before the Line** records "regular ticking". The Readers keep it; the Surveyors call it a forgery; the paper and ink are right for its age. | "The Line caused it" |
@@ -118,7 +118,7 @@ The Current's **rules** keep content systemic. Quest writers use these rather th
 | Mayfly rings | A side story (Mayfly Night) | Over the Crib at the endgame, if it is summer |
 | Vessel names in transmissions | The relay says "*Ida Lamberton*" (Prologue, PROPOSAL) | Port Carrow |
 | Protocol replies | The lock | The tunnel bulkheads, the Crib |
-| Voices of the known | Liv's voice | Midpoint; C5 |
+| Voices of the known | Liv's voice | Midpoint (C4) |
 | Machines keeping schedules | The automatic ferry (side story) | The lock under storm protocol; Kenning's clocks |
 
 ### 5.3 What the transmissions contain (for writers)
@@ -171,7 +171,7 @@ Each rung **answers** a previous question and **raises** a more consequential on
 - What the Current **is**.
 - Whether the pattern is **asking**, or only retrying.
 - Who entered Holt's code (C6).
-- How Liv's private words were aired (C4), and how the player's own words were repeated (C5).
+- How Liv's private words were aired (C4), and how the Line knew where the player's own boat was (C5).
 - Whether the old gale log is real (C8).
 - Whether the Severance saved the region or doomed it.
 - What, if anything, **answering** changes for whatever is on the other end.
@@ -204,7 +204,7 @@ Do not write, imply, or foreshadow any of these as *the* answer:
 - **Magic**, crystals, artifacts, ley lines.
 - **A simulation** or dream.
 - **Nanotechnology**, nanites, swarms.
-- **Time travel** or messages from the future (C5 must never be explained as the future).
+- **Time travel** or messages from the future (nothing in the transmissions may be explained as foreknowledge).
 - **The player is special**: the signal is about the player, the player is a descendant of Holt, the player can hear what others cannot.
 - **Liv is the Current**, or became part of it, or it is using her body.
 - **Mara is immortal, a ghost, or a construct** (her age question in `STORY_REVIEW.md` must be answered mundanely or left alone).
@@ -234,3 +234,46 @@ Use these as dialogue seeds. The point is that interpretation, not hidden villai
 - **Never** write a transmission that is a clear, complete message from an intelligence. Fragments, protocol, archive, and at most one uncanny line per act.
 - Hum: always the same tone. Pattern: always evenly spaced, tightening before weather.
 - Liv's letters and notebook entries are signed **L.** Her handwriting has a distinctive capital **A with no crossbar** (a listener's habit: a crossbar can be misread as a dash in a transcript). The **A** in "HEAR IT TOO" should, when the art pass reaches it, share that hand (PROPOSAL). The match is a Fieldcraft or Survival-style reading once the player carries one of her letters.
+
+---
+
+## 13. Vocabulary: player-facing vs engineer-only (added after the pacing audit)
+
+The story has too many technical nouns for players to carry. **Only six are player-facing**, meaning anyone may say them and the quest log may use them:
+
+| Player-facing | Meaning |
+| --- | --- |
+| **the pattern** | The evenly spaced pulses in every device |
+| **the Line** | The Authority's buried network |
+| **the Severance** | The night the Line was cut (named only from Act II on; in Act I the panel just says SEVERED) |
+| **keys** | What locks a section, and what opens it |
+| **the tables** | Who the Line powers first (from Act III) |
+| **the Crib** | The offshore intake where it all meets |
+
+**Engineer-only** words may appear on panels, in logs, and in the mouths of engineers (Hale, Sigrun, Kowalczyk, the Surveyors, Liv), and should always be **translated by someone in the scene** the first time: *section* ("a piece of the Line"), *resync* ("it's asking to come back"), *black start* ("starting it from nothing"), *protocol* ("the words"), *governors* ("the part that waits for a person"), *islanding* ("cut into pieces"), *seiche* ("the lake breathing"), *characteristic* ("a light's own flash").
+
+Island folk never use any of them. They say "the Authority", "the words", "the storm", and "keep your voice down".
+
+---
+
+## 14. Timeline (PROPOSAL; for continuity)
+
+| When (before the game opens) | What |
+| --- | --- |
+| ~70 years | The Pattern Desk begins recording structure in Current events. |
+| ~60 years | The collapse. The Severance, 03:12, Holt's code. The *Tern* grounded; Ellis Tennant and June Okafor walk inland. Mara, a child, sees them come up the beach (if Decision 3 is A). |
+| ~55 years | The *Tern* Book becomes the Sounding. Aubin's workers have run the dam by hand for five years. |
+| ~40 years | Five harbors sign the Compact's charter. |
+| ~30 years | Odette's father taps Pointe Sombre's vault to power the lamp. |
+| ~25 years | Hale's first ship, the *Constance*, is lost on a dark reef. |
+| ~20 years | The Compact's Lights Office begins relighting. Resync counts start to climb. |
+| ~3 years | The Pointe Sombre light starts flashing the pattern in storms; the *Ashland Grey* is wrecked. |
+| ~2 years | The player salvages the Authority tape and gives it to Liv. |
+| ~1 year | Liv notices vessel names in the transmissions; Hale hires her. |
+| ~5 months | Liv at the Authority Shore: seats the coil, asks Mara about the *Tern*, posts her last letter. |
+| ~4 months | Liv at Pointe Sombre: pulls the section key. Remy Beaudry drowns in the first storm after. |
+| ~3 months | Sigrun cuts the lamp-room cable. Liv at Aubin: detained, trades the key for passage. |
+| ~2 months | Liv at Tall Masts; Tennant gives her the Lexicon. Liv leaves with Tam Reyes and another Answerer. |
+| ~6 weeks | Tam Reyes dies in the intake tunnel. Liv reaches the Crib and starts refusing resync requests. |
+| 3 nights | The scavenger finds Liv's coil still seated in the shore relay and wires a truck battery to it. It starts talking (existing: "three nights now"). |
+| The night before the game opens | The *Ida* puts the player ashore at the Authority landing. The player sleeps (or passes out) in the boathouse (existing). |

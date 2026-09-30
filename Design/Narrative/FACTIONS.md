@@ -226,7 +226,7 @@ They can close the river. The Cutters. A town that owns the only dam can decide 
 ### 4.2 Each prevents a catastrophe the others underestimate
 
 - **The Local prevents the stale-table black start.** Only they know what the tables do. The Compact thinks the Line is neutral; the Answerers think it wants to speak.
-- **The Sounding prevents a botched Severance.** Only they know the protocol well enough to stand a section down. A crude Cutter demolition at the Crib would trigger the Line's firebreak logic, which would island every section including Aubin's powerhouse, in winter.
+- **The Sounding prevents a botched Severance.** Only they know the **stand-down sequence**: a procedure, not a password. Each section's breaker in the Crib is thrown in order while the operator speaks that section's call and waits for the Line's reply, so the Line records an orderly stand-down instead of a failure. It takes two people and about twenty minutes. A crude Cutter demolition at the Crib would trigger the Line's firebreak logic, which would island every section including Aubin's powerhouse, in winter.
 - **The Compact prevents slow death by isolation.** The Local and the Readers both treat "leave it alone" as safe. It is not: people on the small islands die every winter for want of what ships carry.
 
 ### 4.3 Each is right about one thing, holds something the others cannot replace

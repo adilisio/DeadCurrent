@@ -91,6 +91,10 @@ This section is the writers' reference. It describes the **machine**, not the Cu
 - **The tables are sixty years stale.** They power hospitals that are flooded, pump districts no one lives in, hold lake-level gates at pre-collapse targets, and have never heard of any settlement founded since. An automatic black start would misallocate power, close the lock under storm protocol, and drain or flood communities built on the new shorelines. That is the concrete, regional catastrophe: not the end of the world, but the Line faithfully restoring a world that is gone.
 - The protocol and the keys are **how people can intervene**: refuse a resync, rewrite a table, split the keys, burn the Line, or open it.
 
+### 4.4b Where the Crib gets its power (PROPOSAL)
+
+A sixty-year-old console needs power. Proposal: the intake tunnel was fitted with a small **reversible turbine** for emergency supply. The lake's **seiche** (the whole basin sloshing slowly back and forth over hours) pushes water in and out of the four-mile tunnel, and the turbine turns with it. The Crib runs, faintly, on the lake breathing, plus induced current in the trunk cables during storms. This gives the Surveyors a strong argument (the Crib's activity rises and falls with the seiche because its **power** does) without explaining the pattern elsewhere (the *Tern*'s mast lamp, the fish ring, children on islands with no cable). It also gives the Intake dungeon a moving hazard: the water in the tunnel runs one way, stops, and runs back.
+
 ### 4.5 What the Line is not
 
 - It is not conscious by design, not a villain, not an AI that "woke up". It is emergency automation with stale instructions and a lot of copper under the lakes.
@@ -131,7 +135,7 @@ This section is the writers' reference. It describes the **machine**, not the Cu
 - **Evidence she leaves** (a thread through every act; see `QUEST_ARCS.md`, Liv arc): her letters; "HEAR IT TOO" under the scavenger's KEEP OUT (her hand; PROPOSAL reinterpretation of existing text); the coil seating; pencil cross bearings on her charts; her note to the keeper at Pointe Sombre; her confiscated gear at the Locks; her annotations in the Sounding's archive; a **dead letter** held by the Packet; her census notebook; and, from mid-game, **her voice** in the transmissions.
 - **How her story intersects the region.** Her actions caused a death at Pointe Sombre, handed the Local a key, and, by holding the Crib, are the only reason the Line has not black-started. She is simultaneously the person who most endangered the region and the person currently protecting it, and she has made herself its unelected operator. Every faction's leader will say "she has no right". Every faction's leader wants her chair.
 - **How the player's opinion is meant to move:** *lost* (prologue) → *reckless* (Act I, the drowned boy) → *manipulative* (Act II, the Compact money, the traded key, the dead Answerer) → *right about something nobody else sees* (midpoint, the resync) → *someone who has decided she alone should run the lakes* (Act III) → the player decides what they think.
-- **What stops it being a rescue.** The rescue objective is in direct conflict with the regional stakes: if the player takes Liv home, no one is holding the Line (see Endings, "Bring Her Home"). And she may not want to be rescued. She may ask the player to take her place.
+- **What stops it being a rescue.** The rescue objective is in direct conflict with the regional stakes: if the player takes Liv home, no one is holding the Line (see Endings, "Bring Her Home"). And she may not want to be rescued. She will not hand the Line to anyone, the player included: "Nobody should be *given* this." (Deliberately not a succession offer; see `AUDITS.md` §1, Fallout 4.)
 
 ---
 
@@ -169,7 +173,9 @@ Timing is a rough full-game estimate for a player doing most content. The vertic
 
 ### ACT II — The Crossings: "Whose Lights"
 
-Three regions, loosely ordered. The player can visit Port Carrow and the Locks in either order; Tall Masts opens once the player has heard of it from either. Each region is introduced by a **different verb** so Act II is not three trips to a relay: Port Carrow by **convoy** (sailing), the Locks by **passage** (negotiation or break-in), Tall Masts by **vigil** (a night of listening).
+Three regions, loosely ordered. The player can visit Port Carrow and the Locks in either order; Tall Masts opens once the player has heard of it from either.
+
+**Pacing rule (revised after the pacing audit, `AUDITS.md` §3):** each faction arc is split across the midpoint. Before "Kallio at the Crib" the player meets each faction, earns or loses its trust, and learns what it holds. The arcs' **decisions** (Kestrel Light, the Floor vote, the Vigil's aftermath, custody of the Pointe Sombre key) land **after** the broadcast, when every faction is racing for the Crib and each decision decides who comes. This puts the midpoint near the true middle of the game instead of about 70% through it, and makes Act III carry faction climaxes rather than only a dungeon. Each region is introduced by a **different verb** so Act II is not three trips to a relay: Port Carrow by **convoy** (sailing), the Locks by **passage** (negotiation or break-in), Tall Masts by **vigil** (a night of listening).
 
 #### IIa. Port Carrow and the Aubin Locks
 
@@ -204,6 +210,7 @@ Later, at the Crib, Liv says **she never broadcast it**. She said those words, a
 ### ACT III — Kenning: "The Tables"
 
 - **Immediate goal:** reach the Crib before, or with, the people racing there.
+- **Before Kenning (the race):** the faction arcs' decisions (see the pacing rule in Act II). Each one decides who sails for Kenning and in what mood: Board marines or Open Water captains, Cutters with charges or Stewards with a seizure crew, a Reader with a recorder or Answerers with the transmitter keys.
 - **Geography:** the drowned city of Kenning (a Compact beachhead on the waterfront, a Cutter camp in the flooded rail yard, a squatter community on the upper floors). The Authority headquarters tower. The pumping station. **The intake tunnel**, four miles under the lake bed, partly flooded (the second dungeon type of the full game).
 - **Important discoveries:** the **Pattern Desk** memos; the **Severance record** and Holt's code used forty minutes after her launch was found capsized; the **priority tables** themselves. A small demonstration: powering the pumping station (to reach the headquarters' lower floors) lets the Line reallocate power by its old table: it lights the drowned hospital's circuits and cuts the squatters' heat. The player watches the catastrophe at one-block scale.
 - **NPC introductions:** Maren Holt's recorded voice (pre-collapse logs, one per location); the Kenning squatters' spokesperson; faction forces in the field under Hale, Sobczak, and Reyes.
