@@ -4,19 +4,22 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` (see `git log -3`): the VS-02 commit on top of the VS-01 commit `00d8d22`, on top of the approved plan commits `24d3e0d` and `034cbc7`. The plan and VS-01 are pushed (`origin/main` was a clean fast-forward from `9640c05`).
+- `main` = `origin/main` (checked after the last push). Code baseline for the wave: the VS-02 commit **`e833811`** (full `e833811f03d36c80fe96bde7c0914a512c30ae8d`), on top of VS-01 `00d8d22` and the approved plan commits `24d3e0d` and `034cbc7`. The wave-handoff commit follows it (docs only; `git log -2`).
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
 
 **PHASE 6: STARTED** (Anthony approved the plan, 2026-09-30).
 
+**VS-01: COMPLETE. VS-02: COMPLETE. Next: FIRST PARALLEL WAVE READY** (prepared, not launched; only you launch it).
+
 | Task | State |
 | --- | --- |
 | VS-00 Plan | complete, approved |
 | **VS-01 Baseline** | **COMPLETE** (`00d8d22`) |
-| **VS-02 Production foundations** | **COMPLETE** (this commit) |
-| VS-03 onward | not started |
+| **VS-02 Production foundations** | **COMPLETE** (`e833811`) |
+| First parallel wave (VS-03 portal, VS-05 kit, kit research) | **READY, not launched** |
+| VS-04 onward | not started (VS-04 waits for the portal) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -94,6 +97,34 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 - Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only (the VS-02 capture was 2 ms faster than the reference).
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350.
 
-## Next
+## Next: the First Parallel Wave (READY, not launched)
 
-The first parallel wave (VS-03 portal, VS-05 kit, the kit research): handoffs are prepared in the commit after this one, and launched only by you.
+Three packages, three agents, no overlapping files. The wave plan, ownership table, merge order, launch prompt, and worktree commands are in **`Design/POIs/handoffs/PHASE6_WAVE1.md`**.
+
+| Package | Plan task | Agent | Handoff |
+| --- | --- | --- | --- |
+| WP-SYS-PORTAL: the cell portal and scene cut (the one capability VS-04 cannot start without) | VS-03 | Grok / Cursor | `Design/POIs/handoffs/sombre_WP-SYS-PORTAL.md` |
+| WP-KIT: the Great Lakes Working Settlement Kit and its dev gym map | VS-05 | Claude | `Design/POIs/handoffs/sombre_WP-KIT.md` |
+| WP-KIT-RESEARCH: library and CC0 survey, visual reference analysis (docs only) | feeds VS-05 | Gemini | `Design/POIs/handoffs/sombre_WP-KIT-RESEARCH.md` |
+
+Each handoff fixes: the role, the starting commit (`e833811`), allowed and forbidden files, dependencies, deliverables, tests (with exact counts), review artifacts, stop conditions, commit and push permissions (own branch `vs/<package>` only; never `main`), and the integration owner (Claude). Merge order: research, then the portal, then the kit.
+
+**Inspect before launching:**
+
+1. The three handoffs' allowed/forbidden file lists and stop conditions (the parts that keep the agents out of each other's way).
+2. **Three plan clarifications I made** so the packages did not contradict the plan (details in `PHASE6_WAVE1.md`). None changes scope:
+   - the kit's test ground is its own dev map `Lvl_KitGym`, not a corner of the Pointe Sombre blockout (that map does not exist until VS-04, and WP-KIT may not touch shared map scripts)
+   - the kit is verified by a headless script (`kit/verify_kit.py`) plus review captures, not by `Map.Sombre.KitGym` (which needs the Sombre map and a `Source/**` file WP-KIT may not create)
+   - the Gemini research is its own package with its own folder (`Design/Kits/research/`)
+3. That `e833811` is what each agent starts from (`git fetch`, then `git log origin/main -3`).
+4. Machine load: the portal agent runs a full C++ build and editor tests, and the kit agent runs the engine headless, each in its own worktree. Expect it to be slow but not to collide.
+5. `Lvl_PointeSombre` still does not exist; the tools say "registered but not built yet" until VS-04.
+
+Launch prompt and worktree commands: `PHASE6_WAVE1.md` ("Launching an agent").
+
+## Known Issues Carried Forward
+
+- The ~54 FPS low-spec shortfall is deferred (same-session A/B only).
+- Mara is a placeholder mannequin; two unused generated heads remain in Content.
+- `DCLandingStageMapTest.cpp` keeps its own helper copies (an accepted file left unchanged on purpose; migrate later if wanted).
+- Untracked leftovers, not ours: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py`.
