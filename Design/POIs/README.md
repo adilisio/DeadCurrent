@@ -7,7 +7,7 @@ This folder holds the production contract for points of interest. Strategy and r
 | `TEMPLATE.md` | Copy to `<poi_id>.md` before building anything. |
 | `AGENT_HANDOFF_TEMPLATE.md` | The contract passed from one role to the next. |
 | `<poi_id>.md` | One spec per POI. Created when a POI is approved, not before. |
-| `PRODUCTION_PILOT.md` | How the model will be piloted. Approved by Anthony (2026-09-30); running inside Phase 5 (`WorldStatePhasePlan.txt`). |
+| `PRODUCTION_PILOT.md` | How the model will be piloted. Approved by Anthony (2026-09-30); its cell was accepted with Phase 5 (`shore.landing_stage.md`). |
 
 ## Rules
 

@@ -12,7 +12,7 @@ Coordinates are cm in `Lvl_Boathouse`'s frame: +X is out of the boathouse door, 
 - **Working name:** Landing Stage (displayed in the discovery banner and under PLACES). Working name; Anthony may rename the display text at any time (the id stays).
 - **Region:** the Authority Shore, `Lvl_Boathouse`, in the shallows just east of the boathouse door, south of the path.
 - **Biome:** hand-dressed (no biome recipe exists).
-- **Content status:** `READY FOR ANTHONY` (2026-09-30): built, reviewed by two independent critics, revised on their findings (`Design/POIs/reviews/shore.landing_stage_revision.md`), re-verified. Only Anthony accepts.
+- **Content status:** `ACCEPTED` by Anthony, 2026-09-30, with Phase 5.
 - **Lore status:** `PROVISIONAL`. Every claim is listed under Environmental Story. Nothing explains the Current, decides a faction, or decides Mara's history or where she is going.
 
 ## Player Promise
@@ -186,7 +186,7 @@ Filled by the builder with facts only; the judgment of quality is the critics' a
 | Measure | Value |
 | --- | --- |
 | Approved spec to playable candidate | same session, 2026-09-30 (spec `bfc9a71` → gameplay `53c9e36` → tests `5e44416` → presentation `2538f27` → review packet `937f86c`) |
-| Candidate to accepted | critics and revision the same day (Gemini visual, Grok gameplay; revision `82b808a`..`1803d5f`); acceptance open |
+| Candidate to accepted | the same day: critics, revision, then two acceptance playtests; accepted 2026-09-30 |
 | New C++ classes | 1 (`ADCConditionalPresence`, with its `FDCPresenceState`), built before the POI, plus one signal (`UDCWorldStateSubsystem::OnRestored`). Nothing POI-specific in C++. |
 | Bespoke assets generated / Meshy credits | 0 / 0 |
 | Tier A from the library | skiff (`Smugglers_cove` rowing boat), crate with lid (PolyHaven), lantern (PolyHaven) |
@@ -197,5 +197,5 @@ Filled by the builder with facts only; the judgment of quality is the critics' a
 | Tests added | 4 (`World.ConditionalPresence`, `Map.Boathouse.LandingStage`, `Map.Boathouse.LandingStageSaves`, `Map.Boathouse.LandingStagePlayerSave`); 38 → 42 |
 | Defects found by the builder's own captures before the critics | 5: the moored skiff hidden behind the deck from the door; lantern and bulbs too small to read; the masted boat variant; flat colours rendering pale and glossy; open water showing through the plank gaps |
 | Defects found by critics | Visual 8 (V-01..V-08): 7 fixed in full or in part (V-02 and V-06 partly, the rest of each parked); V-07 parked. Gameplay 4 (G-01..G-04): all accepted; G-02's placement parked. The builder had flagged 2 of these 12 as open questions (V-04's bulbs, V-06's flat pack and lashing) and caught none of the other 10, including all three visual blockers and the dialogue contradiction. The critic step paid for itself. |
-| Defects found by Anthony | open |
+| Defects found by Anthony | 7 in playtests, none on the stage itself: Mara's look under open light (then her head, then her whole model), the door's exposure jump (a rebuild bug leaving stacked volumes), the coil route (no clear path, the scavenger seeing him from the door, no setup for avoiding him), and the floating coil |
 | Would the second cell need new C++? | Not for presence or placement. The narrative drafts' next asks (a talkable hostile, map travel) are different capabilities. |

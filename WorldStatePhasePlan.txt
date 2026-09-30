@@ -1,6 +1,6 @@
 # DEAD CURRENT — Phase 5: World State Plan
 
-Status: started 2026-09-30 on Anthony's go-ahead. WS-00..WS-10 done the same day: conditional presence, the Landing Stage, both independent critics (Gemini visual, Grok gameplay), the revision, and re-verification (42 tests, a same-session frame-time A/B, a Development Win64 package). The stage is READY FOR ANTHONY (WS-11); only he accepts. Do not rewrite the scope lock without Anthony.
+Status: **accepted by Anthony, 2026-09-30**, after the critic round and two acceptance-playtest rounds. WS-00..WS-11 are done. The playtest fixes (door lighting, a clear sneak route, the scavenger's warning and distance, Mara as one model) are recorded in Design/game_design.md and Design/ANTHONY_CHECKLIST.md. Phase 6 is not started.
 
 ## Mission
 
