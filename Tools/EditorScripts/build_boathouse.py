@@ -11,7 +11,7 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> 
 Layout (X is out the door, Z is up, units are cm; the lake is -Y):
   Boathouse  X 0..720, Y -320..320     wake, inspect, pistol on the workbench, door out; west window
   Path       X 720..1800               shoreline walk to the scavenger
-  Scavenger  X 2000..2700, Y -60..350 patrols the path; loot after death; relay rig + coil at his camp, on the beach
+  Scavenger  X 2300..3000, Y -60..350 patrols the path; loot after death; relay rig + coil at his camp, on the beach
                                        side of a windbreak (Y -155..-130) his loop stays north of
   Cover      Y 550..650                wall so Mara is out of the scavenger's sight
   Mara       X 3100, Y 1300            Shore Watch quest giver; lookout crate reacts to the outcome
@@ -740,17 +740,19 @@ def build_exterior():
 def build_scavenger():
     folder = "Combat"
     scav = actors.spawn_actor_from_class(
-        unreal.DCScavengerCharacter, unreal.Vector(2300.0, 0.0, 96.0),
+        unreal.DCScavengerCharacter, unreal.Vector(2500.0, 0.0, 96.0),
         unreal.Rotator(pitch=0.0, yaw=180.0, roll=0.0))
     scav.set_actor_label("Scavenger")
     scav.set_folder_path(folder)
     scav.set_editor_property("patrol_points", [
         # Phase 5 playtest: the south leg used to run at Y -350, right past the relay, so the coil could not be
         # reached unseen. It now runs at Y -60, and a windbreak (build_camp_cover) stands between it and the relay.
-        unreal.Vector(2000.0, -60.0, 0.0),
-        unreal.Vector(2700.0, -60.0, 0.0),
-        unreal.Vector(2700.0, 350.0, 0.0),
-        unreal.Vector(2000.0, 350.0, 0.0),
+        # The whole loop also sits 3 m further east than it did, so from the boathouse door he is about 16 m off,
+        # beyond his 12 m sight: the player can watch him before choosing an approach.
+        unreal.Vector(2300.0, -60.0, 0.0),
+        unreal.Vector(3000.0, -60.0, 0.0),
+        unreal.Vector(3000.0, 350.0, 0.0),
+        unreal.Vector(2300.0, 350.0, 0.0),
     ])
     assign_mannequin(
         scav,
@@ -817,7 +819,7 @@ def build_camp_cover():
     """Cover for the coil route (Phase 5 playtest: the open camp forced a fight). Three crate stacks the player can
     move between, crouched, to reach the coil: one west of the camp off the path, two on the beach south of the
     patrol's south leg. Each is a hidden block (collision, which is what breaks the scavenger's sight trace) under
-    closed crates. All stay outside the patrol square (X 2000..2700, Y -60..350) and the path."""
+    closed crates. All stay outside the patrol square (X 2300..3000, Y -60..350) and the path."""
     folder = "CampCover"
     # centre x, y, yaw (degrees). A stack is two crates side by side with one on top: about 214 x 53 x 123 cm.
     for index, (x, y, yaw) in enumerate([(1880.0, 250.0, 90.0), (2250.0, -470.0, 0.0), (2560.0, -470.0, 0.0)]):
@@ -839,7 +841,7 @@ def build_camp_cover():
     steel = surface("MI_DC_Steel")
     rust = surface("MI_DC_RustPaint")
     for index, (x0, dy, height) in enumerate([(1850, 0, 188), (2025, 6, 196), (2200, -4, 184), (2375, 5, 198),
-                                              (2550, -3, 190)]):
+                                              (2550, -3, 190), (2725, 4, 194), (2900, -5, 186)]):
         panel = block(f"CampWindbreak_{index}", folder, x0, x0 + 200, -155 + dy, -137 + dy, 0, height,
                       material=steel if index % 2 == 0 else rust)
         panel.set_editor_property("tags", [unreal.Name("CampWindbreak")])

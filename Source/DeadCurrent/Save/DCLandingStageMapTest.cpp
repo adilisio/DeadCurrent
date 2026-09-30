@@ -734,12 +734,31 @@ bool FDCCampCoverTest::RunTest(const FString& Parameters)
 				++Covers;
 				FVector Center, Extent;
 				It->GetActorBounds(false, Center, Extent);
-				const bool bInsideLoop = Center.X > 2000.0 && Center.X < 2700.0 && Center.Y > -60.0 && Center.Y < 350.0;
+				const bool bInsideLoop = Center.X > 2300.0 && Center.X < 3000.0 && Center.Y > -60.0 && Center.Y < 350.0;
 				TestFalse(TEXT("Cover stays out of his patrol loop"), bInsideLoop);
 				TestTrue(TEXT("Cover blocks (it has collision)"), It->GetActorEnableCollision());
 			}
 		}
 		TestEqual(TEXT("Three cover stacks at the camp"), Covers, 3);
+
+		// Phase 5 playtest: stepping out of the door must not be seen at once. Every point of his loop (corners and
+		// the legs between them) is beyond his standing sight from the door step.
+		if (const ADCScavengerCharacter* Scav = Cast<ADCScavengerCharacter>(Find(TEXT("boat.scavenger"))))
+		{
+			const TArray<FVector>& Points = Scav->GetPatrolPoints();
+			const FVector DoorStep(760.0, 0.0, 0.0);
+			double Nearest = 1.0e9;
+			for (int32 Index = 0; Index < Points.Num(); ++Index)
+			{
+				const FVector A = Points[Index];
+				const FVector B = Points[(Index + 1) % Points.Num()];
+				const FVector Closest = FMath::ClosestPointOnSegment(DoorStep, FVector(A.X, A.Y, 0.0), FVector(B.X, B.Y, 0.0));
+				Nearest = FMath::Min(Nearest, FVector::Dist2D(Closest, DoorStep));
+			}
+			TestTrue(TEXT("His loop has points"), Points.Num() >= 3);
+			TestTrue(*FString::Printf(TEXT("His loop is beyond his 12 m sight from the door (nearest %.0f cm)"), Nearest),
+				Nearest > 1300.0);
+		}
 		TestTrue(TEXT("The windbreak is placed"), Panels >= 4);
 
 		FCollisionQueryParams Params(TEXT("CampCoverTest"));
@@ -755,7 +774,7 @@ bool FDCCampCoverTest::RunTest(const FString& Parameters)
 		// coil, behind the relay, and on the beach approach.
 		const FVector Crouched[] = { FVector(2520.0, -300.0, 60.0), FVector(2480.0, -330.0, 60.0),
 			FVector(2200.0, -450.0, 60.0), FVector(1950.0, -500.0, 60.0) };
-		for (float X = 2000.0f; X <= 2700.0f; X += 100.0f)
+		for (float X = 2300.0f; X <= 3000.0f; X += 100.0f)
 		{
 			for (const FVector& Target : Crouched)
 			{

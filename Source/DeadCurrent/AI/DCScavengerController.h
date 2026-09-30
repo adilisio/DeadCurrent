@@ -47,7 +47,7 @@ public:
 
 protected:
 
-	/** A crouched player is noticed only this close (cm). Standing uses the sight sense's 18 m. */
+	/** A crouched player is noticed only this close (cm). Standing uses the sight sense's 12 m. */
 	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", Units="cm"))
 	float CrouchedSightRadius = 800.0f;
 

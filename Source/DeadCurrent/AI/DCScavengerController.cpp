@@ -17,8 +17,9 @@ ADCScavengerController::ADCScavengerController()
 	SetPerceptionComponent(*Perception);
 
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 1800.0f;
-	SightConfig->LoseSightRadius = 2400.0f;
+	// Phase 5 playtest: at 18 m he saw the player the moment the boathouse door opened. 12 m leaves room to watch him first.
+	SightConfig->SightRadius = 1200.0f;
+	SightConfig->LoseSightRadius = 1600.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 75.0f;
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
