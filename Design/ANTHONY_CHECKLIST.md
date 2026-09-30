@@ -22,7 +22,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | WS-06 Stage tests | done (`5e44416`, `463230b`) |
 | WS-07 Review views + review packet | done (`937f86c`) |
 | **WS-08 Independent critics** | Visual (Gemini) **in** and triaged (`d457e07`); Gameplay (Grok) **still running** |
-| WS-09 Revision | visual findings fixed on branch `ws09-revision` (`dccd987`, worktree `C:deadcurrent-ws09`), **not merged** until Grok finishes; gameplay findings next |
+| WS-09 Revision | visual findings fixed on branch `ws09-revision` (`dccd987`, worktree `C:/deadcurrent-ws09`), **not merged** until Grok finishes; gameplay findings next |
 | WS-10 Verify and stabilize | verification done early (42 tests, rebuilds, captures, A/B, package); re-run after WS-09 |
 | WS-11 Your acceptance | after WS-09 |
 
