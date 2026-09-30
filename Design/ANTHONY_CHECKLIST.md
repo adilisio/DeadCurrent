@@ -21,8 +21,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | WS-05 Presentation | done (`2538f27`): library rowing boat and pier planks, brighter lantern, dressing |
 | WS-06 Stage tests | done (`5e44416`, `463230b`) |
 | WS-07 Review views + review packet | done (`937f86c`) |
-| **WS-08 Independent critics** | **waiting on you** (instructions below) |
-| WS-09 Revision | after WS-08 |
+| **WS-08 Independent critics** | Visual (Gemini) **in** and triaged (`d457e07`); Gameplay (Grok) **still running** |
+| WS-09 Revision | visual findings fixed on branch `ws09-revision` (`dccd987`, worktree `C:deadcurrent-ws09`), **not merged** until Grok finishes; gameplay findings next |
 | WS-10 Verify and stabilize | verification done early (42 tests, rebuilds, captures, A/B, package); re-run after WS-09 |
 | WS-11 Your acceptance | after WS-09 |
 
@@ -33,7 +33,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## In Progress
 
-Nothing half-done in the tree.
+The visual revision sits on branch `ws09-revision` (worktree `C:\deadcurrent-ws09`), kept off `main` so Grok is not reviewing a moving target. 42 of 42 tests pass there; captures are in `C:\deadcurrent-ws09\Saved\Review\2026-09-30_1200`. When `Design/POIs/reviews/shore.landing_stage_gameplay.md` lands: triage it into `shore.landing_stage_revision.md`, fix on the branch, fast-forward `main`, remove the worktree (`git worktree remove C:/deadcurrent-ws09`), and re-verify (WS-10).
 
 ## WS-08: run the two critics (your step)
 
@@ -57,7 +57,13 @@ Playable now. The critics first will save your time, but if you want to look: de
 
 ## Decisions Needed From Anthony
 
-None blocking. Made inside the approved pilot, reversible, with defaults in the spec's Open Creative Decisions:
+**New from the Visual Critic (parked, none blocking; details in `Design/POIs/reviews/shore.landing_stage_revision.md`):**
+
+- **V-06, Mara's pack:** the owned library has no backpack mesh, so it is a canvas duffel with a bedroll in flat colours. Spend about 30 Meshy credits on a real pack (70 of 500 left), or keep the stand-in? Default: keep it.
+- **V-07, the lookout shed:** the critic calls it greybox. It is Presentation Pass geometry you accepted, outside this POI. Default: leave it for a later Tier B pass.
+- **V-02, the upright driftwood branch** by the path (Presentation Pass dressing) reads as floating to the critic. Default: leave it; say if you want it laid down.
+
+Made inside the approved pilot, reversible, with defaults in the spec's Open Creative Decisions:
 
 - **Where the stage stands:** east of the door, not between the camp and the lookout (no water there; the scavenger is alive in that stretch on the coil route).
 - **Kill, then hand over the coil:** stays the combat picture.
