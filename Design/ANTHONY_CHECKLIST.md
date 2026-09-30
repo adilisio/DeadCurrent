@@ -53,12 +53,12 @@ Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for 
 
 ## Decisions Needed From Anthony
 
-- Accept the Presentation Pass, or list what to change.
-- Grade: too blue or grey? Hull tint: `Tint`, `PaintCast`, `GrimeAmount` on `MI_DC_TernU1/U2`; grade in `build_lighting()`.
-- Mara's face: keep the pack's single head as a placeholder, or swap later?
-- Wind bed has very faint birds (your choice) versus the "No birds" window line.
-- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` §12).
-- Chase the frame-time shortfall now or after acceptance?
+Open, for whenever you want to decide (none blocks anything):
+
+- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` Â§12).
+- Chase the frame-time shortfall (about 54 FPS against 60, cause not found) now or later?
+- Choose the next phase. Phase 5 (World State) is next on the roadmap; it has not been started.
+- Answered: the Presentation Pass is accepted; Mara has her own head (provisional); the grade and hull stay as they are; the wind bed keeps its faint birds.
 
 ## Known Issues
 
