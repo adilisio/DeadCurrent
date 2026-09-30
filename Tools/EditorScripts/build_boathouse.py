@@ -523,13 +523,16 @@ def build_lighting():
     # PlayTest runs r.ShadowQuality=0, so the sun and the fill light the boathouse through its roof
     # and the interior clipped to white (captures 1629, 1638). A bounded grade stands in for the
     # missing shadow: the interior exposes darker and cooler, and the doorway blends back to daylight.
-    inner = actors.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(360.0, 0.0, 125.0))
+    # Phase 5 playtest: with a 90 cm blend the exposure changed in one step at the door, which was jarring. The
+    # volume now stops about 2 m inside the walls (X 20..520, Y -200..200) and blends over 2.5 m, so the grade eases
+    # off across the last steps to the door and is gone about 0.5 m outside it.
+    inner = actors.spawn_actor_from_class(unreal.PostProcessVolume, unreal.Vector(270.0, 0.0, 125.0))
     inner.set_actor_label("InteriorGrade")
     inner.set_folder_path(folder)
     inner.set_editor_property("priority", 2.0)
     inner.set_editor_property("blend_weight", 1.0)
-    inner.set_editor_property("blend_radius", 90.0)
-    inner.set_actor_scale3d(unreal.Vector(3.5, 3.1, 1.3))
+    inner.set_editor_property("blend_radius", 250.0)
+    inner.set_actor_scale3d(unreal.Vector(2.5, 2.0, 1.3))
     inner_settings = inner.get_editor_property("settings")
     inner_settings.set_editor_property("override_auto_exposure_bias", True)
     inner_settings.set_editor_property("auto_exposure_bias", -1.7)
