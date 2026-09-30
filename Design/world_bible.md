@@ -57,6 +57,14 @@ To be defined. Three broad positions exist:
 - **PROVISIONAL, RPG Layer:** an Engineering reading of the breaker panel says the cuts start at the shore-power breaker and the mast lamp is not on those lugs. A Survival reading of the cut life jackets says they lie toward the treeline. A Fieldcraft reading of the chalk warning says it was written from the shallows, looking back at the boat. Pulse Read says the fish died in one shock. Relay Ear says the scavenger's coil was seated by someone who knew the housing. The Sounder Chart, compared to the depth sounder, repeats the trace; Schematic Eye adds a margin note whose last tick is marked not a shoal. None of this says what the pattern is.
 - **Nothing explains the Current.** The wreck is a symptom, not an answer. Do not add an explanation.
 
+### World State (Phase 5; all PROVISIONAL, not canon until Anthony confirms)
+
+- **The Landing Stage**, a timber landing in the shallows just east of the boathouse door: a lean-to, a storm lantern on a post, a card under it (*Don't tie up after dark unless the lamp is lit*), a half-packed crate, a skiff tied alongside, and a string of bare bulbs on a cable that runs down into the lake. Spec: `Design/POIs/shore.landing_stage.md`.
+- The card's rule: a lit lamp means the landing is open. PROVISIONAL.
+- On the coil route, Mara packs the crate, loads the skiff, and waits on the stage with her pack: the watch getting ready to travel (fits Mara as the companion). Where she means to go is not said.
+- On the kill route, the landing is shut and stripped: the lamp pinched out, the card torn down, the crate emptied, the skiff cut loose. **Who did it is deliberately unstated.**
+- The bulbs hum while the *Tern*'s battery is live and go dark when its leads are pulled. Nothing says how they are connected. Do not explain it.
+
 ## Characters
 
 - **Mara** (provisional): watches the stretch of shore by the boathouse for "people who still listen before they shoot". Cautious, dry, practical. She has heard the relay's words herself and does not want them repeated "on the boats". If given the relay coil, she keeps it and transcribes what it says. Her role beyond Shore Watch is undecided.

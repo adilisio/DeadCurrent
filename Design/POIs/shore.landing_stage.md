@@ -12,7 +12,7 @@ Coordinates are cm in `Lvl_Boathouse`'s frame: +X is out of the boathouse door, 
 - **Working name:** Landing Stage (displayed in the discovery banner and under PLACES). Working name; Anthony may rename the display text at any time (the id stays).
 - **Region:** the Authority Shore, `Lvl_Boathouse`, in the shallows just east of the boathouse door, south of the path.
 - **Biome:** hand-dressed (no biome recipe exists).
-- **Content status:** `BUILDING` (WS-04). Next: `CANDIDATE` after WS-07.
+- **Content status:** `CANDIDATE` (built, tested, captured; 2026-09-30). Next: the independent critics (WS-08), then revision, then `READY FOR ANTHONY`.
 - **Lore status:** `PROVISIONAL`. Every claim is listed under Environmental Story. Nothing explains the Current, decides a faction, or decides Mara's history or where she is going.
 
 ## Player Promise
@@ -178,3 +178,23 @@ Each has the default the builder uses unless Anthony says otherwise.
 - **Mara's lookout on the combat route.** Default: unchanged in the world (she and her pack stay); her existing greeting and the lookout crate already read the outcome. No new line.
 - **Mara says nothing new about the stage.** Default: no new dialogue; her existing `done_coil` lines do not assume where she stands.
 - **The bulbs' power.** Default: tied to the Survey Launch's battery (`wreck.power_cut`), unexplained.
+
+## Pilot Record (`PRODUCTION_PILOT.md` §10)
+
+Filled by the builder with facts only; the judgment of quality is the critics' and Anthony's.
+
+| Measure | Value |
+| --- | --- |
+| Approved spec to playable candidate | same session, 2026-09-30 (spec `bfc9a71` → gameplay `53c9e36` → tests `5e44416` → presentation `2538f27` → review packet `937f86c`) |
+| Candidate to accepted | open (critics not run yet) |
+| New C++ classes | 1 (`ADCConditionalPresence`, with its `FDCPresenceState`), built before the POI, plus one signal (`UDCWorldStateSubsystem::OnRestored`). Nothing POI-specific in C++. |
+| Bespoke assets generated / Meshy credits | 0 / 0 |
+| Tier A from the library | skiff (`Smugglers_cove` rowing boat), crate with lid (PolyHaven), lantern (PolyHaven) |
+| Tier B reused vs added | reused: surface and flat materials, glow material, `ADCFlickerLight`, `ADCConditionalAudio`, rust paint; added: the timber deck (`SM_wooden_pier_planks`), 10 flat-colour instances |
+| Tier C | 6 hand-placed pieces (`dress_landing.py`); a recipe would not have saved anything at this size |
+| Shared files touched by the POI | `build_boathouse.py` (one hook), `Tools/Review/Lvl_Boathouse.json` (views), `DCBoathouseMapTest.cpp` (the art-layer audio count skips the stage's hum) |
+| Pack migration | new generic `Tools\ImportPackAssets.ps1`; 21 MB committed; the Megascans props were rejected at 70 to 136 MB per mesh, and the tool now refuses packages like them |
+| Tests added | 4 (`World.ConditionalPresence`, `Map.Boathouse.LandingStage`, `Map.Boathouse.LandingStageSaves`, `Map.Boathouse.LandingStagePlayerSave`); 38 → 42 |
+| Defects found by the builder's own captures before the critics | 5: the moored skiff hidden behind the deck from the door; lantern and bulbs too small to read; the masted boat variant; flat colours rendering pale and glossy; open water showing through the plank gaps |
+| Defects found by critics / by Anthony | open |
+| Would the second cell need new C++? | Not for presence or placement. The narrative drafts' next asks (a talkable hostile, map travel) are different capabilities. |

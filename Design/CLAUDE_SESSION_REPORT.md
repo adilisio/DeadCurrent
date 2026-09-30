@@ -1,155 +1,97 @@
-# Development Session Report
+# Development Session Report — Phase 5 (World State), 2026-09-30
 
-## Playtest 2 (Anthony, 2026-09-29): what he said and what changed
+The previous report (Presentation Pass, accepted 2026-09-29) is in git history: `git show 437e2d0:Design/CLAUDE_SESSION_REPORT.md`.
 
-Anthony: Mara looks way better but is still a little off (screenshot); the life jackets and the TERN sign look like they float; everything else looks really good and passes; the hum is barely audible.
-
-- **Life jackets:** the library mesh is modelled upright, as if worn, so it stood on end over the stones. It is now rolled onto its back and flattened to a stuffed vest's thickness, lying on the ground.
-- **TERN sign:** the generated hull does not reach the blockout bow where the board was placed, so the board hovered about a metre in front of it. It now stands on two stakes driven into the stones behind it (PROVISIONAL: someone stood the name board up on the beach). Stakes have no collision. If you would rather it hang on the hull, the hull mesh needs to reach the bow first; say so.
-- **Mara, "a little off":** from your screenshot, a pale tan strap lay across the left of her collar. It was the bust's neck: Meshy painted a tan patch there. The head is now cut at the jaw by a mask (new `M_DC_PropCut`, which draws only above a mesh-local height) so the jacket collar meets the chin cleanly. Her leftover pack hair and neck skin were also matched to her head (dark brown, a warm flat skin tone) so nothing pale shows through the collar.
-- **Hum:** raised again, relay 0.30 to 0.60 and live water 0.07 to 0.16. I can confirm from the log that both play; I cannot judge loudness by ear.
-
-Tests: 38 of 38 pass. Captures: `Saved/Review/2026-09-29_2246`. New views: `bow_side`, `clue_jackets`.
-## Playtest 1 (Anthony, 2026-09-29): what he said and what changed
-
-The pass is **not accepted**. Anthony held it back for these fixes and asked for a new face for Mara. (Accepted after playtest 2, below.)
-
-| Feedback | Response |
-| --- | --- |
-| Boathouse looks mostly great; dry fire works; the pistol is loud enough | No change. |
-| The cot is still a white block nobody would sleep on | New Meshy prop `field_cot` (a folding army cot, olive canvas, rolled blanket), squashed to a camp cot's proportions. |
-| I can't hear the hum; I only hear the water lapping | The hums and wind were set too low (the wind at 0.07 and the live-water hum at 0.02 were both under the lap). Raised: wind 0.22, relay hum 0.30, live-water hum 0.07, with a wider hum attenuation (inner 450, falloff 3800). Looping hums now start with a plain `Play()`; a start line is logged so a capture proves they play. I can confirm they start and their volumes, not how loud they are to your ears. |
-| I can't hear Mara speaking | Mara has no voice lines; her dialogue is text, and there is no CC0 voice in the library. Nothing was broken. Left as a gap. |
-| Mara and the scavenger look the same except the jacket, like twins | Mara has her own head: a new Meshy head (dark hair tied back, weathered skin) attached to the shared body through a small new presentation component, `UDCHeadSwapComponent`. Also fixed the pack's broken eye material. |
-| The cyan glow of the water looks like a little swimming pool | Replaced the flat cyan sheet with `M_DC_Current`: dark water with thin electric filaments that crawl across it. Same actor, same conditions, same damage. |
-| The RPG builds work normally; the shore looks good | No change. |
-| I fall off the map | The east half had no edge (north, east, and the far side of the channel were open void). Invisible walls now close it; a flood-fill probe of the walkable area finds no reachable edge. I did not learn which spot you fell from, so please tell me if you can still fall. |
-
-**A bug found on the way, that predates this session:** `M_DC_Prop`, the master material for every Meshy prop, has failed to compile since PP-06, so every Meshy prop (relay, breaker panel, battery bank, beacon, sounder, fish, coil, chart, dressing, and the name board's base) rendered as the engine's default material. That is why they all looked pale grey, and it is why the cot stayed a "white block". Fixed. Props now show their real colors (the battery bank is dark, the breaker panel is faded white, the fish is a fish). The review tool's material check missed it because an instance of a broken master is not flagged as default, so `Tools\ReviewCapture.bat` now fails when the capture log contains `Failed to compile Material`. The earlier visual findings in this report about props "reading as objects" were judged on that default material.
-
-Meshy: 100 more credits (`field_cot` 50, `mara_head` 50), 430 of 500 in total. One reject was wasted: a rewrite of the prompt did not save, so the "new" preview used the old prompt.
-
-Tests: 38 of 38 still pass. Captures: `Saved/Review/2026-09-29_2210`. New views: `cot`, `mara_face`.
 ## Executive Summary
 
-The Presentation Pass (PP-00 to PP-10) is implemented. Anthony's first playtest sent it back for fixes (see the section above); after a second playtest **Anthony accepted it (2026-09-29)**. This session finished PP-06 to PP-10: every clue prop and pickup now wears a Meshy mesh, the water is a dark rippled freshwater material, Mara and the scavenger wear the `Survival_Character` pack in different jackets on the existing animations, and the shore has sound (wind and lap beds, the relay and live-water hums, spark snaps, a breaker clunk, CC0 pistol shots, pickup and inventory cues). No quest, NPC, item, dialogue line, flag, or save field was added.
+Phase 5 started on Anthony's go-ahead with a committed plan (`WorldStatePhasePlan.txt`) and ran WS-00 to WS-07 in one session:
 
-38 automated tests pass (36 baseline). `DeadCurrentEditor` builds. `Tools\RebuildContent.bat` is clean and leaves the art layer and its audio beds in place. A Development Win64 cook and a null-RHI smoke launch of `Lvl_Boathouse` succeeded. Average frame time in the review captures is **18.4 ms (about 54 FPS)**, short of the 16.7 ms target; see Known Issues.
+- **One reusable capability: conditional presence** (`ADCConditionalPresence`). It is a rule that says "these actors are here, somewhere else, or not here at all, when these shared conditions pass". It saves nothing: its result is recomputed from flags that are already saved, so old saves need no migration. It snaps silently on load. Otherwise it changes only when the player is away and not looking, so Mara never vanishes mid-conversation.
+- **One place that uses it: the Landing Stage** (`shore.landing_stage`), the approved production pilot. It is a timber landing in the shallows just east of the boathouse door. Resolve Shore Watch and it reads differently from the same spot:
+  - Coil route: Mara is standing on it with her pack, the crate lashed, the skiff loaded.
+  - Kill route: lantern out, the crate emptied, the skiff drifting far out, Mara still at her lookout.
+  - The bulbs go dark when the Survey Launch's leads are pulled.
+- **42 automated tests pass** (38 at the start): the capability test, the stage through both routes with save, diverge, and F9, hand-written pre-Phase-5 saves, and Anthony's own version-3 save from 2026-09-28.
+- Same-session frame-time A/B: **+0.36 ms**, inside the noise. No SaveVersion bump, no new flag, quest, item, or dialogue, no renamed id, no Meshy credits spent.
 
-The session also added the smallest production infrastructure the new strategy calls for (a POI spec template, an agent handoff template, ownership conventions) and a plan-only production pilot for Anthony to approve. Phase 5 was not started.
+The stage is a **CANDIDATE**, not accepted: the independent critics (WS-08) have not run. Those are for Anthony to launch with Gemini and Cursor/Grok (below).
 
 ## Starting SHA
 
-Local `main` `822aa16` (PP-06 greybox overrides cleared). `origin/main` was `7a3fc58` (the strategy doc); they had diverged by one commit each and were merged as `7d2a3d9`. Local HEAD was authoritative. Pushed as a fast-forward to `3dfe142` after checking the remote. The later doc and pilot commits are listed under Git.
+`532994d` (narrative docs), `main` = `origin/main`, 38 of 38 tests. Phase 5 commits are local and not pushed.
 
-## Presentation Pass Progress
+## Phase 5 Progress
 
 | Task | State | Commit |
 | --- | --- | --- |
-| PP-00..PP-05 | done in earlier sessions | see git log |
-| PP-06 Clue props | done. All ten Meshy props (330 of 500 credits) and the library meshes are on the existing actors. The *Tern* hull was salmon pink (warm photo diffuse plus rust grime); `M_DC_Wreck` now desaturates and casts it cool, so it reads as faded white paint over grime. | `90a6436` |
-| PP-07 Water | done. `M_DC_Lake` on the open lake and the basin slab, same look so there is no seam. The slab moved down to sit 0.25 cm above the lake. `LiveWater` and sparks untouched. New assertions: the slab is still there after the leads are pulled and after an F9 load. | `59e9d83` |
-| PP-08 Bodies | done. `SK_Survival_Character` for both, on `ABP_Unarmed` (the pack skeleton lists the mannequin as compatible). Mara has a teal jacket and light jeans; the scavenger a rust-brown jacket and charcoal jeans. Textures were cut from 773 MB to 50 MB by `Tools\ImportSurvivalCharacter.ps1` before entering the repo. | `873f15c`, `0f88ed8` |
-| PP-09 Audio | done. See Audio. | `bf9e8be` |
-| PP-10 Stabilize | done: docs, rebuild, suite, captures, cook, smoke, frame times. Also fixed a game-target compile error in the review capture code (`GetActorLabel` outside `#if WITH_EDITOR`) that only the packaging build hits. | this commit |
+| WS-00 Plan | done | `5144257` |
+| WS-01 Reconcile stale status | done | `437e2d0` |
+| WS-02 Conditional presence + test | done | `ea411a2` |
+| WS-03 Spec + handoffs | done | `bfc9a71` |
+| WS-04 Build the stage | done | `53c9e36` |
+| WS-05 Presentation | done | `2538f27` |
+| WS-06 Stage tests | done | `5e44416`, `463230b` |
+| WS-07 Review views + packet | done | `937f86c` |
+| WS-08 Independent critics | **waiting on Anthony** | — |
+| WS-09 Revision | after WS-08 | — |
+| WS-10 Verify and stabilize | verification run early (rebuild, suite, captures, A/B, package); docs this commit | this commit |
+| WS-11 Anthony's acceptance | after WS-09 | — |
 
-Deviations from `PresentationPassPlan.txt`, all recorded in its status line: the live-water hum is an `ADCConditionalAudio` on the same `!wreck.power_cut` condition, not code inside `ADCDamageVolume`; sparks and the breaker throw have sound too (their sources were approved with the pass); `Tools\Package.bat` and `Tools\ImportSurvivalCharacter.ps1` are new tools.
+## What Was Built
 
-## Production Strategy Infrastructure Added
+**Capability** (`Source/DeadCurrent/World/DCConditionalPresence.*`): targets are actors in the same level. There is an ordered list of states `{StateId, Conditions, bPresent, bMove, Placement}`, and the first state that passes wins. With no state passing, the targets stay where they were authored. Hidden means hidden in game with collision off. The rule evaluates at BeginPlay, on the world-state signals, and every 0.5 s. It defers a change while the player is within 15 m of the current or new place, or while a target was on screen. It snaps on `UDCWorldStateSubsystem::OnRestored`, which F9 and the review capture now fire. Documented in `technical_architecture.md` (Conditional presence).
 
-- `Design/POIs/TEMPLATE.md`: the POI specification (identity, player promise, discovery, spatial role, gameplay, environmental story, state, tiered asset plan, audio, systems used, missing capability, tests, review views, acceptance, open decisions), with a definition of "ready to build".
-- `Design/POIs/AGENT_HANDOFF_TEMPLATE.md`: role, scope, owned files, forbidden files, inputs, deliverables, tests, review artifacts, dependencies, stop conditions, handoff notes.
-- `Design/POIs/README.md`: twelve short ownership rules (one spec per POI, isolated content, explicit ownership, shared files are integration-sensitive, one editor per generated file, immutable ids, provisional lore, no global system changes from a POI builder, builders do not approve their own work).
-- `Design/content_production_strategy.md` §5: the first biome-recipe candidates the pass observed. Nothing was automated.
-- `CLAUDE.md` now indexes the strategy, the POI docs, and the checklist.
-- No PCG, no orchestration software, no new gameplay system.
+**Stage** (`Tools/EditorScripts/build_landing_stage.py`, one hook in `build_boathouse.py`): the pieces, all driven by 8 presence rules:
+- gangway, deck, lean-to
+- storm lantern and card
+- crate with a lid that takes three positions
+- tins and blanket, lashing
+- skiff and its cargo, mooring line and cut line
+- bulbs and their hum
+- tackle box (`landing.tackle`), discovery volume
+- Mara's pack
 
-## Assets Added / Changed
+Its dressing is 6 NoCollision pieces in the art level (`dress_landing.py`). Spec: `Design/POIs/shore.landing_stage.md`, with the pilot record at the end.
 
-- 43 `Survival_Character` textures at 1K, the mesh, skeleton, physics asset, and 11 material instances under `/Game/Survival_Character` (50 MB). Four costume tint instances in `import_art.py`.
-- `M_DC_Lake`, `MI_DC_OpenLake`, `MI_DC_Water` (normal map is engine example content `water_n`).
-- `M_DC_Wreck` gained a desaturate and cool cast step.
-- 13 sounds and three attenuation assets under `/Game/Audio`; two UI cues migrated to `/Game/Interface_And_Item_Sounds`.
-- The ten Meshy meshes from PP-06 and their materials.
-- Provenance for all of it is in `Design/art_pipeline.md`.
+**Pipeline**: `Tools\ImportPackAssets.ps1` is the Survival_Character migration made generic. It brought the `Smugglers_cove` rowing boat and pier planks in at 1K (21 MB), and it refuses high-poly scans.
 
-## Meshy Credits Used
+## Decisions Made Inside the Approved Pilot (all reversible)
 
-330 of the 500-credit budget, across ten props: `relay_housing` 50 (including one rejected preview), `depth_sounder` 40, and eight others at 30 each. 170 credits unspent. No generation happened this session; the props were generated earlier and are imported and reviewed here.
+1. **Where the stage stands.** It is east of the door, not "between the camp and the lookout": there is no water there, and on the coil route the scavenger is alive in that stretch.
+2. **Combat is checked before coil.** Kill him, then hand over the coil anyway, and the drifted skiff does not come back.
+3. **Killing him without telling Mara** leaves the stage as it was: Shore Watch is not resolved.
+4. **Mara's lookout on the kill route** does not change in the world. Her existing greeting and the lookout crate already read the outcome.
+5. **No new dialogue.** Her existing lines do not assume where she stands.
+6. **Changes happen out of sight;** a load shows the saved state at once.
 
-## Visual Review Findings
+All are listed with defaults in the spec's Open Creative Decisions.
 
-Captures: `Saved/Review/2026-09-29_1758` (final; contact sheet and 20 views). Findings against the fixed expectations:
+## Verification
 
-- **Passing:** clue props read as objects, not grey boxes (breaker panel, battery bank, beacon, sounder, fish, chalk board, name board `T_RN`). No default or grid materials, no missing textures, no warnings or errors in any view. Mara and the scavenger stand in animated poses (not T-pose) and read as two different people. The water reads as water, and the live-water sheet still hides with the power.
-- **Fixed this session:** salmon-pink *Tern* hull; basin slab as a lighter rectangle with a black edge (the edge is now a faint dotted line); both characters near-black under the pack's dark textures (tints raised above 1.0).
-- **Still weak, for Anthony's eye:** the overall palette is very blue-grey. Sand, boathouse steel, the hull, and the sky all sit in one cool band, so the only strongly saturated things are the cyan live-water sheet and the rust wood. The plan asked whether the grade is too blue: my read is yes, a little. The controls are the `Tint` parameters on the surface instances and `MI_DC_TernU1/U2`, and the grade in `build_lighting()`.
-- The beach still reads flat from a distance (one texture per band, no stones or grass). Those are Tier C candidates.
-- The live-water glow is still the Phase 3 flat cyan sheet. I did not change it.
-- Mara and the scavenger have the same head.
-
-## Audio
-
-All sources are CC0 and were approved by Anthony (files under `C:\FO5_AssetLibrary\Audio`, provenance in `art_pipeline.md`).
-
-- Shore bed: wind (0.07) and water lap (0.46), two 2D beds in the art level (`dress_audio.py`, tag `ShoreAudio`).
-- Relay hum (0.06, positional): plays while the player does not hold `radio_coil`, `shore.relay_recovered` is unset, and `boat.scavenger` is alive. Inspecting the rig does not stop it.
-- Live-water hum (0.02, positional): plays while `!wreck.power_cut`. Six spark snaps (0.22, 30% chance per flash). One breaker clunk (0.56) on the rising edge of `wreck.power_cut`; silent on a load that already has the flag.
-- Pistol: CC0 .38 shot and a striker dry-fire. Pickup click and inventory switch flick from the `Interface_And_Item_Sounds` pack.
-- `ADCConditionalAudio` sets no flag and saves nothing (test: `DeadCurrent.Presentation.ConditionalAudio`, plus relay-hum assertions in the coil route map test and an art-level ambience assertion).
-- **Not verifiable by me:** level balance, whether the water lap startles, whether the hum seams are audible, and whether the two UI cues sound right (chosen by file size). The wind bed keeps its faint birds by Anthony's choice. The breaker throw is a stand-in.
-
-## Automated Tests
-
-**38 of 38 pass** (31 editor, 7 map) via `Tools\RunTests.bat -build`. Baseline 36. Added: `DeadCurrent.Presentation.ConditionalAudio`; the art-layer test now also checks the two shore beds and five audio actors; the survey-launch test checks the water slab exists, survives the power cut, and survives a load; the coil-route test checks the relay hum starts audible and stops when the coil is taken.
-
-## Build / Rebuild
-
-`DeadCurrentEditor` builds with the new C++ (`ADCConditionalAudio`, `DCAudioCues`, flicker-light flash sounds, pickup, container, and inventory hooks). `Tools\RebuildContent.bat` (now `import_art, import_audio, create_items, create_quest, create_dialogue, build_test_gym, build_boathouse`) exits 0, twice in a row, and the art level keeps the sentinel and audio beds.
+- `DeadCurrentEditor` builds. `Tools\RunTests.bat`: **42 of 42** (32 editor, 10 map).
+- `Tools\RebuildContent.bat build_boathouse` is clean, run five times. `dress_landing` is clean. The art layer keeps its sentinel, its audio beds, and the `LandingDress` actors (asserted in `LandingStage`).
+- Captures: final run `Saved/Review/2026-09-30_1055`. The nine landing views are written, with no default materials, missing textures, warnings, errors, or material compile failures.
+- **Frame time.** The machine was about 11.7 ms slower today than last night on the unchanged pre-Phase-5 map, so yesterday's numbers cannot be compared. A same-session A/B (the pre-Phase-5 maps against the Phase 5 maps, back to back) gives **+0.36 ms** on the 24 original views. Runs vary by ±5 ms per view; a later run came in 2.3 ms under. No material regression.
+- Old saves: `LandingStageSaves` (version 5, coil and kill) and `LandingStagePlayerSave` (your real version-3 save, read only) show the right state, with the stage undiscovered. The existing `LegacySave` test is unchanged and passes.
+- Package: see Package / Smoke Test.
 
 ## Package / Smoke Test
 
-`Tools\Package.bat` (new): Development Win64 `BuildCookRun` to `Saved\Packaged\Windows` (about 1.2 GB with engine files), then a null-RHI launch of `Lvl_Boathouse`. Both succeeded; the log shows the map and `Lvl_Boathouse_Art` loading. The first attempt failed on a compile error in `DCReviewCaptureTest.cpp` that only the game target hits (`GetActorLabel`); fixed with the file's existing label helper. Null RHI logs six `invalid ShaderMap` errors, which are expected with no renderer. `DirectoriesToAlwaysCook` now includes `/Game/Audio` and `/Game/Interface_And_Item_Sounds` because the UI cues load by path. Not verified: that the packaged game actually makes each sound (the smoke launch has no audio device).
-
-## READY FOR ANTHONY TO TEST
-
-Launch with `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for a clean run). The walkthrough is `PresentationPassPlan.txt` §9. In short:
-
-1. Boathouse: it should read as a cold shed. Take the pistol, fire once, dry-fire. Both sound like a pistol. Pickups click; **Tab** flicks a switch.
-2. Step out: wind and water are already there. Does the wind sit under everything, and does the lap startle you?
-3. Shore Watch coil route: near the relay it hums. Take the coil: the hum stops. Bring it to Mara. Does Mara read as a person watching the path?
-4. New game. Combat route: kill the scavenger; the hum stops.
-5. Survey Launch: the *Tern* from the beach (faded white, not pink?), the name board, the log, the life jackets, the live water's hum and snaps. Pull the leads: one clunk, the hum and snaps stop, the dark rippled water stays. Loot the locker and the tender.
-6. One RPG build (Engineering): breaker reading, then the chart and the sounder. The meshes changed; the words did not.
-7. F5, quit, relaunch, F9: build, cut power, quest as saved; the shore looks and sounds the same.
-
-Judgement calls only you can make: is the grade too blue or grey; do the two characters read apart; is any sound too loud or wrong; do the click and the switch flick suit the game.
-
-## Production Strategy Pilot Status
-
-> Superseded 2026-09-30: Anthony approved the pilot, and it runs inside Phase 5 (`WorldStatePhasePlan.txt`). The paragraph below is the status as of this report.
-
-`Design/POIs/PRODUCTION_PILOT.md` is a **plan only** and is not approved. It proposes one small cell, the Landing Stage (`shore.landing_stage`, PROVISIONAL name), whose look and Mara's placement change with the Shore Watch route and the wreck's power cut, with the tier split, role ownership, builder-critic-reviser-verifier workflow, tests, and review views. It identifies one likely missing reusable capability (a generic conditional presence rule) and a cosmetic-only fallback. Nothing was built. Phase 5 was not started.
+`ToolsPackage.bat`: the Development Win64 cook succeeded, packaged to `SavedPackagedWindows`. The cook compiled the migrated pack's shaders for the packaged target. In the null-RHI smoke launch, `Lvl_Boathouse` and its art level loaded, and all 8 presence rules evaluated in the packaged game (log lines `[DCPRESENCE]`). Not verified: how it looks or sounds in the packaged build (the smoke launch has no renderer and no audio device).
 
 ## Known Issues
 
-- **Frame time 18.4 ms average (about 54 FPS)** against a 16.7 ms target, at the PlayTest settings, uniformly across all 20 views including the empty boathouse interior. The greybox baseline sat at 16.7 ms because it hit the cap, so the true baseline is unknown. Dropping the screen percentage from 70% to 30% did not change it (18.7 ms), so the cost is not pixel work. It is CPU-side or a fixed per-frame cost. Likely contributors, **not bisected**: two heavier animated characters (skeletal meshes with many material slots), the added actors and meshes in the persistent map and art level, and five audio components. A `stat unit` session would settle it. A failed attempt to use a `ShowFlag` to bisect made the capture crawl; that is a harness quirk, not a finding.
-- The basin water slab has a faint dotted edge (near-coplanar with the lake). Cosmetic.
-- The live-water glow is the Phase 3 flat cyan sheet. It is the loudest colour on the shore.
-- Both characters share one head. `T_EyeMidPlaneDisplacement` would not export and stays at source size (small).
-- Runtime navigation is rebuilt at launch (pre-existing warning).
-- Untracked and left alone: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py`.
-- A content rebuild rewrites imported binaries byte-for-byte differently each run. I discarded that churn instead of committing it, so the committed assets are from the last deliberate change.
+- **The frame-time shortfall** (about 54 FPS against 60 at the PlayTest settings) is unchanged and still deferred. Today's machine ran slower still; comparing across days needs a same-session A/B (plan §9).
+- **The review frames show the engine's "Preparing Shaders" lines** at the top left: editor-build messages, not game UI.
+- **Things for the critics to judge, not pre-judged here:** the plank decking's pale colour; whether the power-cut view differs enough in daylight; the pack and lashing as flat-colour boxes.
+- Unchanged from before: the basin slab's dotted edge; one small eye texture; the stand-in breaker sound; packaged audio not verified by ear; content rebuilds rewrite unrelated material instances byte-for-byte (discarded, not committed).
 
-## Decisions Needed
+## READY FOR ANTHONY TO TEST
 
-- Accept the Presentation Pass, or list what to change.
-- Is the grade too blue or grey, and is the *Tern*'s pale hull right? (`Tint`, `PaintCast`, `GrimeAmount`.)
-- Mara's face: keep the pack's single head as a placeholder, or swap later?
-- The wind bed's faint birds (your earlier choice) against the "No birds" window line.
-- Approve, change, or drop the production pilot and its conditional presence capability (`PRODUCTION_PILOT.md` §12).
-- Chase the frame-time shortfall now, or after acceptance?
+The stage is playable now. The walkthrough is `WorldStatePhasePlan.txt` §7; `Design/ANTHONY_CHECKLIST.md` has the short version. It is worth running the critics first (below), so your time goes on how it feels.
 
-## Recommended Next Step
+## Next Step
 
-Human acceptance of the Presentation Pass, using the walkthrough above, and review of `Design/POIs/PRODUCTION_PILOT.md`. Do not begin Phase 5 until you choose it.
+1. **You** run the two critics (WS-08). Hand each agent `Design/POIs/handoffs/shore.landing_stage_critics.md` and `Design/POIs/reviews/shore.landing_stage_REVIEW_PACKET.md`; the captures are in `Saved/Review/2026-09-30_1055/`. They write `Design/POIs/reviews/shore.landing_stage_visual.md` and `..._gameplay.md`.
+2. The builder revises on their findings only (WS-09), then re-verifies (WS-10).
+3. You play §7 and accept or send it back (WS-11). Do not start Phase 6.

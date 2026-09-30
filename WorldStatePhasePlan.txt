@@ -1,6 +1,6 @@
 # DEAD CURRENT — Phase 5: World State Plan
 
-Status: started 2026-09-30 on Anthony's go-ahead. This document is the plan. Update the status line as tasks land; do not rewrite the scope lock without Anthony.
+Status: started 2026-09-30 on Anthony's go-ahead. WS-00..WS-07 done the same day (conditional presence, the Landing Stage, 42 tests). WS-08 (independent critics) waits on Anthony running them; the stage is a CANDIDATE, not accepted. Update this line as tasks land; do not rewrite the scope lock without Anthony.
 
 ## Mission
 
@@ -284,6 +284,8 @@ Delete `Saved\SaveGames\DeadCurrent.sav`, launch `Tools\PlayTest.bat`.
 
 - Budget: at most about 30 new actors in the persistent map, two new shadowless point lights (the lantern and one for the lamp string), one looping positional sound. Presence rules tick at 0.5 s and do nothing else between changes.
 - Measure the capture run's average frame time before (`Saved/Review/2026-09-29_2246` family, about 18.4 ms) and after WS-05 and WS-10. **A material regression is more than +1.0 ms average**, or any view more than 2 ms slower than its own earlier value; either stops the phase for a look. Otherwise the deferred ~54 FPS issue is left alone.
+- As built (WS-05): about 40 small actors plus 8 presence rules (rules render nothing), the lantern light, one bulb light (two more bulbs are glow only), one hum. Over the 30-actor guess; the frame-time check below is what decides.
+- As measured (WS-05): the machine was about 11.7 ms slower on 2026-09-30 than on 2026-09-29 for the unchanged pre-Phase-5 map, so comparing against last night's run is meaningless. The check is a same-session A/B instead: the pre-Phase-5 maps (from `532994d`) and the Phase 5 maps captured back to back on today's binaries. Result on the 24 original views: +0.36 ms average (runs 2026-09-30_1047 against _1044); single views move up to ±5 ms either way between runs, so that is inside the noise. A later run at WS-05's commit averaged 2.3 ms under the pre-Phase-5 run. No material regression.
 - No new collision on the lake-side walk, the review route, the scavenger's patrol square, or the boathouse door. The firearm's traces, the interaction trace, and navigation are unchanged elsewhere; the deck adds walkable ground only.
 
 ---
