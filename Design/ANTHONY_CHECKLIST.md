@@ -70,10 +70,17 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
   - `63f342c`: three crate stacks at the camp, all outside his patrol loop. One stands west of the camp, north of the path. Two stand on the beach just south of his south leg, the nearer one right below the coil.
   - **Recheck:** crouch, work from stack to stack, grab the coil when he is walking away. Is it now possible but still tense?
 - Tests: 44 of 44 (33 editor, 11 map), with the new `AI.ScavengerNotice` and `Map.Boathouse.CampCover`.
+- **2026-09-30: the recording of the door lighting.** The real cause was a map-rebuild bug, older than Phase 5. The rebuild never deleted volumes, so the map had piled up 42 interior grades and 78 post-process volumes, and the old hard-edged ones switched off about a metre outside the door. Fixed (`160910f`): each rebuild now clears them, and the map is down from about 510 actors to about 250 (duplicate nav bounds cleared too). **Recheck:** walk out of the door. It should now ease, not jump.
+- **2026-09-30: "I need a clear path to sneak past him, he is looking right at the relay."** Fixed (`160910f`, `851b901`):
+  - His loop's south leg moved from Y −350 to −60.
+  - A scrap windbreak now runs along the lake side of his camp, with the relay and coil on the beach side of it.
+  - Crouched on the beach, you are out of his sight all the way to the coil (checked against his whole south leg by `Map.Boathouse.CampCover`).
+  - **Recheck:** come along the waterline, crouched, take the coil.
+- **2026-09-30: "Mara looks like a floating head attached to a coat."** Her face is a separate generated bust fixed to the body's head bone and cut at the jaw, with only the body's thin neck under it. Seating it 1.5 cm lower (`58d81b1`) shortens the gap but cannot remove it: any cut low enough to keep a neck shows the bust's shoulder patch at the collar. A real fix needs a different head (question below).
 
 ## Decisions Needed From Anthony
 
-- **What reads weird about Mara on the stage?** The head's size or shape, the join at the jaw, the skin tone, the jacket, or the pose? Tell me which and I will target it. A cheap option: stand her in the lean-to's shade instead of the open deck. [until you say: the tint and roughness changes above only]
+- **Mara's head (answered: the floating head).** Options: (a) generate a new head with its own neck made to sit inside a collar (Meshy, about 50 credits of the 70 left); (b) go back to the body pack's own head, which is rigged and moves with her perfectly, and tell her apart from the scavenger with hair and skin tint; (c) keep the current bust, seated lower. [no default; waiting on you]
 
 
 None open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
