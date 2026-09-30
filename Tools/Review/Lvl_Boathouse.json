@@ -227,6 +227,76 @@
       "setup": {"inspect": "Lake window"},
       "expectation": "An inspect message is open over a bright view out the lake window, and the words stay readable on that background.",
       "source": "PresentationPassPlan.txt §2 and mission; Design/game_design.md decisions log 2026-09-29"
+    },
+    {
+      "id": "landing_far",
+      "location": [960, 220, 180],
+      "rotation": [-7, -84, 0],
+      "expectation": "From the door, a timber landing someone uses: a lit lantern, a string of bulbs, a skiff tied alongside, a half-packed crate under a lean-to. It reads as a place before any text does.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views; WorldStatePhasePlan.txt §2"
+    },
+    {
+      "id": "landing_coil",
+      "location": [960, 220, 180],
+      "rotation": [-7, -84, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_coil"},
+      "expectation": "Same camera after the coil route: Mara stands on the stage beside a closed, lashed crate and her pack, and the skiff is loaded. The difference from landing_far reads at a glance.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views; WorldStatePhasePlan.txt §2 coil route"
+    },
+    {
+      "id": "landing_combat",
+      "location": [960, 220, 180],
+      "rotation": [-7, -84, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_killed"},
+      "expectation": "Same camera after the kill route: no warm light at the lantern, no skiff alongside (a shape far out on the water), the crate open with its lid on the boards. It reads as a place shut down, not a texture swap.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views; WorldStatePhasePlan.txt §2 combat route"
+    },
+    {
+      "id": "landing_power_cut",
+      "location": [960, 220, 180],
+      "rotation": [-7, -84, 0],
+      "setup": {"flags": ["wreck.power_cut"]},
+      "expectation": "Same camera with the Survey Launch's leads pulled: the bulbs along the stage are dark; everything else is as in landing_far.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views; WorldStatePhasePlan.txt §2 power cut"
+    },
+    {
+      "id": "landing_close",
+      "location": [1010, -790, 170],
+      "rotation": [-26, -40, 0],
+      "expectation": "The crate at interaction range: half packed, its lid leaning against it, the tins and the rolled blanket reading as supplies.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views and Environmental Story clue 2"
+    },
+    {
+      "id": "landing_close_coil",
+      "location": [1010, -790, 170],
+      "rotation": [-26, -40, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_coil"},
+      "expectation": "Same camera after the coil route: the lid is on, rope lashing round the crate, her pack beside it.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views"
+    },
+    {
+      "id": "landing_close_combat",
+      "location": [1010, -790, 170],
+      "rotation": [-26, -40, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_killed"},
+      "expectation": "Same camera after the kill route: the crate is empty and the lid lies on the boards where it was thrown.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views"
+    },
+    {
+      "id": "landing_adrift",
+      "location": [1000, -1000, 175],
+      "rotation": [-10, -56, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_killed"},
+      "expectation": "From the stage after the kill route: the skiff is far out in the channel, turned, empty. It reads as a boat cut loose, not a boat that belongs out there.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views"
+    },
+    {
+      "id": "lookout_coil",
+      "location": [3100, 860, 175],
+      "rotation": [-4, 90, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_coil"},
+      "expectation": "Mara's lookout after the coil route: empty. No Mara and no pack; the lookout crate and the shed are as they were.",
+      "source": "Design/POIs/shore.landing_stage.md Review Views; WorldStatePhasePlan.txt §2 coil route"
     }
   ],
   "route": {
