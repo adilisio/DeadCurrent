@@ -28,7 +28,7 @@ Coordinates are cm in `Lvl_Boathouse`'s frame: +X is out of the boathouse door, 
 
 ## Spatial Role
 
-- **Approximate footprint:** gangway X 950..1070, Y −600..−820; deck X 850..1270, Y −820..−1120; skiff moored along the deck's south edge around (1060, −1215); total about 4.2 m × 6.5 m plus the skiff. Adrift placement of the skiff: about (1720, −2080), yaw 35°, out in the channel.
+- **Approximate footprint:** gangway X 950..1070, Y −575..−820; deck X 850..1270, Y −820..−1120; skiff moored along the deck's west side (the side facing the boathouse door), centred about (765, −985), 4 m long; total about 5.5 m × 6.5 m. Adrift placement of the skiff: about (1720, −2080), yaw 35°, out in the channel.
 - **Nearby routes:** the boathouse door (X 700..720, Y −50..50); the lake-side walk round the back of the boathouse to the Survey Launch (Y −560..−320 from X 700 west); the review route from the scavenger camp back to the boathouse through (2000, −400) → (700, −450); the beached hull inspectable (X 1090..1310, Y −315..−245); the scavenger's patrol square (X 2000..2700, Y −350..350), about 10 m east.
 - **Important sightlines:** the lantern and the bulbs must be visible from the door and from the path west of the scavenger camp. The stage is south of the ridge, so it is **not** visible from Mara's lookout, and her lookout is not visible from the stage: a change at one is never seen happening from the other.
 - **Exclusion zones (no collision, no dressing with collision):** the beach strip Y −580..−300 between X 700 and 2000 (the lake-side walk and the review route); the door apron X 700..900, Y −150..150; the hull inspectable's interaction side; the scavenger's patrol square; Mara's lookout shed interior (X 3040..3220, Y 1180..1500) except her pack's authored spot.
@@ -89,7 +89,7 @@ In the order a player finds them:
 
 | Asset | Role in the clues | Source | Meshy credits (est.) |
 | --- | --- | --- | --- |
-| Skiff (moored, loaded, adrift) | Clue 3 and the combat route's loudest change | `Smugglers_cove` `SM_boat_dutch_small_01` (a small plank rowing boat), migrated at 1K. Fallback: `motorboat_wreck` scaled (reads as a wreck, weaker). Meshy only if both read wrong in captures, one prop at about 40 credits. | 0 planned |
+| Skiff (moored, loaded, adrift) | Clue 3 and the combat route's loudest change | `Smugglers_cove` `SM_boat_dutch_small_02` (a plank rowing boat without a mast; `_01` has one and was dropped), migrated at 1K, scaled to 4 m. Fallback: `motorboat_wreck` scaled (reads as a wreck, weaker). Meshy only if both read wrong in captures, one prop at about 40 credits. | 0 planned |
 | Crate with a separate lid | Clue 2; the lid is what moves between states | PolyHaven `wooden_crate_01` (body, lid, latch meshes; CC0, already in `Content/Art/PolyHaven`) | 0 |
 | Storm lantern | Clue 1 | PolyHaven `Lantern_01` (CC0, already imported) | 0 |
 
@@ -97,26 +97,29 @@ In the order a player finds them:
 
 | Piece | Where used | Already in the kit? |
 | --- | --- | --- |
-| Timber deck, gangway, posts | the stage | No. `Smugglers_cove` `SM_wooden_pier_planks`, `SM_wooden_pier_poles` (migrated at 1K) become the first timber kit. Until then (WS-04) boxes in existing surface instances. |
-| Lean-to frame and roof | over the crate | Posts from the pier kit; roof as a tarp-coloured box or `SM_Ind_Jun_Storage_Pallet_Wood_Trap_01` cover |
-| Rope (mooring line, lashing, cut stub) | skiff, crate | ambientCG `Rope001` surface on thin boxes; library `harbor_props/rope.fbx` if it reads better |
-| Mooring cleat | deck edge | library `harbor_props/mooring_cleat.fbx` (untextured; `MI_DC_RustPaint`) |
-| Bulbs and cable | deck east edge | `ADCFlickerLight` glow cubes (existing) on a thin dark box cable |
+| Timber deck and gangway | the stage | New: `Smugglers_cove` `SM_wooden_pier_planks` (migrated at 1K, WS-05), stretched over hidden walkable blocks. The first timber kit piece; reusable for any later dock. |
+| Piles, lean-to posts, lantern post | under and on the deck | Dark boxes (`MI_DC_Pile`). The pack's `SM_wooden_pier_poles` is a multi-pole frame, used only as old piles in the water (Tier C). |
+| Lean-to roof | over the crate | A tarp-coloured box (`MI_DC_Tarp`). |
+| Rope (mooring line, lashing, cut stub) | skiff, crate | Thin boxes in `MI_DC_Rope`. `harbor_props/rope.fbx` not needed yet. |
+| Mooring cleat | deck edge | A rust box (`MI_DC_RustPaint`). |
+| Bulbs and cable | deck east edge | `ADCFlickerLight` glow cubes (existing) on a thin dark box cable. |
 
 ### Tier C — Procedural
 
 | Dressing | Recipe / placement | Collision | Exclusions |
 | --- | --- | --- | --- |
-| Shore stones and driftwood at the gangway root | hand-placed in `dress_landing.py` (the `dress_shore.py` meshes), about 6 pieces | NoCollision | beach strip Y −580..−300; door apron |
-| Rope coils, a bucket, a float on the deck | hand-placed, about 4 pieces | NoCollision | the crate's interaction side; Mara's coil-route spot |
-| Mara's pack | `Scene_Junkyard` `SM_Ind_Con_Storeage_Sack_Debris_M_01` (a canvas sack) | NoCollision | — (it is a presence target, placed by the POI script) |
-| Skiff cargo | `SM_Ind_Jun_Storage_Pallet_Wood_Trap_01` scaled small, `SM_Ind_War_Container_Jerrycan_Metal_Red_03` | NoCollision | — (presence target) |
+| Driftwood at the gangway root, tins, two old piles in the water east of the stage | hand-placed in `dress_landing.py`, 6 pieces (`dead_quiver_branch_01`, `dead_tree_trunk`, `can_rusted`, `SM_wooden_pier_poles`) | NoCollision | beach strip Y −580..−300 (nothing with collision); door apron; the skiff's mooring |
+| Crate contents (two tins, a rolled blanket) | placed by the POI script (presence targets) | NoCollision | — |
+| Mara's pack | a canvas bag and a bedroll (two boxes, `MI_DC_PackCanvas`, `MI_DC_Blanket`), a presence target | NoCollision | — |
+| Skiff cargo | a tarped bundle (box, `MI_DC_Tarp`) and `can_rusted` scaled as a water can, a presence target | NoCollision | — |
 
-Budget: at most about 30 new actors in the persistent map.
+The Megascans sack, jerrycan, and tarped pallet in the library were rejected: 70 to 136 MB per mesh (high-poly scans), far over what a background prop may cost in the repo. `Tools\ImportPackAssets.ps1` now refuses such packages.
+
+Budget: about 30 new actors was the plan. Built: about 40 small actors plus 8 presence rules (rules render nothing). Frame time is checked in WS-10.
 
 ## Audio
 
-- Bulbs' hum: `ADCConditionalAudio`, `/Game/Audio/Ambience/S_DC_HumLive` at about half the live-water hum, `SA_DC_Hum`, conditions `[!wreck.power_cut]`. Existing CC0.
+- Bulbs' hum: `ADCConditionalAudio`, `/Game/Audio/Ambience/S_DC_HumLiveWater` at 0.08 (half the live-water hum), `SA_DC_Hum`, conditions `[!wreck.power_cut]`. Existing CC0.
 - The lantern: none. The skiff: none (a hull knock would be new sourcing; written down as a gap).
 
 ## Existing Systems Used

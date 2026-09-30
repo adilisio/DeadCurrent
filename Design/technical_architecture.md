@@ -87,6 +87,9 @@ The folder is `Saved/Review/<yyyy-mm-dd_hhmm>/`: the PNGs, `contact_sheet.png`, 
 | `build_boathouse.py` | Regenerates the persistent `/Game/Maps/Lvl_Boathouse` (Shore Watch and the Survey Launch). Also creates the material instances in `/Game/Environment/Materials` (`MI_DC_*`, children of `M_FlatCol` and our own `M_DC_Glow`, an unlit translucent glow with `Color` rgb = emissive, a = opacity). Hand edits to that persistent map are lost on the next run. It re-links the streaming sublevel `/Game/Maps/Lvl_Boathouse_Art` and does not edit or save it. Requires the surface instances from `import_art.py`. |
 | `dress_shore.py` | Imports three CC0 driftwood meshes and replaces actors tagged `ShoreDress` in `Lvl_Boathouse_Art`. NoCollision. Safe to re-run. Not part of `RebuildContent.bat`; a content rebuild leaves those actors. |
 | `dress_structures.py` | Imports the *Tern* and the CC0 crate, lamp, and can, and replaces actors tagged `StructureDress` in the art level. NoCollision. The tender mesh is assigned by `build_boathouse.py` on the existing container. |
+| `build_landing_stage.py` | The Landing Stage POI (Phase 5). Not run on its own: `build_boathouse.py` calls `build(<its helpers>)` near the end of `main()`. Owns only the actors in folder `LandingStage`. |
+| `dress_landing.py` | Places the Landing Stage's NoCollision dressing (tag `LandingDress`) in `Lvl_Boathouse_Art`. Not part of `RebuildContent.bat`; a content rebuild leaves them. |
+| `export_pack_textures.py`, `reimport_pack_textures.py` | Helpers for `Tools\ImportPackAssets.ps1` (generic pack migration with textures cut to 1K). |
 | `dress_audio.py` | Places the always-on shore wind and lap beds (two 2D `ADCConditionalAudio`, tagged `ShoreAudio`) in `Lvl_Boathouse_Art`. Not part of `RebuildContent.bat`; a content rebuild leaves them. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
@@ -162,6 +165,20 @@ An optional site on the west shore, not on any route and with no marker. Coordin
 - **Relay Ear:** after `shore.relay_inspected` is set (the first look still sets it for everyone), the perk adds a pinout reading. It does not skip the Shore Watch clue.
 
 The POI adds no quest and no wreck-specific C++. Build checks are shared conditions on the existing actors. Pulling the leads, both containers, and both Shore Watch routes still work with nothing invested.
+
+### Point of interest: the Landing Stage (Phase 5, World State)
+
+Spec: `Design/POIs/shore.landing_stage.md`. A timber landing stage in the shallows just east of the boathouse door, south of the path (gangway X 950..1070 from the curb; deck X 850..1270, Y −820..−1120, top Z 30), with a lean-to over a crate, a storm lantern on a post, a string of bare bulbs, a skiff moored along the west side, and a tackle box. It is built by `Tools/EditorScripts/build_landing_stage.py`, which owns only the stage; `build_boathouse.py` calls it through one hook (`build_landing_stage_poi`) that hands it the map script's helpers. Its actors are in the persistent map (outliner folder `LandingStage`, tag `LandingStage`) because presence rules reference them. The walkable deck and gangway are hidden collision blocks under NoCollision plank meshes from the migrated `Smugglers_cove` pier kit. Static dressing is in the art level (`dress_landing.py`, tag `LandingDress`).
+
+The stage reads the Shore Watch outcome from existing flags only, through eight `ADCConditionalPresence` rules (tagged `Presence_<Name>`), combat listed first so that a kill followed by a coil hand-over stays the combat picture:
+
+| State | Flag | Stage | Mara |
+| --- | --- | --- | --- |
+| Combat | `shore.path_cleared` | lantern light, card, and mooring line hidden; crate lid thrown on the deck; contents hidden; cut line shown; skiff moved out to (1720, −2080) | stays at the lookout, with her pack |
+| Coil | `shore.relay_recovered` | lid shut; lashing and skiff cargo shown; contents hidden | moved to the deck (960, −990), her pack beside the crate |
+| Default | neither | lantern lit, lid leaning, contents shown, skiff moored | at the lookout |
+
+`wreck.power_cut` turns the bulbs (`ADCFlickerLight`, `ActiveConditions`) and their hum (`ADCConditionalAudio`) off. Inspectables with variants: `Crate`, `Storm lantern`, `Card`, `Bulbs`, `Skiff`, `Cut line`. Discovery: `ADCLocationVolume` `shore.landing_stage` / "Landing Stage". Container: `landing.tackle` (6× 9mm, 1× Salvaged Wiring). No new flag, quest, item, dialogue, or save field. Tests: `DeadCurrent.Map.Boathouse.LandingStage`, `DeadCurrent.Map.Boathouse.LandingStageSaves`.
 
 ## Presentation layer
 
@@ -403,7 +420,7 @@ Automation test `DeadCurrent.Inventory.Stacking` covers stacking and removal. Ru
 
 Gym IDs: `gym.scavenger`, `gym.mara`, `gym.door`, `gym.pickup_pistol`, `gym.pickup_ammo`, `gym.pickup_dressing`, `gym.pickup_wiring`, `gym.pickup_coil`.
 
-Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`, `boat.wreck_locker`, `boat.wreck_tender`.
+Boathouse IDs: `boat.scavenger`, `boat.mara`, `boat.door`, `boat.pickup_pistol`, `boat.pickup_ammo`, `boat.pickup_dressing`, `boat.pickup_coil`, `boat.wreck_locker`, `boat.wreck_tender`, and (Phase 5) `landing.tackle`. Reserved and unused: `landing.crate`, `landing.skiff`, `landing.note`.
 
 `UDCSaveGame` is the slot (`DeadCurrent`, user 0; tests switch to a scratch slot with `UDCSaveSubsystem::SetSlotName`). `UDCSaveSubsystem` (`UGameInstanceSubsystem`) writes player transform, health, inventory, equipped magazine, the quest log (quest id + stage), world flags (from `UDCWorldStateSubsystem`), and every registered persistent actor. World-actor inventories are stored as parallel primitive arrays (`WorldInvActorIds` / `WorldInvItemIds` / quantities / paths) because nested `TArray` stacks inside `WorldActors` or `ActorInventories` can serialize empty through `USaveGame`.
 

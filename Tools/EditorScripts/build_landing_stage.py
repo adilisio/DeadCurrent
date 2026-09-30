@@ -61,12 +61,18 @@ DECK = (850.0, 1270.0, -1120.0, -820.0)          # x0, x1, y0, y1
 GANGWAY = (950.0, 1070.0, -820.0, -575.0)
 CRATE_AT = (1180.0, -930.0)
 LANTERN_POST = (865.0, -835.0)
-SKIFF_AT = (1060.0, -1205.0, 8.0)
-SKIFF_ADRIFT = ((1720.0, -2080.0, 8.0), (0.0, 35.0, 0.0))
-MARA_ON_STAGE = ((930.0, -960.0, DECK_TOP + 96.0), (0.0, 60.0, 0.0))
+LANTERN_POST_HEIGHT = 175.0
+# Moored along the deck's west side, the side that faces the boathouse door, so it reads from the path.
+SKIFF_AT = (765.0, -985.0, 38.0)                  # bounds center; the floor stays above the lake sheet
+SKIFF_YAW = 90.0
+SKIFF_ADRIFT = ((1720.0, -2080.0, 38.0), (0.0, 35.0, 0.0))
+MARA_ON_STAGE = ((960.0, -990.0, DECK_TOP + 96.0), (0.0, 100.0, 0.0))
 PACK_AT_LOOKOUT = (3205.0, 1335.0, 0.0)
 PACK_ON_STAGE = (1085.0, -895.0, DECK_TOP)
-CLEAT_AT = (1180.0, -1116.0, DECK_TOP + 3.0)
+CLEAT_AT = (858.0, -930.0, DECK_TOP + 3.0)
+
+BOAT_MESH = "/Game/Smugglers_cove/meshes/ships/SM_boat_dutch_small_02"
+PLANK_MESH = "/Game/Smugglers_cove/meshes/structures/SM_wooden_pier_planks"
 
 T = None  # build_boathouse.py's helpers, set by build()
 
@@ -101,8 +107,15 @@ def no_collision(actor):
     return actor
 
 
-def flat(name, rgba):
-    return T.material_instance(name, T.MAT_FLAT, {"Base Color": rgba})
+def flat(name, rgba, roughness=0.9):
+    """A flat-colour instance of M_FlatCol. Under the shore's exposure these read far lighter than their values, so
+    cloth and timber are authored dark; high roughness keeps a tarp from mirroring the sky."""
+    mi = T.material_instance(name, T.MAT_FLAT, {"Base Color": rgba})
+    unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi, "Roughness", roughness)
+    unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi, "Metallic", 0.0)
+    unreal.MaterialEditingLibrary.update_material_instance(mi)
+    unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False)
+    return mi
 
 
 def dressing_box(label, center, size, material, rot=None):
@@ -183,39 +196,65 @@ def presence(name, targets, states, pivot_on_origin=False):
 
 # --- Pieces.
 
+def planks(label, x0, x1, y0, y1, top, sections_x=1, sections_y=1, yaw=0.0):
+    """Visual decking from the pier kit's plank section, stretched to fill the rectangle. NoCollision: the walkable
+    surface is the hidden block under it, so the kit's own collision can never trip the player."""
+    mesh = unreal.load_asset(PLANK_MESH)
+    bounds = mesh.get_bounding_box()
+    ext = bounds.max - bounds.min
+    w = (x1 - x0) / sections_x
+    d = (y1 - y0) / sections_y
+    along_x, along_y = (d, w) if yaw else (w, d)
+    for i in range(sections_x):
+        for j in range(sections_y):
+            section = no_collision(mesh_actor(f"{label}_{i}{j}", mesh))
+            section.set_actor_scale3d(unreal.Vector(along_x / ext.x, along_y / ext.y, 1.0))
+            pose(section, (x0 + w * (i + 0.5), y0 + d * (j + 0.5), top - ext.z / 2.0), (0.0, yaw, 0.0))
+
+
+def walkable(label, x0, x1, y0, y1, z0, z1, material):
+    """The walkable collision block: a dark bed 3 cm under the plank tops, so the gaps between the kit's boards show
+    timber underneath rather than open water. The planks on top are what the player reads."""
+    return tag(T.block(label, FOLDER, x0, x1, y0, y1, z0, z1 - 3.0, material=material))
+
+
 def build_structure(timber, pile, tarp):
     x0, x1, y0, y1 = DECK
-    tag(T.block("Landing_Deck", FOLDER, x0, x1, y0, y1, DECK_TOP - 12.0, DECK_TOP, material=timber))
+    walkable("Landing_Deck", x0, x1, y0, y1, DECK_TOP - 12.0, DECK_TOP, timber)
+    planks("Landing_DeckPlanks", x0, x1, y0, y1, DECK_TOP, sections_x=2)
     gx0, gx1, gy0, gy1 = GANGWAY
-    tag(T.block("Landing_Gangway", FOLDER, gx0, gx1, gy0, gy1, 12.0, 24.0, material=timber))
+    walkable("Landing_Gangway", gx0, gx1, gy0, gy1, 12.0, 24.0, timber)
+    planks("Landing_GangwayPlanks", gx0, gx1, gy0, gy1, 24.0, yaw=90.0)
     for index, (x, y) in enumerate([(x0 + 10, y0 + 10), (x1 - 10, y0 + 10), (x0 + 10, y1 - 10), (x1 - 10, y1 - 10)]):
         dressing_box(f"Landing_Pile_{index}", (x, y, (DECK_TOP - 12.0 - 90.0) / 2.0), (18, 18, 90 + DECK_TOP - 12.0), pile)
     # The lean-to over the crate: four posts and a tarp roof falling toward the water.
     for index, (x, y, h) in enumerate([(1120, -845, 190), (1262, -845, 190), (1120, -1005, 150), (1262, -1005, 150)]):
         dressing_box(f"Landing_LeanToPost_{index}", (x, y, DECK_TOP + h / 2.0), (9, 9, h), pile)
     dressing_box("Landing_LeanToRoof", (1191.0, -925.0, DECK_TOP + 172.0), (170, 185, 4), tarp, rot=(0.0, 0.0, 13.0))
-    # The lantern post at the head of the gangway.
-    dressing_box("Landing_LanternPost", (LANTERN_POST[0], LANTERN_POST[1], DECK_TOP + 52.0), (12, 12, 104), pile)
+    # The lantern post at the head of the gangway, tall enough that the lantern shows against the water from the path.
+    dressing_box("Landing_LanternPost", (LANTERN_POST[0], LANTERN_POST[1], DECK_TOP + LANTERN_POST_HEIGHT / 2.0),
+                 (12, 12, LANTERN_POST_HEIGHT), pile)
 
 
 def build_lantern_and_card():
-    lantern = T.box("Landing_Lantern", FOLDER, (LANTERN_POST[0], LANTERN_POST[1], DECK_TOP + 122.0), (16, 14, 36),
+    top = DECK_TOP + LANTERN_POST_HEIGHT
+    lantern = T.box("Landing_Lantern", FOLDER, (LANTERN_POST[0], LANTERN_POST[1], top + 22.0), (20, 16, 44),
                     actor_class=unreal.DCInspectableActor)
     T.setup_inspectable(lantern, "Storm lantern", TEXT_LANTERN,
                         variants=[T.variant(TEXT_LANTERN_COMBAT, combat())])
-    T.wear_mesh(lantern, unreal.load_asset(LANTERN_MESH), 36.0, (LANTERN_POST[0], LANTERN_POST[1], DECK_TOP + 122.0))
-    rest_on(lantern, DECK_TOP + 104.0)
+    T.wear_mesh(lantern, unreal.load_asset(LANTERN_MESH), 44.0, (LANTERN_POST[0], LANTERN_POST[1], top + 22.0))
+    rest_on(lantern, top)
     tag(lantern)
     glass = mesh_actor("Landing_LanternGlass", unreal.load_asset(LANTERN_GLASS))
     glass.set_actor_transform(lantern.get_actor_transform(), False, False)
     no_collision(glass)
-    glow = T.material_instance("MI_DC_GlowLantern", T.MAT_GLOW, {"Color": (3.2, 1.6, 0.35, 1.0)})
+    glow = T.material_instance("MI_DC_GlowLantern", T.MAT_GLOW, {"Color": (7.0, 3.4, 0.8, 1.0)})
     origin, _extent = glass.get_actor_bounds(False)
-    light = T.flicker_light("Landing_LanternLight", FOLDER, (origin.x, origin.y, origin.z), (255, 168, 90), 45.0, 900.0,
-                            glow_cm=5.0, glow_material=glow, min_brightness=0.82, dropout=0.0, interval=(0.08, 0.3))
+    light = T.flicker_light("Landing_LanternLight", FOLDER, (origin.x, origin.y, origin.z), (255, 168, 90), 90.0, 1200.0,
+                            glow_cm=8.0, glow_material=glow, min_brightness=0.82, dropout=0.0, interval=(0.08, 0.3))
     tag(light)
-    card = T.box("Landing_Card", FOLDER, (LANTERN_POST[0], LANTERN_POST[1] + 7.0, DECK_TOP + 78.0), (16, 1.2, 11),
-                 material=flat("MI_DC_Card", (0.62, 0.58, 0.48, 1.0)), actor_class=unreal.DCInspectableActor)
+    card = T.box("Landing_Card", FOLDER, (LANTERN_POST[0], LANTERN_POST[1] + 7.0, DECK_TOP + 105.0), (16, 1.2, 11),
+                 material=flat("MI_DC_Card", (0.30, 0.28, 0.22, 1.0)), actor_class=unreal.DCInspectableActor)
     T.setup_inspectable(card, "Card", TEXT_CARD, duration=6.0)
     tag(card)
     return light, card
@@ -268,14 +307,14 @@ def build_crate(cloth, rope):
 
 
 def build_bulbs(cable_mat):
-    glow = T.material_instance("MI_DC_GlowBulb", T.MAT_GLOW, {"Color": (2.6, 3.0, 3.8, 1.0)})
+    glow = T.material_instance("MI_DC_GlowBulb", T.MAT_GLOW, {"Color": (4.5, 5.0, 6.5, 1.0)})
     dressing_box("Landing_BulbCable", (1272.0, -978.0, DECK_TOP + 168.0), (2, 270, 2), cable_mat, rot=(0.0, 0.0, 4.0))
     dressing_box("Landing_BulbCableDrop", (1276.0, -1117.0, (DECK_TOP + 160.0 - 6.0) / 2.0), (2, 2, DECK_TOP + 166.0),
                  cable_mat)
     unpowered = [T.cond("WORLD_FLAG", id=POWER_CUT, negate=True)]
     for index, y in enumerate([-900.0, -978.0, -1056.0]):
         light = T.flicker_light(f"Landing_Bulb_{index}", FOLDER, (1272.0, y, DECK_TOP + 160.0), (205, 222, 255),
-                                18.0 if index == 1 else 0.0, 500.0, glow_cm=4.5, glow_material=glow,
+                                30.0 if index == 1 else 0.0, 600.0, glow_cm=7.0, glow_material=glow,
                                 conditions=unpowered, min_brightness=0.55, dropout=0.06, interval=(0.05, 0.5))
         tag(light)
     bulbs = T.box("Landing_Bulbs", FOLDER, (1272.0, -978.0, DECK_TOP + 162.0), (10, 190, 12),
@@ -289,23 +328,29 @@ def build_bulbs(cable_mat):
 
 def build_skiff(timber_dark, rope, rust, tarp):
     sx, sy, sz = SKIFF_AT
-    skiff = T.box("Landing_Skiff", FOLDER, (sx, sy, sz), (380, 130, 40), material=timber_dark,
+    skiff = T.box("Landing_Skiff", FOLDER, (sx, sy, sz), (130, 400, 60), material=timber_dark,
                   actor_class=unreal.DCInspectableActor)
     T.setup_inspectable(skiff, "Skiff", TEXT_SKIFF, variants=[
         T.variant(TEXT_SKIFF_COMBAT, combat()),
         T.variant(TEXT_SKIFF_COIL, coil()),
     ])
+    boat = unreal.load_asset(BOAT_MESH)
+    if boat:
+        # Library rowing boat (Smugglers_cove, migrated at 1K), cut to a 4 m skiff. It sits high enough that the
+        # lake sheet does not show through its floor.
+        T.wear_mesh(skiff, boat, 400.0, (sx, sy, sz), yaw=SKIFF_YAW)
     tag(skiff)
-    cleat = dressing_box("Landing_Cleat", CLEAT_AT, (18, 6, 6), rust)
-    line = dressing_box("Landing_MooringLine", (1192.0, -1133.0, DECK_TOP - 4.0), (3, 38, 3), rope, rot=(0.0, 18.0, 20.0))
-    stub = T.box("Landing_CutLine", FOLDER, (CLEAT_AT[0], CLEAT_AT[1] - 4.0, DECK_TOP - 10.0), (4, 4, 22),
+    cleat = dressing_box("Landing_Cleat", CLEAT_AT, (6, 18, 6), rust)
+    line = dressing_box("Landing_MooringLine", (CLEAT_AT[0] - 22.0, CLEAT_AT[1] + 12.0, DECK_TOP + 6.0), (48, 3, 3), rope,
+                        rot=(-8.0, -28.0, 0.0))
+    stub = T.box("Landing_CutLine", FOLDER, (CLEAT_AT[0] - 5.0, CLEAT_AT[1], DECK_TOP - 9.0), (4, 4, 22),
                  material=rope, actor_class=unreal.DCInspectableActor)
     T.setup_inspectable(stub, "Cut line", TEXT_CUT_LINE)
     tag(stub)
-    cargo = [
-        dressing_box("Landing_SkiffBundle", (sx - 30.0, sy, sz + 26.0), (95, 70, 34), tarp),
-        dressing_box("Landing_SkiffWaterCan", (sx + 120.0, sy + 10.0, sz + 26.0), (20, 32, 34), rust),
-    ]
+    water_can = no_collision(mesh_actor("Landing_SkiffWaterCan", unreal.load_asset(CAN_MESH), 2.2))
+    pose(water_can, (sx, sy + 115.0, sz), (0.0, 25.0, 0.0))
+    rest_on(water_can, sz - 40.0)
+    cargo = [dressing_box("Landing_SkiffBundle", (sx, sy - 35.0, sz - 30.0), (62, 95, 32), tarp), water_can]
     return skiff, line, stub, cargo, cleat
 
 
@@ -316,9 +361,13 @@ def build_tackle(rust):
     return tag(tackle)
 
 
-def build_pack(cloth_dark):
-    return dressing_box("Landing_MaraPack", (PACK_AT_LOOKOUT[0], PACK_AT_LOOKOUT[1], PACK_AT_LOOKOUT[2] + 22.0),
-                        (40, 28, 44), cloth_dark)
+def build_pack(cloth_dark, cloth):
+    """Mara's pack: a canvas bag with a bedroll strapped across the top. Two pieces that move as one."""
+    x, y, z = PACK_AT_LOOKOUT
+    return [
+        dressing_box("Landing_MaraPack", (x, y, z + 21.0), (36, 24, 42), cloth_dark),
+        dressing_box("Landing_MaraBedroll", (x, y, z + 48.0), (44, 15, 15), cloth),
+    ]
 
 
 def build_discovery():
@@ -336,13 +385,13 @@ def build(map_tools):
     global T
     T = map_tools
 
-    timber = flat("MI_DC_Timber", (0.19, 0.15, 0.11, 1.0))
-    timber_dark = flat("MI_DC_TimberDark", (0.11, 0.09, 0.07, 1.0))
-    pile = flat("MI_DC_Pile", (0.08, 0.07, 0.06, 1.0))
-    tarp = flat("MI_DC_Tarp", (0.13, 0.15, 0.12, 1.0))
-    rope = flat("MI_DC_Rope", (0.36, 0.30, 0.21, 1.0))
-    cloth = flat("MI_DC_Blanket", (0.24, 0.19, 0.15, 1.0))
-    cloth_dark = flat("MI_DC_PackCanvas", (0.16, 0.17, 0.12, 1.0))
+    timber = flat("MI_DC_Timber", (0.05, 0.04, 0.03, 1.0))
+    timber_dark = flat("MI_DC_TimberDark", (0.03, 0.025, 0.02, 1.0))
+    pile = flat("MI_DC_Pile", (0.025, 0.021, 0.018, 1.0))
+    tarp = flat("MI_DC_Tarp", (0.030, 0.036, 0.026, 1.0))
+    rope = flat("MI_DC_Rope", (0.13, 0.10, 0.065, 1.0))
+    cloth = flat("MI_DC_Blanket", (0.08, 0.05, 0.035, 1.0))
+    cloth_dark = flat("MI_DC_PackCanvas", (0.035, 0.040, 0.025, 1.0))
     cable = flat("MI_DC_Cable", (0.02, 0.02, 0.02, 1.0))
     rust = T.surface("MI_DC_RustPaint")
 
@@ -352,7 +401,7 @@ def build(map_tools):
     build_bulbs(cable)
     skiff, line, stub, cargo, _cleat = build_skiff(timber_dark, rope, rust, tarp)
     build_tackle(rust)
-    pack = build_pack(cloth_dark)
+    pack = build_pack(cloth_dark, cloth)
     build_discovery()
 
     mara = T.actor_by_label("Mara")
@@ -374,7 +423,7 @@ def build(map_tools):
     presence("Skiff", [skiff], [state("combat", combat(), place=placement(*SKIFF_ADRIFT))])
     presence("Mara", [mara], [state("combat", combat()), state("coil", coil(), place=placement(*MARA_ON_STAGE))],
              pivot_on_origin=True)
-    pack_rule = presence("MaraPack", [pack], [
+    pack_rule = presence("MaraPack", pack, [
         state("combat", combat()),
         state("coil", coil(), place=placement((PACK_ON_STAGE[0], PACK_ON_STAGE[1], PACK_ON_STAGE[2] + 22.0), (0.0, 15.0, 0.0))),
     ])

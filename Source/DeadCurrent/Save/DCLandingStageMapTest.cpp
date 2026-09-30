@@ -37,8 +37,8 @@ namespace DCLandingStageTest
 	const FName Tackle = TEXT("landing.tackle");
 
 	const FVector Lookout(3100.0, 1280.0, 0.0);        // Mara's authored spot
-	const FVector MaraOnStage(930.0, -960.0, 0.0);     // her coil-route placement
-	const FVector SkiffMoored(1060.0, -1205.0, 0.0);
+	const FVector MaraOnStage(960.0, -990.0, 0.0);     // her coil-route placement
+	const FVector SkiffMoored(765.0, -985.0, 0.0);      // alongside the deck's west side
 	const FVector SkiffAdrift(1720.0, -2080.0, 0.0);
 	const FVector OnGangway(1010.0, -700.0, 110.0);    // inside the discovery volume, 3 m from the deck
 	const FVector NearMara(3100.0, 1120.0, 100.0);     // talking range
@@ -369,6 +369,20 @@ bool FDCLandingStageTest::RunTest(const FString& Parameters)
 		}
 		ExpectDefault(this, TEXT("Fresh map"));
 		TestTrue(TEXT("Bulbs lit while the wreck's battery is live"), Bulb()->IsLightActive());
+
+		// The art-level dressing (dress_landing.py) is loaded with the map and never collides.
+		int32 Dressing = 0;
+		int32 Colliding = 0;
+		for (TActorIterator<AActor> It(GameWorld()); It; ++It)
+		{
+			if (It->Tags.Contains(TEXT("LandingDress")))
+			{
+				++Dressing;
+				Colliding += It->GetActorEnableCollision() ? 1 : 0;
+			}
+		}
+		TestTrue(TEXT("Landing dressing loaded from the art level"), Dressing >= 5);
+		TestEqual(TEXT("Landing dressing has no collision"), Colliding, 0);
 		TestTrue(TEXT("Crate reads half packed"), Read(TEXT("Crate")).Contains(TEXT("half packed")));
 		TestTrue(TEXT("Card readable"), Read(TEXT("Card")).Contains(TEXT("UNLESS THE LAMP IS LIT")));
 		TestFalse(TEXT("Stage not yet discovered"), WorldState()->IsLocationDiscovered(Location));
