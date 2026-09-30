@@ -21,3 +21,4 @@ Plugins/*/Intermediate/
 
 # Local logs
 *.log
+__pycache__/

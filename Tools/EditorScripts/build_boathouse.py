@@ -1407,6 +1407,19 @@ def build_nav():
     log("nav mesh rebuild requested")
 
 
+def build_landing_stage_poi():
+    """The Landing Stage (Phase 5 pilot) lives in its own script, which owns only its actors
+    (Design/POIs/shore.landing_stage.md). This hook hands it this script's helpers; it is the only coupling."""
+    import os
+    import sys
+    import types
+    scripts = os.path.join(unreal.SystemLibrary.get_project_directory(), "Tools", "EditorScripts")
+    if scripts not in sys.path:
+        sys.path.insert(0, scripts)
+    import build_landing_stage
+    build_landing_stage.build(types.SimpleNamespace(**globals()))
+
+
 def require_surfaces():
     missing = [path for path in REQUIRED_SURFACES if not unreal.EditorAssetLibrary.does_asset_exist(path)]
     if missing:
@@ -1432,6 +1445,7 @@ def main():
     build_cover_and_npc()
     build_west_shore()
     build_survey_launch()
+    build_landing_stage_poi()
     build_nav()
     ensure_art_level()
 
