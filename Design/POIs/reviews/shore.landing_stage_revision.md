@@ -17,4 +17,13 @@ The builder's response to the critics, finding by finding. Each verdict was chec
 
 ## Gameplay Critic (`shore.landing_stage_gameplay.md`, Cursor/Grok)
 
-Not in yet. Visual fixes are made in a separate worktree branch (`ws09-revision`) so the gameplay review is not reading a moving target. The branch merges into `main` after the gameplay findings are in.
+Visual fixes were made on a separate worktree branch (`ws09-revision`) while this review was running, so it was not reading a moving target. That branch was merged into `main` (`82b808a`) once these findings were in.
+
+| Id | Verdict | What was checked | Action |
+| --- | --- | --- | --- |
+| G-01 reward line promises she stays | **Accept** | `reward_coil` ends "I'm going to sit up with this coil tonight and listen"; minutes later she is packed and waiting at the landing. `done_coil` ("The coil talked all night") still fits, because she listened at the landing. | The closing clause is now "I've got packing to do." PROVISIONAL, no destination. This is the one Mara line the plan allows a critic to change (plan §3). Recorded in the spec. |
+| G-02 the scavenger can see the stage | **Accept the spec fix; park the placement for Anthony** | The south-west corner of the patrol is about 11 m from the deck, the deck is inside the 75° cone facing west, and the flat beach blocks nothing. Only on the coil route, where he is alive. | The spec's "Possible danger: none" now names this. Whether to keep the tension or move the deck out of the cone is Anthony's call; default: keep it. |
+| G-03 test does not walk the return path | **Accept** | The test released Mara from the Survey Launch beach, far from both bubbles, rather than from the real walk. | After the turn-in, the test now teleports to (1500, 950), west of the ridge and north of the door, outside both 15 m bubbles, and asserts the coil picture there. The "still at the lookout while you talk to her" check is kept. |
+| G-04 power cut not crossed with the routes; hum untested | **Accept** | The power cut was only set in the default picture, and the hum's audibility was never read. On a load, `ADCConditionalAudio` played from BeginPlay (flags not restored yet) until its first tick, the same brief leak the relay and live-water hums have. | The test now cuts the power in the coil picture, and saves a combat picture with the power cut and loads it: bulbs dark, hum silent, Mara's and the skiff's rules unchanged, all asserted right after F9. `ADCConditionalAudio` now snaps on `OnRestored` (a loop starts or stops without a fade, a one-shot re-primes and never replays on load), with restore steps added to `DeadCurrent.Presentation.ConditionalAudio`. Generic; it also fixes the two older hums. |
+
+Noted by the Gameplay Critic but not filed, left for Anthony: on the coil route the empty lookout's crate still reads "Mara's notebook lies open on the crate", which may now read as left behind.

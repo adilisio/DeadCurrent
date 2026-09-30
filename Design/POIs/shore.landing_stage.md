@@ -37,7 +37,7 @@ Coordinates are cm in `Lvl_Boathouse`'s frame: +X is out of the boathouse door, 
 ## Gameplay
 
 - **Core interaction:** look. Four inspectables (crate, lantern, bulbs, note on the post), one inspectable that is either the moored skiff or the cut line, one small loot container (tackle box).
-- **Possible danger:** none. The scavenger's patrol is 10 m east; the stage does not change his behavior.
+- **Possible danger:** the scavenger, on the coil route only (he is alive there). From the south-west corner of his patrol, facing west, the gangway and deck are about 11 m away and inside his sight cone, and nothing blocks the line, so standing on the stage to take in the coil picture can start a chase. The stage does not change his behavior; it sits inside his existing sight. Kept by default as the tension the reward line already names ("He's still out there"). **Parked for Anthony** (Gameplay Critic G-02): keep it, or move the deck out of the cone.
 - **Combat route:** Shore Watch by the kill route changes the stage (see State). No fighting at the stage.
 - **Non-combat route:** Shore Watch by the coil route changes it differently; Mara comes to the stage.
 - **RPG / build checks:** none. A character with nothing spent sees everything. (A build variant would be new writing; not in the pilot.)
@@ -176,7 +176,7 @@ Each has the default the builder uses unless Anthony says otherwise.
 - **Combat route, who stripped the landing.** Default: unstated.
 - **Kill, then hand over the coil anyway.** Default: stays the combat picture (a drifted skiff does not come back).
 - **Mara's lookout on the combat route.** Default: unchanged in the world (she and her pack stay); her existing greeting and the lookout crate already read the outcome. No new line.
-- **Mara says nothing new about the stage.** Default: no new dialogue; her existing `done_coil` lines do not assume where she stands.
+- **Mara's lines.** One line changed (Gameplay Critic G-01): her coil payout, `reward_coil`, ended "I'm going to sit up with this coil tonight and listen", which contradicted her packing and waiting at the landing. It now ends "I've got packing to do." PROVISIONAL; it names no destination. Every other line is unchanged.
 - **The bulbs' power.** Default: tied to the Survey Launch's battery (`wreck.power_cut`), unexplained.
 
 ## Pilot Record (`PRODUCTION_PILOT.md` §10)
