@@ -1,0 +1,1254 @@
+# DEAD CURRENT — Phase 6: Vertical Slice Plan ("The Wrong Characteristic" at Pointe Sombre)
+
+Status: **PLANNED, NOT STARTED, AWAITING ANTHONY'S APPROVAL** (VS-00, 2026-09-30). Nothing below is built. No Phase 6 code, map, asset, quest, item, or dialogue exists. Implementation begins at VS-01 only after Anthony approves or changes this plan.
+
+## Mission
+
+Phase 6 answers two questions.
+
+1. **Does DEAD CURRENT work as an actual game?** A polished 60–90 minute miniature of the whole game (`LongTermPlan.txt` §22–§23), in which the accepted systems combine into one coherent RPG experience:
+
+   **Explore → notice → investigate → talk → use the build → fight / avoid / persuade → read the place → enter a dungeon → form an interpretation → decide with your hands → watch the world change → it persists**
+
+2. **Are we now able to make more DEAD CURRENT without every location needing bespoke engineering?** Several content cells built from one shared grammar: a modular settlement kit (Tier B), a real procedural shoreline recipe (Tier C), a hand-authored focal layer (Tier A), per-cell ownership contracts, independent critics, and Anthony's acceptance, with production metrics that show whether later cells got cheaper **without feeling cheaper**.
+
+The production principle for the whole phase:
+
+**Procedural systems make the hill. Designers deliberately place the thing worth finding.**
+
+The target feeling:
+
+"Pointe Sombre is a real place with real people, the light went dark for four reasons, I found out on my own terms, I changed it with my own hands, and the whole harbor saw what I did."
+
+---
+
+# 1. Player-Facing Promise
+
+The player arrives at dusk in a Current storm aboard the *Ida*. From the deck they see a light burning on the wrong headland and, beyond it, a lighthouse with no light at all. The *Ida* turns for the wrong light and strikes the reef. In the harbor, Captain Varga will not sail while the point is dark.
+
+Over the next hour the player:
+
+- walks a small, dense island where the dark tower is always in view
+- meets the keeper who lied, the trader who does the arithmetic, the wreckers who "only held the lantern", a father whose children draw the pattern in chalk, and a copper buyer who isn't one
+- finds a clean cut in the lamp's feed and follows it into the rock
+- gets into the Authority vault under the lighthouse one of four ways, depending on who they are and what they found
+- crosses live water to a panel that says **SECTION 14 — SEVERED — RESYNC PENDING**, finds Liv's note, and learns she pulled the card and a boy drowned in the dark that followed
+- watches the storm pass and a Compact Warden arrive with a card and a deadline
+- decides the light **with their hands**: seat the card, light it by hand, throw the feed to the town, flood the vault, or leave it as Liv left it
+- carries evidence (or doesn't) into the net loft, where the island decides whom to blame
+- steps out into the second storm, at night, and sees what they made
+
+Save anywhere; the result persists.
+
+---
+
+# 2. Starting Baseline (verified at plan time, 2026-09-30)
+
+- **Repository.** `main` at `9640c05` ("WS-11: Record Anthony's acceptance of Phase 5..."). **`origin/main` is the same commit** (`git rev-list --left-right --count main...origin/main` = `0 0` after `git fetch`). The Phase 5 commits are pushed. The living-document lines that say "local, not pushed" (`Design/ANTHONY_CHECKLIST.md` Current Head, `Design/CLAUDE_SESSION_REPORT.md` Starting SHA) are stale; VS-00 corrects the checklist and adds a correction note to the report.
+- **Untracked, not ours, left alone:** `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py`.
+- **Accepted:** Phases 1–5 and the Presentation Pass (4.5). Phase 5 accepted 2026-09-30.
+- **Tests:** 45 of 45 (33 editor, 12 map). `DeadCurrentEditor` builds. Development Win64 cook and null-RHI smoke launch of `Lvl_Boathouse` succeeded after Phase 5 acceptance.
+- **Frame time:** the ~18.4 ms (~54 FPS) low-spec shortfall is known and **deferred**. Frame times from different days do not compare on this machine; only same-session A/B does (`WorldStatePhasePlan.txt` §9).
+- **Save:** `UDCSaveGame::SaveVersion` = 5. No accepted id may be renamed.
+- **Meshy:** 460 of the earlier 500 budget spent; account balance 437.
+- **Narrative:** the slice is written as design documents only: `Design/Narrative/SLICE_WRONG_CHARACTERISTIC.md` (beats, quest data, ids, physical acts), `SLICE_DIALOGUE.md` (every line), `PROLOGUE_POSTED_FROM_THE_SHORE.md` (prologue additions). Anthony's decisions: tie chosen by the player; the Shore Watch is an inherited office speaking as "I"; Mara is the companion; Liv pulled the Pointe Sombre key and Remy Beaudry drowned; the slice opens in the crossing; Marthe chairs the net loft; Hale arrives midway; Liv's note is right. Everything else in `Design/Narrative/` stays PROVISIONAL.
+
+## 2.1 What already exists and is reused, not rebuilt
+
+Shared rule grammar (`Core/`): conditions `HasItem`, `QuestNotStarted/Active/Complete`, `QuestStage`, `WorldFlag`, `ActorDead`, `LocationDiscovered`, `AttributeAtLeast`, `SkillAtLeast`, `HasPerk` (each negatable; lists are AND; ordered first-match lists give OR); consequences `GiveItem`, `RemoveItem`, `StartQuest`, `SetQuestStage`, `SetWorldFlag`, `ClearWorldFlag`.
+
+World actors: `ADCInspectableActor` (variants, per-variant verbs, consequences), `ADCItemPickup`, `ADCLootContainer`, `ADCDoor`, `ADCLocationVolume`, `ADCDamageVolume` and `ADCFlickerLight` (world-condition `ActiveConditions`), `ADCConditionalAudio`, **`ADCConditionalPresence`** (present / absent / other placement by conditions; snaps on restore; defers while observed), `ADCFriendlyNPC` (dialogue), `ADCScavengerCharacter` + controller (patrol, warn, chase, melee, crouch-aware notice), firearm, health, inventory, quests, dialogue, discovery, save/load with `OnRestored`, the build (3 attributes, 3 skills, 3 perks), the art-layer sublevel pattern, `Tools\ImportPackAssets.ps1`, the review-capture harness, and the per-POI script hook pattern (`build_landing_stage.py`).
+
+**Phase 6 does not redesign any of these.**
+
+---
+
+# 3. The Phase 6 Boundary
+
+## 3.1 Decisions per story element
+
+| # | Element | Phase 6 treatment | Why |
+| --- | --- | --- | --- |
+| A | Existing Authority Shore (`Lvl_Boathouse`) | **Unchanged. Regression only.** Its 45 tests, saves, and package smoke stay green. | Accepted content; the slice is proven on its own map. |
+| B | "Posted From the Shore" prologue additions | **Not in Phase 6. Deferred** to a follow-up milestone after slice acceptance (see §3.2). | Decided below. |
+| C | Transition Shore → *Ida* | **Not in Phase 6.** No map-to-map chapter travel. | Only the prologue needs it. |
+| D | Played storm crossing | **In.** A walkable deck cell of the *Ida*, offshore inside the Pointe Sombre map, facing the real island: the false light, the dark tower. Ends in the reef strike (§5.4). | Anthony decided the slice opens in the crossing. |
+| E | Pointe Sombre harbor | **In.** Quay, the *Ida* moored and pumping, Hale's berth, Remy's marker and boat. | B1, B5, B9. |
+| F | Settlement | **In.** Marthe's store with the net loft over it, Odette's cottage, the Leclair porch, the Pruitts' salvage shed, the smokehouse. Home interiors are **not** built (closed doors). | B2, B8. |
+| G | Lighthouse | **In.** Exterior tower (the slice's landmark), base room, lamp room and gallery at real height. The stair climb is abstracted (§5.3). | B3, B7, B9. |
+| H | Vault | **In.** The slice's one dungeon, as an abstracted interior cell with three physical entrances. | B4, B7. |
+| I | Cable hut | **In.** Small wilderness cell; the conduit entrance; mussel lines. | Vault route; first contract-built wilderness cell. |
+| J | West headland | **In.** The false-light post, the hide, the reef causeway. | B6. |
+| K | False Light investigation | **In** as written, minus the scavenger-at-the-post variant (it needs the prologue) and minus "force the Pruitts" (§3.3). | B6. |
+| L | Net loft | **In.** Abstracted interior cell over Marthe's store. | B8. |
+| M | Second storm | **In.** Night storm world states per outcome. | B9. |
+| N | End state / end card | **In.** End card from a deliberate act on the night quay. | B9. |
+| — | The *Ashland Grey* | **In, bounded:** the broken stern section on the reef, walkable at low water; the winch (pawl source); the Pruitts' cache; the slice's hostile encounter. Her interior, her log, and the Loss Book quest are **initial production, not Phase 6**. Fallback if the stern fails as art: the *Grey* is a view-only landmark, the pawl moves to the Pruitts' shed, and the encounter moves to the headland. | Zero-investment hand-light route; combat pillar. |
+
+## 3.2 The prologue decision: option 3 (stays optional; the slice stands alone)
+
+`PROLOGUE_POSTED_FROM_THE_SHORE.md` does **not** become part of Phase 6 and is **not** a prerequisite. The slice uses the standalone fallback the narrative docs already specify: Liv's letter is on board the *Ida* and Mara asks "Who is she to you?" on the crossing.
+
+Reasons:
+
+- **Coherence.** The slice must play standalone regardless: for testers, for critics, for a demo build, and for any player who never saw the shore. So the standalone path is required work either way. The prologue would add a second path, not replace one.
+- **Narrative value is mostly preserved.** The two prologue beats the slice depends on (the tie choice and the watch reveal) are already written into the crossing (`SLICE_DIALOGUE.md` §1, `crossing_tie`, `watch`). What is lost is Mara's admission, the promise earned on the shore, and the watch's page on the door. They are good, and they belong to a connection milestone.
+- **Cost and risk.** The prologue edits accepted content: `mara_intro` (Shore Watch's own dialogue), a new quest on `Lvl_Boathouse`, three new actors, and new variants on accepted inspectables. It is exactly the kind of edit to a shared generator that blocks parallel work, and it puts accepted Shore Watch behavior at risk during the phase that most needs a stable baseline.
+- **Technical.** It is the only thing in the slice that needs map-to-map travel carrying player state across worlds (§6, capability 4). Nothing else in Phase 6 needs it.
+- **It does not help prove the slice.** Neither of Phase 6's two questions is answered better by it.
+
+**What Phase 6 does to keep the prologue cheap later:** every slice id that the prologue also uses is the same id (`liv_letter`, `player.tie.*`, `watch.revealed`, `watch.mara_travelling`, `shore.promise_told`). Every prologue-dependent line has the neutral fallback the dialogue already defines. The later prologue milestone is then additive: build the prologue beats on the shore, add a one-way chapter transition, and the slice reads the flags it already knows. That milestone is proposed as **Phase 6.5, "Connection"**, after slice acceptance, and is **not** planned here.
+
+## 3.3 Scope lock
+
+In scope:
+
+1. **One new production map, `Lvl_PointeSombre`**, generated by scripts, with in-map interior cells (§5).
+2. **The slice's content** as written in the three narrative documents, reconciled in §8: the beats B0–B9, two quests (`sombre.characteristic`, `sombre.false_light`), nine conversations, ten items, the physical decision, the net loft, the second storm, the end card.
+3. **Three small reusable capabilities** proven necessary by that content (§6): a cell portal (with a scene-cut signal), an authored light sequence, and a story card. Nothing else in C++ without new evidence and a recorded decision.
+4. **One modular settlement kit** (Tier B, §9) and **one procedural rocky-shoreline recipe** (Tier C, §10), each measured.
+5. **Seven content cells** built through the POI contract, including one integrated lighthouse-and-vault contract (§11), and one late "contract-only" cell built by an agent that built none of the others (VS-20).
+6. **Production tooling** that the second map forces: multi-map tests, review capture, packaging, playtest; per-file content specs so owners do not share a generator (VS-02).
+7. **Tests, review views, critics, revision, verification, four intermediate Anthony checkpoints, and a final acceptance run.**
+
+## 3.4 Out of scope (do not start)
+
+- Phase 7 content, the initial production region (`LongTermPlan.txt` §24), a second dungeon, the *Ashland Grey* interior, Loss Book, Storm-Waking, a full Copper Buyer quest
+- the prologue additions, map-to-map chapter travel, boat travel or sailing, a world map
+- **World Partition** (the slice is one small always-loaded map; §5.1)
+- a following companion or companion AI, affinity, a party system (Mara is placed; §7)
+- talking to hostile NPCs; a friendly NPC that turns hostile (the "force the Pruitts" approach is cut; §8.2)
+- new enemy archetypes, a ranged NPC weapon, new player weapons, melee weapons, armor
+- trading, merchant inventory as a system, reputation, factions as data, settlement building, outposts, radiant quests, crafting
+- item descriptions that change with world state
+- voice, music score (§12.8), a UMG HUD rewrite, a main menu (the packaged build starts in the slice; §5.7)
+- new condition or consequence types, AND/OR grammar, condition groups, a save-format change (none are needed; a need is a stop condition)
+- a general PCG framework, landscape-scale procedural terrain, runtime generation
+- a unique generated asset for every building or every piece of junk
+- the deferred ~54 FPS investigation
+- canonizing anything outside Anthony's decisions: Liv's fate, the nature of the Current, the Severance's author, faction names, ending count, geography, Indigenous representation, seasons, Mara's history
+- renaming any shipped id, flag, stage, item, or asset
+
+---
+
+# 4. What Phase 6 Must Prove, and Where
+
+| # | Proof | Where it is built | Where it is judged |
+| --- | --- | --- | --- |
+| 1 | Exploration is compelling | VS-08, VS-13, VS-16, VS-20 | Checkpoint A, E |
+| 2 | The setting has a recognizable identity | VS-05, VS-06, VS-21 | Checkpoints A, E; visual critic |
+| 3 | NPCs and dialogue are worth engaging | VS-09, VS-11 | Checkpoint B |
+| 4 | Builds change information and actions | VS-12, VS-14, VS-16, VS-17 (§8.4) | Checkpoints B–D; build tests |
+| 5 | Problems have multiple approaches | Four vault entries, four False Light routes, five light outcomes | Checkpoints C, D |
+| 6 | Environmental storytelling rewards curiosity | VS-12, VS-14, VS-20 | Checkpoints B, C, E |
+| 7 | The vault works as a real dungeon | VS-14 | Checkpoint C |
+| 8 | The player learns enough to face a hard choice | VS-14, VS-15 | Checkpoint D |
+| 9 | The choice happens through physical acts | VS-17 | Checkpoint D |
+| 10 | The settlement visibly reacts | VS-15, VS-19 | Checkpoint D |
+| 11 | Save/load preserves the result | every map test; VS-24 | tests; Checkpoint E |
+| 12 | It packages and runs as a coherent experience | VS-04, VS-14, VS-19, VS-24 | package gates |
+| 13 | Multiple cells from shared grammar | VS-05, VS-06, VS-07, VS-10..VS-20 | production report (VS-24) |
+| 14 | Later content is cheaper | VS-13 vs VS-16 vs VS-20 metrics (§14) | production report |
+
+---
+
+# 5. Map and World Architecture
+
+## 5.1 The recommendation
+
+**One new persistent map, `/Game/Maps/Lvl_PointeSombre`, not World Partition.** The playable exterior is small (target 400–500 m by 300–400 m, about 0.15 km², §5.5). Interiors are **cells inside the same map**, placed outside the exterior's playable bounds and reached through portals that fade, move the player, and fade back (§6, capability 1). There is **no level travel inside the slice.**
+
+`Lvl_Boathouse` stays exactly as accepted.
+
+Why this is the smallest robust architecture, checked against the code:
+
+- `UDCWorldStateSubsystem` and `UDCPersistentRegistry` are **world** subsystems and the quest log and build live on the player pawn. `UGameplayStatics::OpenLevel` destroys all of them. Map travel would need a carry-over mechanism for flags, quests, inventory, and build, and a per-map store for persistent actors (containers, deaths, pickups) that one save file does not have today (`UDCSaveGame::WorldActors` is one map's list). That is a save-format change. In-map cells need **none** of it.
+- `ADCConditionalPresence` targets must be in the same level as the rule. Streaming sublevels for interiors would split gameplay actors from their rules (the Landing Stage already hit this and kept gameplay actors in the persistent map).
+- Save/load already restores the player transform, so a save made inside the vault loads inside the vault.
+- One world means one discovery list, one flag set, one registry: the slice's quest continuity is the same as Shore Watch's.
+
+Rejected:
+
+| Option | Rejected because |
+| --- | --- |
+| World Partition | No evidence: a 0.15 km² map with interiors does not need streaming grids, data layers, or HLODs. It would change the map-generation scripts, tests, and cook for no measured gain. |
+| Separate maps per interior with `OpenLevel` | Needs cross-map persistent-actor state and a `SaveVersion` bump; loses presence across maps; loading hitches at every door. |
+| Streaming sublevels for interiors | Cross-level references break presence rules and portals; unloaded persistent actors cannot be saved or restored. Kept only for **stateless** dressing and biome output (§5.6). |
+| Interiors physically embedded 1:1 in their shells | The vault would have to fit under the modeled rock; the stair would be a long empty climb; every shell would need a matching interior. Costs layout time and performance for no player value. |
+
+## 5.2 Cells
+
+| Cell | Kind | Where | Entered by |
+| --- | --- | --- | --- |
+| `sombre.crossing` (the *Ida*'s deck) | exterior set | offshore, southwest of the island, inside the storm fog, facing the real false light and the dark tower | new game (PlayerStart) |
+| `sombre.harbor` | exterior | the island | the crossing portal (one-way) |
+| `sombre.settlement` | exterior | the island | on foot |
+| `sombre.light` exterior + base room | exterior + small real interior | the Pointe | on foot; the base door is a real `ADCDoor` |
+| lamp room and gallery | real space at the top of the real tower | in place, at height | portal "Climb the stair" / "Go down" (the stair shaft is abstracted) |
+| `sombre.vault` | abstracted interior cell | outside the playable bounds | three portals: the hatch in the base room, the lower door in the sea cliff, the conduit in the cable hut |
+| `sombre.net_loft` | abstracted interior cell | outside the playable bounds | portal: the outside stair beside Marthe's store |
+| `sombre.cable_hut` | exterior + open hut | north shore | on foot |
+| `sombre.headland` | exterior | west headland | on foot |
+| `sombre.ashland_grey` | exterior (stern deck) | the reef | on foot over the reef rocks |
+
+**Why the lamp room stays in place:** its windows and gallery look out over the island, and in B9 the keeper's silhouette on the gallery is seen from the quay. An abstracted lamp room would show the wrong view. The stair between the base and the lamp room is the only part abstracted.
+
+**Why the vault and the loft are abstracted:** neither has windows onto the island; both are authored as closed spaces; each has an owner, a test file, and review views of its own.
+
+Cell placement rules, decided with evidence in VS-04: interior cells sit where the exterior's height fog, sky light, and 2D ambience do not reach them (or are cancelled locally), are enclosed so the sun cannot leak in, and are beyond every exterior sightline and the far clip. Each interior cell has its own post-process volume, lighting, and ambience, the way the boathouse interior already does.
+
+## 5.3 Portals (transitions)
+
+| Portal | From → to | Conditions | On use |
+| --- | --- | --- | --- |
+| Wheelhouse door, "Tell Varga about the light" | crossing → quay (one-way) | none | `SetWorldFlag sombre.reef_struck`; card text during the fade: the strike |
+| Tower stair, "Climb the stair" / "Go down" | base room ↔ lamp room | none | — |
+| Vault hatch, "Unlock the hatch" / "Go down" | base room ↔ vault upper room | `HasItem sombre_vault_key` **or** `WorldFlag sombre.vault_opened` | first use with the key: `SetWorldFlag sombre.vault_opened` |
+| Lower door, "Pry the jam" / "Go in" | sea cliff ↔ vault lower gallery | variant 1 `SkillAtLeast Skill.Engineering 2`; variant 2 `WorldFlag sombre.vault_opened` | variant 1: `SetWorldFlag sombre.vault_opened` |
+| Conduit, "Crawl in" | cable hut ↔ vault cable gallery | none (it is found by exploring) | `SetWorldFlag sombre.vault_opened` |
+| Loft stair, "Go up to the loft" / "Go down" | quay ↔ net loft | none | — |
+
+A locked portal shows its locked text ("The hatch is locked. There's a keyhole, and fresh scratches round it.") instead of moving the player. This is how the slice does **condition-driven locked access**: no separate locked-door class.
+
+## 5.4 The crossing (B0) and arrival (B1)
+
+- New game starts on the *Ida*'s deck at dusk in `sombre.storm`. The deck is walkable (hidden collision under NoCollision art, the Landing Stage pattern). It does not move; the storm is carried by wind, rain, lightning, spray on the rail, and a passing wave material on the water.
+- On the deck: **Liv's letter** (inspectable "Read": `GiveItem liv_letter`, `SetWorldFlag watch.mara_travelling`; tie-neutral text from the prologue doc, P1), a chart pinned in the lee of the wheelhouse (a one-screen recap: the Authority Shore, the Narrows, Pointe Sombre), and **Mara** at the rail (`sombre_mara` `crossing_tie`, `crossing`, `watch`, `third`).
+- The **false light** burns on the west headland ahead; beyond it the dark tower shows only in lightning.
+- The wheelhouse door is the crossing's exit: "Tell Varga about the light." The player is too late. Fade; the card text reads the strike; `sombre.reef_struck`; the player is on the quay beside the moored, pumping *Ida*. Presence has already moved Mara to the quay (scene cut, §6).
+- The *Ida* on the deck and the *Ida* at the quay are two placements of the same art (presence), not two vessels.
+- Fallback (only if the deck scene cannot be made to read): a story card over a fixed view from the deck. Anthony decided the crossing is played, so the fallback needs his sign-off.
+
+## 5.5 Compressed geography
+
+**Believable is not the same as realistic distance.** Pointe Sombre must feel bigger than it is.
+
+Compass sketch (not engine units; the map frame is fixed in VS-04 and recorded in `technical_architecture.md`):
+
+```
+                                   N
+           . . . . . . . . . . . open lake . . . . . . . . . . . .
+         .        CABLE HUT ~~~ mussel lines run out ~~~            .
+        .       (Authority mast)\                                    .
+       .      north path ________\______ tower rock ___               .
+      .      /                                         [LIGHTHOUSE]    .   the Pointe
+ W  [WEST HEADLAND]     SETTLEMENT (store + loft,        base room      E
+    false-light post     Odette's cottage, Leclair       lower door in
+    and hide             porch, Pruitts' shed,           the sea cliff
+      \ reef causeway    smokehouse, net racks)            /
+       \                        \___ QUAY ____ harbor ____/
+   [ASHLAND GREY]                  the Ida;  Hale's berth later
+    stern on the reef
+           ~~~~~~~ reef ~~~~~~ harbor mouth ~~~~ Remy's marker and boat on the rocks
+                                   S
+           (the crossing approaches from the SW; the deck cell is offshore there)
+```
+
+Walking-time targets (at the player's normal walk speed; measured, not guessed, by the route-timing report in VS-08):
+
+| Leg | Target | What fills it |
+| --- | --- | --- |
+| Quay → Marthe's store | 10–15 s | the *Ida* pumping, net racks, a dues chit on a door |
+| Quay → tower base | 35–50 s | the tower in view the whole climb; Remy's marker just off the path |
+| Settlement → cable hut | 25–40 s | the mast seen over the ridge; the hut's loose door heard before it is seen |
+| Tower → cable hut | 15–25 s | a cut stair down the north side; the mussel lines visible from above |
+| Quay → west headland | 45–60 s | the false-light post in view across the harbor; the Pruitts' shed on the way |
+| Headland → *Ashland Grey* stern | 20–30 s | reef rocks at low water; the hull looming |
+
+Rules for the World Architect (VS-07, VS-08):
+
+- **The tower pulls.** It is visible from every exterior cell and from the crossing, and it is never behind the player for long on a main route.
+- **Landmarks overlap.** From the quay the player can see the tower (NE), the false-light post (W), and the *Grey*'s hull (SW) at once. From the tower gallery, the whole island.
+- **Optional places sit just off natural routes** (the cable hut below the north path; Remy's marker off the tower path; the *Grey* past the headland).
+- **Activity is spatial storytelling:** where people stand, what they are working on, what is stacked outside whose door.
+- **Quiet is deliberate.** The north path and the reef causeway are intentionally sparse, and they are short.
+- **No leg is longer than about 60 s without something to notice** (a sightline, a sound, a person, a clue, a small discovery; VS-20 list).
+- **Do not add travel time to look big.** If a stretch feels empty, shorten it before filling it.
+
+## 5.6 Files and levels
+
+| Level | Holds | Generated by | Committed by |
+| --- | --- | --- | --- |
+| `Lvl_PointeSombre` (persistent) | terrain, water, sky and atmosphere sets, player start, nav bounds, cell anchors, **all gameplay actors** (NPCs, inspectables, portals, presence rules, containers, volumes, hazards, lights and audio that follow state, walkable collision) | `build_pointe_sombre.py` (core) calling one `build(<toolkit>)` hook per cell script in `Tools/EditorScripts/pointe_sombre/` | the Integrator only (the `.umap` is a build product) |
+| `Lvl_PointeSombre_Art_<Cell>` (always loaded, one per cell) | stateless dressing: kit composition that does not change, props, NoCollision detail | `dress_sombre_<cell>.py` (idempotent, by tag) | the cell's owner |
+| `Lvl_PointeSombre_Biome` (always loaded) | Tier C instances (HISM), one actor per biome zone | the biome recipe tool (§10) | the Integrator (build product) |
+
+Every Pointe Sombre script is idempotent and runs in `Tools\RebuildContent.bat` (a `sombre` group), so the whole map is reproducible from scripts. This is stricter than the shore, where dressing scripts were run once by hand.
+
+## 5.7 Save, load, travel, and compatibility
+
+- **No `SaveVersion` bump expected.** No new save field. The slice is one world; saves record `MapPackage` and F9 already reopens the saved map.
+- **Player transform** inside any cell is saved and restored as now.
+- **Persistent world state, quest continuity, flags, discoveries** are single-world, exactly as on the shore.
+- **One save slot** is shared by both maps (`DeadCurrent`). F5 in the slice overwrites a shore save. Loading a shore save from inside the slice opens `Lvl_Boathouse`, and the reverse; both are tested (`Map.Sombre.CrossMapLoad`). Separate slots are out of scope.
+- **Old Phase 5 saves** load on `Lvl_Boathouse` exactly as today (existing `LegacySave`, `LandingStageSaves`, `LandingStagePlayerSave` stay green).
+- **Mara's placement** follows the quest stage through presence (§7); nothing about her is saved on its own.
+- **Respawn:** today a dead player respawns at the PlayerStart, which in the slice is on the crossing deck. After `sombre.reef_struck` that is wrong. VS-04 tries the existing-system answer first (a presence rule moves the PlayerStart to the quay, then to the tower base once the vault is open). If the game mode does not honor a moved start, the smallest fix is a first-match conditioned respawn point, recorded as a capability change.
+- **Packaged build:** the slice map becomes `GameDefaultMap` (default; §16 parks it for Anthony). `Lvl_Boathouse` stays cooked, loads from its saves, and launches with `Tools\PlayTest.bat Lvl_Boathouse`. `EditorStartupMap` is unchanged.
+
+---
+
+# 6. Capability-Gap Audit (against the Phase 5 codebase)
+
+Conditional presence is done and is not redesigned. New C++ needs evidence from real slice content. Each row below cites it.
+
+| # | Capability | Classification | Evidence / decision |
+| --- | --- | --- | --- |
+| 1 | **Cell portal + scene cut** (`ADCCellPortal`, `World/`) | **REQUIRED** | Six transitions (§5.3) are the interior-cell architecture. Interactable; `Conditions` to use; `LockedText` otherwise; `Consequences` on use; destination actor; fade out / move / fade in; optional card text during the fade. **Scene cut:** during the fade it broadcasts `UDCWorldStateSubsystem::NotifySceneCut()`, and presence rules snap on it. Without that, the net loft could never fill: attendees would defer forever because the player arrives inside the 15 m bubble of their new placement. Saves nothing. Also delivers **condition-driven locked access** (#3). |
+| 2 | **Authored light sequence** (extend `ADCFlickerLight`) | **REQUIRED** | The slice is named for it. B9 needs the tower's own characteristic (PROVISIONAL default: two flashes every 10 s), a slow steady hand light, and, on the Line outcome, **three seconds of the pattern played once before the characteristic returns**. Adds an optional `Sequence` (on/off durations, looping) and a `Prelude` (played once on activation). The prelude waits until the light is first rendered on screen after activation (so a player who steps out of the loft sees it), and never plays on a restore. Random flicker stays the default; existing lights do not change. |
+| 3 | Condition-driven locked access | **USE EXISTING / CONTENT** | Portal conditions (#1) for cell entries; inside a cell, a blocker hidden by presence. `ADCDoor` is not extended. |
+| 4 | Map travel / boat travel | **DEFER** | The crossing is an in-map deck cell; no sailing; no chapter transition (prologue deferred, §3.2). |
+| 5 | Following companion | **DEFER** | Placed Mara is enough (§7). |
+| 6 | Talking to hostile NPCs | **DEFER** | The scavenger archetype's warning line covers "warn, then fight"; the slice has no conversation with a hostile. The "force the Pruitts" approach is cut (§8.2). |
+| 7 | Item descriptions by world state | **FALLBACK IS GOOD ENOUGH** | Liv's chart lives on the vault's chart table as an inspectable with variants; the `liv_chart` item is a static copy. |
+| 8 | Storm and time-of-day presentation by state | **USE EXISTING, prove in a spike (VS-04)** | Three looks: dusk storm (arrival until `knows`), calm evening (after `knows`), night storm (after the meeting). First answer: presence swaps sets of directional light, sky light, fog, sky mesh, and rain actors; `ADCConditionalAudio` for rain, thunder, wind; `ADCFlickerLight` for lightning. Every change happens under a scene cut (the player is in the vault at `knows`, in the loft at the meeting's end). **Only if** the spike shows a set cannot be switched this way (the known suspect: post-process volumes, which honor `bEnabled`, not hidden) does a small `ADCConditionalAtmosphere` get built, with Anthony told. |
+| 9 | Story card (`ADCStoryCard`, HUD) | **REQUIRED (small, presentation only)** | B9's end card ("Two bearings. Somewhere past the Narrows. Liv went through the locks.") and the opening title. A full-screen text card on a condition's rising edge, dismissed by a key, with consequences on dismissal. Its once-only-ness comes from a flag it sets, so it saves nothing itself. Drawn by the canvas HUD. The reef-strike text rides on the portal's fade (#1), not on this. |
+| 10 | Respawn after the crossing | **USE EXISTING, prove in VS-04** | See §5.7. Fallback C++ is a few lines in the game mode. |
+| 11 | Cell ambience (2D beds leaking into interiors) | **USE EXISTING, prove in VS-04** | Engine `AudioVolume` interior settings and per-cell ambience; if 2D exterior beds still leak, make them positional. No C++ expected. |
+| 12 | NPC idle poses and activity | **CONTENT (engine feature)** | Single-node animation on each NPC's mesh, set by the cell script, from library animations. If Python cannot set it, a one-property extension to `ADCFriendlyNPC` (recorded). |
+| 13 | Pickups that also set a flag (`false_lantern`, `liv_note`) | **CONTENT PATTERN** | `ADCItemPickup` only adds to inventory. The slice uses an inspectable whose consequence gives the item and sets the flag, with presence hiding the mesh after. Documented as the pattern. |
+| 14 | Biome scatter tool | **TOOLING (Python, no gameplay C++)** | §10. |
+| 15 | Multi-map tooling | **TOOLING** | `RunTests.bat`, `ReviewCapture.bat` (and `DCReviewCaptureTest.cpp`), `Package.bat`, `PlayTest.bat` are hard-wired to `Lvl_Boathouse`. VS-02 parameterizes them. |
+
+**New gameplay C++ in Phase 6: one new actor (portal), one extension (light sequence), one small presentation actor plus a HUD mode (story card), one signal (scene cut).** No rule-language change, no save change. Anything more is a stop condition (§17).
+
+---
+
+# 7. Mara
+
+Mara is the companion narratively. **A follow-anywhere companion is deferred.**
+
+Placed Mara is sufficient because every one of her slice lines is written as a conversation that works wherever she stands: her `panel`, `ticks`, `promise`, and `after` entries fire on flags whenever the player next talks to her (`SLICE_DIALOGUE.md` §1). Nothing in the slice needs her beside the player in the vault or on the headland.
+
+Placements (one presence rule, first match):
+
+| When | Where |
+| --- | --- |
+| `sombre.meeting_done` | the night quay, watching the tower |
+| `sombre.meeting_called`, not `meeting_done` | the net loft |
+| `sombre.reef_struck` | the quay by the *Ida*, then the store porch once `LocationDiscovered sombre.light` (she has moved up into town; she is where the talk is) |
+| (default) | the *Ida*'s rail, on the crossing |
+
+The case for a following Mara would be the vault ("Write it down" at the panel) and the headland. Both are covered by her later lines. Building follow AI, pathing, door handling through portals, combat behavior, and save state for a companion would cost more than any other single slice feature and prove nothing the slice asks.
+
+**Risk accepted and checked:** Mara may feel absent. Checkpoint B asks Anthony directly (§15).
+
+---
+
+# 8. The Story as a Production Inventory
+
+Classification codes used in every table:
+
+- **[E]** exists and reusable as is
+- **[N]** new content using existing systems (layout, data, assets, dialogue, tests)
+- **[C]** new reusable capability required (§6)
+- **[P]** provisional / may be cut
+
+## 8.1 Beats to cells
+
+| Beat | Cell(s) | ~min | Core systems |
+| --- | --- | --- | --- |
+| B0 crossing | crossing | 3–5 | inspectables, dialogue, presence, portal [C], atmosphere |
+| B1 harbor | harbor | 5 | dialogue (starts both quests), discovery |
+| B2 settlement | settlement, harbor | 10–15 | dialogue ×6, inspectables, build checks |
+| B3 lamp room | lighthouse | 5–8 | inspectables with variants, pickup, quest transitions, portal |
+| B4 vault | vault, cable hut, lighthouse | 15–20 | portals ×3, hazard, inspectables, build checks, loot, quest |
+| B5 Hale | harbor | 5 | presence, dialogue |
+| B6 False Light | headland, *Grey*, settlement | 10–15 | inspectables, presence, dialogue, hostile AI |
+| B7 decision | lighthouse, vault, settlement (smokehouse) | 5–10 | inspect verbs with conditions and consequences |
+| B8 net loft | net loft | 5–10 | dialogue with evidence, presence |
+| B9 second storm | harbor (night), all exteriors | 3–5 | atmosphere, light sequence [C], presence, story card [C] |
+
+## 8.2 Reconciliation of the narrative documents (to be applied in VS-09; each recorded)
+
+The slice documents are built **as written**, except for these continuity fixes, each the smallest change, each recorded in `SLICE_DIALOGUE.md`'s change list and shown to Anthony at Checkpoint B:
+
+1. **Dell's wet boots.** "It hasn't rained since the storm" contradicts a slice that opens in a storm. Smallest fix: keep the Survival 2 choice and its outcome; reword only the clause about rain (for example, "Nobody walks the reef in this for fish."). Default wording proposed in VS-09; Anthony may replace it.
+2. **"Catch them at it."** The beat script places it in the second storm, which only comes after the meeting. In the slice, the headland lantern burns during the **first** storm; Dell tends it (presence: `sombre.storm`, not `false_light_taken`, not `dell_confessed`). Catching him at the post is talking to him there. The scavenger-at-the-post variant needs the prologue and is cut.
+3. **"Force: Tem keeps a shotgun"** is cut: it needs a ranged NPC weapon and a friendly-to-hostile switch. The slice's fight is on the *Grey* (§8.9).
+4. **The net loft gathering.** One new choice in Marthe's `store` node at stage `knows`: "Call the island to the loft." → `SetWorldFlag sombre.meeting_called`, and her `loft` entry gains that condition. Attendees move to the loft on the scene cut when the player climbs the stair. Before the call, everyone stays where the `knows`-stage conversations need them.
+5. **Soft-lock guard, destroy first.** If the player opens the sea cock before reading the panel, the panel's destroyed variant also sets `sombre.panel_read`, so `knows` stays reachable.
+6. **Soft-lock guard, Liv's note.** The chart table and the note sit **above** the flood line in the node room, so flooding never destroys the note (`liv_note_found` gates `knows`). The log and the loop keep their data loss.
+7. **The bearing.** "Take the bearing" needs the storm or Engineering 2, and the storm clears at `knows`. That order is intended (data loss is real); the gameplay critic checks it reads as a choice, not a trap.
+8. **Pickups that set flags** (`false_lantern` → `false_light_taken`; `liv_note` → `liv_note_found`) use the inspectable-plus-presence pattern (§6 #13).
+9. **Copper Buyer** (listed in `QUEST_ARCS.md` §2.5 as trimmed) is carried entirely by Sigrun's dialogue and flags. No quest asset.
+10. **Children** are not modeled. They are present through the chalk rows, a drawing of the lighthouse, and Jonas.
+11. **The end card's trigger:** a deliberate act on the night quay (Varga's "Where next?" sets `sombre.slice_end`, or a "Watch the light" interaction at the quay's end). Chosen in VS-19, judged at Checkpoint D.
+
+New ids introduced by these fixes: `sombre.reef_struck`, `sombre.meeting_called`, `sombre.slice_end`. All other ids are the documents' own (§8.5).
+
+## 8.3 Maps, cells, and levels
+
+| Item | Class |
+| --- | --- |
+| `Lvl_Boathouse`, `Lvl_Boathouse_Art` (regression only) | [E] |
+| `Lvl_PointeSombre` persistent map and core script | [N] |
+| Per-cell art sublevels ×7, biome sublevel | [N] |
+| In-map interior cells (vault, net loft) and the lamp room at height | [N] + portals [C] |
+| Crossing deck cell | [N] |
+| `Lvl_TestGym` | [E] (a portal and a sequence light are added to it for editor-free checks only if VS-03 needs a map; otherwise untouched) |
+
+## 8.4 Content cells, NPCs, quests, dialogue
+
+**Cells:** crossing, harbor, settlement, lighthouse + vault (one integrated contract), cable hut, headland, *Ashland Grey* stern — all [N]. The late contract-only cell (VS-20; default: Remy's cove at the harbor mouth) [N][P].
+
+| NPC | Where / placements | Class |
+| --- | --- | --- |
+| Mara | crossing rail → quay → store porch → loft → night quay | [N] (body is the accepted placeholder [E]) |
+| Captain Ines Varga | the *Ida* at the quay | [N] |
+| Odette Beaudry | her cottage door; by Remy's marker (default state `[P]`); loft; the gallery at night if keeper | [N] |
+| Marthe | store counter; loft (chair) | [N] |
+| Jonas Leclair | Leclair porch; loft | [N] |
+| Tem Pruitt | salvage shed; loft; hidden if exposed and the room turned (default: stays) | [N] |
+| Dell Pruitt | shed; headland post in the first storm; loft; gallery at night if keeper | [N] |
+| Sigrun Dahl | net racks ("buying copper"); loft; gone once `exposed_sigrun` and Hale is present | [N] |
+| Warden Casimir Hale | absent until `hale_arrived`; his cutter's gangway; loft | [N] |
+| Wrecker hand (unnamed, PROVISIONAL) | the *Grey*'s stern deck | [N] (scavenger archetype [E]) |
+| Hale's crew at the tower base after `hale_crew_up` | dressing | [P] |
+| Leclair children | not modeled | out |
+
+| Quest / dialogue / id group | Class |
+| --- | --- |
+| `sombre.characteristic` (8 stages as in the beat script §6) | [N] |
+| `sombre.false_light` (4 stages) | [N] |
+| Dialogues: `sombre_mara`, `sombre_varga`, `sombre_odette`, `sombre_marthe` (incl. the meeting), `sombre_tem`, `sombre_dell`, `sombre_sigrun`, `sombre_hale`, `sombre_jonas` | [N] |
+| Flags: the beat script's list, `SLICE_DIALOGUE.md` §11's additions, and §8.2's three | [N] |
+| Locations: `sombre.harbor`, `sombre.light`, `sombre.vault`, `sombre.headland`, `sombre.cable_hut`, `sombre.ashland_grey` (plus `sombre.crossing` is **not** discoverable) | [N] |
+
+## 8.5 Items, evidence, loot
+
+| Item | Role | Class |
+| --- | --- | --- |
+| `liv_letter` | recap on the crossing; Odette's tie-key condition | [N] |
+| `liv_note` | evidence (Liv); gates `knows` via flag | [N] |
+| `liv_chart` | copy of Liv's chart (static) | [N] |
+| `vault_access_log` | evidence (Odette) | [N] |
+| `cut_cable_end` | evidence (Sigrun); Sigrun's reveal | [N] |
+| `false_lantern` | evidence (the Pruitts) | [N] |
+| `section_key_compact` | Hale's card | [N] |
+| `clockwork_pawl` | hand light (zero-investment) | [N] |
+| `lamp_oil` | hand light | [N] |
+| `sombre_vault_key` | Odette's key | [N] |
+| Loot: `ammo_9mm`, `field_dressing`, `salvage_wiring` in 5–7 containers (vault locker, Pruitts' cache, the *Grey*'s wheelhouse, Sigrun's copper bin, cable hut kit, smokehouse shelf) | reward, not economy | [E] items, [N] placement |
+| A slice-only novel loot item (the *Tern*'s Sounder Chart equivalent) | [P] — only if Checkpoint C says loot is flat |
+
+## 8.6 Inspectables and environmental story beats
+
+| Beat | Place | Class |
+| --- | --- | --- |
+| Liv's letter, the recap chart | crossing | [N] |
+| Remy's marker; his boat on the rocks | harbor mouth | [N] |
+| The *Ida*'s damage and pumps | quay | [N] |
+| Dues chits nailed on doors (Compact presence before Hale) | settlement | [N][P] |
+| The children's chalk ticks and the lighthouse drawing (Survival / chart variants) | Leclair porch | [N] |
+| Salvage marked "A. GREY" in the Pruitts' shed | settlement | [N] |
+| Lamp, clockwork, feed box, the unlit oil burner | lamp room | [N] |
+| The empty oil store at the tower base ("the light that never needed oil") | base room | [N][P] |
+| Mussel lines from the hut to the rock (Survival shows the way) | cable hut | [N] |
+| Authority cable-hut notice; the conduit | cable hut | [N] |
+| Keeper's log (three hands), sign-in board, node panel, DF loop, chart table and Liv's note, sea cock, dead eels (Pulse Read) | vault | [N] |
+| Footprints, "one drags a foot" (Survival), the hide | headland | [N] |
+| The *Grey*'s winch and pawl; the Pruitts' cache | *Grey* | [N] |
+| A Compact Loss Book page left on Hale's gangway | harbor after B5 | [N][P] |
+
+## 8.7 Hazards and combat
+
+| Encounter | Where | Approaches | Class |
+| --- | --- | --- | --- |
+| **Live water** in the vault's lower gallery (`ActiveConditions = [sombre.storm, !sombre.node_destroyed, !sombre.vault_floor_isolated]`) | vault | avoid by the catwalk and pipe route; Survival reads the dead-eel line (the safe edge); Engineering 2 isolates the floor grid at a breaker (`sombre.vault_floor_isolated`, new id); wait for the storm to pass is **not** possible (`knows` needs the panel) | [E] hazard + [N] |
+| **Wrecker hand** on the *Grey*'s stern | *Grey* | warns first (existing), avoid by the hull's cover and crouch, fight (pistol), loot the body; persistent death | [E] AI + [N] |
+| The reef at high water (visual only; the causeway is the path) | headland | none | [N][P] |
+| A second hostile at the headland in the fallback layout | headland | as above | [P] |
+
+Combat is the thinnest pillar in the slice: one melee archetype and one fight. That is deliberate (the slice is an investigation), and it is a **known risk** that Checkpoint C tests directly (§18). A ranged NPC is out of scope; if Anthony judges the slice needs it, that is a scope change he makes.
+
+## 8.8 World-state variants
+
+| Change | Driven by | Class |
+| --- | --- | --- |
+| Three atmospheres (dusk storm / calm / night storm) | `sombre.storm`, `hale_arrived`, `meeting_done` | [N] (presence) or [C] if the spike fails |
+| Mara's placements | §7 | [N] |
+| Hale and his cutter appear | `hale_arrived` | [N] |
+| Sigrun gone | `exposed_sigrun` + `hale_arrived` | [N] |
+| The headland lantern burns / is gone | `storm`, `false_light_taken` | [N] |
+| Dell at the post | `storm`, not taken, not confessed | [N] |
+| Loft attendees | `meeting_called`, not `meeting_done` | [N] |
+| Panel read-outs (2, 3, 4 of 5, dark) | node flags | [N] |
+| Vault flooded after the sea cock (water level up, bubbling at the vault's sea mouth) | `node_destroyed` | [N] |
+| Tower light: dark / on the Line (characteristic + pattern prelude) / by hand (slow steady) | outcome flags | [C] light sequence |
+| Keeper silhouette on the gallery | `keeper_odette` / `keeper_dell` + `meeting_done` | [N] |
+| Windows lit along the harbor | `power_settlement` | [N] |
+| Compact goods crates at Marthe's (Line outcome) | `light_line` | [N][P] |
+| Everyone's after-lines | dialogue entries | [N] |
+| End card | `slice_end` | [C] story card |
+
+## 8.9 Interiors
+
+| Interior | Kind | Class |
+| --- | --- | --- |
+| Tower base room | real, small | [N] |
+| Lamp room + gallery | real, at height | [N] |
+| Vault (5–6 spaces: upper room, stair, flooded lower gallery with catwalk, node room, sea-cock chamber, cable gallery) | abstracted cell | [N] |
+| Net loft | abstracted cell | [N] |
+| *Ida* wheelhouse | not entered (the portal) | — |
+| Homes, the store's back room, the smokehouse inside | not built (closed doors, an open smokehouse front) | — |
+
+## 8.10 Audio, music, lighting, VFX
+
+| Item | Source | Class |
+| --- | --- | --- |
+| Wind, water lap, hums, sparks, breaker, pistol | existing CC0 | [E] |
+| Rain, thunder, heavy surf, *Ida*'s bilge pump, rope and timber creak, vault drip and room tone, smokehouse fire | new CC0, sourced the 2026-09-29 way, recorded in `SOURCING_NOTES.md` and `art_pipeline.md` | [N] |
+| The sixty-cycle hum at the vault node (same tone as the relay) | existing `S_DC_HumRelay` family | [E] |
+| Music | **none by default** (§12.8) | [P] |
+| Atmosphere sets ×3 | lights, fog, sky | [N] |
+| Interior lighting per cell (vault emergency lamps flicker with no power; loft lanterns; lamp-room storm light) | `ADCFlickerLight`, point lights | [E] class, [N] placement |
+| Lightning | `ADCFlickerLight` on `sombre.storm` + a sky flash | [E]/[N] |
+| Rain | Niagara if a system can be made from an engine template in VS-04; else a camera-near streak material | [N][P] |
+| Live water filaments | `M_DC_Current` | [E] |
+| Mussel lines | decals | [N] |
+| Spray, smokehouse smoke | material cards | [P] |
+| Tower beam | glow mesh + light sequence | [C]/[N] |
+
+## 8.11 Landmarks
+
+The dark tower (primary), the false-light post, the *Ashland Grey*'s hull, the *Ida* at the quay, the net loft's gable and the smokehouse chimney, the cable hut's Authority mast, Hale's cutter (appears at B5 and changes the harbor's skyline). All [N].
+
+## 8.12 How much of Phase 6 is content, and how much is engineering
+
+Across the inventory above (about 150 rows): roughly **two thirds are new content on existing systems [N]**, a quarter are existing assets and systems reused [E], a small tail is provisional [P], and **four rows are new reusable capabilities [C]** (portal with scene cut, light sequence, story card, and only if its spike fails, the atmosphere actor). The tooling work (multi-map scripts, per-file specs, biome scatter) is production infrastructure, not gameplay C++. VS-24 recounts this from the specs and the tags (§14) and reports the real split.
+
+---
+
+# 9. Tier B: the Great Lakes Working Settlement Kit
+
+## 9.1 What the library already offers (surveyed at plan time)
+
+| Source | Useful pieces | Fit |
+| --- | --- | --- |
+| `AbandonedPowerPlant` (65 meshes) | modular concrete walls (plain, door, window variants), doors, stairs, platforms, pillars, steel beams, rubble | **the vault** (Authority concrete), the cable hut, the tower base room |
+| `Smugglers_cove` (already partly migrated) | pier planks and poles (in project), five pier sections, barrels (plus 17 barrel pieces), buckets, crates, wooden lantern, rowing boats (in project), coast rocks, land rocks, cliffs, sand rocks | **docks**, maritime clutter, Tier C rocks; avoid the plants, the fort, the period ships |
+| `Scene_Junkyard` (61) | drums, barrels, gas tanks, jerrycan, corrugated sheets, rusty beams, pallets, crates, chain pile, rock and stick sets | clutter, lean-tos, roofing sheet, Tier C |
+| `Scene_UnfinishedBuilding` (56) | concrete debris, cinder blocks, pallets, sacks, a hanging lamp, cardboard | clutter; the vault's debris |
+| `ModularBuildingSet` (not surveyed before) | urban brick storefronts, store doors, shutters, awnings, signs, electrical boxes and wires, fire-escape ladders | **weak** fit (city brick). Use only: electrical boxes and wires, a shutter, an awning, ladders |
+| `DriftWoodPack` (30 meshes, not yet migrated) | driftwood with low-poly variants | Tier C recipe input |
+| `SM_Notes` | paper notes | Liv's note, the sign-in board, dues chits |
+| CC0 surfaces (in project) | corrugated steel, rusty paint, plaster, concrete, gravel, rope, rock, sand, mud | kit materials |
+| Existing Meshy | `lighthouse_logbook`, `canned_rations_tin`, `dead_fish`, the relay and panel language | focal props |
+
+**The gap:** there is no weathered timber building kit (walls, siding, shingled or tarred roofs, gables, porches, net racks) in the library, and no CC0 wood-siding texture in it.
+
+## 9.2 The kit
+
+A small vocabulary, composed by data, not a unique asset per building.
+
+- **Shell modules** (authored once as simple meshes or from Geometry Script, with triplanar `M_DC_Surface` instances so scale does not stretch): wall 1 m / 2 m / 4 m, wall with door, wall with window, gable end, corner post, floor/deck slab, lean-to roof, pitched-roof half, porch deck, stair.
+- **Skins** (material instances, not new meshes): tarred timber, grey weathered siding (new CC0 wood texture), corrugated steel (existing), rust paint trim (existing), whitewash plaster (existing), concrete (existing).
+- **Trim and attachments** (library): corrugated sheets, pier poles as posts, beams, electrical boxes and wire, lantern mounts, shutters, a ladder, rope, floats, net racks, barrels, crates, drums, pallets, buckets, generic skiffs.
+- **Compositions** (data, `Tools/Kits/great_lakes_settlement/*.json`): a structure is a footprint, a wall skin per side, openings, a roof type, a porch flag, and a list of attachments. `kit.compose(spec)` places the pieces with a tag `Kit:<PieceId>` and `Structure:<Id>`.
+
+Structures the kit must build, each visibly distinct: Marthe's store (with the net loft's outside stair and gable), the net loft interior shell, Odette's cottage, the Leclair house front and porch, the Pruitts' salvage shed (open-sided), the smokehouse, harbor sheds (2), the cable hut, the tower base room, the *Ida*'s deck furniture and wheelhouse front, Hale's cutter's deck furniture.
+
+**Expected bespoke structural assets:** the lighthouse tower shell, the *Ida*'s hull, Hale's cutter's hull (or the *Ida*'s hull re-trimmed), the *Grey*'s stern. Those are vessels and one landmark, not buildings.
+
+## 9.3 How we know it worked (measured in VS-24 by `report_kit_usage.py`, a read-only script that counts tags)
+
+| Measure | Target |
+| --- | --- |
+| Structures built from the kit | ≥ 10 |
+| Distinct kit modules used | ≤ 30 |
+| Kit modules each reused in ≥ 3 structures | ≥ 10 |
+| Share of structural placements that are kit pieces | ≥ 75% |
+| Bespoke structural assets (buildings) | **0**; vessels and the tower ≤ 4 |
+| Visual critic: "any two buildings read as copies" | no blocker finding |
+
+If every building needs its own generated model, the kit has failed and VS-24 says so.
+
+---
+
+# 10. Tier C: the Great Lakes Rocky Shoreline Recipe
+
+## 10.1 The success condition
+
+**An agent can define a shoreline zone in data and receive a believable environmental baseline without hand-placing every rock and branch.**
+
+Not "we have PCG".
+
+## 10.2 What it is
+
+- **A recipe** (`Tools/Biomes/great_lakes_rocky_shore.json`): layers, each with a mesh set (library), density per m², clustering, scale and yaw ranges, slope limits, distance-from-waterline band, a seed offset, collision policy, and cull distance. Layers: shore stones along the waterline; gravel and pebble clusters; dark rock outcrops (medium); driftwood (the migrated `DriftWoodPack` low-poly variants plus the three CC0 pieces already in use); dead branches; sparse shoreline grass (a CC0 or library grass, checked against the palette); mud and wet-sand decal variation; maritime litter (rope, floats, a tire, a crate board, a washed-up drum).
+- **Zones** (`Tools/Biomes/zones/<cell>.json`, owned by each cell's owner): polygons or boxes in map space with a recipe, a seed, and a density scale.
+- **Exclusions**, two kinds:
+  - **authored**: `BiomeExclude` boxes placed by cell scripts: doors and portals, interaction approaches, NPC standing spots and patrol areas, the *Grey*'s combat area, route corridors, sightline corridors to the landmarks, persistent actors
+  - **automatic**: a radius around every `IDCInteractable`, `ADCLocationVolume` entry edge, NPC, portal, and PlayerStart
+- **The tool** (`Tools/EditorScripts/biome/scatter.py`): seeded placement, ground traces against the map's terrain, rejection by rule and exclusion, output as **Hierarchical Instanced Static Mesh** components on one actor per zone in `Lvl_PointeSombre_Biome`, plus a manifest (`Tools/Biomes/out/<map>.json`: per zone and layer, instance counts and a transform hash).
+- **Collision:** Tier C is NoCollision (it cannot block traces, bullets, or navigation). Large rocks that should block are Tier B and placed by hand.
+- **Gameplay-critical objects are never procedural.** If a generated rock or branch becomes narratively important, it is promoted into the cell script and excluded from the recipe.
+
+## 10.3 PCG or scripted HISM?
+
+Unreal's PCG framework is the long-term candidate. VS-06 opens with a **timeboxed spike** (one working day) and adopts PCG for the recipe **only if** all four hold:
+
+1. it regenerates headless inside `Tools\RebuildContent.bat`
+2. the same seed gives the same transforms (hash-equal) on two runs
+3. it honors the authored and automatic exclusions
+4. the packaged build pays no generation cost at runtime (the result is saved)
+
+Otherwise the recipe is the scripted HISM scatter above, which meets all four by construction and uses the same recipe and zone data, so moving to PCG later changes the tool, not the content. The decision and its evidence go in `technical_architecture.md`.
+
+## 10.4 Acceptance of the recipe
+
+| Measure | Target |
+| --- | --- |
+| Deterministic | two full rebuilds give identical manifests |
+| Exclusions | `Map.Sombre.BiomeExclusions`: zero instances inside any exclusion; zero within the automatic radii |
+| Reuse | the same recipe fills ≥ 3 cells' zones (cable hut, headland, harbor shore) with only zone data added |
+| Agent test | the VS-20 cell's zone is added in ≤ 20 lines of data, with no tool change |
+| Share | ≥ 80% of Tier C instances in the slice placed by the recipe |
+| Cost | same-session A/B, biome on vs off: ≤ 0.5 ms average |
+| Look | the visual critic finds no "procedural" or "floating" blocker in the shore views |
+
+---
+
+# 11. Content Cells and the Contract
+
+The Landing Stage proved the contract once. Phase 6 uses it seven times, plus one late cell.
+
+| Cell spec (`Design/POIs/`) | Contract | Why a cell |
+| --- | --- | --- |
+| `sombre.crossing.md` | standard | own script, own atmosphere, one-way exit |
+| `sombre.harbor.md` | standard | B1, B5, B9's stage; Remy's marker |
+| `sombre.settlement.md` | standard, with an NPC appendix | six NPCs, the smokehouse, the loft stair |
+| `sombre.lighthouse.md` | **integrated** (tower, base room, lamp room, gallery, vault, the node's physical acts, the three vault entrances' far ends) | the slice's dungeon and decision are one system; splitting it would split its tests and its ownership |
+| `sombre.net_loft.md` | standard (small) | an abstracted interior; the meeting's staging |
+| `sombre.cable_hut.md` | standard | first contract-built wilderness cell (metrics baseline) |
+| `sombre.headland.md` (includes the *Grey*'s stern) | standard | second wilderness cell (metrics comparison) |
+| late cell (default `sombre.remys_cove.md`) | standard, contract-only | the manufacturability test (VS-20) |
+
+Every spec fills `TEMPLATE.md`: identity, promise, discovery, spatial role and exclusions, gameplay, 2–5 environmental beats, state, assets by tier (with the kit's piece ids and the recipe's zone), audio, systems used, missing capability (expected empty after VS-03), tests, review views, human questions, and open decisions with defaults.
+
+**The id ledger** (`Design/POIs/sombre_ids.md`, VS-07): every flag, item, location, persistent actor, quest stage, dialogue asset, and tag the slice uses, with its owner cell. The Integrator owns it. A builder who needs an id asks; no two owners can mint the same one.
+
+---
+
+# 12. Asset Strategy
+
+## 12.1 Tier rules (enforced)
+
+- **Tier A** (focal: the player studies, remembers, fights, talks to, or decides about it): owned pack → CC0 → Meshy → custom. Close-range review views.
+- **Tier B** (the kit): reuse first; a new module is recorded with where it is used.
+- **Tier C** (connective): the recipe. **No Meshy credits for Tier C.** NoCollision.
+- **Before any generation: search the library** and record the search in the cell spec's Tier A row.
+
+## 12.2 Tier A list
+
+| Asset | Source order / default | Meshy est. |
+| --- | --- | --- |
+| Lamp and lens (Fresnel) | Meshy | 40 |
+| Rotation clockwork (weight, drum, governor, sheared pawl) | Meshy | 40 |
+| Node panel (Continuity Section 14) | Meshy, in the relay housing's visual language | 40 |
+| Direction-finding loop on its turntable | Meshy | 40 |
+| Sea cock wheel and pipe | library (powerplant, junkyard) → Meshy | 0–30 |
+| Feed box with cut, folded cable ends | library electrical box + a small cut-ends mesh | 0–30 |
+| Keeper's log | existing `lighthouse_logbook` | 0 |
+| Chart table + Liv's chart | kit table + authored chart texture | 0 |
+| Liv's note, sign-in board, dues chits | `SM_Notes` + authored textures | 0 |
+| False lantern | CC0 `Lantern_01` or Smugglers `SM_wooden_lantern_01` | 0 |
+| Compact section card, vault key, pawl, oil can | library (gear, can, jerrycan) → one small Meshy batch if needed | 0–30 |
+| Lighthouse tower shell (landmark silhouette; walkable only at the base and gallery, by hidden collision) | procedural revolved profile (Geometry Script) → Meshy | 0–50 |
+| *Ida* hull (art only; walkable deck by hidden collision), reused re-trimmed for Hale's cutter | Meshy or library | 50 |
+| *Ashland Grey* stern | composed: powerplant walls and beams + large hull-plate pieces + `M_DC_Wreck` | 0 |
+| Named NPC bodies ×8 | §12.3 | — |
+
+**Proposed Meshy ceiling for Phase 6: 350 credits** (balance 437), spent only through a cell spec's Tier A row, logged the same day. Exceeding it is a stop condition. Approving this plan approves the ceiling.
+
+## 12.3 Named NPCs (the largest art risk)
+
+Eight named people on one pack body invites the "twins" problem Anthony already flagged once. Default for the build tasks: `Survival_Character` with per-NPC costume tints and a distinct silhouette per person from library props (hat, apron, oilskin, a coil of rope, a Compact coat), plus the accepted one-piece placeholder approach where a body reads wrong. **VS-11 runs a bounded spike** on two better options at low-spec cost: MetaHuman characters at their lowest LODs, and a rigged generated body. It brings captures and frame-time numbers to Checkpoint B, where Anthony chooses. Until then, bodies are placeholders and are judged as placeholders.
+
+## 12.4 Music
+
+None by default. The storm, the hum, and silence carry the slice, as on the shore. A single end-card sting is `[P]`, added only if Checkpoint D asks for it.
+
+## 12.5 Provenance
+
+Every imported or generated asset gets a row in `Design/art_pipeline.md` the same day. Pack migration uses `Tools\ImportPackAssets.ps1` (1K textures, 12 MB package ceiling).
+
+---
+
+# 13. Production Ownership and Parallel Agents
+
+## 13.1 Roles
+
+| Agent | Default roles in Phase 6 |
+| --- | --- |
+| **Claude** | lead architect; Integrator (sole committer of generated maps, shared generators, tooling, ledger, docs); World Architect (specs, layout); Narrative Builder (quests, dialogue, inspect text); POI Builder for the harbor, settlement, crossing, net loft, lighthouse; revisions; final verification |
+| **Cursor / Grok** | Systems Engineer (VS-03 capabilities, VS-02 tooling C++ if split out); biome scatter tool (VS-06); POI Builder for the vault half of the lighthouse contract (VS-14) if Anthony wants a second builder; **Gameplay Critic** for every cell it did not build |
+| **Gemini** | library survey research for the kit (docs only, VS-05); **Visual Critic** for every checkpoint and the final round; Gameplay Critic for any cell Grok built |
+
+A builder never critiques its own cell. Only Anthony accepts.
+
+## 13.2 Ownership rules for this phase
+
+- The generated `.umap` files (`Lvl_PointeSombre`, `Lvl_PointeSombre_Biome`) are **build products**. Builders commit scripts and data; the Integrator regenerates and commits the maps after merging.
+- Each art sublevel `Lvl_PointeSombre_Art_<Cell>` has exactly one owner (the cell's builder).
+- `build_pointe_sombre.py` (core), `create_*.py` generator cores, `Tools/*.bat`, `Config/*`, `Source/**` outside a Systems Engineer handoff, `Design/POIs/sombre_ids.md`, phase plans, and `CLAUDE.md` are Integrator-owned.
+- New content specs are **per file** after VS-02: `Tools/ContentSpecs/items/<area>.py`, `quests/<quest>.py`, `dialogue/<dialogue>.py`. The generators read the folder. Each file has one owner.
+- New map tests are **new files per cell** (`Source/DeadCurrent/Save/DCSombre<Cell>MapTest.cpp`) using the shared helpers extracted in VS-02. Test files are the only `Source/**` a POI Builder may create.
+- Review views are **per cell**: `Tools/Review/Lvl_PointeSombre/<cell>.json`.
+- Content folders are per cell: `Content/World/PointeSombre/<Cell>/`; the kit in `Content/World/Kits/GreatLakesSettlement/`.
+- One worktree and branch per active builder (`vs/<package>`). The Integrator merges one package at a time, regenerates, runs the full suite, and commits.
+- Parallel building starts only after VS-02, VS-03, VS-04, and VS-07 are committed (boundaries stable).
+
+## 13.3 Work packages
+
+Each package is also written as a handoff in `Design/POIs/handoffs/sombre_<package>.md` from `AGENT_HANDOFF_TEMPLATE.md` when it starts. Summary contracts:
+
+**WP-SYS — capabilities (VS-03)**
+- Role: Systems Engineer (Grok by default; Claude if Grok is not available).
+- Task: cell portal + scene cut; light sequence + prelude; story card + HUD card mode; editor tests; docs section.
+- Files owned: new `Source/DeadCurrent/World/DCCellPortal.{h,cpp}`, `DCCellPortalTest.cpp`, `DCSignalSequenceTest.cpp`, `Source/DeadCurrent/UI/DCStoryCard.{h,cpp}`, `DCStoryCardTest.cpp`; additive edits to `World/DCFlickerLight.{h,cpp}` (sequence and prelude only), `World/DCWorldStateSubsystem.{h,cpp}` (`OnSceneCut` / `NotifySceneCut` only), `World/DCConditionalPresence.cpp` (snap on scene cut only), `UI/DCHUD.{h,cpp}` (card drawing only); the matching section of `technical_architecture.md`.
+- Forbidden: `Core/DCGameplayTypes.h`, rules, save, quest, dialogue, every map and content script, every other `Source/**` file.
+- Inputs: this plan §6; baseline commit and 45 tests.
+- Outputs: the three capabilities; tests; docs.
+- Dependencies: VS-02 committed.
+- Tests: `Tools\RunTests.bat -build` ≥ 48, every existing test unchanged.
+- Review artifacts: none visual; a short note of each capability's authoring contract.
+- Stop: needs a rule enum, a save field, or a change to an existing actor's default behavior; needs a file not listed.
+
+**WP-NARR — slice data (VS-09)**
+- Role: Narrative Builder (Claude).
+- Task: items, both quests, nine dialogues as per-file specs; §8.2 fixes; content tests.
+- Files owned: `Tools/ContentSpecs/items/sombre.py`, `Tools/ContentSpecs/quests/sombre_characteristic.py`, `sombre_false_light.py`, `Tools/ContentSpecs/dialogue/sombre_*.py`, new `Source/DeadCurrent/Quest/DCSombreContentTest.cpp`, `Design/Narrative/SLICE_DIALOGUE.md` change list only.
+- Forbidden: generator cores, existing specs (`mara_intro`, `shore_watch`, existing items), maps, `Source/**` other than the new test file.
+- Inputs: the three narrative docs; the id ledger.
+- Outputs: generated `/Game/Items`, `/Game/Quests`, `/Game/Dialogue` assets (committed by the Integrator after regeneration).
+- Dependencies: VS-02, VS-07 (ledger).
+- Tests: `Content.Validate` green; the new content tests (§19).
+- Review artifacts: a read-aloud list of changed lines for Anthony.
+- Stop: any line would decide canon beyond Anthony's decisions; a new condition type seems needed.
+
+**WP-KIT — settlement kit (VS-05)**
+- Role: Presentation Builder (Claude), with Gemini's survey (docs only) as input.
+- Files owned: `Tools/EditorScripts/kit/*.py`, `Tools/EditorScripts/import_kit_settlement.py`, `Tools/Kits/great_lakes_settlement/*.json`, `Content/World/Kits/GreatLakesSettlement/**`, `Design/Kits/great_lakes_settlement_kit.md`, `Tools/EditorScripts/report_kit_usage.py`.
+- Forbidden: map scripts, `import_art.py` core, `Source/**`.
+- Dependencies: VS-02.
+- Tests: `Map.Sombre.KitGym` (the kit test structures place and have no default material).
+- Review artifacts: kit sheet captures.
+- Stop: a building seems to need a unique generated model; the survey finds a license question.
+
+**WP-BIOME — shoreline recipe (VS-06)**
+- Role: Systems Engineer or POI Builder (Grok by default).
+- Files owned: `Tools/EditorScripts/biome/*.py`, `Tools/Biomes/great_lakes_rocky_shore.json`, `Tools/Biomes/zones/_test.json`, new `Source/DeadCurrent/Save/DCSombreBiomeMapTest.cpp`, the recipe section of `technical_architecture.md`.
+- Forbidden: cell zone files other than `_test.json`, map scripts, generators, other `Source/**`.
+- Dependencies: VS-04 (a map to fill).
+- Tests: determinism (two manifests equal), exclusions, NoCollision.
+- Review artifacts: shore views with the recipe on and off.
+- Stop: PCG is adopted and needs editor-GUI steps that cannot be scripted; runtime generation would be required.
+
+**WP-CELL-<name> — one per cell (VS-10..VS-20)**
+- Role: POI Builder (+ Narrative Builder for inspect text).
+- Files owned: `Tools/EditorScripts/pointe_sombre/<cell>.py`, `Tools/EditorScripts/dress_sombre_<cell>.py`, `Content/Maps/Lvl_PointeSombre_Art_<Cell>.umap`, `Tools/Biomes/zones/<cell>.json`, `Tools/Review/Lvl_PointeSombre/<cell>.json`, `Source/DeadCurrent/Save/DCSombre<Cell>MapTest.cpp`, `Content/World/PointeSombre/<Cell>/**`, `Design/POIs/sombre.<cell>.md` (status and Pilot Record sections).
+- Forbidden: the core map script, other cells' files, generators and specs, the ledger (request ids), `Source/**` except its test file, shared review files, `Config/*`.
+- Inputs: the cell spec, the ledger, the kit, the recipe, baseline commit and test count.
+- Outputs: a playable, tested cell candidate.
+- Dependencies: VS-02..VS-04, VS-07, and the data it reads (VS-09).
+- Tests: its map test file; the full suite.
+- Review artifacts: its views captured; its Pilot Record rows.
+- Stop: the template's stop conditions, plus: needs another cell's actor by reference (ask the Integrator for a shared anchor).
+
+**WP-CRIT — critics (VS-08, VS-12, VS-15, VS-19 light rounds; VS-22 full round)**
+- Roles: Visual Critic (Gemini), Gameplay Critic (Grok; Gemini for cells Grok built).
+- Files owned: `Design/POIs/reviews/sombre_<cell>_<critic>.md` only.
+- Forbidden: everything else.
+- Inputs: the review packet (not the builder's self-assessment), captures, specs, logs.
+- Stop: a finding needs a creative decision (it is filed for Anthony, not decided).
+
+## 13.4 Which work runs in parallel
+
+| Window | In parallel | Serialized |
+| --- | --- | --- |
+| After VS-02 | WP-SYS (VS-03) ∥ WP-KIT (VS-05) ∥ Gemini survey | the Integrator's VS-04 waits for VS-03 |
+| After VS-04 + VS-07 | WP-BIOME (VS-06) ∥ WP-NARR (VS-09) ∥ greybox (VS-08, Claude) | VS-08 merges last |
+| After Checkpoint A | crossing/harbor (VS-10) and settlement (VS-11) by Claude ∥ vault half of VS-14 by Grok (if used), from a stable greybox | lighthouse (VS-12) before the vault merges; both touch the lighthouse contract, so the contract assigns the vault files to one owner and the tower files to the other |
+| After Checkpoint B | cable hut (VS-13) ∥ headland (VS-16) | VS-17..VS-19 are serial (they cross every cell) |
+| VS-20 | the contract-only cell by a fresh agent ∥ Claude's discovery pass | |
+| VS-22 | both critics ∥ | |
+
+Parallelism is used where files do not overlap. Anything that crosses cells (the decision, the meeting, the second storm) is done by one owner.
+
+---
+
+# 14. Production Metrics
+
+Recorded per cell in its spec's Pilot Record, and for the phase in `Design/POIs/SLICE_PRODUCTION_REPORT.md` (created in VS-07, updated at every checkpoint, finished in VS-24).
+
+| Metric | How it is measured |
+| --- | --- |
+| Spec approved → playable candidate | commit timestamps (spec commit → first green map test for the cell) |
+| Candidate → accepted | candidate commit → Anthony's checkpoint acceptance |
+| Behavior through existing systems | share of the cell's gameplay actors that are existing classes (script count) |
+| New foundational C++ classes | per task; phase total (target: 3 + 1 signal) |
+| Bespoke hero assets, Meshy credits | per cell; phase total vs the 350 ceiling |
+| Tier B modules reused / added | `report_kit_usage.py` |
+| Tier C procedural vs hand-placed | recipe manifest vs tagged hand placements |
+| Asset-library reuse | provenance rows by source |
+| Critic findings (by severity) | review files |
+| Defects only Anthony found | checkpoint notes |
+| Test growth | per task |
+| Frame time | same-session A/B at each gate (§20) |
+| Rebuild reproducibility | two consecutive `RebuildContent.bat` runs: identical biome manifest; map tests green after each |
+| Package success | each package gate |
+
+**The key metric: do later locations get cheaper without feeling more generic?** The comparison set is cable hut (VS-13, first) → headland (VS-16) → contract-only cell (VS-20, last): time, new C++ (target 0 after VS-03), bespoke assets, Tier C share, critic blockers, and Anthony's "did any location feel procedural or generic?" answer for each.
+
+---
+
+# 15. Ordered Tasks
+
+Every task: purpose, scope, dependencies, **done when**, tests, human check. "Suite" means `Tools\RunTests.bat` (with `-build` after C++), all green.
+
+## VS-00 — Plan and contracts
+
+- **Purpose:** decide the slice's scope, architecture, ownership, and gates before any work.
+- **Scope:** this file; `Design/ANTHONY_CHECKLIST.md`; the status lines in `CLAUDE.md` and `Design/game_design.md`; a correction note on the stale "not pushed" line in `Design/CLAUDE_SESSION_REPORT.md`.
+- **Dependencies:** Phase 5 accepted.
+- **Done when:** committed, with no Phase 6 code or content; the checklist says PLANNED / NOT STARTED / AWAITING ANTHONY APPROVAL.
+- **Tests:** none (docs only).
+- **Human check:** Anthony approves or changes the plan.
+
+## VS-01 — Baseline, stale status, and the start record
+
+- **Purpose:** start from a verified, honest baseline.
+- **Scope:** `git fetch`; record `main` and `origin/main`; full suite; one same-session capture of `Lvl_Boathouse` as the frame-time reference for this machine; one package run; living status lines (`CLAUDE.md`, `game_design.md`, checklist, `technical_architecture.md` intro) say Phase 6 started; historical reports left as history.
+- **Dependencies:** VS-00 approved.
+- **Done when:** suite 45/45; package cooks and smoke-loads `Lvl_Boathouse`; the reference capture folder is named in the checklist; no living document says Phase 5 is in progress, the commits are unpushed, or Phase 6 has not started.
+- **Tests:** full suite.
+- **Human check:** none.
+
+## VS-02 — Production foundations
+
+- **Purpose:** make parallel, multi-map production possible before any content.
+- **Scope:**
+  - **Per-file content specs:** `create_items.py`, `create_quest.py`, `create_dialogue.py` read `Tools/ContentSpecs/<kind>/*.py`. Existing content moves into files unchanged (`shore.py`, `shore_watch.py`, `mara_intro.py`).
+  - **Multi-map tooling:** `RunTests.bat` runs one map suite per production map (`DeadCurrent.Map.Boathouse.*` on `Lvl_Boathouse`, `DeadCurrent.Map.Sombre.*` on `Lvl_PointeSombre` once it exists); `ReviewCapture.bat <map>` with per-map view folders and per-map routes (`DCReviewCaptureTest.cpp` reads the map's JSON set); `Package.bat` cooks a map list and smoke-loads each; `PlayTest.bat [map]`. The capture manifest gains primitive and draw-call counts.
+  - **Shared map-test helpers** extracted from `DCBoathouseMapTest.cpp` into a header (teleport, talk and choose, inspect, F5/F9 with a scratch slot, wait-for-condition).
+  - **Conventions** written into `Design/POIs/README.md`: per-cell scripts and sublevels, tags, content folders, the build-product rule for generated maps, worktrees.
+- **Dependencies:** VS-01.
+- **Done when:** regenerating items, quests, and dialogue produces assets whose properties match the pre-split assets (a before/after property dump, identical); suite 45/45; `ReviewCapture.bat Lvl_Boathouse` produces the same view set as before; `Package.bat` succeeds with the one-map list.
+- **Tests:** full suite; `Content.Validate`.
+- **Human check:** none.
+
+## VS-03 — Three small capabilities (WP-SYS)
+
+- **Purpose:** build only what §6 proves necessary, before any content uses it.
+- **Scope:** `ADCCellPortal` with conditions, locked text, consequences, destination, fade, card text, and the scene-cut signal (presence snaps on it); `ADCFlickerLight` sequence and prelude; `ADCStoryCard` and the HUD card; documentation (authoring, and what each must not be used for).
+- **Dependencies:** VS-02.
+- **Done when:** editor tests pass: `World.CellPortal` (locked text; conditions; consequences once per use; the player arrives at the destination's transform; presence snaps on the cut; nothing saved; the prompt text), `World.SignalSequence` (looping pattern timing within a frame's tolerance; prelude plays once on a rising edge, only after first render, never on a restore; random mode unchanged when no sequence is set; `ActiveConditions` still switch it), `UI.StoryCard` (rising edge only; consequences on dismissal; no replay when its flag is already set at start or after a restore). Suite ≥ 48, and no existing test changed.
+- **Tests:** as above.
+- **Human check:** none.
+
+## VS-04 — Map architecture proof (travel proof)
+
+- **Purpose:** prove the smallest architecture works end to end before building content on it.
+- **Scope:** `build_pointe_sombre.py` core with the per-cell hook; a first island blockout (terrain method chosen by a spike: landscape from a versioned heightmap, a generated terrain mesh from the same heightmap, or composed rock and cliff meshes, judged on headless regeneration, traces, performance, and look); one exterior, one interior test cell, a two-way portal; the crossing deck stub; the three atmosphere sets switched by presence (the spike in §6 #8); PlayerStart and respawn (§5.7); AudioVolume and ambience checks; cooking and smoke-loading both maps.
+- **Dependencies:** VS-03.
+- **Done when:**
+  - `Map.Sombre.Architecture` passes: walk to the portal, use it, arrive, F5 inside the cell, diverge, F9 (the map reopens and the player is inside the cell), portal back; presence snaps on the cut; a locked portal refuses and shows its text.
+  - `Map.Sombre.CrossMapLoad` passes: a shore save loaded from the slice opens `Lvl_Boathouse` with its state; a slice save loaded from the shore opens `Lvl_PointeSombre`.
+  - The atmosphere spike's result is recorded (presence enough, or `ADCConditionalAtmosphere` needed and why).
+  - Respawn after `sombre.reef_struck` lands on the quay (test).
+  - `Package.bat` cooks both maps and smoke-loads each.
+  - **Perf gate 0:** same-session capture of the blockout recorded as the slice's baseline.
+  - The architecture section of `technical_architecture.md` records the map frame, cell placement rule, terrain method, and why.
+- **Tests:** as above; full suite.
+- **Human check:** none (Checkpoint A comes after the greybox).
+
+## VS-05 — Settlement kit v1 (WP-KIT)
+
+- **Purpose:** prove Tier B composition.
+- **Scope:** library survey (Gemini's research doc as an input); CC0 wood siding and roofing texture sourced; shell modules; skins; `kit.compose()`; the kit catalog doc; a kit gym (a corner of the blockout or `Lvl_TestGym`) with three test structures of different types (store, shed, cottage).
+- **Dependencies:** VS-02 (can run in parallel with VS-03/04).
+- **Done when:** three test structures are composed from data only, each distinct in silhouette; the catalog lists every module with source and license; no default material in the kit-gym captures; `report_kit_usage.py` prints the counts.
+- **Tests:** `Map.Sombre.KitGym` (or an editor test of `compose` output) green.
+- **Human check:** none (judged at Checkpoint A).
+
+## VS-06 — Rocky shoreline recipe v1 (WP-BIOME)
+
+- **Purpose:** prove Tier C by recipe.
+- **Scope:** the PCG spike (§10.3) and decision; the recipe, the tool, automatic and authored exclusions, the manifest, `_test.json` zone on the blockout shore.
+- **Dependencies:** VS-04.
+- **Done when:** §10.4's determinism, exclusions, and cost targets pass on the test zone; the decision (PCG or scripted HISM) is recorded with evidence; **perf gate:** biome on vs off, same session, ≤ 0.5 ms average.
+- **Tests:** `Map.Sombre.BiomeExclusions` (manifest hash equals the committed one; no instance in an exclusion or within the automatic radii; every Tier C component NoCollision).
+- **Human check:** none (judged at Checkpoint A).
+
+## VS-07 — Slice specs and the id ledger (World Architect)
+
+- **Purpose:** no cell is built without a filled contract.
+- **Scope:** the seven cell specs (§11), each with its exclusion zones, kit structures, recipe zones, review views, and tests; `sombre_ids.md`; the §8.2 fixes listed; `SLICE_PRODUCTION_REPORT.md` created; handoffs for the first packages.
+- **Dependencies:** VS-04 (the map frame), VS-05 and VS-06 designs (their final numbers can land later).
+- **Done when:** every spec has no blank or TBD field; every open decision names its default; every id in the three narrative docs and §8.2 is in the ledger with an owner; no id collides with a shipped one.
+- **Tests:** none (docs).
+- **Human check:** none (Anthony may read the specs; nothing waits on him).
+
+## VS-08 — Exterior greybox with compressed geography → **Checkpoint A**
+
+- **Purpose:** find out whether Pointe Sombre's shape works before anything is dressed.
+- **Scope:** terrain; the waterline and reef; paths; the tower, the headland post, the *Grey*'s hull, the *Ida*, and the mast as landmark blockouts; every cell's footprint; kit shells roughed in for the settlement; portal stubs; exclusion volumes; nav bounds; location volumes; the recipe on the shore zones; the route-timing report (path length ÷ walk speed for every §5.5 leg).
+- **Dependencies:** VS-04..VS-07.
+- **Done when:** every §5.5 leg is within ±20% of its target in the route-timing report (or the spec is changed with a reason); the tower is visible from every exterior cell's review view (the capture's landmark trace check); the greybox has no reachable void (`inspect_bounds.py`-style flood fill); **perf gate 1** recorded against gate 0; a light visual-critic pass on the greybox captures (Gemini) is filed.
+- **Tests:** `Map.Sombre.Greybox` (every cell reachable on foot or by portal from the quay; no exterior spawn in the void; location volumes present); full suite.
+- **Human check — Checkpoint A (§16).**
+
+## VS-09 — Slice data (WP-NARR; parallel with VS-05..VS-08)
+
+- **Purpose:** the quests, dialogues, and items as data, testable without the map.
+- **Scope:** §8.4–§8.5 assets; §8.2 fixes; content tests.
+- **Dependencies:** VS-02; VS-07's ledger.
+- **Done when:** `Content.Validate` green for every new asset; `Content.Sombre.*` tests pass (§19); the changed-lines list is in the checklist for Anthony's read-aloud.
+- **Tests:** as above.
+- **Human check:** optional read-aloud before Checkpoint B.
+
+## VS-10 — The crossing and the harbor (B0–B1)
+
+- **Purpose:** the first ten minutes.
+- **Scope:** the deck cell (walkable collision, the letter, the recap chart, Mara at the rail, the false light and dark tower in view, the storm); the wheelhouse portal and strike text; the quay; the *Ida* moored and pumping; Varga; `sombre.harbor` discovery; Remy's marker and boat; Mara's first placements.
+- **Dependencies:** VS-08, VS-09.
+- **Done when:** a new game starts on the deck in the storm; the letter gives `liv_letter` once; the tie question sets exactly one tie flag or none; the strike moves the player to the quay with Mara already there; Varga's first reply starts both quests; the harbor is discovered once.
+- **Tests:** `Map.Sombre.Crossing`.
+- **Human check:** at Checkpoint B.
+
+## VS-11 — The settlement and its people (B2)
+
+- **Purpose:** the conversations that make the investigation.
+- **Scope:** Odette, Marthe, Jonas, Tem, Dell, Sigrun placed with their dialogue; the store, the loft stair, the Leclair porch ticks, the Pruitts' shed, the smokehouse ("Render a can"), net racks, Sigrun's copper bin; kit structures dressed; NPC idle poses; the body spike (§12.3).
+- **Dependencies:** VS-10.
+- **Done when:** each NPC's first conversation plays; the ticks set `sombre.ticks_seen` and give the chart variant with `survey_chart` (not reachable standalone; the neutral text shows); Dell's confession via Persuasion 2 and via Survival 2; rendering oil gives `lamp_oil`; **perf gate: NPC population** (same-session A/B against VS-08).
+- **Tests:** `Map.Sombre.Settlement`.
+- **Human check:** at Checkpoint B.
+
+## VS-12 — The lighthouse (B3) → **Checkpoint B**
+
+- **Purpose:** the first clue that the failure was deliberate.
+- **Scope:** tower exterior and base room; the stair portal; the lamp room (lamp, clockwork with the Engineering reading, feed box with the cut and the Engineering reading, `cut_cable_end`), the gallery; `sombre.light` discovery; the hatch portal locked (VS-14 opens it); the tower light in its dark state.
+- **Dependencies:** VS-10, VS-11.
+- **Done when:** discovering the light moves the quest to `lamp_room`; the feed box sets `sombre.cable_cut_found` and moves it to `vault`; builds change the readings as specified; the gallery view shows the island.
+- **Tests:** `Map.Sombre.Lighthouse`.
+- **Human check — Checkpoint B (§16)**, after a light critic pass (Grok gameplay on VS-10..VS-12, Gemini visual).
+
+## VS-13 — The cable hut (first contract-built wilderness cell)
+
+- **Purpose:** the vault's third door, and the metrics baseline for a wilderness cell.
+- **Scope:** the hut from the kit, the Authority mast, mussel lines, the conduit portal, the Survival reading that shows the way from the shore, a small loot kit, recipe zone.
+- **Dependencies:** VS-12; the vault cell's destination anchor (a placeholder until VS-14).
+- **Done when:** the cell spec's tests pass; its Pilot Record rows are filled (time, reuse, Tier C share, assets).
+- **Tests:** `Map.Sombre.CableHut`.
+- **Human check:** at Checkpoint C.
+
+## VS-14 — The vault (B4)
+
+- **Purpose:** a real dungeon.
+- **Scope:** the six spaces (§8.9); the four ways in (Odette's key: Persuasion 2 or the tie line with the letter; force the lower door: Engineering 2; the conduit; Sigrun with `cut_cable_end`); live water and its three answers (route, Survival, Engineering isolation); the log, sign-in board, panel, DF loop, chart table and Liv's note, sea cock, dead eels; the locker; `sombre.vault` discovery; the `vault_inside` and `knows` transitions (`knows` clears the storm and sets `hale_arrived`, under the vault's own scene).
+- **Dependencies:** VS-12, VS-13.
+- **Done when:** each entry route reaches `vault_inside` from a fresh save with the build it needs, and a zero-investment character reaches it by the conduit and by Sigrun; the live water hurts during the storm and not after isolation or the storm's end; `knows` fires on panel + note in either order; data loss works as written; the §8.2 soft-lock guards hold; **package gate 2** (both maps cook and smoke-load).
+- **Tests:** `Map.Sombre.VaultRoutes`, `Map.Sombre.Vault`.
+- **Human check:** at Checkpoint C.
+
+## VS-15 — Hale's arrival and the midpoint turn (B5) → **Checkpoint C**
+
+- **Purpose:** the world visibly turns halfway.
+- **Scope:** the calm atmosphere; Hale and his cutter present on `hale_arrived`; his conversation (card, crew, oil, Liv, copper buyer); Sigrun's reveal, unjam, and "Do it with me" paths; the Loss Book page `[P]`.
+- **Dependencies:** VS-14.
+- **Done when:** on leaving the vault after `knows`, the harbor is calm and Hale's cutter is berthed, with no pop-in while observed; every offer in Hale's `offer` node works and hides as specified.
+- **Tests:** `Map.Sombre.Midpoint`.
+- **Human check — Checkpoint C (§16)**, after a light critic pass on VS-13..VS-15.
+
+## VS-16 — The west headland, the False Light, and the *Ashland Grey* (B6)
+
+- **Purpose:** the side quest, the fight, and the second wilderness cell for the metrics comparison.
+- **Scope:** the headland post and hide, footprints (Survival), the lantern as "Take the lantern" (item + flag), Dell at the post during the first storm; the reef causeway; the *Grey*'s stern with the winch (`clockwork_pawl`), the Pruitts' cache, the wrecker hand; `sombre.headland` and `sombre.ashland_grey` discovery; telling Varga; the fallback layout if the stern fails as art (§3.1).
+- **Dependencies:** VS-11, VS-15.
+- **Done when:** False Light completes by each route (take the lantern then tell Varga or bring it to the loft; confession then tell Varga); the headland light obeys its conditions; the wrecker warns, can be avoided, can be killed and looted, and stays dead through F9; the pawl is obtainable without any build; Pilot Record rows filled for comparison with VS-13.
+- **Tests:** `Map.Sombre.FalseLight`, `Map.Sombre.Grey`.
+- **Human check:** at Checkpoint D.
+
+## VS-17 — The decision by hand (B7)
+
+- **Purpose:** the slice's choice, made physically.
+- **Scope:** every act in `SLICE_WRONG_CHARACTERISTIC.md` §4 with its exact conditions and consequences (splice, seat the card, throw the settlement feed with card or jumper, open the sea cock, free the clockwork by pawl or file, render oil, light it by hand, choose a keeper); panel read-outs by state; the vault's flooded state.
+- **Dependencies:** VS-14..VS-16.
+- **Done when:** the node ends in exactly one of Line, Settlement, Destroyed, Untouched in every tested order; the hand light combines with Settlement and Destroyed but never Line; every act is reachable by a zero-investment character through the help routes; the node acts' variants hide once another act is taken.
+- **Tests:** `Map.Sombre.Resolution` (every outcome × zero / Engineering / Survival / Persuasion builds, including the hand-light combinations and keeper choices).
+- **Human check:** at Checkpoint D.
+
+## VS-18 — The net loft (B8)
+
+- **Purpose:** exposure as a separate, social decision.
+- **Scope:** the loft cell; "Call the island to the loft"; attendees on the cut; Marthe's meeting with evidence choices that appear only while carried and consume the item; reactions; Odette's forgiveness; the tie line; `meeting_done`.
+- **Dependencies:** VS-17.
+- **Done when:** each evidence item shows its choice only while carried and removes it when given; each exposure flag is set by exactly its item; forgiveness works only with both the access log and the note; the tie line shows exactly one variant; the meeting completes the main quest into the stage matching the light.
+- **Tests:** `Map.Sombre.Meeting`.
+- **Human check:** at Checkpoint D.
+
+## VS-19 — The second storm and the end card (B9) → **Checkpoint D**
+
+- **Purpose:** the visible consequence.
+- **Scope:** the night-storm atmosphere; the tower's characteristic per outcome, and the pattern prelude on the Line; keeper silhouettes; lit windows; the headland; Sigrun gone; attendees on the night quay; everyone's after-lines; the end card and its trigger.
+- **Dependencies:** VS-18.
+- **Done when:** each of the five outcomes (Line; hand with Odette, with Dell, with no keeper; Settlement with and without a hand light; Destroyed with and without; Untouched) shows its picture from the same night-quay camera; the prelude plays once, only when seen, and not after F9; the end card shows once and not on load; **perf gate: storm** (same-session A/B); **package gate 3**.
+- **Tests:** `Map.Sombre.SecondStorm`, `Map.Sombre.Saves` (§19).
+- **Human check — Checkpoint D (§16)**, after a light critic pass on VS-16..VS-19.
+
+## VS-20 — Discovery density, environmental story, and the contract-only cell
+
+- **Purpose:** "something worth noticing every 30–60 s", and the manufacturability test.
+- **Scope:** walk every route with the route timer and list what is noticed on each leg; fill gaps with authored beats (§8.6) or shorten the leg; loot balance; **the contract-only cell** (default Remy's cove) built by an agent that built no other cell, from its spec, the kit, and the recipe only, with its time and counts recorded.
+- **Dependencies:** VS-19.
+- **Done when:** no route leg has more than 60 s without a listed point of interest (the list is in the report); the late cell's Pilot Record is complete and compared with VS-13 and VS-16; no new C++ was needed for it.
+- **Tests:** the late cell's map test; full suite.
+- **Human check:** at Checkpoint E.
+
+## VS-21 — Presentation
+
+- **Purpose:** make it look and sound like DEAD CURRENT at low spec.
+- **Scope:** Tier A assets within the Meshy ceiling; NPC bodies per Anthony's Checkpoint B choice; kit and recipe dressing complete; interior lighting; the three atmospheres tuned; new CC0 audio; VFX within §8.10; provenance.
+- **Dependencies:** VS-20.
+- **Done when:** no view shows a default or grid material or a missing texture; no floating dressing in the review views; Meshy spend ≤ 350 and logged; **perf gate: finished slice** (§20).
+- **Tests:** full suite; captures.
+- **Human check:** at Checkpoint E.
+
+## VS-22 — Review packet and independent critics
+
+- **Purpose:** the builders are not the judges.
+- **Scope:** `Design/POIs/reviews/sombre_REVIEW_PACKET.md` (what to look at, where, the expectations, the questions; no self-assessment); a full capture run of every view (§21); Visual Critic (Gemini) and Gameplay Critic (Grok; Gemini for Grok-built cells) findings files.
+- **Dependencies:** VS-21.
+- **Done when:** both findings files exist for the whole slice. Until then the slice is `CANDIDATE`.
+- **Tests:** none new.
+- **Human check:** Anthony runs the critic agents.
+
+## VS-23 — Revision
+
+- **Purpose:** answer every finding.
+- **Scope:** fixes only for findings, one commit per coherent group, each citing its finding id; creative questions parked for Anthony with defaults.
+- **Dependencies:** VS-22.
+- **Done when:** every finding is fixed, rejected with a reason, or parked.
+- **Tests:** full suite after each group.
+- **Human check:** parked items.
+
+## VS-24 — Full verification and the production report
+
+- **Purpose:** prove it is done, and measure what it cost.
+- **Scope:** `RebuildContent.bat` twice (identical biome manifests; art sublevels intact); full suite; captures of both maps; same-session A/B for both maps; `Package.bat` with both maps; old saves (Phase 5 hand-written and Anthony's own, copied to a scratch slot); `SLICE_PRODUCTION_REPORT.md` finished (§14 and the kit and recipe tables); docs (`technical_architecture.md`, `game_design.md`, `world_bible.md` PROVISIONAL lines only, `art_pipeline.md`); `CLAUDE_SESSION_REPORT.md` replaced; checklist.
+- **Dependencies:** VS-23.
+- **Done when:** everything above is green and recorded; the session report lists exactly what Anthony should play (§22).
+- **Tests:** everything.
+- **Human check:** none (next is E).
+
+## VS-25 — Anthony's acceptance → **Checkpoint E**
+
+- **Purpose:** only Anthony accepts.
+- **Scope:** the §22 walkthrough; findings become revision tasks; repeat VS-23..VS-24 as needed.
+- **Done when:** Anthony explicitly accepts Phase 6. Stop. Do not start Phase 7.
+
+---
+
+# 16. Intermediate Playable Checkpoints (Anthony)
+
+Phase 5 showed that Anthony finds what tests and critics miss. Each checkpoint is short, concrete, and happens before the next layer is built on top.
+
+| Checkpoint | After | Play (time) | Judge | What freezes after it |
+| --- | --- | --- | --- | --- |
+| **A — Shape** | VS-08 | walk the greybox island from the quay: to the tower, the hut, the headland, the *Grey*; look from the gallery (15–20 min) | scale; density; landmark pull; compressed geography; whether the kit's rough shells and the recipe's shore read as a Great Lakes place; "did it feel bigger than it is?"; "any stretch empty just because it is long?" | the island's layout and the cell footprints |
+| **B — People and the first clue** | VS-12 | new game: the crossing, the harbor, every settlement conversation, the lamp room (25–35 min) | pacing; NPC readability; whether the player knows what to do without being led; the tie question; Mara placed, not following ("did you miss her?"); **NPC body choice** (§12.3); the read-aloud list | the conversation structure and the NPC body pipeline |
+| **C — The dungeon** | VS-15 | each way into the vault (from saves provided), the vault, Hale's arrival (25–35 min) | "a dungeon or a room with clues?"; danger; build routes; environmental story; the live water; **is one fight enough?** | the vault layout |
+| **D — The decision** | VS-19 | from a `knows` save: each outcome by physical acts, the meeting, the second storm (30–40 min, saves provided) | earned; materially different; "did you understand what you physically changed?"; "did the settlement react?"; the end card's trigger | the resolution structure |
+| **E — The game** | VS-24 | the full run (§22) | "does this feel like a real game?" | acceptance |
+
+Before B, C, D: a light critic round on the cells built since the last checkpoint. Before E: the full round (VS-22).
+
+---
+
+# 17. Stop Conditions
+
+Stop and ask Anthony only when:
+
+- a creative decision outside Anthony's recorded decisions and this plan's defaults blocks progress
+- a save-format change, a `SaveVersion` bump, or a renamed shipped id would be needed
+- a new C++ capability beyond §6 would be needed (with the content that proves it)
+- the atmosphere spike needs `ADCConditionalAtmosphere` (tell, then build: it is pre-approved in principle but must be recorded)
+- the work would enter Phase 7 or anything in §3.4
+- the Meshy ceiling would be exceeded
+- the crossing cannot be made to read as a played scene (the fallback needs his sign-off)
+- a perf gate fails (§20)
+- a builder would have to edit another owner's files, or uncommitted edits by someone else sit in files a task needs
+- two architectures with different long-term consequences cannot be settled from the project's rules
+
+---
+
+# 18. Known Risks
+
+| Risk | Mitigation |
+| --- | --- |
+| Named NPCs read as twins or mannequins | the body spike and Anthony's choice at Checkpoint B; distinct silhouettes by props meanwhile |
+| Combat is thin (one melee archetype, one fight) | deliberate; tested at Checkpoint C; a ranged NPC is a scope change only Anthony makes |
+| The crossing reads as a static set | storm audio, lightning, spray, the moving water material, the strike in the fade; a fallback with sign-off |
+| The atmosphere swap cannot be done with presence | spike in VS-04; a small `ADCConditionalAtmosphere` |
+| Vessels and the tower need bespoke art beyond the ceiling | revolved-profile tower; one hull reused re-trimmed; the *Grey* composed; fallback layouts |
+| The kit reads as greybox boxes | a real wood siding texture, trim from the library, silhouettes by composition; critics judge it |
+| Tier C reads as scattered noise | recipe rules (bands, clustering), the visual critic, Checkpoint A |
+| The single always-loaded map costs frame time | perf gates at every layer; interior cells culled by distance; HISM with cull distances |
+| Parallel agents collide | §13 ownership, build-product maps, per-file specs, one merge at a time |
+| The shared save slot confuses playtests | documented; saves provided per checkpoint on scratch copies |
+| The slice runs long (> 90 min) or short (< 60) | beat timings in §8.1 measured at Checkpoint D and E; cut optional beats `[P]` first |
+| Players miss the pattern prelude | it waits until the light is on screen; the quay faces the tower; tested |
+| Canon creep | every new line PROVISIONAL; nothing explains the Current; the read-aloud list |
+| Old frame-time shortfall confused with regression | same-session A/B only; the ~54 FPS issue stays deferred |
+
+---
+
+# 19. Test Strategy
+
+The 45 existing tests stay green and unchanged throughout. New tests, by task (names are proposals):
+
+Editor context:
+
+- `World.CellPortal`, `World.SignalSequence`, `UI.StoryCard` (VS-03)
+- `Content.Sombre.QuestGraph`: every outcome stage of both quests is reachable by some sequence of flags; `knows` needs both the panel and the note; the untouched ending completes; `done` of False Light sets `false_light_taken`
+- `Content.Sombre.Dialogue`: every node has an unconditional choice; every entry list ends unconditional; **no tie leak** (every tie-variant choice or line has a NO_TIE partner; each tie flag shows exactly one variant per keystone node); evidence choices require the item and remove it; keeper choices exclude each other; Varga's `first` starts both quests
+- `Content.Sombre.Items`: every slice item id resolves and has a category
+
+Game context, `Lvl_PointeSombre` (`DeadCurrent.Map.Sombre.*`):
+
+| Test | Covers |
+| --- | --- |
+| `Architecture` | portals both ways, locked text, save inside a cell, F9 back into the cell, scene-cut snap |
+| `CrossMapLoad` | shore save from the slice; slice save from the shore; a Phase 5 save still loads on the shore |
+| `Greybox` | reachability of every cell from the quay; location volumes; no void |
+| `BiomeExclusions` | recipe determinism (manifest hash), exclusions, NoCollision |
+| `KitGym` | kit composition places with no default material |
+| `Crossing` | new-game start in the storm, the letter once, tie flags, the strike, Mara on the quay, quests start at Varga |
+| `Settlement` | every first conversation, ticks, Dell's two confession routes, render oil |
+| `Lighthouse` | `lamp_room` and `vault` transitions, build readings, the cut cable end |
+| `CableHut` | the conduit, the Survival route reading, loot |
+| `VaultRoutes` | all four entries with their builds; zero investment by conduit and by Sigrun; build-gated routes hidden without the build |
+| `Vault` | live water by storm and isolation; evidence pickups; data loss after the sea cock; the soft-lock guards; `knows` in both orders; storm clears; Hale arrives out of sight |
+| `Midpoint` | the calm; Hale's offers; Sigrun's paths |
+| `FalseLight` | take the lantern; confession by Persuasion and by Survival; telling Varga; the headland light's conditions; Dell at the post |
+| `Grey` | the wrecker warns, is avoidable, dies, is looted, stays dead through F9; the pawl with no build |
+| `Resolution` | every act; mutual exclusion; hand-light combinations; keeper choices; panel read-outs; every outcome for zero, Engineering, Survival, Persuasion |
+| `Meeting` | evidence only while carried, consumed when given; each exposure; forgiveness; the tie line; the completion stage matches the light |
+| `SecondStorm` | each outcome's night picture (the lights' states, presence states, sequence mode); the prelude once and not after load; the end card once and not on load |
+| `Saves` | F5 → diverge → F9 at every stage boundary (`arrived`, `lamp_room`, `vault`, `vault_inside`, `knows`, each `done_*`); no discovery re-announced; destroyed and dead actors restored; relaunch (reopened map) |
+| `Discovery` | each slice location discovered once, silent on load |
+| `<late cell>` | its spec's tests |
+
+Regression: every `DeadCurrent.Map.Boathouse.*` test, `LegacySave`, `LandingStageSaves`, `LandingStagePlayerSave`, and the Phase 4 build checks run unchanged in every suite run.
+
+Expected end count: **at least 70** (45 + 3 capability + 3 content + about 20 map).
+
+Not automated, on purpose: whether it is compelling, whether a place feels real, whether a line sounds right, whether a choice feels earned. Those belong to Anthony and the critics.
+
+---
+
+# 20. Performance Gates
+
+- **Same-session A/B only.** Each gate captures the previous gate's build and the current build back to back on the same binaries and machine, and compares average frame time over the same views. The ~54 FPS baseline shortfall is deferred and is not a gate.
+- **Gates:** 0 blockout (VS-04), 1 greybox + recipe (VS-08), biome on/off (VS-06), NPC population (VS-11), storm (VS-19), finished slice (VS-21), final (VS-24).
+- **A material regression** is more than **+1.0 ms** average between consecutive gates, any single view more than **+2 ms** over its previous value, the biome's on/off cost over **0.5 ms**, or the finished slice's average more than **1.0 ms** above `Lvl_Boathouse`'s in the same session. Any one stops the phase for a look.
+- `Lvl_Boathouse` itself must not regress (the Phase 5 rule, re-run at VS-24).
+- Budgets watched in the manifest: primitives and draw calls per view, dynamic shadowed lights per cell (target ≤ 4 visible at once), texture-pool warnings (none), HISM instance totals.
+
+---
+
+# 21. Review Views and Critic Gates
+
+Views live in `Tools/Review/Lvl_PointeSombre/<cell>.json`. Every view names what must read first. The minimum set:
+
+| View | Setup | Must read first |
+| --- | --- | --- |
+| `crossing_bow` | new game | the false light, low on a headland; the dark tower beyond it in lightning |
+| `crossing_rail_mara` | new game | Mara at the rail, and the letter's spot |
+| `arrival_quay` | `reef_struck` | the *Ida* listing and pumping; the dark tower above the town |
+| `harbor_overview` | `arrived` | three landmarks in one frame: tower, false-light post, the *Grey* |
+| `harbor_mouth_remy` | default | Remy's marker, his boat on the rocks |
+| `settlement_street` | `arrived` | people at work; the store and loft gable; smoke |
+| `store_marthe`, `cottage_odette`, `porch_leclair`, `shed_pruitts`, `racks_sigrun` | default | each person in their place, their trade legible |
+| `ticks_close` | default | the chalk rows and the drawn lighthouse |
+| `tower_silhouette` | storm | the tower against the storm sky from the settlement |
+| `lamp_room` | `lamp_room` | the dead lamp and the unlit burner |
+| `feed_box_close` | `lamp_room` | the clean cuts |
+| `gallery_view` | calm | the whole island from the gallery |
+| `cable_hut_approach` | default | the mast over the ridge; mussel lines in the water |
+| `vault_entry_hatch`, `vault_entry_lower`, `vault_entry_conduit` | `vault_opened` | where each route lands; a route onward |
+| `vault_lower_gallery` | storm | the live water and the catwalk; the dead eels |
+| `vault_node_room` | storm | the panel, the loop, the chart table |
+| `vault_flooded` | `node_destroyed` | water to the second rung |
+| `headland_post` | storm | the lantern burning in the hide; Dell |
+| `grey_stern` | default | the stern deck, the winch, the wrecker's position |
+| `hale_arrival` | `hale_arrived` | the cutter in the calm harbor |
+| `loft_meeting` | `meeting_called` | the island in one room; Marthe in the chair |
+| `night_quay_<outcome>` ×5 | each outcome, `meeting_done` | the tower's state: blazing / steady and slow with a figure / dark with the town lit / dark with the vault mouth bubbling / dark |
+| `night_headland` | lantern taken vs not | lit or dark |
+
+**Critic gates:** a light visual pass at A; light visual + gameplay passes before B, C, D on the cells new since the last checkpoint; the full round at VS-22. Findings go to `Design/POIs/reviews/sombre_<scope>_<critic>.md`. Builders do not write, soften, or pre-answer them. Revision answers every finding (fixed, rejected with a reason, or parked for Anthony).
+
+---
+
+# 22. Human Acceptance Walkthrough (Checkpoint E, 60–90 minutes)
+
+Delete `Saved\SaveGames\DeadCurrent.sav` (the checklist says where a backup of the shore save is). Launch `Tools\PlayTest.bat Lvl_PointeSombre`. Choose a build on **B** before stepping off the deck (suggested first run: 2 points in one skill of your choice; a second run later can use another).
+
+1. **The crossing (≈5).** Read the letter. Talk to Mara; answer her question however you like. Look ahead: which light is wrong? Tell Varga. *Did the crossing feel played, not watched?*
+2. **The harbor (≈5).** Talk to Varga. Look around the quay before going anywhere. F5. *What did you want to go and look at first, and why?*
+3. **The settlement (≈15).** Talk to everyone who will talk. Find the children's chalk. Visit Remy's marker. *Which people did you remember? Did anyone feel like a quest dispenser?*
+4. **The tower (≈8).** Climb it. Read the lamp room. *Did you know where to go next without being told?*
+5. **Getting in (≈5–10).** Get into the vault however your character can. *Was there more than one way you could see?*
+6. **The vault (≈15–20).** Cross the lower gallery. Read everything. Find Liv's note. *Did it feel like a dungeon rather than a room with clues? Where was the danger?*
+7. **Hale (≈5).** Come out. *Did you notice the harbor had changed before anyone told you?* Talk to Hale.
+8. **The headland and the *Grey* (≈10–15).** Find out who shows the lantern. Deal with the wrecker however you like. *Did your build give you different options here?*
+9. **Deciding (≈5–10).** Decide the light with your hands. *Did you understand what you physically changed? Did the decision feel earned?*
+10. **The loft (≈5–10).** Call the island. Bring what you carry, or don't. *Whose side did you end up on, and did it feel like yours?*
+11. **The second storm (≈3–5).** Go out on the quay. Watch. Talk to Varga. *Did the settlement visibly react?*
+12. **Save and load.** F5 on the quay, quit, relaunch, F9. Everything as it was.
+13. **A second outcome (optional, ≈15).** F9 to the `knows` save provided, decide differently, go to the quay. *Was it materially different?*
+
+Overall questions:
+
+- Did Pointe Sombre feel like a real place?
+- Was there regularly something worth noticing?
+- Did you understand where to go without feeling led by the nose?
+- Did your build give you meaningfully different options?
+- Did any location feel procedural or generic?
+- Did the world feel bigger than it actually is?
+- Did any space feel empty merely because we were preserving realistic distance?
+- Which characters did you remember?
+- Did anything feel like Fallout imitation rather than DEAD CURRENT?
+- **Does this feel like a real game?**
+
+---
+
+# 23. Definition of Done
+
+Phase 6 cannot be accepted unless:
+
+- the full 60–90 minute slice is playable from the crossing to the end card
+- exploration, investigation, and multiple RPG approaches matter (tests and Checkpoint E)
+- every build check in §8 functions and a zero-investment character can finish every outcome
+- the lighthouse and vault work, including all four entries
+- False Light works by each route
+- every physical resolution path works, with mutual exclusion
+- the settlement visibly reacts in the second storm for each outcome
+- world state persists through F5, divergence, F9, and relaunch at every stage
+- old saves (Phase 5, and Anthony's own) still load
+- every existing test passes; new tests (≥ 70 total) cover Phase 6
+- `RebuildContent.bat` twice gives identical results
+- the Development Win64 package cooks; both production maps smoke-load; no missing cooked assets; no editor-only references
+- no unexplained frame-time regression (§20)
+- the settlement kit is proven (§9.3), the rocky-shoreline recipe is proven (§10.4), and procedural placement obeys the exclusions
+- at least seven cells used the common contract, and the contract-only cell was built without new C++
+- at least one package ran in parallel on isolated ownership and merged cleanly
+- independent gameplay and visual reviews happened and every finding was answered
+- the production report says whether later cells got cheaper without feeling more generic
+- Anthony completed the full playtest and **explicitly accepted Phase 6**
+
+Then stop. Do not start Phase 7.

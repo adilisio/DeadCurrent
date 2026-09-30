@@ -26,7 +26,7 @@ Earlier reports are in git history:
 
 ## Starting SHA
 
-`532994d`, with `main` = `origin/main` and 38 of 38 tests. All Phase 5 commits (40 so far) are local and not pushed.
+`532994d`, with `main` = `origin/main` and 38 of 38 tests. All Phase 5 commits (40 so far) are local and not pushed. (Correction, VS-00, 2026-09-30: they were pushed. After `git fetch`, `origin/main` matched `9640c05`.)
 
 ## Phase 5 Progress
 
