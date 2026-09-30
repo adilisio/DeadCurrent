@@ -1247,6 +1247,16 @@ def dress_library_clues():
     relay = actor_by_label("RelayRig")
     wear_mesh(relay, first_mesh("/Game/Art/Meshy/relay_housing"), 40.0, (2480.0, -220.0, 20.0), yaw=270.0)
     seat(relay)
+    # Phase 5 playtest: the coil hung 20 cm over the sand beside the housing. It sits on top of the housing now, as
+    # Mara describes it ("the coil sits in the relay housing"), resting on the dressed mesh's real top.
+    coil = actor_by_label("Pickup_RadioCoil")
+    relay_origin, relay_extent = relay.get_actor_bounds(False)
+    coil_origin, coil_extent = coil.get_actor_bounds(False)
+    loc = coil.get_actor_location()
+    coil.set_actor_location(unreal.Vector(
+        loc.x + relay_origin.x - coil_origin.x,
+        loc.y + relay_origin.y - coil_origin.y,
+        loc.z + (relay_origin.z + relay_extent.z) - (coil_origin.z - coil_extent.z)), False, True)
 
     # Greybox inspectables that were still on MI_DefaultColorway. Library meshes, same actors.
     wear_mesh(actor_by_label("Can"), first_mesh("/Game/Art/PolyHaven/can_rusted"), 44.0, (980.0, 80.0, 22.0))
