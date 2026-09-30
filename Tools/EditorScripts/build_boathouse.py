@@ -847,6 +847,18 @@ def build_camp_cover():
         panel.set_editor_property("tags", [unreal.Name("CampWindbreak")])
 
 
+def mannequin_paint(name, rgb):
+    """A plain matte colour for one UE mannequin slot. The mannequin's own material paints only part of the surface
+    and left a white, pixelated pattern up close, so this is a flat colour instead."""
+    mi = material_instance(name, MAT_FLAT, {"Base Color": (rgb[0], rgb[1], rgb[2], 1.0)})
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_scalar_parameter_value(mi, "Metallic", 0.0)
+    mel.set_material_instance_scalar_parameter_value(mi, "Roughness", 0.8)
+    mel.update_material_instance(mi)
+    unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False)
+    return mi
+
+
 def build_cover_and_npc():
     folder = "Cover"
     # LOS wall: scavenger patrols south of this, Mara stands north.
@@ -864,25 +876,21 @@ def build_cover_and_npc():
         unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0))
     npc.set_actor_label("Mara")
     npc.set_folder_path(folder)
-    assign_mannequin(
-        npc,
-        SURVIVAL_MESH,
-        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
-        "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
-        costume=("MI_DC_MaraJacket", "MI_DC_MaraJeans"),
-        skin="MI_DC_MaraSkin",
-        hair="MI_DC_MaraHair",
-    )
-    # Her own head, so she does not read as the scavenger in a different jacket. PROVISIONAL: a face for the
-    # provisional character, not a decision about her history. Bone space: X is up, Y is forward, Z is lateral.
-    # The mesh is authored Z-up; pitch -90 turns its up onto the bone's up.
-    swap = npc.get_editor_property("head_swap")
-    swap.set_editor_property("head_mesh", first_mesh("/Game/Art/Meshy/mara_head_collar"))
-    swap.set_editor_property("rotation", unreal.Rotator(pitch=-90.0, yaw=0.0, roll=0.0))
-    # Phase 5 playtest ("a floating head attached to a coat"): a new head that brings its own knit collar ring, so
-    # the join to the jacket is cloth against cloth. Its chin sits about 6 mesh units higher than the old bust's.
-    swap.set_editor_property("offset", unreal.Vector(-4.8, 1.0, 0.0))
-    swap.set_editor_property("scale", 0.22)
+    # Phase 5 playtest (Anthony, 2026-09-30): a generated head on the pack body always read as a head popping out
+    # of the coat. "Let's just make her one single model, with a distinctive look, for now." She is the one-piece
+    # Quinn mannequin, which plays the same animations natively, in matte colours from her palette: slimmer and
+    # differently coloured from the scavenger's pack body. PROVISIONAL placeholder, not a decision about her looks.
+    # The head-swap component stays inert (no head mesh), and the generated heads remain in Content, unused.
+    quinn = "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple"
+    assign_mannequin(npc, quinn, "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple")
+    mara_paint = [
+        mannequin_paint("MI_DC_MaraBody", (0.02, 0.085, 0.09)),   # teal, her jacket colour
+        mannequin_paint("MI_DC_MaraTrim", (0.03, 0.022, 0.017)),  # dark charcoal-brown
+    ]
+    body = npc.get_editor_property("mesh")
+    if body.get_skeletal_mesh_asset() and body.get_skeletal_mesh_asset().get_path_name().startswith(quinn):
+        for slot, paint in enumerate(mara_paint):
+            body.set_material(slot, paint)
     set_persistent_id(npc, "boat.mara")
 
     inspectable("Lookout", folder, (3160, 1220, 40), (40, 30, 80), "Lookout crate",
