@@ -6,7 +6,9 @@
 #include "EngineUtils.h"
 #include "Interaction/DCInteractable.h"
 #include "Inventory/DCInventoryComponent.h"
+#include "HAL/FileManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/Paths.h"
 #include "Quest/DCQuestComponent.h"
 #include "Save/DCPersistentRegistry.h"
 #include "Save/DCSaveGame.h"
@@ -590,6 +592,68 @@ bool FDCLandingStageSavesTest::RunTest(const FString& Parameters)
 		return true;
 	}));
 
+	QueueCleanup();
+	return true;
+}
+
+/**
+ *  The player's own save, if there is one (Saved/SaveGames/DeadCurrent.sav), copied to a scratch slot and loaded:
+ *  whatever it holds, the stage must show what its flags imply and the stage must be undiscovered unless the save
+ *  says otherwise. The player's slot is only read. With no save on this machine the test logs that and passes.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCLandingStagePlayerSaveTest, "DeadCurrent.Map.Boathouse.LandingStagePlayerSave",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCLandingStagePlayerSaveTest::RunTest(const FString& Parameters)
+{
+	using namespace DCLandingStageTest;
+	const FString SaveDir = FPaths::ProjectSavedDir() / TEXT("SaveGames");
+	const FString PlayerSave = SaveDir / TEXT("DeadCurrent.sav");
+	if (!FPaths::FileExists(PlayerSave))
+	{
+		AddInfo(TEXT("No player save on this machine; nothing to check."));
+		return true;
+	}
+
+	QueueFreshMap();
+	TSharedRef<TArray<FName>> Flags = MakeShared<TArray<FName>>();
+	TSharedRef<bool> bSavedDiscovered = MakeShared<bool>(false);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, PlayerSave, SaveDir, Flags, bSavedDiscovered]()
+	{
+		TestTrue(TEXT("Copied the player's save to the scratch slot"),
+			IFileManager::Get().Copy(*(SaveDir / FString(TestSlot) + TEXT(".sav")), *PlayerSave) == COPY_OK);
+		if (const UDCSaveGame* Save = Cast<UDCSaveGame>(UGameplayStatics::LoadGameFromSlot(TestSlot, 0)))
+		{
+			*Flags = Save->WorldFlags;
+			*bSavedDiscovered = Save->DiscoveredLocations.Contains(Location);
+			AddInfo(FString::Printf(TEXT("Player save: version %d, %d flags, %d quests"), Save->SaveVersion,
+				Save->WorldFlags.Num(), Save->Quests.Num()));
+		}
+		return true;
+	}));
+	QueueLoad(this);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Flags, bSavedDiscovered]()
+	{
+		if (!StagePlaced(this))
+		{
+			return true;
+		}
+		if (Flags->Contains(TEXT("shore.path_cleared")))
+		{
+			ExpectCombat(this, TEXT("Player save (combat flags)"));
+		}
+		else if (Flags->Contains(TEXT("shore.relay_recovered")))
+		{
+			ExpectCoil(this, TEXT("Player save (coil flags)"));
+		}
+		else
+		{
+			ExpectDefault(this, TEXT("Player save (no outcome flag)"));
+		}
+		TestEqual(TEXT("Player save: stage discovered only if the save says so"),
+			WorldState()->IsLocationDiscovered(Location), *bSavedDiscovered);
+		return true;
+	}));
 	QueueCleanup();
 	return true;
 }
