@@ -7,6 +7,7 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 - Session started. Read CLAUDE.md, LongTermPlan.txt, world bible, game design, content strategy, production pilot, session report, checklist, and the in-game text in `create_dialogue.py`, `create_items.py`, `build_boathouse.py`, so the story builds on what the player already sees.
 - Created `Design/Narrative/`.
 - **`STORY_ARC.md` drafted:** existing material sorted into canon / provisional / undecided; the one-paragraph spine; a fictional region (the Narrows, between "Upper" and "Lower"); the buried network as the authors understand it (the Line, the Severance, sections and keys, resync, stale priority tables); the missing person (five options compared, one working version: Liv Kallio, the player's older sister, a listener); Prologue → Act I (Pointe Sombre, the vertical slice) → Act II (Port Carrow, Aubin Locks, Tall Masts, the "Kallio at the Crib" midpoint) → Act III (drowned Kenning, the intake tunnel) → Endgame (the Four-Mile Crib) → Epilogue.
+- **`MYSTERY_LEDGER.md` drafted:** 14 established facts, 12 apparent facts that get reframed, eleven groups' interpretations, 11 load-bearing contradictions, ten behavioral **rules of the Current** for systemic content, the transmission mix, a 12-rung reveal ladder (each rung needs a player action), answered/unanswered questions by act, hidden author constraints, forbidden cheap answers, and an interpretation matrix (the same phenomenon, five readers).
 
 ## Strongest New Ideas
 
