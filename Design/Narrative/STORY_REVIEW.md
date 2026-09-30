@@ -13,13 +13,15 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 | `QUEST_ARCS.md` | Main spine; **the Pointe Sombre vertical slice**; three faction arcs; Liv's trail; Mara's arc; side stories; environmental seeds; consequence chains; quiet stories; exploration shortcuts |
 | `ENDINGS.md` | The Crib; who can be present; six ending directions; matrix; epilogue; last transmissions |
 | `AUDITS.md` | Originality, thematic, pacing, scope, consistency with in-game text, sensitivity |
+| `SLICE_WRONG_CHARACTERISTIC.md` | **Beat script for the vertical slice** (2026-09-30): ten beats, four ways into the vault, the decision as physical acts with exact conditions and consequences, the net loft evidence scene, proposed quest stages and ids, a build-variety check, the missing capabilities, and tests |
 
 ## Current Progress
 
 - **Complete first draft** of every requested document, plus `AUDITS.md`.
 - **Audited and revised:** originality (Fallout 4's succession beat, Far Harbor's destroy-the-base password, and an Oxenfree-style voice trick were revised out; the Death Stranding and New Vegas resemblances were differentiated with rules), pacing (the midpoint moved from ~70% to the middle by splitting faction arcs across it; one quiet story per region; exploration shortcuts; a six-word player vocabulary), and scope (the slice has one dungeon, as `LongTermPlan.txt` §23 says; the second dungeon belongs to the initial production region).
 - **Consistency pass** after the audits: every place now sits on Upper or Lower, and Tall Masts is below the lock, so Liv's route and the player's route agree. Lock permission no longer depends on the post-midpoint Floor vote. Key custody, Kestrel, and the Floor vote are explicitly after the midpoint. The Loss Book (losses) and the resync ledger (rejoin counts) are separate documents everywhere. The Crib's light flashes the pattern, not an "irregular rhythm". Added a continuity timeline and sample transmissions (tone only) to the ledger.
-- **Not done:** beat-level scripts, dialogue, POI specs, anything for the Kenning / Crib levels beyond arcs. Each is a later task, after Anthony's decisions.
+- **2026-09-30:** applied Anthony's Decisions 1 (B), 3 (B), 4 (A), and 15 (A) across every document, and wrote the slice's beat script, `SLICE_WRONG_CHARACTERISTIC.md`. Its main finding: the slice is buildable in today's rule language **if** the production pilot's conditional-presence capability exists; almost every visible consequence depends on it.
+- **Not done:** beat scripts outside the slice, full dialogue, POI specs, anything for the Kenning / Crib levels beyond arcs. Each is a later task, after Anthony's decisions.
 
 ## Strongest New Ideas
 
@@ -189,4 +191,4 @@ Numbered. **Identity-level decisions are marked ◆**; for those the draft uses 
 
 ## Exact Next Narrative Task
 
-After Anthony answers **Decisions 1, 3, 4, and 15** (they determine who is in the slice), write the **beat script for "The Wrong Characteristic"**: the slice's main quest as ordered stages, each with its trigger, the inspect texts and key lines in the game's existing voice, the evidence items for the net loft, and each resolution path expressed in the existing condition and consequence types (`HAS_ITEM`, `WORLD_FLAG`, quest stages, inspect variants, switchable hazards, build checks). Document only, in `Design/Narrative/`, with every missing capability listed rather than built.
+(Anthony: the four small questions in `SLICE_WRONG_CHARACTERISTIC.md` §10 do not block this.) Write the **beat script for the prologue additions ("Posted From the Shore")**: the letter and the tie choice, the watch reveal and Mara's promise lines, how the watch is kept or left when Mara sails, and the new flags (`player.tie.*`, `watch.*`) that the slice script assumes. Include how they sit beside the existing Shore Watch dialogue without renaming any shipped id. Document only. It is the missing link between the accepted prototype and the slice, and it is small.

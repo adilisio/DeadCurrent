@@ -41,7 +41,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 - **Consequence:** Mara's willingness to come.
 - **Callback:** Liv, in the Crib: "Did Mara tell you? ...No. She wouldn't have."
 
-### MQ-A1 — The Wrong Characteristic: see §2.
+### MQ-A1 — The Wrong Characteristic: see §2, and the beat script in `SLICE_WRONG_CHARACTERISTIC.md`.
 
 ### MQ-X — Cross Bearings (Acts I–II)
 - **Hook:** at Pointe Sombre the player finds **Liv's chart** in the vault (her pencil line from the Authority Shore, taken with her own direction-finding set, a second line, and a long thin question mark where they cross).
