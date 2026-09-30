@@ -10,7 +10,7 @@ Built on Anthony's decisions of 2026-09-30: the player's tie to Liv is chosen (s
 
 ## 1. Assumptions
 
-- **The tie flag exists before the slice.** One of `player.tie.sister`, `player.tie.partner`, `player.tie.took_in` is set when the player first reads Liv's letter (prologue, `QUEST_ARCS.md` MQ-P1). For the **standalone demo**, a recap card (Liv's letter, a one-screen map, three reply lines) sets it, plus `watch.mara_travelling`.
+- **The tie flag may exist before the slice.** One of `player.tie.sister`, `player.tie.partner`, `player.tie.took_in` is set when Mara asks "Who is she to you?" in the prologue (`PROLOGUE_POSTED_FROM_THE_SHORE.md` P2). In the **standalone demo**, a recap card (Liv's letter, a one-screen map) sets `watch.mara_travelling` and gives `liv_letter`, and **Varga asks the tie question at the harbor** (B1). If no tie is ever chosen, tie lines fall back to neutral ones.
 - **The slice starts in the storm.** `sombre.storm` is set on arrival and drives the storm's sound, lightning flicker, the vault's live water, and the direction-finding loop. The quest clears it at the halfway point and sets it again for the last beat.
 - **Mara is placed, not following** (fallback for a companion system): she stands at authored spots that change with the quest stage (§8, capability 1).
 - The slice is **60 to 90 minutes**, with one dungeon (the vault). The *Ashland Grey* is an exterior and deck only.
@@ -40,12 +40,12 @@ Built on Anthony's decisions of 2026-09-30: the player's tie to Liv is chosen (s
 - **Trigger:** slice start (or the end of the prologue).
 - **Sees:** dusk, rising storm (`sombre.storm`). From the *Ida*'s deck, a light burning low on a headland; beyond it, a tower with no light at all. The *Ida* turns for the burning light, then shudders on stone.
 - **Mara (the watch reveal, if not already heard):** "That line you asked about. Two of them came up the beach. That wasn't me. That was the watch. It's the same thing."
-- **Cost-saving option:** play B0 as a short fixed-camera scene or a fade over audio; start control on the harbor.
+- **Decided (Anthony, 2026-09-30): the slice opens in the crossing.** Build B0 as a played scene on the *Ida*'s deck. A fixed-camera or fade version is a fallback only if the boat scene cannot be built.
 - **State:** `StartQuest(sombre.characteristic)` → stage `arrived`.
 
 ### B1 — Harbor
 - **Varga** (on the *Ida*'s deck, pumps going): "I read that light as the point and put us on the reef for it. Somebody lit it on purpose. The *Ida* isn't leaving this harbor while the point's dark. Find out why, or find me a keeper who'll light it."
-- She also knows why the player came: "Your listener came through here. Four months back. Ask the keeper." (Tie-aware line variants only if the player asks her about Liv.)
+- She also knows why the player came: "Your listener came through here. Four months back. Ask the keeper." (Tie-aware line variants only if the player asks her about Liv.) If no tie flag is set yet, she asks: "Who is she to you, anyway?" (the same three choices, plus "Does it matter?", as in the prologue).
 - **Starts False Light** (`sombre.false_light` quest) with the same conversation: "And whoever lit that lantern, I want a name."
 - **Location:** `sombre.harbor` discovered.
 
@@ -164,7 +164,7 @@ Mutual exclusion is done with negated conditions, so the node ends in exactly on
 
 ## 5. The net loft (the settlement meeting)
 
-- **Chair:** Marthe (PROPOSAL). **Present:** Odette, the Pruitts (unless dead), the Leclairs, Sigrun (unless gone), Hale (if arrived), Varga, and Mara.
+- **Chair:** Marthe (decided, 2026-09-30). **Present:** Odette, the Pruitts (unless dead), the Leclairs, Sigrun (unless gone), Hale (if arrived), Varga, and Mara.
 - **Available** once the quest is at `knows` or later. Opening line: "Is the light burning tonight, or isn't it?"
   - "Not yet." → ends the conversation, nothing set (the player can go and act).
   - "It's done." → shown when any of `sombre.light_line`, `sombre.light_hand`, `sombre.power_settlement`, `sombre.node_destroyed` is set.
@@ -245,7 +245,7 @@ In priority order. Each has a fallback that keeps the slice buildable.
 4. **Storm presentation by flag.** Thunder and lightning already work (`ADCConditionalAudio`, `ADCFlickerLight` on `sombre.storm`); rain and sky do not. Fallback: audio and flicker only.
 5. **A companion that follows.** Not needed for the slice if capability 1 exists (placed Mara).
 6. **Item descriptions that change with flags.** Avoided: the chart lives on an inspectable table; the item is a static copy.
-7. **Boat travel.** The crossing is a scene or a fade.
+7. **Boat travel.** Not needed: B0 is played on a deck set (the *Ida*'s deck as a static space, a moving storm horizon, the false light and the dark tower in view, the reef strike as a shudder, a camera shake, and sound). Sailing between maps comes later.
 
 No trading system, faction reputation, or new condition type is required. Faction standing in the slice is carried by flags (`sombre.light_line` is Compact-friendly, `sombre.node_destroyed` Local-friendly) until Phase 5 or later decides on reputation.
 
@@ -259,9 +259,9 @@ No trading system, faction reputation, or new condition type is required. Factio
 - Persistence: save in each outcome; the flags, panel text, damage volume, and lights restore; no re-announced locations.
 - Build: zero-investment, Engineering-only, Survival-only, and Persuasion-only runs each reach the vault and each outcome.
 
-## 10. Open questions for Anthony (small)
+## 10. Answered by Anthony (2026-09-30)
 
-1. Does the slice **open in the crossing** (costlier, stronger) or on the harbor?
-2. **Marthe chairs the meeting**, or Odette, or a new reeve?
-3. Hale arriving **midway** (after the vault) vs. being present from the start?
-4. Liv's note: is the tone right? It is the player's first direct contact with her voice after the letter.
+1. **The slice opens in the crossing** (B0 is played, not skipped). The fixed-camera or fade version stays only as a production fallback if the boat scene cannot be built.
+2. **Marthe chairs the net loft meeting.**
+3. **Hale arrives midway**, after the vault (as written: `knows` on_enter sets `sombre.hale_arrived`).
+4. **Liv's note to Odette is right as written.**

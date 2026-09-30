@@ -47,13 +47,13 @@ Anthony's option read "sister, partner, or the captain who took them in". In thi
 | **Partner** | Equals. Years together aboard the *Ida*. An established relationship, not a romance system: no meter, no courtship scenes. | Shared the work, the cabin, the plans | She went without them, and let them hear she'd drowned | As an equal she has wronged |
 | **She took you in** | Found the player on the docks as a child, orphaned by the lake, and brought them aboard. Liv's own mother was lost the same way. | Gave them a berth and a trade | She went exactly where she always told them never to go | As someone she is still responsible for |
 
-**Where the choice is made (PROPOSAL):** the first time the player reads Liv's letter (in the *Ida* framing beat, or in the boathouse at the start of the prologue), the player chooses how they think of her. Three lines, one per tie. The choice is stored as one world flag (working ids, not created: `player.tie.sister`, `player.tie.partner`, `player.tie.took_in`) and read by the existing `WORLD_FLAG` condition. No new system is needed.
+**Where the choice is made (revised 2026-09-30):** in conversation. When the player first asks Mara about Liv, Mara asks, "Who is she to you?" (`PROLOGUE_POSTED_FROM_THE_SHORE.md` P2). In the standalone slice demo, Varga asks the same question at the harbor. An inspectable cannot offer choices, and asking costs no new system. "Does it matter?" is also allowed and sets no tie. The choice is stored as one world flag (proposed ids: `player.tie.sister`, `player.tie.partner`, `player.tie.took_in`), read by the existing `WORLD_FLAG` condition. With no tie flag set, every tie-variant line falls back to a neutral one.
 
 **Writing rules:**
 
 1. **About 90% of Liv lines are tie-neutral.** Everyone calls her Liv. Most NPCs never learn the tie unless the player says it.
 2. **Only keystone moments vary**, one line per tie:
-   - the letter's last line;
+   - the moment someone first asks who she is to them (the choice itself);
    - Mara's admission of her promise;
    - the player's admission at the Pointe Sombre net loft ("the listener was my sister / my partner / the one who took me in");
    - the dead letter's closing;

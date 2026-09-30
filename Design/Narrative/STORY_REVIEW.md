@@ -14,6 +14,7 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 | `ENDINGS.md` | The Crib; who can be present; six ending directions; matrix; epilogue; last transmissions |
 | `AUDITS.md` | Originality, thematic, pacing, scope, consistency with in-game text, sensitivity |
 | `SLICE_WRONG_CHARACTERISTIC.md` | **Beat script for the vertical slice** (2026-09-30): ten beats, four ways into the vault, the decision as physical acts with exact conditions and consequences, the net loft evidence scene, proposed quest stages and ids, a build-variety check, the missing capabilities, and tests |
+| `PROLOGUE_POSTED_FROM_THE_SHORE.md` | **Beat script for the prologue additions** (2026-09-30): Liv's letter, the tie choice (Mara asks "Who is she to you?"), five routes to Mara's admission, the watch reveal, the promise, the watch's page on the door, the *Ida*'s rowboat; strictly additive to the accepted shore; buildable today with existing systems |
 
 ## Current Progress
 
@@ -21,6 +22,7 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 - **Audited and revised:** originality (Fallout 4's succession beat, Far Harbor's destroy-the-base password, and an Oxenfree-style voice trick were revised out; the Death Stranding and New Vegas resemblances were differentiated with rules), pacing (the midpoint moved from ~70% to the middle by splitting faction arcs across it; one quiet story per region; exploration shortcuts; a six-word player vocabulary), and scope (the slice has one dungeon, as `LongTermPlan.txt` §23 says; the second dungeon belongs to the initial production region).
 - **Consistency pass** after the audits: every place now sits on Upper or Lower, and Tall Masts is below the lock, so Liv's route and the player's route agree. Lock permission no longer depends on the post-midpoint Floor vote. Key custody, Kestrel, and the Floor vote are explicitly after the midpoint. The Loss Book (losses) and the resync ledger (rejoin counts) are separate documents everywhere. The Crib's light flashes the pattern, not an "irregular rhythm". Added a continuity timeline and sample transmissions (tone only) to the ledger.
 - **2026-09-30:** applied Anthony's Decisions 1 (B), 3 (B), 4 (A), and 15 (A) across every document, and wrote the slice's beat script, `SLICE_WRONG_CHARACTERISTIC.md`. Its main finding: the slice is buildable in today's rule language **if** the production pilot's conditional-presence capability exists; almost every visible consequence depends on it.
+- **2026-09-30, later:** Anthony answered the slice's four questions (open in the crossing; Marthe chairs; Hale midway; Liv's note is right). Wrote `PROLOGUE_POSTED_FROM_THE_SHORE.md`. The tie choice moved from reading the letter to Mara asking "Who is she to you?", because an inspectable cannot offer choices and a conversation can; in the standalone demo, Varga asks. With no tie chosen, tie lines fall back to neutral ones. The prologue additions need **no new system**; the slice needs one (conditional presence).
 - **Not done:** beat scripts outside the slice, full dialogue, POI specs, anything for the Kenning / Crib levels beyond arcs. Each is a later task, after Anthony's decisions.
 
 ## Strongest New Ideas
@@ -74,6 +76,7 @@ Deliberately left open (not merely postponed):
 | 3 | **B: the Shore Watch is an inherited office; watchers speak its memory as "I".** Mara is the fourth watcher; her age stays open. | `CHARACTERS.md` §2 (the office, its rule, the log, succession, leaving the shore); `QUEST_ARCS.md` §5 ("The Watch Log"); June Okafor's scene; `ENDINGS.md` |
 | 4 | **A: Mara is the companion.** Sigrun is supporting only. | `CHARACTERS.md` §2, §9; `STORY_ARC.md` prologue |
 | 15 | **A: Liv pulled the Pointe Sombre key, and Remy Beaudry drowned.** | `STORY_ARC.md` Act I; `QUEST_ARCS.md` §2 |
+| Slice §10 | **Open in the crossing; Marthe chairs the net loft; Hale arrives midway; Liv's note is right.** | `SLICE_WRONG_CHARACTERISTIC.md` B0, §5, §10 |
 
 ## Anthony Decisions Needed
 
@@ -191,4 +194,6 @@ Numbered. **Identity-level decisions are marked ◆**; for those the draft uses 
 
 ## Exact Next Narrative Task
 
-(Anthony: the four small questions in `SLICE_WRONG_CHARACTERISTIC.md` §10 do not block this.) Write the **beat script for the prologue additions ("Posted From the Shore")**: the letter and the tie choice, the watch reveal and Mara's promise lines, how the watch is kept or left when Mara sails, and the new flags (`player.tie.*`, `watch.*`) that the slice script assumes. Include how they sit beside the existing Shore Watch dialogue without renaming any shipped id. Document only. It is the missing link between the accepted prototype and the slice, and it is small.
+Write the **full dialogue text for the slice's eight conversations** (`sombre_varga`, `sombre_odette`, `sombre_marthe`, `sombre_pruitts`, `sombre_sigrun`, `sombre_hale`, `sombre_mara`, `sombre_meeting`) as a document in `Design/Narrative/`: every node, line, and choice in the game's existing voice, each choice with its conditions and consequences from `SLICE_WRONG_CHARACTERISTIC.md`, the tie variants and their neutral fallbacks, and a check that no conversation can leave the player stuck. Document only.
+
+Worth knowing before then: the prologue additions and the slice are now specified closely enough to build. The prologue needs no new system. The slice needs the production pilot's **conditional presence** capability, which is Anthony's call as part of choosing Phase 5.

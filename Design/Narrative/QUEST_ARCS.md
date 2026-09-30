@@ -29,7 +29,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 | MQ-E1 | Black Start | Endgame | decide | Liv, the console, and the Line. See `ENDINGS.md`. |
 
 ### MQ-P1 — Posted From the Shore (Prologue) **[INITIAL]**
-- **Hook:** the player carries Liv's last letter, posted from "the old Authority landing". The *Ida* has left them there for three nights. **Reading the letter the first time is where the player chooses Liv's tie** (sister, partner, the one who took them in; `CHARACTERS.md` §1.1). The letter's last line varies with it.
+- **Hook:** the player carries Liv's last letter, posted from "the old Authority landing". The *Ida* has left them there for three nights. The tie is chosen when Mara asks **"Who is she to you?"** (sister, partner, the one who took them in, or "Does it matter?"). Beat script: `PROLOGUE_POSTED_FROM_THE_SHORE.md`.
 - **Escalation:** Mara deflects. The relay (if inspected closely, or with Relay Ear) was seated by someone who knew the pinout. "HEAR IT TOO" under the scavenger's KEEP OUT is in handwriting whose A has no crossbar, like the letter's.
 - **Approaches:**
   - **Persuasion 2:** Mara admits Liv was here, and (with trust) that Liv asked her not to tell.
