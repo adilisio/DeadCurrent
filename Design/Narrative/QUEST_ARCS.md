@@ -29,7 +29,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 | MQ-E1 | Black Start | Endgame | decide | Liv, the console, and the Line. See `ENDINGS.md`. |
 
 ### MQ-P1 — Posted From the Shore (Prologue) **[INITIAL]**
-- **Hook:** the player carries Liv's last letter, posted from "the old Authority landing". The *Ida* has left them there for three nights.
+- **Hook:** the player carries Liv's last letter, posted from "the old Authority landing". The *Ida* has left them there for three nights. **Reading the letter the first time is where the player chooses Liv's tie** (sister, partner, the one who took them in; `CHARACTERS.md` §1.1). The letter's last line varies with it.
 - **Escalation:** Mara deflects. The relay (if inspected closely, or with Relay Ear) was seated by someone who knew the pinout. "HEAR IT TOO" under the scavenger's KEEP OUT is in handwriting whose A has no crossbar, like the letter's.
 - **Approaches:**
   - **Persuasion 2:** Mara admits Liv was here, and (with trust) that Liv asked her not to tell.
@@ -37,7 +37,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
   - **Relay Ear:** the coil seating is a listener's.
   - **Shore Watch coil route:** Mara's transcripts include a call sign, LK-IDA, the *Ida*'s listener's sign.
   - **The *Tern*:** its bearing (with the chart and Schematic Eye) points east, toward Pointe Sombre.
-- **Decision:** none large. The small one is whether the player tells Mara who they are. (If they do, she stops lying; if they don't, she keeps her promise until Pointe Sombre.)
+- **Decision:** none large. The small one is whether the player tells Mara who they are to Liv. (If they do, she stops lying; if they don't, she keeps her promise until Pointe Sombre.) Liv's promise asked Mara to stay quiet to "someone from the *Ida*", so it binds whatever the tie.
 - **Consequence:** Mara's willingness to come.
 - **Callback:** Liv, in the Crib: "Did Mara tell you? ...No. She wouldn't have."
 
@@ -165,7 +165,7 @@ The **physical** decision is made in the vault and the lamp room. **Exposure** i
 | --- | --- |
 | The false lantern (and the scavenger's word, if he is alive and here) | The Pruitts are expelled, fined, or offered the keeper's post. |
 | Liv's note to Odette and the vault's access log | The village turns on Odette, or forgives her. Affects who can keep a hand-lit light. |
-| The player's own admission that the listener was their sister | The village's view of the player shifts. Odette's reaction is the scene. Mara watches. |
+| The player's own admission of who the listener was to them (sister, partner, the one who took them in) | The village's view of the player shifts. Odette's reaction is the scene. Mara watches. |
 | Sigrun's cut cable end | Hale arrests her (if present). The Local's standing drops. |
 | Nothing | Everyone keeps their version. The meeting ends in the dark. |
 
@@ -249,14 +249,15 @@ The thread must never disappear for more than one region. Each stop has **an obj
 
 ---
 
-## 5. The companion arc: "Mara's Book" (PROPOSAL; Mara's history is not decided)
+## 5. The companion arc: "The Watch Log" (Mara is the companion, DECIDED; the Shore Watch office DECIDED; details PROPOSAL)
 
-- **Prologue:** Shore Watch. If she gets the coil, she transcribes it. She deflects about the *Tern* and about Liv (her promise).
-- **Act I:** at Pointe Sombre she sees the Leclair children's ticks and goes quiet. If the player exposes Liv as their sister at the net loft, Mara tells them about the promise that night.
-- **Act II, Tall Masts:** June Okafor, the last *Tern* crew member, and Mara: the woman who walked up the beach and the girl who didn't follow. With high Persuasion and Mara present, June says one sentence. On the Mourners' list, Mara finds her brother's name, entered decades ago by someone else.
-- **Decision (by doing):** her **book** (decades of transcripts, the most complete protocol record outside the Sounding): burn it, give it to the Readers, give it to the Answerers, or carry it to the Crib.
-- **Endgame:** at the Crib Mara can call the **stand-down sequence** (the call-and-response for each section breaker, in order; it is in her book, if it survives), refuse, or, if the player has pushed her toward it, **answer**.
-- **Opinion triggers:** she approves of hand-lit lights, returned charts, protected children, and listening first. She disapproves of speaking protocol casually, of using the children, and of lying to her about Liv.
+- **Prologue:** Shore Watch. If she gets the coil, the watch transcribes it. She deflects about the *Tern* and about Liv (her promise). Pressed about the *Tern* line, and trusting the player: "That wasn't me. That was the watch. It's the same thing."
+- **Leaving the shore (decided by doing):** before the crossing, the shore needs a keeper or it goes unwatched. The player can bring someone to keep the watch: the scavenger, if he is alive and the player talked him down (a strange, fitting penance for the man who fed the relay); or, on a later return, someone from Pointe Sombre (Dell Pruitt, or Odette if she leaves her light). Otherwise Mara nails the current page to the boathouse door, WATCH AWAY. KEEP OUT OF THE WATER, and the shore is empty. **Consequence:** an unwatched shore shows it on the player's next visit (a stranger's boat pulled up by the *Tern*, footprints into the water, a new line in the log in no one's hand). A kept shore has a new voice saying "I".
+- **Act I:** at Pointe Sombre she sees the Leclair children's ticks and goes quiet. If the player names their tie to Liv at the net loft, Mara tells them about the promise that night.
+- **Act II, Tall Masts:** June Okafor, the last *Tern* crew member, meets the watch. "Did you follow?" "I didn't follow." Sixty years on, the two sides of the beach speak. With high Persuasion and Mara present, June says one sentence more. In the Sounding's archive, Mara finds an entry about the third watcher, the one who walked out to the *Tern*: the Mourners read the name into the channel years ago.
+- **Decision (by doing):** the **watch log** (sixty years of the watch's entries and transcripts, the most complete record of the words outside the Sounding): burn it, give it to the Readers, give it to the Answerers, or carry it to the Crib.
+- **Endgame:** at the Crib Mara can call the **stand-down sequence** (the call-and-response for each section breaker, in order; it is in the log, if the log survives), refuse, or, if the player has pushed her toward it, **answer**. In the Keys Divided ending, she can make the Crib a watch post and stay: the watch is an office for staying.
+- **Opinion triggers:** she approves of hand-lit lights, returned charts, protected children, a kept shore, and listening first. She disapproves of speaking protocol casually, of using the children, and of lying to her about Liv.
 - **Ending states:** see `CHARACTERS.md` §2.
 
 ---
@@ -324,7 +325,7 @@ Each is a human story first, and each touches the Line in one concrete way.
 
 | Decision | Immediate | Local | Later callback | Ending implication |
 | --- | --- | --- | --- | --- |
-| Shore Watch route (existing) | Relay silent; scavenger dead or alive | Mara warm or cold; the landing stage pilot's variants | The scavenger at Pointe Sombre; Mara's transcripts (coil route) | Mara's book exists only if she had the coil |
+| Shore Watch route (existing) | Relay silent; scavenger dead or alive | Mara warm or cold; the landing stage pilot's variants | A living scavenger either keeps the watch (if the player talks him down) or turns up at Pointe Sombre with the Pruitts; Mara's transcripts (coil route) | The watch log holds the coil's words only if she had the coil |
 | Sounder Chart kept, sold, returned | Item held or gone | Hale buys it; or the Readers | Completes the *Tern* Book | Readers' trust; one line from June Okafor |
 | Pointe Sombre light | See §2.9 | See §2.9 | See §2.9 | See §2.9 |
 | Lock Passage method | Gates open | Local ally, enemy, or frightened | Who comes to Kenning; whether the dam opens | Black start possible without force? |
@@ -332,7 +333,7 @@ Each is a human story first, and each touches the Line in one concrete way.
 | Kestrel Light | Lit on the Line, by hand, or dark | Island stays or leaves | Board or Open Water at Kenning | Kestrel on the census tables or not |
 | The Floor vote | Wing leads the Local | Aubin's posture | Charges, seizure crew, or no one at Kenning | Severance ending prepared or blocked |
 | The Vigil reply | Every relit light flashes | Readers or Answerers ascendant | Who comes to the Crib | Open Channel ending available or not |
-| Mara's book | Burned or given | Mara's trust | The stand-down sequence at the Crib | Whether the Crib can be stood down safely |
+| The watch log | Burned or given | Mara's trust | The stand-down sequence at the Crib | Whether the Crib can be stood down safely |
 | Pumping station | Squatters' heat cut, or a table rewritten | Squatters ally or enemy | Squatters in the tunnel, or not | First proof the tables can be edited |
 | Who comes through the tunnel | The team | Tunnel route and cost | Who stands in the Crib | Which endings are physically possible |
 | What goes on the census | Places added or struck | n/a | The tables | Who gets power, heat, and light in the census endings |
@@ -343,7 +344,7 @@ Each is a human story first, and each touches the Line in one concrete way.
 | --- | --- |
 | Which machine they repair | Pointe Sombre clockwork; Kestrel's lamp; the pumping station |
 | Which route they open | The lock; the ferry's new route; the tunnel |
-| Who receives an object | The Sounder Chart; the Pointe Sombre key; Mara's book; the dead letter; the Authority's last order |
+| Who receives an object | The Sounder Chart; the Pointe Sombre key; the watch log; the dead letter; the Authority's last order |
 | Whether they activate infrastructure | Seat a key; power a pump; speak a phrase at a gate |
 | Whether they reveal information | Evidence carried to the net loft; the resync ledger by the Post |
 | Which community they physically connect | Pointe Sombre's power; Kestrel; the census tables |

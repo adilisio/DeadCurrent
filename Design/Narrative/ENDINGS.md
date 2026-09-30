@@ -28,7 +28,7 @@ A round stone intake crib four miles off Kenning, three levels, reached by the f
 | Present if | Wants | Can do in the room |
 | --- | --- | --- |
 | **Liv** (always) | Keep holding until the tables are right; possibly hand the player the chair | Operate either console; lock bulkheads; refuse to leave |
-| **The companion** (Mara, proposed) | Listen first; not answer | Call the stand-down sequence (if her book survives); refuse; answer |
+| **The companion** (Mara) | Listen first; not answer | Call the stand-down sequence (if the watch log survives); refuse; answer |
 | **Hale** and a Compact crew (if the player allied with him, or he forced the lock) | Seize and black-start on lights-first tables | Seat Compact keys; hold the room at gunpoint; kill Liv if she won't move |
 | **Sobczak** and Cutters (if the Floor went to the Cutters, or the player brought them) | Burn the Line | Set charges in the trunk gallery |
 | **Tolliver** and Stewards (if the Floor went to the Stewards) | Seize the keys and lock the Line shut from Aubin | Pull keys; hold the key wall |
@@ -66,7 +66,7 @@ It splits by **whose tables** it runs on:
 
 ### 3.2 The Second Severance: "Burn the Line"
 
-**What the player physically does:** sets charges on the trunk cables in the gallery (with Sobczak, or alone), floods the key wall, and throws the Crib's main breakers. If the Sounding's **stand-down sequence** is worked first, breaker by breaker (Mara's book or the Lexicon), the sections fall silent in order. If not, the Line's firebreak logic islands **every** section at once, Aubin's powerhouse included, in November.
+**What the player physically does:** sets charges on the trunk cables in the gallery (with Sobczak, or alone), floods the key wall, and throws the Crib's main breakers. If the Sounding's **stand-down sequence** is worked first, breaker by breaker (the watch log or the Lexicon), the sections fall silent in order. If not, the Line's firebreak logic islands **every** section at once, Aubin's powerhouse included, in November.
 
 - **Requires:** access to the gallery; charges (the Cutters' or the player's Engineering); the stand-down sequence to do it safely.
 - **Who benefits:** anyone who feared a single hand on the lakes. The Local's dam becomes the only power that matters.
@@ -76,14 +76,14 @@ It splits by **whose tables** it runs on:
 - **Infrastructure:** the Line is gone. The relit lights keep working **only if they were relit by hand** (Pointe Sombre path 2 becomes the model the whole region needs).
 - **What remains unknown:** **the Current does not end.** The relays go quiet in most places. The *Tern*'s unwired mast lamp still flickers. The children still don't sleep. Readers note that the pattern is now weaker in some places and stronger in others (C7, again).
 - **Liv:** refuses to leave. The player can carry her out through the tunnel before the charges go (a timed escape), or leave her. If carried out, she does not speak to the player for a long time.
-- **Companion (Mara):** if the sequence came from her book, she burns her book afterward. If there was no sequence, she says nothing on the long walk back.
+- **Companion (Mara):** if the sequence came from the watch log, she burns the log afterward: the watch has said everything it will say. If there was no sequence, she says nothing on the long walk back.
 - **Future uncertainty:** the Local now holds the only large power source in the region, and the Cutters are the heroes of the Floor.
 
 ### 3.3 Open Channel: "Answer"
 
 **What the player physically does:** unlocks the **protocol governors** (Reyes's keys, or Engineering with Schematic Eye), then keys the Crib's transmitter and answers the pattern with the Lexicon's confirmation phrase. From then on the Line acts on the pattern without waiting for people.
 
-- **Requires:** access to the governor cabinet; the Lexicon or Mara's book; the Answerers present or the player's own skill.
+- **Requires:** access to the governor cabinet; the Lexicon or the watch log; the Answerers present or the player's own skill.
 - **Who benefits:** unknowable. The Answerers are vindicated or destroyed by what follows, and the game does not say which.
 - **What happens (epilogue, deliberately mixed):** the lights across the lakes flash the pattern. The lock at Aubin cycles on a schedule nobody set, and the Local learns to read it. The automatic ferry changes its route. Storm warnings go out **before** storms the Sounding had not forecast. One town goes dark for nine days, and then its power comes back. Pointe Sombre's light, one night, shows **its own old characteristic** again, unprompted, and then goes back to the pattern.
 - **Who pays:** everyone who needs to plan. The Compact's routes become guesses. People on the lakes learn to live beside a system they cannot instruct.
@@ -92,17 +92,17 @@ It splits by **whose tables** it runs on:
 - **Infrastructure:** restored, and no longer under anyone's control.
 - **What remains unknown:** everything that matters. This is the ending with the most answered **behavior** and the least answered **meaning**.
 - **Liv:** the one outcome she feared more than the old tables. She either stays to watch it, or walks into the tunnel with a lantern and is not seen again.
-- **Companion (Mara):** if Mara spoke the answer (possible only if the player pushed her there), she stays at the Crib, listening. If not, she goes home and stops writing.
+- **Companion (Mara):** if Mara spoke the answer (possible only if the player pushed her there), she stays at the Crib, listening. If not, she goes home and closes the log: the watch ends with her.
 - **Future uncertainty:** total, and permanent.
 
 ### 3.4 The Keys Divided: "The Commons" (hybrid; hardest to reach)
 
 **What the player physically does:** black-starts the Line on the **census tables**, then **redistributes the section keys** at the key wall so that the table console and the governors need **three of four keyholders** to act. The keys leave the Crib with their holders, carried by the Post.
 
-- **Requires:** Liv's census; the Local's dam (so the Floor, or at least the Hands, must trust the player); the protocol, to operate the Crib without tripping a firebreak (a Reader, or Mara's book); at least two factions' trust; Odile to carry the keys; four holders willing to take them (typically the Compact, the Local, the Sounding, and **an unaligned holder**: Pointe Sombre, the lockkeeper's descendant from Dead Letters, or the Post itself).
+- **Requires:** Liv's census; the Local's dam (so the Floor, or at least the Hands, must trust the player); the protocol, to operate the Crib without tripping a firebreak (a Reader, or the watch log); at least two factions' trust; Odile to carry the keys; four holders willing to take them (typically the Compact, the Local, the Sounding, and **an unaligned holder**: Pointe Sombre, the lockkeeper's descendant from Dead Letters, or the Post itself).
 - **Who benefits:** most people, slowly. Warnings, lights, and medicine move; no one can switch off a town alone.
 - **Who pays:** **speed.** The first winter under the Commons, a vote on power for a freezing island fails for eleven days because two keyholders cannot agree. People die in those eleven days. Every future crisis depends on people who distrust each other agreeing fast enough.
-- **Also pays:** whoever sits at the resync console, because **someone must stay at the Crib** to operate it. Liv (by choice), Mara (by choice), or the player, who can choose to stay. Liv never offers the chair; if the player takes it, it is over her objection.
+- **Also pays:** whoever sits at the resync console, because **someone must stay at the Crib** to operate it. Liv (by choice), Mara (by choice: she makes the Crib a watch post, an office for staying), or the player, who can choose to stay. Liv never offers the chair; if the player takes it, it is over her objection.
 - **Trade:** recovers steadily; the Compact is powerful but not sovereign.
 - **Communities:** every place on the census is on the tables. Places the player never found are not, until someone adds them, which requires three keys.
 - **Infrastructure:** restored and fragmented on purpose.
@@ -116,11 +116,11 @@ It splits by **whose tables** it runs on:
 
 - **Requires:** only reaching her.
 - **What happens:** with no one refusing requests, **the Line black-starts by itself** within days on the **old tables** (see 3.1), unless someone else takes the chair first. Who does depends on who came through the tunnel: Hale (Compact or lights-first tables), Tolliver (the Stewards lock it shut from Aubin), Reyes (Open Channel), or, if the player came alone, no one.
-- **Who benefits:** the Kallios.
+- **Who benefits:** Liv and the player.
 - **Who pays:** whoever the next hand on the Line decides.
 - **What remains unknown:** everything about the Current, and, for the player, what their choice cost, until the epilogue shows it.
 - **Liv:** alive, home, and unable to forgive herself or the player for leaving the chair. Or, after a long winter on the *Ida*, able to.
-- **Companion (Mara):** "You found her. That's what you came for." She means it. She goes back to her shore.
+- **Companion (Mara):** "You found her. That's what you came for." She means it. She goes back to her shore and the watch.
 - **Future uncertainty:** entirely in other hands. This is the ending that answers "what am I willing to do?" with "save the one person I came for".
 
 ### 3.6 Crown a Keeper (variant of 3.1 or of the Stewards' seizure)

@@ -1,6 +1,6 @@
 # DEAD CURRENT — Characters (PROVISIONAL)
 
-Status: **PROVISIONAL, 2026-09-29.** Only Mara and the scavenger exist in game, and both are provisional. Everything else is a proposal. Names are working names. **Mara's backstory, age, and faction are not decided;** her section offers options and a clearly labeled working proposal.
+Status: **PROVISIONAL, 2026-09-29; updated 2026-09-30 with Anthony's decisions.** Only Mara and the scavenger exist in game. **Decided by Anthony (2026-09-30):** the player chooses their tie to Liv (Decision 1: B); the Shore Watch is an inherited office whose watchers speak its memory as "I" (Decision 3: B); Mara is the companion (Decision 4: A); Liv pulled the Pointe Sombre key and a boy drowned (Decision 15: A). Everything else here, including Mara's personal history beyond the office, remains a proposal. Names are working names.
 
 A deliberately small cast: eight major characters, a handful of supporting ones, and a few pre-collapse voices heard only in records.
 
@@ -8,10 +8,11 @@ A deliberately small cast: eight major characters, a handful of supporting ones,
 
 ## 0. The player
 
-- **Working version (PROPOSAL):** Liv Kallio's younger sibling. Grew up on the Compact trader *Ida Lamberton* after their mother was lost on the water. A deckhand and salvager: good with a boat, a pry bar, and a bargain. No faction oath.
-- **Guilt:** two years ago the player salvaged an Authority tape from a wreck and gave it to Liv as a curiosity. The pattern was on it.
+- **Working version (PROPOSAL):** a deckhand and salvager on the Compact trader *Ida Lamberton*: good with a boat, a pry bar, and a bargain. No faction oath.
+- **The tie to Liv is the player's choice (DECIDED, Decision 1: B).** See §1.1.
+- **Guilt (all ties):** two years ago the player salvaged an Authority tape from a wreck and gave it to Liv as a curiosity. The pattern was on it.
 - **What the player carries at the start:** Liv's last letter (*don't come*), and nothing else of hers.
-- **Deliberately open:** gender, appearance, age within adulthood, what the player feels about Liv. Dialogue should let the player be angry, loyal, frightened, or indifferent without a morality meter. An alternative with fewer assumptions is to let the player choose the relationship at the start (sister, partner, the captain who took them in). See `STORY_REVIEW.md`, Decision 1.
+- **Deliberately open:** gender, appearance, age within adulthood, what the player feels about Liv. Dialogue should let the player be angry, loyal, frightened, or indifferent without a morality meter.
 - **Background mechanically:** the trader-deckhand background can justify an early barter or boat-handling edge without becoming a class system.
 
 ---
@@ -20,51 +21,86 @@ A deliberately small cast: eight major characters, a handful of supporting ones,
 
 | | |
 | --- | --- |
-| **Public role** | A listener on the *Ida*; the best forecaster on the Narrows. Now "missing, probably drowned". |
+| **Public role** | A listener on the *Ida*; the best forecaster on the Narrows. About forty. Now "missing, probably drowned". |
 | **Private goal** | Keep the Line from black-starting on the old tables until someone, preferably her, can write new ones. |
-| **Fear** | That she is the only one who sees it, and that she is wrong. Second fear, never spoken: that the voice she first heard on the player's tape was their mother. (She has never said this to anyone. The player can find it in her notebook. It is never confirmed or denied.) |
+| **Fear** | That she is the only one who sees it, and that she is wrong. Second fear, never spoken: that the voice she first heard on the player's tape was **her mother**, lost on the water when Liv was a girl. (She has never said this to anyone. The player can find it in her notebook. It is never confirmed or denied.) |
 | **Contradiction** | She despises the factions for wanting to control the Line, and she is controlling it, alone, by hand, with tables she wrote herself. |
 | **Personal stake** | The player. The tape. A drowned boy at Pointe Sombre she has not let herself think about. |
 | **Relationship to the Current** | Hears it better than anyone alive. Believes "it's asking". Has not slept a full night in weeks. Hum-ear in her left ear. |
 | **Relationship to the missing person** | She is the missing person. |
 | **What she wants from the player** | At first: to go home. Then: help holding the Line. Never succession: she refuses to hand the chair to anyone, the player included. |
 | **What changes the relationship** | What the player has learned about her on the way (Pointe Sombre, the Compact money, the traded key, Tam Reyes's death in the tunnel), and whom the player brings into the Crib. |
-| **Where she can oppose the player** | In the Crib. If the player moves to burn the Line, hand it to Hale, or open it to the Answerers, Liv will try to stop them: at the console, by locking bulkheads, by refusing to leave. She will not shoot her sibling. She will make them choose. |
+| **Where she can oppose the player** | In the Crib. If the player moves to burn the Line, hand it to Hale, or open it to the Answerers, Liv will try to stop them: at the console, by locking bulkheads, by refusing to leave. She will not shoot the player. She will make them choose. |
 | **Ending states** | Stays as the Crib's operator (alone, or under the Commons); comes home with the player; tried by the Compact; walks into the tunnel with a lantern and is not seen again; dies in the Crib (if the player burns it and does not carry her out). See `ENDINGS.md`. |
 
-**Voice:** quick, dry, impatient, very funny when she is not frightened. Talks to the player as if they are still twelve. Apologizes badly.
+**Voice:** quick, dry, impatient, very funny when she is not frightened. Apologizes badly. How she talks *to the player* depends on the tie (§1.1).
 
 **Opinion arc for the player:** lost → reckless → manipulative → right about something no one else sees → someone who has decided she alone should run the lakes → the player's verdict.
 
+### 1.1 The tie (DECIDED: the player chooses; details PROPOSAL)
+
+Anthony's option read "sister, partner, or the captain who took them in". In this draft Liv is the *Ida*'s listener, not her captain, so the third tie is written as **"she took you in"**. If Liv should have been a captain (of her own boat, before the *Ida*), that is a small change; say so.
+
+| Tie | Who Liv is to the player | What she does for them | The grievance when she leaves | How she talks to them |
+| --- | --- | --- | --- | --- |
+| **Sister** | Older by about twelve years; half-raised the player on the *Ida*. They share a mother, lost on the water. | Kept them fed, taught them the boats | She decided alone, as always, and told them not to follow | As if they are still twelve |
+| **Partner** | Equals. Years together aboard the *Ida*. An established relationship, not a romance system: no meter, no courtship scenes. | Shared the work, the cabin, the plans | She went without them, and let them hear she'd drowned | As an equal she has wronged |
+| **She took you in** | Found the player on the docks as a child, orphaned by the lake, and brought them aboard. Liv's own mother was lost the same way. | Gave them a berth and a trade | She went exactly where she always told them never to go | As someone she is still responsible for |
+
+**Where the choice is made (PROPOSAL):** the first time the player reads Liv's letter (in the *Ida* framing beat, or in the boathouse at the start of the prologue), the player chooses how they think of her. Three lines, one per tie. The choice is stored as one world flag (working ids, not created: `player.tie.sister`, `player.tie.partner`, `player.tie.took_in`) and read by the existing `WORLD_FLAG` condition. No new system is needed.
+
+**Writing rules:**
+
+1. **About 90% of Liv lines are tie-neutral.** Everyone calls her Liv. Most NPCs never learn the tie unless the player says it.
+2. **Only keystone moments vary**, one line per tie:
+   - the letter's last line;
+   - Mara's admission of her promise;
+   - the player's admission at the Pointe Sombre net loft ("the listener was my sister / my partner / the one who took me in");
+   - the dead letter's closing;
+   - Liv's first line at the reunion;
+   - Liv's refusal ("Nobody should be *given* this");
+   - Bring Her Home's last scene.
+3. **People who knew both** (Varga, Odile, Mara after the promise) know the tie and may refer to it.
+4. **The mother subplot is Liv's**, not the player's. Only for the sister tie is it shared.
+5. **The partner tie** must never become a romance mechanic, a jealousy beat, or a reward.
+
 ---
 
-## 2. Mara — shore watcher (possible companion)
+## 2. Mara — the Shore Watch (companion)
 
 ### Established in game (PROVISIONAL)
-Watches the shore by the boathouse "for people who still listen before they shoot". Cautious, dry, practical. Has heard the relay's words and does not want them "repeated on the boats". Deflects about the *Tern* ("it's always a storm"). Pressed: saw two people come up off the beach the night the *Tern* grounded; they would not look at the water or say what they had heard; she did not follow. Keeps the coil if given it and sits up transcribing. A face was made for her (a costume decision, not a history decision).
+Watches the shore by the boathouse "for people who still listen before they shoot". Cautious, dry, practical. Has heard the relay's words and does not want them "repeated on the boats". Deflects about the *Tern* ("it's always a storm"). Pressed: "Two of them came up off that beach the night she grounded... I didn't follow." Keeps the coil if given it and sits up transcribing. A face was made for her.
 
-### The age question (UNDECIDED; see `STORY_REVIEW.md`, Decision 3)
-Her pressed line is first-person, about a night about sixty years ago. Options: (A) she is about seventy and was a child on the beach; (B) the shore watch is an inherited office and watchers speak its memory as "I"; (C) the *Tern* grounded later than the collapse. The working proposal below uses **(A)** because it needs no change to existing text. It is only a proposal.
+### The Shore Watch (DECIDED, Decision 3: B; details PROPOSAL)
+**The Shore Watch is an inherited office, and its watchers speak its memory as "I".** Mara's eyewitness line about the *Tern* is the watch speaking, not Mara's own childhood. Her age is therefore open, and her current face needs no change.
 
-### Working proposal (PROPOSAL; not a decision about Mara)
-- **History:** As a girl on this shore she saw the *Tern*'s crew come up off the beach. She did not follow. Her older brother did; he became one of the first listeners and died at a vigil years later. Mara has watched the shore since, turning back listeners who come looking for "the mark off the point". "People who still listen before they shoot" means listeners, and people with enough sense to hear something out before they kill it.
-- **Liv:** Five months ago Liv came asking about the *Tern*. Mara tried to turn her back and failed. Before she left, Liv asked her one thing: *if someone who looks like me comes asking, don't tell them where I went.* Mara's deflection in the prologue is that promise. The pressed Persuasion line is as far as she goes, until she decides the player will follow anyway, and then she comes along "so someone sensible is in the boat".
+- **Origin (PROPOSAL):** the watch began the night the *Tern* grounded. The first watcher saw two people come up off the beach, would not follow them, and stayed. Since then there has always been one watcher on this stretch of shore.
+- **Its rule:** *the shore does not forget because a watcher did.* A watcher never says "before my time" about anything that can still kill someone. The watch's memory is spoken in the first person, so it cannot be dismissed as an old story.
+- **Its work:** warn boats off the *Tern*'s water, turn back people who come looking for "the mark off the point", and keep **the watch log**. The log is sixty years of entries: who came asking, which boats were lost, what the storms did, and, since the relays began to talk, what they said. It is the most complete record of the words outside Tall Masts.
+- **Its line of succession (PROPOSAL):** Mara is the fourth watcher. The third, who trained her, walked out to the *Tern* one storm night and was not found. The watch's own keeper broke its rule. Mara took the log.
+- **How the player learns it:** pressed again after the *Tern* line (Persuasion, or trust after the coil route), or on the crossing to Pointe Sombre: "That wasn't me. That was the watch. It's the same thing." At Tall Masts it pays off: June Okafor, the last of the *Tern*'s crew, meets the watch (see `QUEST_ARCS.md` §5).
+- **Leaving the shore (the companion's cost):** a watcher who leaves leaves the shore unwatched. Before she sails, Mara nails the watch's current page to the boathouse door: WATCH AWAY. KEEP OUT OF THE WATER. The player can instead **bring someone to keep the watch** while she is gone (decided by doing; see `QUEST_ARCS.md` §5). If no one keeps it, the shore shows the cost later.
+- **Fits the production pilot:** in the Landing Stage's coil-route variant, Mara's crate is packed and her skiff loaded, which now reads as the watch getting ready to travel.
+
+### Mara (PROPOSAL beyond the office; her personal history is still open)
+- **Liv:** five months ago Liv came asking about the *Tern*. Mara, as the watch, tried to turn her back and failed. Before she left, Liv asked one thing: *if someone from the Ida comes asking after me, don't tell them where I went.* Mara's deflection in the prologue is that promise. She holds to it until she decides the player will follow anyway, and then comes along "so someone sensible is in the boat".
+- "People who still listen before they shoot" means listeners, and people with enough sense to hear something out before they kill it.
 
 | | |
 | --- | --- |
-| **Public role** | Shore watcher. Later, the player's companion. |
-| **Private goal** | To see the mark's other end once, and to not follow it. |
-| **Fear** | That she wants to answer. That her brother did. |
-| **Contradiction** | Tells everyone never to repeat the words. Writes down every one of them, every night, in a book she has kept for decades. |
-| **Personal stake** | Her promise to Liv. Her brother. Her book. |
+| **Public role** | The Shore Watch. The player's companion. |
+| **Private goal** | To see the mark's other end once, and not to follow it. |
+| **Fear** | That she wants to answer. That the third watcher did. |
+| **Contradiction** | Tells everyone never to repeat the words. The watch writes down every one of them. |
+| **Personal stake** | Her promise to Liv. The watch. The log. |
 | **Relationship to the Current** | Refuses to interpret it: "I write down what it says. I don't decide what it means." |
-| **Relationship to Liv** | Liked her. Kept her secret. Blames herself a little for the *Tern*. |
+| **Relationship to Liv** | Liked her. Kept her secret. Blames the watch a little for the *Tern*. |
 | **What she wants from the player** | At first: quiet on her shore (Shore Watch). Then: that the player not follow Liv. Then: that someone sensible goes with them. |
-| **What changes the relationship** | Shore Watch's route (the coil route earns trust; the combat route makes her colder, and "went back for him anyway" colder still). Whether the player reads the *Tern* and asks honestly. Whether the player treats the words as tools. |
-| **Where she can oppose the player** | If the player means to **speak the words** at the lock or the Crib, or hand her book to the Answerers, she objects and can leave. At the Crib she can refuse, or call the stand-down sequence that shuts a section down in order. |
-| **Ending states** | Returns to her shore, and to a landing stage that looks like whatever the player made of it; stays at the Crib as keeper (if the player leaves Liv free to go); burns her book; gives her book to Tall Masts; leaves the player's company after a betrayal; dies in the tunnel (only if the player takes her there without the pumps or the protocol, and chooses to go on). |
+| **What changes the relationship** | Shore Watch's route (the coil route earns trust; the combat route makes her colder, and "went back for him anyway" colder still). Whether the player reads the *Tern* and asks honestly. Whether the player treats the words as tools. Whether anyone keeps the watch while she is gone. |
+| **Where she can oppose the player** | If the player means to **speak the words** at the lock or the Crib, or hand the log to the Answerers, she objects and can leave. At the Crib she can refuse, or call the stand-down sequence (it is in the log). |
+| **Ending states** | Returns to her shore and the watch, to a landing stage that looks like whatever the player made of it; hands the log to a successor; makes the Crib a watch post and stays as its keeper (the watch is an office for staying, which is exactly what the Crib needs); burns the log; gives the log to Tall Masts; leaves the player's company after a betrayal; dies in the tunnel (only if the player takes her there without the pumps or the protocol, and chooses to go on). |
 
-**Why Mara is the proposed companion:** she is already built, liked in playtest, holds the coil and the transcripts (the Lexicon's missing pages), witnessed the Sounding's founding, and can travel to Pointe Sombre in the vertical slice. An alternative companion, if Anthony wants Mara to stay put, is **Sigrun Dahl** (§9).
+**Why Mara is the companion (DECIDED):** she is already built and liked in playtest, holds the coil and the watch log (the Lexicon's missing pages), is the living voice of the night the Sounding began, and can travel to Pointe Sombre in the vertical slice.
 
 ---
 
@@ -123,7 +159,7 @@ He is the game's antagonist because he is competent, sincere, and willing to do 
 | **Ending states** | Records the Crib under the Commons; loses the Readers' Table to the Answerers; closes Tall Masts to the children; keeps listening to a Line that has gone silent (Severance). |
 
 ### June Okafor — the Silent Reader (supporting)
-The *Tern*'s survey technician, about eighty-five, the last living founder. She has not spoken of that night in sixty years. **She still will not say what she heard** (continuity with Mara's existing line). With high Persuasion, and Mara present, she says one sentence, which is never the answer. She is the Sounding's conscience: she has never answered, and never let anyone ask her why.
+The *Tern*'s survey technician, about eighty-five, the last living founder. She has not spoken of that night in sixty years. **She still will not say what she heard** (continuity with Mara's existing line). When she meets Mara she recognizes the watch, not the woman: she asks, "Did you follow?" and Mara, speaking as the watch, answers, "I didn't follow." It is the first time in sixty years that the two sides of that beach have spoken. With high Persuasion and Mara present, June says one sentence more, which is never the answer. She is the Sounding's conscience: she has never answered, and never let anyone ask her why.
 
 ---
 
@@ -167,20 +203,20 @@ The *Tern*'s survey technician, about eighty-five, the last living founder. She 
 
 | Name | Role | Where | Note |
 | --- | --- | --- | --- |
-| **Captain Ines Varga** | Captain of the *Ida*; leader of Open Water in the Compact | Prologue framing; Port Carrow | Liv's old employer; brought the player; wants dues abolished. |
+| **Captain Ines Varga** | Captain of the *Ida*; leader of Open Water in the Compact | Prologue framing; Port Carrow | Liv's old employer; brought the player; knows the player's tie to Liv; wants dues abolished. |
 | **Callum Reyes** | Leader of the Answerers | Tall Masts; Kenning; the Crib | His brother **Tam** went with Liv and died in the intake tunnel. Shares Liv's beliefs and hates her. If he reaches the Crib, he tries to open it. |
 | **Hollis Marr** | The Namekeeper (Mourners) | Tall Masts | Reads names of the drowned into the channel. Kind, and the Sounding's best fundraiser. |
 | **Nadia Sobczak** | Leader of the Cutters | Aubin; Kenning | Her husband died when a Compact-relit light woke a section and a surge came down the river cable. |
 | **Wes Tolliver** | Leader of the Stewards; Kowalczyk's deputy | Aubin | Would "hold the Line shut" from Aubin. Reasonable, patient, and exactly what the Local fears. |
 | **Odette Beaudry** | Keeper of the Pointe Sombre light | Pointe Sombre | Let Liv into the vault. Her son **Remy** drowned on the reef the week the light went dark. She told the village it failed. |
 | **Tem and Dell Pruitt** | Wrecker mother and son | Pointe Sombre | Profit from the dark reef; show a false light in storms. Poor, not monsters. |
-| **Sigrun Dahl** | Local lineworker (a Cutter) | Pointe Sombre; Aubin | "Buying copper." Made sure the light stays off the Line. Alternative companion. |
-| **The scavenger** (existing, unnamed) | Keeps the relay powered | Prologue | PROPOSAL: a "battery man" who wires dead relays to sell storm warnings; found Liv's coil in the housing and kept it fed. If alive after Shore Watch, he turns up at Pointe Sombre working for the Pruitts. |
+| **Sigrun Dahl** | Local lineworker (a Cutter) | Pointe Sombre; Aubin | "Buying copper." Made sure the light stays off the Line. |
+| **The scavenger** (existing, unnamed) | Keeps the relay powered | Prologue | PROPOSAL: a "battery man" who wires dead relays to sell storm warnings; found Liv's coil in the housing and kept it fed. If alive after Shore Watch, he either keeps the Shore Watch while Mara is away (if the player talks him down) or turns up at Pointe Sombre working for the Pruitts. |
 | **Kenning spokesperson** | The squatters' voice | Kenning | The table demonstration happens to her people. |
 
-## 9. Sigrun Dahl — alternative companion (if Mara stays on her shore)
+## 9. Sigrun Dahl (supporting; no longer a companion candidate)
 
-A young Cutter lineworker, sent to Pointe Sombre to keep the node off the Line. Grew up on Table Day stories. Tied to the main narrative because she has been following Liv's trail for the Cutters since the Locks. Her arc: from "burn it all" to understanding the islands' dependence on the lights, or deeper into the Cutters. At the Crib she carries the charges. Weaker than Mara as a companion because she is new and aligned; stronger if Anthony wants the companion to pull the player toward one faction.
+Mara is the companion (Decision 4: A). Sigrun stays a supporting character: a young Cutter lineworker, sent to Pointe Sombre to keep the node off the Line. She grew up on Table Day stories and has followed Liv's trail for the Cutters since the Locks. Her arc: from "burn it all" to understanding the islands' dependence on the lights, or deeper into the Cutters. If the player allies with the Cutters, she is the one carrying the charges at the Crib.
 
 ---
 

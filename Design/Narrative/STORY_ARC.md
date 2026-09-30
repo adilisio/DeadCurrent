@@ -1,6 +1,6 @@
 # DEAD CURRENT — Story Arc (PROVISIONAL)
 
-Status: **PROVISIONAL narrative design, 2026-09-29.** Nothing in this file is canon until Anthony confirms it. It does not change the active phase, any quest, any dialogue asset, or any map. Where it reinterprets existing in-game text, the text itself is unchanged: the reinterpretation is a proposal about what that text *means*.
+Status: **PROVISIONAL narrative design, 2026-09-29.** Nothing in this file is canon until Anthony confirms it, except the four decisions he made on 2026-09-30: **the player chooses their tie to Liv** (sister, partner, or the one who took them in); **the Shore Watch is an inherited office whose watchers speak its memory as "I"**; **Mara is the companion**; **Liv pulled the Pointe Sombre key and a boy drowned.** It does not change the active phase, any quest, any dialogue asset, or any map. Where it reinterprets existing in-game text, the text itself is unchanged: the reinterpretation is a proposal about what that text *means*.
 
 Companion documents: `MYSTERY_LEDGER.md` (what is true, what only looks true, the reveal ladder), `FACTIONS.md`, `CHARACTERS.md`, `QUEST_ARCS.md`, `ENDINGS.md`, `AUDITS.md`, and `STORY_REVIEW.md` (start there if you only read one).
 
@@ -27,11 +27,11 @@ Everything below is PROPOSAL unless marked otherwise.
 
 ## 2. The spine in one paragraph
 
-The player comes ashore at an abandoned Maritime Authority station looking for **Liv Kallio**, their older sister, a *listener* (someone who reads the Current's transmissions for weather and sells the warnings to captains). Liv followed a pattern in the transmissions to this shore, then to a lighthouse she deliberately darkened, then through the locks, then to the listeners' station, and finally out to an offshore water-intake crib four miles off a drowned city, where the pre-collapse network's central continuity node still stands. The player follows her by the same methods she used: cross bearings, old records, and people who remember her. Along the way the player learns that the collapse was made permanent by a deliberate act (the **Severance**, when the network was cut into islands), that the severed sections are slowly re-knitting themselves, and that if the network rejoins on its own it will run the region by priority tables sixty years out of date. Liv is alive. She has been sitting in the Crib for weeks, refusing the network's rejoin requests one by one by hand, like a switchboard operator refusing calls, because she believes no one's tables are fit to run the lakes, including the three factions who are now racing to reach her. The player reaches her knowing a great deal about the machine and the politics, and much less about the thing speaking through it, and has to decide what happens to the network, to Liv, and to the people who depend on both.
+The player comes ashore at an abandoned Maritime Authority station looking for **Liv Kallio** (the player chooses who she is to them: sister, partner, or the one who took them in), a *listener* (someone who reads the Current's transmissions for weather and sells the warnings to captains). Liv followed a pattern in the transmissions to this shore, then to a lighthouse she deliberately darkened, then through the locks, then to the listeners' station, and finally out to an offshore water-intake crib four miles off a drowned city, where the pre-collapse network's central continuity node still stands. The player follows her by the same methods she used: cross bearings, old records, and people who remember her. Along the way the player learns that the collapse was made permanent by a deliberate act (the **Severance**, when the network was cut into islands), that the severed sections are slowly re-knitting themselves, and that if the network rejoins on its own it will run the region by priority tables sixty years out of date. Liv is alive. She has been sitting in the Crib for weeks, refusing the network's rejoin requests one by one by hand, like a switchboard operator refusing calls, because she believes no one's tables are fit to run the lakes, including the three factions who are now racing to reach her. The player reaches her knowing a great deal about the machine and the politics, and much less about the thing speaking through it, and has to decide what happens to the network, to Liv, and to the people who depend on both.
 
 The player's question moves through three stages, matching `LongTermPlan.txt`'s aim:
 
-1. **Prologue and Act I: "What happened here?"** (to this shore, this boat, this light, my sister)
+1. **Prologue and Act I: "What happened here?"** (to this shore, this boat, this light, Liv)
 2. **Act II: "What is happening now?"** (the network is re-knitting; everyone is moving; Liv's voice is on the air)
 3. **Act III and Endgame: "What am I willing to do about it?"**
 
@@ -114,12 +114,12 @@ A sixty-year-old console needs power. Proposal: the intake tunnel was fitted wit
 | D | **A stranger**, a contract from the missing person's family | Money, then curiosity | The player owes nothing, so every step is a choice | Weak personal stake for the first hours; conflicts with "personal mystery" |
 | E | **Crewmate the player abandoned** on an earlier run | Guilt | Strong moral ground | Front-loads a backstory the player never played |
 
-### 5.2 Working version: A, with E's guilt folded in (PROPOSAL, not canon)
+### 5.2 Working version: Liv Kallio, tie chosen by the player (DECIDED 2026-09-30, Decision 1: B; details PROPOSAL)
 
-**Liv Kallio**, the player's older sister, is chosen for the draft because it gives the clearest reason to walk into danger on the first night, and because the story's work goes into making her *not* a rescue objective. The relationship itself is an open decision (`STORY_REVIEW.md`, Decision 1); most beats survive if she becomes a mentor, partner, or player-chosen relationship instead.
+**Liv Kallio**'s tie to the player is **chosen by the player** at the start: **sister**, **partner**, or **the one who took them in**. The story's work goes into making her *not* a rescue objective, and that work is the same for all three. Only a handful of keystone lines vary by tie; the rules and the three ties are in `CHARACTERS.md` §1.1.
 
-- **Who she is.** Mid-thirties. A **listener**: she reads the Current's transmissions aboard the Compact trader *Ida Lamberton* and sells storm warnings to captains. Listeners are useful and distrusted: sailors believe that repeating the words on a boat brings the storm (Mara's "don't repeat them on the boats"). Liv is brilliant at the work, impatient with superstition, and has never once asked permission.
-- **Why the player cares.** She half-raised the player on the *Ida* after their mother was lost on the water. Guilt: two years before the game, the player salvaged an Authority tape from a wreck and gave it to Liv as a curiosity. On it, under the storm traffic, was the pattern. That tape is where this started.
+- **Who she is.** About forty. A **listener**: she reads the Current's transmissions aboard the Compact trader *Ida Lamberton* and sells storm warnings to captains. Listeners are useful and distrusted: sailors believe that repeating the words on a boat brings the storm (Mara's "don't repeat them on the boats"). Liv is brilliant at the work, impatient with superstition, and has never once asked permission.
+- **Why the player cares.** Depends on the tie: she half-raised them (sister), shared the work and the cabin (partner), or found them orphaned on the docks and gave them a berth (took them in). In every tie, Liv's own mother was lost on the water when Liv was a girl. Guilt, in every tie: two years before the game, the player salvaged an Authority tape from a wreck and gave it to Liv as a curiosity. On it, under the storm traffic, was the pattern. That tape is where this started.
 - **What she was investigating.** The pattern precedes storms by a regular interval, which made her the best listener on the lakes. Then she noticed that the transmissions read out **present-day vessel names and positions**, including the *Ida*'s. Something on the Line is still watching the lakes, and reporting to no one.
 - **Why she came here.** She followed bearings: the pattern is strongest at old cable junctions. The Authority Shore's junction, "the mark off the point", is where the *Tern* was sent sixty years ago.
 - **What she discovered, in order.** The *Tern*'s mark is a junction (prologue). The lighthouse at Pointe Sombre is a section node trying to rejoin (Act I). The Local holds power and the lock (Act II). The Sounding holds the protocol (Act II). The Crib holds the tables, the Severance record, and the resync queue (Act III).
@@ -155,7 +155,7 @@ Timing is a rough full-game estimate for a player doing most content. The vertic
 - **Mystery reveal:** independent machines share one pattern, and the pattern points somewhere.
 - **World-state consequence:** existing flags (relay recovered, scavenger dead or alive, wreck power cut). Callback: a living scavenger reappears at Pointe Sombre among the wreckers.
 - **Missing-person thread:** Liv was here five months ago. She seated the coil. She showed interest in the *Tern*. She left east.
-- **Pull forward:** the *Ida* returns in a rising storm. The *Tern*'s bearing and Mara's admission point at Pointe Sombre. Mara (PROPOSAL: the companion) comes too, for reasons she does not fully give.
+- **Pull forward:** the *Ida* returns in a rising storm. The *Tern*'s bearing and Mara's admission point at Pointe Sombre. Mara, the companion (decided), comes too, for reasons she does not fully give. The shore is left unwatched unless the player finds someone to keep the watch.
 
 ### ACT I — Pointe Sombre: "The Wrong Characteristic" (the vertical slice; see `QUEST_ARCS.md` §2)
 
@@ -168,7 +168,7 @@ Timing is a rough full-game estimate for a player doing most content. The vertic
 - **Major decision:** what happens to the light, decided in the vault and the lamp room: relight it on the Line, relight it by hand, redirect its power to the settlement, destroy the node, and separately what to expose (Liv, the keeper, the wreckers).
 - **Mystery reveal:** the collapse did not simply happen to the Line; this node was **severed by an order**, and it is trying to rejoin.
 - **World-state consequence:** the light's state (on the Line, by hand, dark, destroyed), night safety, the wreckers' fate, merchant stock, who keeps the light, Compact and Local reputation.
-- **Missing-person thread:** Liv pulled the section key. The keeper's son drowned the week after. Liv's note to the keeper: *light it by hand; I'm sorry; don't let anyone put it back on the Line*. The player learns their sister caused a death and left.
+- **Missing-person thread:** Liv pulled the section key. The keeper's son drowned the week after. Liv's note to the keeper: *light it by hand; I'm sorry; don't let anyone put it back on the Line*. The player learns that Liv (sister, partner, or the one who took them in) caused a death and left. (Decided, Decision 15: A.)
 - **Pull forward:** two bearings cross somewhere beyond the Narrows, too loose to fix. Liv went through **Aubin Locks** on the Packet. Hale will pay the player to find her; Sigrun will take the player to the Local.
 
 ### ACT II — The Crossings: "Whose Lights"
@@ -256,7 +256,7 @@ Slides or short playable returns to visited places, driven by world state (light
 The player is not chosen. They matter because:
 
 - they **follow Liv's method** (bearings, records, people), which no faction is doing, because each faction is sure it already knows what the Line is;
-- they **can move between factions** that cannot talk to each other (trader background, a sister who burned every bridge, no oath to anyone);
+- they **can move between factions** that cannot talk to each other (trader background, a tie to someone who burned every bridge, no oath to anyone);
 - they **gather access**: the keys, the Lexicon, the lock, the tunnel routes, the census, each earned through a quest;
 - they **decide who stands in the Crib**, because they decide who comes through the tunnel;
 - they **know the places**: in the census-table endings, communities the player found and recorded are on the tables, and the ones they never visited are not (see `ENDINGS.md` §3). Exploration has ending weight.

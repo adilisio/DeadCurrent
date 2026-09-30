@@ -4,6 +4,15 @@ Canon for setting, factions, characters and places. See `LongTermPlan.txt` secti
 
 A full provisional story draft (arc, mystery ledger, factions, cast, quest arcs, endings) is in `Design/Narrative/`; start with `STORY_REVIEW.md`. **None of it is canon** until Anthony confirms it here.
 
+### Narrative direction confirmed by Anthony (2026-09-30)
+
+- **The missing person's tie is the player's choice**: sister, partner, or the one who took them in. (Her working name, Liv Kallio, and her history are still provisional.)
+- **The Shore Watch is an inherited office.** Its watchers keep its log and speak its memory in the first person, as "I". Mara's line about seeing two people come up off the beach the night the *Tern* grounded is the watch speaking, not her own childhood memory. Her age is open.
+- **Mara is the companion.**
+- **At the lighthouse settlement (the vertical slice), the missing person pulled the light's key, and the keeper's son drowned** in the dark that followed.
+
+Everything else in `Design/Narrative/` remains provisional.
+
 ## Setting
 
 A post-collapse Great Lakes archipelago, roughly sixty years after a cascading infrastructure disaster ended long-distance power, shipping, communications and centralized government.

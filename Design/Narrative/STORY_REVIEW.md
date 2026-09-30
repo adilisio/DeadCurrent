@@ -25,7 +25,7 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 
 1. **Islanding.** The collapse became permanent because the network was deliberately cut into self-sufficient sections on the collapse night (the Severance). Connection vs isolation is a literal electrical question as well as a political one.
 2. **Stale priority tables.** If the network rejoins, it runs the region by sixty-year-old priorities: it lights a flooded hospital and cuts a living settlement's heat. The catastrophe is regional and material, not the end of the world, and the player sees it at the scale of one block (Pumping Station) before deciding it for the region.
-3. **Liv holding the Line.** The missing sister sits in the offshore crib refusing the network's rejoin requests by hand, night after night, like a switchboard operator. Rescuing her means letting go of the line, so the rescue is in conflict with the stakes.
+3. **Liv holding the Line.** Liv sits in the offshore crib refusing the network's rejoin requests by hand, night after night, like a switchboard operator. Rescuing her means letting go of the line, so the rescue is in conflict with the stakes.
 4. **The Four-Mile Crib.** The finale is an offshore water-intake crib reached through a four-mile intake tunnel under the lake bed, powered by the lake's own slosh (the seiche). No other setting has this.
 5. **Lighthouse characteristics and light dues.** The slice's mystery rests on real navigation practice: a light began flashing the pattern instead of its charted signature, and ships misread it. The Compact funds lights with historical-style light dues and keeps a **Loss Book** of everyone the lakes took.
 6. **"Kallio at the Crib."** The midpoint broadcast is Liv's voice on every relay, and in the Crib she says she never sent it. One uncanny event, well placed, that no faction can explain away.
@@ -50,7 +50,8 @@ Deliberately left open (not merely postponed):
 
 ## Potential Problems
 
-1. **Mara's age vs her eyewitness line** (existing text): she describes the *Tern*'s grounding, about sixty years ago, in the first person. Her Meshy head reads younger. (Decision 3.)
+1. ~~**Mara's age vs her eyewitness line.**~~ **Resolved (Decision 3: B):** the line is the Shore Watch speaking its inherited memory. No text or art change. New, smaller risk: players may read "I" literally and think Mara is lying or ageless. The custom must be stated clearly once (the "That was the watch" line) and shown once more (June Okafor).
+1b. **Writing cost of the chosen tie (Decision 1: B).** Keystone lines need three versions, and it is easy to drift into sister-specific writing. The rules in `CHARACTERS.md` §1.1 keep it to about seven moments. Review every Liv line for "tie leaks" before it ships.
 2. **Endgame scope.** Six directions and up to seven parties in the Crib is expensive to build and balance. (Decision 13.)
 3. **Liv may be unlikeable.** Her arc runs through a drowned boy, stolen money, a traded key, and a dead follower. She needs real charm and humor on the page, or players will leave her in the Crib gladly. That is a legitimate choice, but it should not be the default.
 4. **The auto-black-start "clock"** could read as a deadline timer. It should stay a narrative pressure (sections rejoining over acts), never a real-time countdown.
@@ -63,11 +64,20 @@ Deliberately left open (not merely postponed):
 11. **The Crib's power** needed a plausible source; the seiche turbine (`STORY_ARC.md` §4.4b) is a proposal that also strengthens the Surveyors' case. It could be judged too tidy.
 12. **Phenomena cost.** Mayfly rings, mussel lines, fish rings, and wildlife behavior are art and VFX. The slice should use at most two (the fish ring already exists; mussel lines are cheap decals).
 
+## Decided by Anthony (2026-09-30)
+
+| # | Decision | Applied in |
+| --- | --- | --- |
+| 1 | **B: the player chooses their tie to Liv**: sister, partner, or the one who took them in. (The option said "the captain who took them in"; Liv is the *Ida*'s listener in the draft, so it is written as "the one who took them in". Say if she should have been a captain.) | `CHARACTERS.md` §0, §1.1 (the three ties, where the choice is made, writing rules); `STORY_ARC.md` §2, §5.2; `QUEST_ARCS.md` MQ-P1, §2.6; `ENDINGS.md` |
+| 3 | **B: the Shore Watch is an inherited office; watchers speak its memory as "I".** Mara is the fourth watcher; her age stays open. | `CHARACTERS.md` §2 (the office, its rule, the log, succession, leaving the shore); `QUEST_ARCS.md` §5 ("The Watch Log"); June Okafor's scene; `ENDINGS.md` |
+| 4 | **A: Mara is the companion.** Sigrun is supporting only. | `CHARACTERS.md` §2, §9; `STORY_ARC.md` prologue |
+| 15 | **A: Liv pulled the Pointe Sombre key, and Remy Beaudry drowned.** | `STORY_ARC.md` Act I; `QUEST_ARCS.md` §2 |
+
 ## Anthony Decisions Needed
 
-Numbered. **Identity-level decisions are marked ◆**; for those the draft uses a working option but does not recommend one.
+Numbered. **Identity-level decisions are marked ◆**; for those the draft uses a working option but does not recommend one. Decisions 1, 3, 4, and 15 are answered (above) and kept below for the record.
 
-**1. ◆ Who is the missing person to the player?**
+**1. ◆ Who is the missing person to the player?** — **DECIDED: B.**
 - **A.** Liv, the player's older sister (working draft). Clear stakes on the first night; guilt through the tape.
 - **B.** The player chooses at the start: sister, partner, or the captain who took them in. Lines are written to survive all three.
 - **C.** A mentor, or a stranger's contract (see `STORY_ARC.md` §5.1).
@@ -79,13 +89,13 @@ Numbered. **Identity-level decisions are marked ◆**; for those the draft uses 
 - **C.** Unknown until the final room.
 - *Tradeoffs:* A makes the rescue conflict with the stakes, which is the story's best tension. B is braver and sadder, and removes the reunion and the most personal ending. C is A with a longer fuse.
 
-**3. ◆ Mara's age and her eyewitness line.**
+**3. ◆ Mara's age and her eyewitness line.** — **DECIDED: B.**
 - **A.** She is about seventy and was a child on the beach (working draft; no text change; her face would need to age).
 - **B.** The shore watch is an inherited office, and watchers speak its memory as "I". Original lore, and a big invention about who Mara is.
 - **C.** Change the *Tern*'s timing, or reword the line ("My mother saw...").
 - *Tradeoffs:* A makes Mara an unusual companion (an old woman who saw the Sounding begin) and needs art changes. B is distinctive but decides a lot. C is cheapest and loses the link to June Okafor.
 
-**4. ◆ Is Mara the companion?**
+**4. ◆ Is Mara the companion?** — **DECIDED: A.**
 - **A.** Yes (working draft): already built, liked, holds the transcripts, can reach Pointe Sombre in the slice.
 - **B.** No. She stays the shore's anchor; the companion is Sigrun Dahl (a young Cutter).
 - **C.** A new companion designed for the slice.
@@ -147,7 +157,7 @@ Numbered. **Identity-level decisions are marked ◆**; for those the draft uses 
 - **C.** Selectable backgrounds.
 - *Tradeoffs:* A gives the opening guilt and a trade edge. B maximizes role-play and weakens the tape. C costs content.
 
-**15. ◆ Liv's role in the slice.**
+**15. ◆ Liv's role in the slice.** — **DECIDED: A.**
 - **A.** Liv pulled the key and a boy drowned (working draft): the slice carries the personal thread and the first big turn against her.
 - **B.** Liv is absent from the slice's causes; her involvement is revealed later. The slice stands alone more cleanly.
 - **C.** Only the keeper and the wreckers are responsible.
@@ -171,7 +181,7 @@ Numbered. **Identity-level decisions are marked ◆**; for those the draft uses 
 - **Faction names.** "The Local" is thematically right and may read as generic; "the Sounding" risks sounding like a cult name despite the design; "Harbor Compact" is serviceable.
 - **Kenning** as the drowned city's name is apt ("kenning" is the range of sight at sea) and may be too literary.
 - **Keys Divided** may be too clever and too expensive; it is also the most "designed" ending.
-- **The mother subplot** (Liv's unspoken fear that the tape's voice was their mother): powerful, and close to the Mourners' ghost reading. Keep it very quiet or cut it.
+- **The mother subplot** (Liv's unspoken fear that the tape's voice was her mother): powerful, and close to the Mourners' ghost reading. Keep it very quiet or cut it.
 - **The seiche turbine** in the Crib may explain slightly too much.
 - **Sigrun, Tolliver, Reyes, Sobczak, Marr**: supporting characters are thin. If scope tightens, merge (Sigrun could be Sobczak's niece; Reyes could lead the Mourners and the Answerers both).
 - **Six side stories.** The Schedule (the ghost ferry) and the Grand Harmon are the strongest; the Ice Road depends on Decision 11.

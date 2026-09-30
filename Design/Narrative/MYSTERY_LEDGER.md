@@ -224,7 +224,7 @@ Do not write, imply, or foreshadow any of these as *the* answer:
 - **Time travel** or messages from the future (nothing in the transmissions may be explained as foreknowledge).
 - **The player is special**: the signal is about the player, the player is a descendant of Holt, the player can hear what others cannot.
 - **Liv is the Current**, or became part of it, or it is using her body.
-- **Mara is immortal, a ghost, or a construct** (her age question in `STORY_REVIEW.md` must be answered mundanely or left alone).
+- **Mara is immortal, a ghost, or a construct** (her first-person memory of the *Tern* is the Shore Watch's inherited voice, a human custom, and must stay that).
 - **Indigenous spirituality as the explanation.** Anishinaabe and Haudenosaunee peoples are part of this region's present, not a source of mystical answers. See `STORY_REVIEW.md`.
 - **One final exposition dump**, in any voice, that explains it.
 
@@ -278,7 +278,7 @@ Island folk never use any of them. They say "the Authority", "the words", "the s
 | When (before the game opens) | What |
 | --- | --- |
 | ~70 years | The Pattern Desk begins recording structure in Current events. |
-| ~60 years | The collapse. The Severance, 03:12, Holt's code. The *Tern* grounded; Ellis Tennant and June Okafor walk inland. Mara, a child, sees them come up the beach (if Decision 3 is A). |
+| ~60 years | The collapse. The Severance, 03:12, Holt's code. The *Tern* grounded; Ellis Tennant and June Okafor walk inland. The first watcher sees them come up the beach and does not follow: the Shore Watch begins. |
 | ~55 years | The *Tern* Book becomes the Sounding. Aubin's workers have run the dam by hand for five years. |
 | ~40 years | Five harbors sign the Compact's charter. |
 | ~30 years | Odette's father taps Pointe Sombre's vault to power the lamp. |
