@@ -625,6 +625,8 @@ MESHY_PROPS = [
 # surface renders black. This scale keeps the map's variation and keeps the prop lit.
 PROP_METALLIC_SCALE = 0.25
 NON_METAL_PROPS = ("mara_head", "field_cot")
+# Skin read glossy under open sky on the Landing Stage (Phase 5 playtest); the head gets a higher roughness floor.
+ROUGHNESS_FLOORS = {"mara_head": 0.85}
 # Props drawn only above a mesh-local Z (cm before the actor scale). The head is a bust: chin at about -5, base of the
 # bust at about -94. Cutting at -14 keeps the jaw and drops the neck, shoulders and chest; the body neck under it (skinned dark) takes over, because the bust neck carries a pale tan texture patch that read as a strap.
 CUT_PROPS = {"mara_head": -14.0}
@@ -875,6 +877,9 @@ def import_meshy_prop(prop_id, cap):
     if prop_id in NON_METAL_PROPS:
         # Skin is not metal. PlayTest has no reflections, so any metallic value renders it dark and blue-grey.
         unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(instance, "MetallicScale", 0.0)
+        if prop_id in ROUGHNESS_FLOORS:
+            unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(
+                instance, "RoughnessFloor", ROUGHNESS_FLOORS[prop_id])
         unreal.MaterialEditingLibrary.update_material_instance(instance)
         unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False)
     # Slot 0 is the prop's material, so a placed actor or a pickup renders it without an override.
@@ -1212,7 +1217,9 @@ SURVIVAL_MESH = SURVIVAL + "/Meshes/SK_Survival_Character"
 # Jacket and jeans tints for the two costumes. Faded, cold, and different enough to read apart at a distance.
 # A costume, not a decision about anyone's face or history.
 COSTUMES = {
-    "MI_DC_MaraJacket": ("MI_Survival_Character_Jacket", (3.2, 5.2, 5.4, 1.0)),
+    # Phase 5 playtest: 3.2/5.2/5.4 was tuned in the lookout shed's shade and washed to near-white on the open Landing
+    # Stage. About 57% of that still reads teal in the shed and keeps her colour in open light.
+    "MI_DC_MaraJacket": ("MI_Survival_Character_Jacket", (1.8, 2.9, 3.0, 1.0)),
     "MI_DC_MaraJeans": ("MI_Survival_Character_Jeans", (2.4, 2.8, 3.4, 1.0)),
     "MI_DC_ScavJacket": ("MI_Survival_Character_Jacket", (5.6, 2.6, 1.3, 1.0)),
     "MI_DC_ScavJeans": ("MI_Survival_Character_Jeans", (1.6, 1.5, 1.3, 1.0)),

@@ -86,6 +86,14 @@
       "source": "Presentation Pass playtest 1 (2026-09-29): Mara and the scavenger looked like twins"
     },
     {
+      "id": "mara_face_stage",
+      "location": [945, -901, 202],
+      "rotation": [-2, -80, 0],
+      "setup": {"quest": "shore.watch", "stage": "done_coil"},
+      "expectation": "Same framing as mara_face, after the coil route, with Mara on the Landing Stage deck: her head sits on her neck exactly as it does at the lookout.",
+      "source": "Phase 5 acceptance playtest (Anthony, 2026-09-30): Mara looks weird at the landing"
+    },
+    {
       "id": "scavenger_close",
       "location": [2000, 0, 180],
       "rotation": [0, 0, 0],
