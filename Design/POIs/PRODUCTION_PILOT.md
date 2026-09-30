@@ -1,6 +1,6 @@
-# Production Pilot — APPROVED, NOT STARTED
+# Production Pilot — APPROVED, RUNNING IN PHASE 5
 
-Status: **approved by Anthony, 2026-09-30, to run inside Phase 5 (World State). Nothing is built yet.** Approval does not start Phase 5: the pilot begins only after Anthony gives the go-ahead for Phase 5 and its `WorldStatePhasePlan.txt` is committed with the pilot in its scope lock. The decisions are recorded in section 12.
+Status: **approved by Anthony, 2026-09-30; running inside Phase 5 (World State) since 2026-09-30.** `WorldStatePhasePlan.txt` has the pilot in its scope lock (tasks WS-02 to WS-11). Where this document and the plan or the spec (`Design/POIs/shore.landing_stage.md`) differ on detail, such as the stage's exact placement or which reserved ids are used, the plan and the spec win. The decisions are recorded in section 12.
 
 Everything below marked PROVISIONAL is a suggestion to react to, not canon. Faction, backstory, and the Current stay unexplained.
 

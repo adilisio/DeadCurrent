@@ -7,7 +7,7 @@ First-person action RPG in a post-collapse Great Lakes archipelago. Unreal Engin
 | Need | Read |
 | --- | --- |
 | Vision, pillars, the 10-phase ladder | `LongTermPlan.txt` |
-| Scope of each finished/active phase | `FirstPhasePlan.txt`, `ExplorationLoopPlan.txt`, `RPGPhasePlan.txt` |
+| Scope of each finished/active phase | `FirstPhasePlan.txt`, `ExplorationLoopPlan.txt`, `RPGPhasePlan.txt`, `PresentationPassPlan.txt`, `WorldStatePhasePlan.txt` (active) |
 | Build, test, controls, every system, conventions | `Design/technical_architecture.md` |
 | What's in the game and why (decisions log) | `Design/game_design.md` |
 | Canon and PROVISIONAL lore | `Design/world_bible.md` |
@@ -17,12 +17,13 @@ First-person action RPG in a post-collapse Great Lakes archipelago. Unreal Engin
 | Building a new POI, or handing work to another agent | `Design/POIs/README.md`, `TEMPLATE.md`, `AGENT_HANDOFF_TEMPLATE.md` |
 | Anthony's live return checklist (where work stopped) | `Design/ANTHONY_CHECKLIST.md` |
 
-## Where we are (2026-09-29)
+## Where we are (2026-09-30)
 
 - Phases 1–4 are **accepted**: Walking Skeleton, Micro RPG (Shore Watch), Exploration Loop (Wrecked Survey Launch), and RPG Layer (3 attributes / 3 skills / 3 perks as shared rule conditions on existing actors, accepted 2026-09-29). 38 automated tests pass.
 - Everything is on one map, `Lvl_Boathouse`. The **Presentation Pass** (PP-00..PP-10) has dressed it: real materials and meshes, an overcast cold-lake grade, rippled water, Meshy clue props, `Survival_Character` bodies on Mara and the scavenger, and first audio. The canvas HUD is still temporary.
-- Phase 4.5, the **Presentation Pass, is accepted** (Anthony, 2026-09-29, after two playtests). Real materials, meshes, water, bodies, and first audio are on `Lvl_Boathouse`. Plan: `PresentationPassPlan.txt`. Results and known issues (including the 54 FPS shortfall, cause not found) are in `Design/CLAUDE_SESSION_REPORT.md`. Constraints and the asset library: `Design/art_pipeline.md`. `Design/content_production_strategy.md` is the approved direction for making content cheaper without making it generic; it does not expand any phase. `Design/POIs/PRODUCTION_PILOT.md` is approved (2026-09-30) to run inside Phase 5, with its conditional presence capability; it is not started. **Next: Anthony chooses.** Phase 5 (World State) has not been started and needs his go-ahead.
-- After that: Phase 5 World State, then Phase 6 Vertical Slice (the lighthouse-in-a-storm settlement, `LongTermPlan.txt` §23). **Anthony chooses and accepts phases. Don't start the next phase unless he's said to.**
+- Phase 4.5, the **Presentation Pass, is accepted** (Anthony, 2026-09-29, after two playtests). Real materials, meshes, water, bodies, and first audio are on `Lvl_Boathouse`. Plan: `PresentationPassPlan.txt`. Results and known issues (including the 54 FPS shortfall, cause not found) are in `Design/CLAUDE_SESSION_REPORT.md`. Constraints and the asset library: `Design/art_pipeline.md`. `Design/content_production_strategy.md` is the approved direction for making content cheaper without making it generic; it does not expand any phase. `Design/POIs/PRODUCTION_PILOT.md` is approved (2026-09-30) and runs inside Phase 5.
+- **Phase 5, World State, is in progress** (started 2026-09-30 on Anthony's go-ahead). Plan: `WorldStatePhasePlan.txt` (tasks `WS-00`..`WS-11`). One new capability (conditional presence) and one place that uses it (the Landing Stage, the production pilot). Live status: `Design/ANTHONY_CHECKLIST.md`.
+- After that: Phase 6 Vertical Slice (the lighthouse-in-a-storm settlement, `LongTermPlan.txt` §23). **Anthony chooses and accepts phases. Don't start the next phase unless he's said to.**
 
 ## How work is done here
 

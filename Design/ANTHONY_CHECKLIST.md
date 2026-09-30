@@ -4,95 +4,72 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- Local `main` = `origin/main` after the acceptance push (see `git log -1`).
-- Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers).
+- Local `main`, ahead of `origin/main` by the Phase 5 commits (not pushed; see `git log origin/main..main`).
+- Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone / Task
 
-**Presentation Pass: ACCEPTED by Anthony (2026-09-29), after two playtests.** Nothing is in progress. Phase 5 has not been started and needs his go-ahead.
+**Phase 5, World State: in progress (started 2026-09-30).** Plan: `WorldStatePhasePlan.txt`.
 
-## Playtest 2 fixes (2026-09-29): please recheck these
-
-1. **Life jackets** (on the stones near the boarding plank): now lie flat. Better?
-2. **TERN sign**: now stands on two stakes in the stones instead of hovering. Does it read as a sign someone stood up? Or should it hang on the hull?
-3. **Mara**: the pale strap at her collar is gone; the jacket collar meets her chin. Still off? Tell me what (head size, angle, skin tone, hair).
-4. **Hum**: about twice as loud at the relay and the water. Audible now?
-
-## Playtest 1 fixes (2026-09-29): rechecked in playtest 2 unless noted above
-
-1. **Cot** (boathouse, north-west of the door): a folding camp cot with olive canvas and a rolled blanket. Would someone sleep on it?
-2. **Hums and wind**: walk to the relay (they are louder, and the relay hum stops when you take the coil) and stand near the wreck water. Wind is louder than before. Is the hum audible now? Too loud?
-3. **Mara's face**: a new head. Talk to her. Does she read as a person, and not as the scavenger? I did not decide anything about her beyond the face; tell me what you want changed.
-4. **Live water**: dark water with thin electric filaments instead of a flat cyan sheet. Better, or still off? Pull the leads: the filaments, sparks, and hum stop.
-5. **Falling off the map**: I closed the east half's edges with invisible walls and checked by flood-fill that no reachable edge is open. **Please try to fall again and tell me where if you can.**
-6. **Props have real colors now.** Every Meshy prop (relay, breaker panel, battery bank, beacon, sounder, fish, coil, chart, dressing) had been rendering as a pale default material because their master material never compiled. They look very different: check they read right.
-7. Mara has no voice lines (text only), so nothing to hear there.
+| Task | State |
+| --- | --- |
+| WS-00 Plan | done (`5144257`) |
+| WS-01 Reconcile stale status | done (this commit) |
+| WS-02 Conditional presence capability + test | **next** |
+| WS-03 Landing Stage spec + handoffs | not started |
+| WS-04 Build the stage | not started |
+| WS-05 Presentation | not started |
+| WS-06 Stage tests | not started |
+| WS-07 Review views + review packet | not started |
+| WS-08 Independent critics (Gemini, Cursor/Grok; run by you) | not started |
+| WS-09 Revision | not started |
+| WS-10 Verify and stabilize | not started |
+| WS-11 Your acceptance | not started |
 
 ## Completed Since Last Update
 
-- PP-10: docs updated, clean rebuild (twice), 38/38 tests, final captures, Development Win64 cook, smoke launch of `Lvl_Boathouse`, frame times measured, `CLAUDE_SESSION_REPORT.md` replaced.
-- Fixed a packaging-only compile error in the review capture code (`GetActorLabel` outside `#if WITH_EDITOR`).
-- Added `Tools\Package.bat`.
-- Wrote `Design/POIs/PRODUCTION_PILOT.md` (plan only).
-- Earlier this session: PP-06 to PP-09 (see the session report), `Design/POIs/` templates.
+- WS-00: `WorldStatePhasePlan.txt` committed before any Phase 5 code.
+- WS-01: stale status fixed in `CLAUDE.md`, `Design/game_design.md` (Current milestone), `Design/POIs/README.md`, `Design/POIs/PRODUCTION_PILOT.md` (status line), and this file. `Design/CLAUDE_SESSION_REPORT.md` keeps its history; its pilot-status section is marked superseded. It will be replaced at the end of the phase.
+
+## In Progress
+
+Nothing half-done in the tree.
 
 ## READY FOR ANTHONY TO CHECK
 
-Nothing pending. The Presentation Pass passed. The lists below are history.
-
-Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for a clean run).
-
-1. **Boathouse.** Where: you wake on the floor. What to do: take the pistol from the bench, fire once, dry-fire, take the ammo and dressing. Should happen: it reads as a cold steel shed; the shot and the dry click sound like a pistol; each pickup clicks. Ask: is the pistol the loudest thing? Do the click and the **Tab** switch flick suit the game?
-2. **The door.** Step outside. Should happen: wind and water are already there, before anything glows. Ask: does the wind sit under everything? Does the lap ever startle you?
-3. **Coil route.** Walk east past the ridge to the relay. Should happen: it hums, louder as you close in. Take the coil: the hum stops within about half a second. Bring it to Mara. Ask: does Mara read as a person watching the path (teal jacket)? Can you hear her lines over anything?
-4. **Combat route.** New game (F10 / delete the save). Kill the scavenger. Should happen: he reads as a rust-brown jacketed figure, clearly not Mara; the hum stops when he dies.
-5. **Survey Launch.** Walk west past the back of the boathouse. Should happen: the *Tern* from the beach reads as faded white paint over grime, not pink; the name board reads `T_RN`; the live water hums and now and then snaps; the water is dark and rippled. Pull the leads at the battery bank: one clunk, the hum and snaps stop, the glow goes, the water stays. Loot the locker and the tender. Ask: is the cyan glow too loud? Is the hull right?
-6. **One RPG build** (**B** panel, Engineering). Should happen: the breaker panel's extra reading, then the chart from the tender and the sounder. The meshes changed; the words did not.
-7. **Save and reload.** F5, quit, relaunch, F9. Should happen: build, cut power, quest as saved; the shore looks and sounds the same.
-8. **Overall.** Ask: is the whole shore too blue and grey? Do you stop and look at things even when they don't glow?
+Nothing yet. The Phase 5 walkthrough is `WorldStatePhasePlan.txt` §7; it becomes playable after WS-06.
 
 ## Decisions Needed From Anthony
 
-Status (2026-09-30): the frame-time shortfall is deferred. The production pilot is approved to run inside Phase 5, which has not been started. Nothing here is being worked on.
+None blocking. Made inside the approved pilot, all reversible, recorded in the plan:
 
-Open, for whenever you want to decide (none blocks anything):
+- **Where the stage stands:** in the shallows just east of the boathouse door, south of the path (roughly X 860..1260, Y −580..−1250). The pilot said "between the scavenger's camp and Mara's lookout", but the only water is south of the path, and on the coil route the scavenger is still alive, so putting Mara inside his patrol square would read wrong. This spot is on the way the player walks every time. Say if you want it elsewhere.
+- **Which state wins when both routes happen:** killing the scavenger and then handing over the coil keeps the combat picture (the drifted skiff does not come back). Coil first, kill later keeps the coil picture.
+- **Mara's lookout on the combat route:** she stays, her pack stays, and her existing lines and the lookout crate already read the outcome. On the coil route the lookout is empty (she and her pack are on the stage).
+- **Stage changes happen out of sight:** Mara does not vanish mid-conversation; the stage changes once you have walked away and are not looking at it. A load shows the saved state at once.
 
-- Chase the frame-time shortfall (about 54 FPS against 60, cause not found) now or later?
-- Choose the next phase. Phase 5 (World State) is next on the roadmap; it has not been started.
-- Answered: the production pilot is approved as written (the Landing Stage, the conditional presence capability, Mara moving to the stage on the coil route, run during Phase 5; `PRODUCTION_PILOT.md` §12). The Presentation Pass is accepted; Mara has her own head (provisional); the grade and hull stay as they are; the wind bed keeps its faint birds.
+Still open from before (none blocks anything): the frame-time shortfall (deferred); the TERN name board on stakes or on the hull.
 
 ## Known Issues
 
-- **Frame time 18.4 ms average (about 54 FPS)** vs the 16.7 ms target, uniform across all views; 30% screen percentage did not change it, so it is CPU-side or a fixed cost. Not bisected. Suspects: two heavier animated characters, added actors, five audio components. A `stat unit` session would settle it.
+- **Frame time 18.4 ms average (about 54 FPS)** vs the 16.7 ms target at PlayTest settings, uniform across views; not bisected. Deferred by you. Phase 5 watches for a regression of more than 1 ms (plan §9).
 - Basin water slab has a faint dotted edge. Cosmetic.
-- Live-water glow is still the Phase 3 flat cyan sheet.
-- Both characters share one head. One eye texture (`T_EyeMidPlaneDisplacement`) is still at source size (small).
-- Breaker throw is a stand-in sound. Not verified by ear: balance, hum seams, UI cues.
-- The packaged game's audio is untested (smoke launch has no audio device).
-- Live-water hum is an `ADCConditionalAudio`, not code inside `ADCDamageVolume` as the plan worded it.
-- Content rebuilds rewrite imported binaries differently each run; I discarded that churn rather than commit it.
+- One eye texture (`T_EyeMidPlaneDisplacement`) is still at source size (small).
+- Breaker throw is a stand-in sound. Audio balance and the packaged game's audio are not verified by ear.
+- Content rebuilds rewrite imported binaries differently each run; that churn is discarded rather than committed.
+- Superseded (fixed after the report that listed them): the live water is no longer the flat cyan sheet (`M_DC_Current` filaments); Mara has her own head.
 
 ## Future Tier-C Candidates (for the first biome recipe; not automated)
 
-Also in `Design/content_production_strategy.md` §5.
-
-- shore stones (waterline band, under the ridge)
-- driftwood and dead branches (nine hand placements in `dress_shore.py`: the cleanest first recipe test)
-- minor debris and camp scrap
-- mud and wet-sand variation (one texture per band, so the beach reads flat)
-- shoreline grass (none yet)
-- generic maritime scrap (rope, floats, tires)
-- an ambience zone owning the wind and lap beds
+Also in `Design/content_production_strategy.md` §5: shore stones, driftwood, minor debris, mud and wet-sand variation, shoreline grass, generic maritime scrap, an ambience zone owning the wind and lap beds. The Landing Stage's dressing is hand-placed and will say which of these a recipe would have saved.
 
 ## Automated Status
 
-- Build: `DeadCurrentEditor` builds; the Development Win64 game target also builds (packaging).
-- Tests: **38 of 38** (31 editor, 7 map). Baseline 36.
-- Rebuild: `Tools\RebuildContent.bat` clean, exit 0; art level keeps the sentinel and audio beds.
-- Review captures: final run `Saved/Review/2026-09-29_1758`; no defaults, missing textures, warnings, or errors.
-- Package: Development Win64 cook to `Saved\Packaged\Windows` succeeded; null-RHI smoke launch loaded `Lvl_Boathouse` and its art level.
-- Meshy spend: 430 of 500 credits, twelve props (cot and Mara's head added after playtest 1).
+- Build: `DeadCurrentEditor` builds (unchanged since the Presentation Pass).
+- Tests: **38 of 38** at the start of Phase 5 (31 editor, 7 map). Target at the end: at least 41.
+- Package: last Development Win64 cook succeeded at the end of the Presentation Pass.
+- Meshy spend: 430 of 500 credits. Phase 5 budget: at most one prop (about 40), only if the spec justifies it.
 
 ## Next Autonomous Task
 
-None. Anthony is doing a narrative phase. Do not start Phase 5 or the frame-time investigation without his go-ahead. The production pilot is approved but runs inside Phase 5, so it waits for that go-ahead too.
+WS-02: `ADCConditionalPresence` in `Source/DeadCurrent/World/`, the `OnRestored` signal on `UDCWorldStateSubsystem`, the load and review-capture hooks, and the editor test `DeadCurrent.World.ConditionalPresence`. Then `Tools\RunTests.bat -build`.

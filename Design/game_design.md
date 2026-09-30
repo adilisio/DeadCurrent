@@ -4,7 +4,9 @@ Living design document. The source plans are `LongTermPlan.txt` (vision, pillars
 
 ## Current milestone
 
-Next: Presentation Pass (chosen 2026-09-29, not yet started). A bounded art, audio, and readability pass on the existing `Lvl_Boathouse` shore before Phase 5. No new gameplay, place, quest, or enemy. Its plan will be `PresentationPassPlan.txt`. Constraints and the asset library are in `Design/art_pipeline.md`.
+**Phase 5, World State: in progress (started 2026-09-30).** Choices visibly alter locations and NPC behavior. One new reusable capability (conditional presence: an actor is here, somewhere else, or absent, by conditions) and one small place that uses it, the Landing Stage, which is also the approved production pilot. See `WorldStatePhasePlan.txt` and `Design/POIs/PRODUCTION_PILOT.md`.
+
+Presentation Pass (Phase 4.5): accepted 2026-09-29 after two playtests. Real materials, meshes, water, bodies, and first audio on `Lvl_Boathouse`. See `PresentationPassPlan.txt`.
 
 Phase 4, RPG Layer (accepted 2026-09-29 after playtest):
 

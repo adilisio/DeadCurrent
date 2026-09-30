@@ -127,6 +127,8 @@ Judgement calls only you can make: is the grade too blue or grey; do the two cha
 
 ## Production Strategy Pilot Status
 
+> Superseded 2026-09-30: Anthony approved the pilot, and it runs inside Phase 5 (`WorldStatePhasePlan.txt`). The paragraph below is the status as of this report.
+
 `Design/POIs/PRODUCTION_PILOT.md` is a **plan only** and is not approved. It proposes one small cell, the Landing Stage (`shore.landing_stage`, PROVISIONAL name), whose look and Mara's placement change with the Shore Watch route and the wreck's power cut, with the tier split, role ownership, builder-critic-reviser-verifier workflow, tests, and review views. It identifies one likely missing reusable capability (a generic conditional presence rule) and a cosmetic-only fallback. Nothing was built. Phase 5 was not started.
 
 ## Known Issues
