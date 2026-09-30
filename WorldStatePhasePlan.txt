@@ -1,0 +1,312 @@
+# DEAD CURRENT — Phase 5: World State Plan
+
+Status: started 2026-09-30 on Anthony's go-ahead. This document is the plan. Update the status line as tasks land; do not rewrite the scope lock without Anthony.
+
+## Mission
+
+Prove that **choices visibly alter locations and NPC behavior** (`LongTermPlan.txt` §22, Phase 5).
+
+The loop is:
+
+**Resolve Shore Watch one way → walk back past a familiar place → it looks different, and Mara is somewhere else (or is not) → save, quit, load → it is still different**
+
+Phase 5 is not about storing world state. Flags, quest stages, deaths, discoveries, inventories, containers, save/load, conditional dialogue, inspect variants, and conditioned hazards, lights, and sounds already exist and are accepted. What the rule language cannot yet say is **"this actor is here, somewhere else, or not here at all, when these conditions pass."** This phase adds that one capability and spends it on one small place, the Landing Stage, which is also the approved production pilot (`Design/POIs/PRODUCTION_PILOT.md`).
+
+The target feeling is:
+
+"I did something on this shore, and when I come back to the landing, it shows."
+
+---
+
+# 1. Starting Point
+
+- Phases 1–4 accepted. Presentation Pass (Phase 4.5) accepted 2026-09-29 after two playtests.
+- HEAD at plan time: `532994d` (narrative docs). `main` = `origin/main`.
+- 38 automated tests pass (31 editor, 7 map). Development Win64 cook and smoke launch succeeded at the end of the Presentation Pass.
+- Known and deferred: average frame time about 18.4 ms (about 54 FPS) against 16.7 ms at the PlayTest settings, cause not found. Phase 5 must not make it materially worse (see §9); it does not investigate it.
+- Production pilot approved 2026-09-30 (`PRODUCTION_PILOT.md` §12): the Landing Stage, the conditional-presence capability, Mara moving to the stage on the coil route, run inside Phase 5.
+- The narrative draft (`Design/Narrative/`) is PROVISIONAL and design-only. The Pointe Sombre slice and the prologue additions are **not** part of this phase.
+
+---
+
+# 2. Player-Facing Promise
+
+On `Lvl_Boathouse`, a small timber landing stage stands in the shallows just east of the boathouse, south of the path, on the way the player walks every time. Before Shore Watch is resolved it is a place someone is getting ready to use: a skiff tied alongside, a lantern lit, a crate half packed. After Shore Watch it reads, from the same spot, without any text, as one of:
+
+| State | Derived from (existing ids only) | The stage | Mara |
+| --- | --- | --- | --- |
+| Before resolution (default) | neither flag below | skiff moored, lantern lit, crate half packed (lid off, contents showing), Mara's pack at her lookout | at her lookout, as now |
+| Coil route | `WorldFlag shore.relay_recovered` and not `shore.path_cleared` | crate packed and closed and lashed, her pack beside it, skiff loaded, lantern lit | **on the stage**; her lookout is empty |
+| Combat route | `WorldFlag shore.path_cleared` | lantern out, skiff cut adrift (out in the channel, a cut line on the cleat), crate open and empty, lid thrown down | stays at her lookout; her pack stays; the lookout crate and her greeting already read the outcome |
+| Power cut (either route, additive) | `WorldFlag wreck.power_cut` | the string of bulbs along the stage, which hummed, is dark and silent | unchanged |
+
+Why these exact flags: `shore.path_cleared` is set only when Shore Watch completes by the kill route (`done_killed` OnEnter); `shore.relay_recovered` when it completes by the coil route, or when a coil is handed over after the kill route. Checking combat first means "killed him, then handed over the coil anyway" stays the combat picture (a drifted skiff does not come back). Killing the scavenger and never telling Mara leaves the stage in its default state: Shore Watch is not resolved.
+
+Every state survives F5 → diverge → F9, and a save made before this phase loads with the stage showing whatever those flags already say.
+
+---
+
+# 3. Scope Lock
+
+In scope:
+
+- **One reusable capability: conditional presence** (`ADCConditionalPresence`, `World/`). It shows, hides, or moves one or more target actors among authored placements, choosing the first state whose `FDCGameplayCondition` list passes. It saves nothing; its result is derived from existing state on every evaluation. It snaps silently on level start and on save restore, and otherwise defers a visible change while the player is close to it or looking at it.
+- **One small generic signal:** `UDCWorldStateSubsystem::OnRestored` / `NotifyRestored()`, broadcast once a load has been applied (and by the review harness after it applies a viewpoint's setup), so presentation can snap instead of animating a restore.
+- **The Landing Stage** (`shore.landing_stage`, working name), built through the pilot's workflow: spec → build → independent critics → revision → verification → Anthony.
+  - its gameplay actors, presence rules, discovery volume, inspectables, one small loot container, the lamp string, and its sounds in a new per-POI script `build_landing_stage.py`, called from `build_boathouse.py` by one small hook
+  - its static dressing in the art level (`dress_landing.py`, tag `LandingDress`)
+  - inspect text (PROVISIONAL) for the stage's inspectables
+  - Mara's second placement (coil route) and her pack moving with her
+- Automated tests for the capability and for the stage in the real map, per state, including save/diverge/F9 and a pre-Phase-5 save.
+- Review viewpoints for the stage, the same camera in each state, and a review packet for independent critics.
+- Doc reconciliation of stale status text (§8 WS-01), and this phase's docs and session report.
+
+Explicitly out of scope (do not start):
+
+- Pointe Sombre, the vertical slice, the lighthouse, any Phase 6 content
+- the prologue additions (`PROLOGUE_POSTED_FROM_THE_SHORE.md`): Liv's letter, the tie choice, the watch reveal, the *Ida*'s rowboat, the watch's page. The stage may later host the rowboat; nothing here builds it.
+- a companion that follows the player, companion affinity, a party system
+- map travel, a second map, World Partition, PCG, biome recipes (Tier C stays hand-placed)
+- new quests, quest stages, items, enemies, factions, reputation
+- new dialogue for Mara, unless a Gameplay Critic finds a line that reads wrong at her new placement (then one line, recorded as a spec change)
+- a talked-down scavenger keeping the watch (a second-cell candidate, `PRODUCTION_PILOT.md` §12)
+- animated transitions (Mara walking to the stage, the skiff drifting); changes happen out of sight
+- AND/OR condition grammar, condition groups, or any rule-language change beyond what presence needs (ordered first-match states already give OR)
+- the frame-time investigation, the HUD, voice, the grade
+- new Meshy generation unless the spec's Tier A row justifies one prop (budget: at most one, about 40 credits, 70 remain)
+- renaming any shipped id, flag, stage, or asset
+
+---
+
+# 4. Architecture
+
+## 4.1 Conditional presence
+
+`ADCConditionalPresence` is a rule actor, not a component, because the map scripts spawn plain `StaticMeshActor`s, `DCFlickerLight`s, and `DCFriendlyNPC`s and can set an actor-reference array on another actor in the same level, but cannot reliably add instance components from Python. One rule, many targets.
+
+- `Targets` (actors in the same level). Each keeps its offset from the rule actor's authored transform, captured at BeginPlay. The rule actor is the pivot.
+- `States`: ordered `{ StateId, Conditions, bPresent, bMove, Placement }`. The first whose conditions pass wins. If none pass, the targets are at their authored transforms and present. (An unconditioned last state is an explicit default, e.g. "hidden unless".)
+- `bMove`: the pivot goes to `Placement` (a world transform); each target goes to `Placement × its offset`. Not moving keeps the authored transform.
+- `bPresent = false`: targets are hidden in game and their collision is off, so an interaction trace, a bullet, or a walking player cannot hit them. Nothing is destroyed; the persistent registry and save are untouched.
+- **Evaluation context** is the local player's pawn when there is one (so `HasItem`, quest, and build conditions work), otherwise the rule actor, exactly like `ADCConditionalAudio`.
+- **When:** at BeginPlay (snap), on `OnRestored` (snap), on world-state `OnChanged`, and on a timer (`CheckInterval`, 0.5 s) that also picks up quest and inventory changes.
+- **Deferral** (`bDeferWhileObserved`, default on): a change other than a snap waits while the player is within `ObservedDistance` (default 15 m) of the pivot's current or next placement, or while any target was rendered on screen in the last half second. So Mara does not vanish mid-conversation, and nothing pops in at the player's feet. The pending state applies as soon as neither holds. Tests and tools can force it with `Snap()`.
+- **Saves nothing, sets nothing.** No persistent id, no flag, no save field. Old saves and new saves are the same format.
+- Getters for tests and review: `GetActiveStateId()` (`NAME_None` for the default), `HasPendingChange()`.
+- `IsHidden()`, collision, and transforms of the targets are the observable result.
+
+Rejected alternatives: a component on each target (not authorable from the map scripts without the subobject API, and a group — the skiff and its cargo — would need N copies of the same rule); saving the placement (redundant with the flags, and would break when content changes); a condition-type extension (presence is not a check, it is a consumer of checks).
+
+## 4.2 Restore signal
+
+`UDCWorldStateSubsystem` gains `FSimpleMulticastDelegate OnRestored` and `NotifyRestored()`. `UDCSaveSubsystem::ApplyPendingLoad` calls it after the player and quest log are applied. The review capture calls it after applying a viewpoint's setup. `ADCConditionalPresence` snaps on it. Nothing else changes in save/load. No `SaveVersion` bump.
+
+## 4.3 Where the Landing Stage lives
+
+- Gameplay actors (presence rules and their targets, inspectables, the container, the discovery volume, the lamp-string lights and hum, the deck with collision) are in the persistent map, because presence rules reference their targets and cross-level references are not allowed. They are built by `Tools/EditorScripts/build_landing_stage.py`, a separate file that owns only this POI. `build_boathouse.py` calls it with one hook at the end of `main()`, passing itself as the toolkit (its helpers: `box`, `inspectable`, `cond`, `flicker_light`, `conditional_audio`, `wear_mesh`…). That hook is the whole of the change to the shared map script. This answers the pilot's open question (`PRODUCTION_PILOT.md` §5) in favour of the per-POI script; what broke, if anything, is recorded in the spec.
+- Static dressing with no state is in the art level, placed by `dress_landing.py` (tag `LandingDress`, NoCollision). Like the other `dress_*` scripts it is not part of `RebuildContent.bat`, and a content rebuild leaves its actors.
+- Collision: only the walkway and deck (walkable) and the crate, skiff, and Mara (interaction). Everything else is NoCollision. The walk from the boathouse's lake side to the scavenger camp (the review route through (2000, −400) → (700, −450)) crosses no new collision: the stage starts at the shore curb (Y −580) and runs south into the water.
+- No quest, dialogue, or item asset changes. Inspect text lives in the POI script (Narrative Builder's part of it).
+
+## 4.4 Ids
+
+- New: location `shore.landing_stage`; container `landing.tackle` (a small tackle box, the stage's one loot).
+- Reserved by the pilot and not used, because inspectables carry no persistent state: `landing.crate`, `landing.skiff`, `landing.note`. They stay reserved.
+- No new flag. No new quest stage. No `SaveVersion` bump.
+
+---
+
+# 5. Implementation Order
+
+## WS-00 — Plan
+
+- this document
+
+**Done when:** committed before any Phase 5 code or content.
+
+---
+
+## WS-01 — Reconcile stale status
+
+- `Design/game_design.md` "Current milestone": Phase 5 in progress; the Presentation Pass accepted.
+- `Design/CLAUDE_SESSION_REPORT.md`: mark its "production pilot is a plan only and not approved" section as superseded (approved 2026-09-30) without rewriting the historical report.
+- `Design/POIs/README.md` and `PRODUCTION_PILOT.md` status lines: approved and running inside Phase 5.
+- `Design/ANTHONY_CHECKLIST.md`: current head, current task, Phase 5 started; older known issues that were fixed (the flat cyan live-water sheet, the shared head) marked as superseded.
+- `CLAUDE.md` "Where we are": Phase 5 started, plan file indexed.
+
+**Done when:** no living status section says the Presentation Pass is next, that the pilot is unapproved, or that Phase 5 has not started. Historical sections are left as history.
+
+---
+
+## WS-02 — Conditional presence (Systems Engineer)
+
+- `ADCConditionalPresence` and `FDCPresenceState` in `World/`.
+- `OnRestored` / `NotifyRestored()` on `UDCWorldStateSubsystem`; `ApplyPendingLoad` broadcasts it; the review harness broadcasts it after setup.
+- Editor test `DeadCurrent.World.ConditionalPresence` (no map): default placement; first-match order; move with offsets kept for two targets; hide disables collision and re-show restores it; a flag cleared returns to authored; deferral holds a change while observed and applies it after; snap and `NotifyRestored` override deferral; a destroyed target is skipped; nothing writes world state; the rule has no persistent id.
+- `technical_architecture.md`: the capability, how to author it, and what it must not be used for (anything that should be saved on its own).
+
+**Done when:** `Tools\RunTests.bat -build` passes with the new test (at least 39), and no existing test changed.
+
+---
+
+## WS-03 — Landing Stage spec (World Architect)
+
+- `Design/POIs/shore.landing_stage.md` from `TEMPLATE.md`, every section filled: identity, promise, discovery, spatial role with the exclusion zones (the lake-side walk, the review route, the scavenger's patrol square X 2000..2700 / Y −350..350, the boathouse door), gameplay, environmental story with each PROVISIONAL claim, state table, asset tiers with library sources, audio, systems used, the missing capability (now built in WS-02), tests, review views with cameras, human acceptance, open creative decisions each with the default the builder uses.
+- Role handoffs for this pilot in `Design/POIs/handoffs/` (POI Builder, Narrative Builder, Presentation Builder, Visual Critic, Gameplay Critic, Verifier) from `AGENT_HANDOFF_TEMPLATE.md`.
+
+**Done when:** the spec has no blank or TBD field, and every open decision names its default.
+
+---
+
+## WS-04 — Build the stage (POI Builder + Narrative Builder)
+
+- `build_landing_stage.py`: walkway and deck (existing surface instances), lean-to frame, lantern post, the crate body and lid, the crate contents, the lashing, Mara's pack, the skiff and its cargo, the cut line, the lamp string (`ADCFlickerLight`, `ActiveConditions = [!wreck.power_cut]`) and its hum (`ADCConditionalAudio`), the `ADCLocationVolume`, the tackle box, and the presence rules: lantern light, crate lid, crate contents, lashing, pack, skiff group, cargo, cut line, Mara.
+- One hook in `build_boathouse.py` (`import build_landing_stage; build_landing_stage.build(<this module>)`).
+- Inspect text, PROVISIONAL, per state: the crate, the skiff (while moored; the cut line while adrift), the lantern, and a note on the lean-to post. None explains the Current or decides who Mara is or where she is going.
+- Meshes: library and existing Meshy props first (the crate, lamp and can from `dress_structures.py`, the tender or `motorboat_wreck` for the skiff, the cot's blanket or a library bag for the pack). Greybox boxes with existing surface instances are acceptable for kit pieces in this task; WS-05 replaces what reads as greybox.
+
+**Done when:** `RebuildContent.bat` is clean; in the editor the four states can be seen by setting flags; both Shore Watch routes and the Survey Launch still play; existing tests still pass.
+
+---
+
+## WS-05 — Presentation (Presentation Builder)
+
+- `dress_landing.py`: art-level dressing (Tier C stones, driftwood, rope, a mooring float or two), NoCollision, tag `LandingDress`, honoring the exclusion zones.
+- Replace any greybox that reads as greybox from the review views with library meshes (Tier B).
+- Audio: the lamp-string hum (existing `S_DC_HumRelay` or the live hum, quieter), and optionally one water knock on the skiff. Existing CC0 only.
+- Provenance rows in `Design/art_pipeline.md`. Meshy only through the spec's Tier A row.
+
+**Done when:** the review views show no default or grid material, no floating dressing, and the four states differ at a glance.
+
+---
+
+## WS-06 — Tests for the stage
+
+- Map test `DeadCurrent.Map.Boathouse.LandingStage` on the real map:
+  - default state on a fresh map: Mara at the lookout, lantern light shown, skiff at its mooring, lid off, contents shown, pack at the lookout, lamp string on
+  - walking onto the stage announces `shore.landing_stage` once
+  - coil route played through the real pickup and Mara's real turn-in: while the player stands at Mara nothing moves (deferred); after the player walks away, Mara, the pack, the lid, and the lashing are in their coil placements; F5; diverge (teleport, pick something up); F9: the coil state is back immediately, with no second discovery banner
+  - combat route played through the real kill and turn-in: lantern light hidden, skiff and cut line in the drifted placement, contents gone, Mara still at the lookout; F5, diverge, F9: same
+  - `wreck.power_cut`: the lamp string is off in either route
+  - the tackle box: take a stack, save, load, the stack stays taken
+- Map test `DeadCurrent.Map.Boathouse.LandingStageSaves`: a hand-written version-5 save with no knowledge of the stage (coil route complete; then combat route complete) loads with the stage in the derived state and the stage undiscovered.
+- Existing map tests unchanged. If one breaks because Mara moved, the fix goes in the test's lookup, not in the content, and is recorded.
+
+**Done when:** the suite passes with at least 41 tests.
+
+---
+
+## WS-07 — Review views and review packet (Verifier / Integrator)
+
+- `Tools/Review/Lvl_Boathouse.json`: `landing_far` (from the path, default), `landing_coil` and `landing_combat` (identical camera, setup by quest stage), `landing_power_cut`, `landing_close` (the crate at interaction range, default), `landing_close_coil`, `landing_close_combat`, and `lookout_coil` (the lookout empty after Mara has gone).
+- A capture run with `Tools\ReviewCapture.bat`; its contact sheet and manifest.
+- `Design/POIs/reviews/shore.landing_stage_REVIEW_PACKET.md`: what to look at, where the captures are, the spec's expectations, the questions each critic answers, and where to write findings. It does not contain the builder's self-assessment.
+
+**Done when:** the capture run finishes with every landing view written and no default material, missing texture, warning, or error in those views.
+
+---
+
+## WS-08 — Independent criticism (not by the builder)
+
+- Visual Critic and Gameplay Critic, run by Anthony as separate agents (for example Gemini and Cursor/Grok) from the review packet and the handoffs. Findings go to `Design/POIs/reviews/shore.landing_stage_<critic>.md`.
+- The builder does not write, soften, or pre-answer these.
+
+**Done when:** both findings files exist. Until then the stage is `CANDIDATE`, not `READY FOR ANTHONY`.
+
+---
+
+## WS-09 — Revision
+
+- The builder fixes the critics' findings only, one commit per coherent group, each citing the finding. Findings that need Anthony are moved to the checklist, not decided.
+
+**Done when:** every finding is fixed, rejected with a reason, or parked for Anthony.
+
+---
+
+## WS-10 — Verify and stabilize
+
+- `Tools\RebuildContent.bat` twice; the art layer and `LandingDress` survive.
+- `Tools\RunTests.bat -build`: all green.
+- Capture run; frame-time comparison (§9).
+- `Tools\Package.bat`: Development Win64 cook and smoke launch of `Lvl_Boathouse`.
+- Docs: `technical_architecture.md` (capability, the stage, ids, tests), `game_design.md` (decisions), `world_bible.md` (PROVISIONAL lines only), the spec's status and pilot metrics (`PRODUCTION_PILOT.md` §10), `CLAUDE_SESSION_REPORT.md` replaced, `ANTHONY_CHECKLIST.md`.
+
+**Done when:** everything above is green and the session report lists what Anthony should play.
+
+---
+
+## WS-11 — Anthony's acceptance
+
+- Anthony plays §7. Only he accepts. Findings become revision tasks. Stop. Do not start Phase 6.
+
+---
+
+# 6. Testing
+
+Editor context:
+
+- `DeadCurrent.World.ConditionalPresence`: see WS-02.
+- Existing: `Rules`, `Quest`, `Dialogue`, `Content.Validate`, `Content.ShoreWatch.*`, `Exploration.*`, `Progression.*`, `Presentation.ConditionalAudio`, `Save.*`, `Inventory.*`, `Combat.*`: unchanged and green.
+
+Game context (`Lvl_Boathouse`):
+
+- `Map.Boathouse.LandingStage`, `Map.Boathouse.LandingStageSaves`: see WS-06.
+- Existing map tests (`CoilRoute`, `CombatRoute`, `SurveyLaunch`, `SurveyLaunchSaves`, `LegacySave`, `BuildChecks`, `ArtLayer`) unchanged and green. `ArtLayer` also checks the `LandingDress` actors once WS-05 lands.
+
+Baseline 38. Expected at the end: at least 41.
+
+---
+
+# 7. Human Acceptance Walkthrough (for Anthony)
+
+Delete `Saved\SaveGames\DeadCurrent.sav`, launch `Tools\PlayTest.bat`.
+
+1. **Before.** Step out of the boathouse and look right, toward the water. A landing stage: a skiff tied alongside, a lantern lit, a crate with its lid off, things half packed. Walk onto it: `LOCATION DISCOVERED / Landing Stage`. Inspect the crate and the note. Visit Mara: she is at her lookout, her pack by the crate. F5 here. *Does the stage read as a place someone is getting ready to use?*
+2. **Coil route.** Take the coil and hand it to Mara. Talk to her after: nothing moves while you stand there. Walk back toward the boathouse. At the stage: the crate is closed and lashed, her pack is beside it, the skiff is loaded, and Mara is standing on the stage. Her lookout is empty. *Did you notice before you were told? Does it feel like the watch getting ready to travel?*
+3. **Save, diverge, load.** F5 on the stage. Walk away, take something, F9. Mara, the crate, and the skiff are as saved, at once. No second banner.
+4. **Combat route.** F9 back to the save from step 1. Kill the scavenger and tell Mara. Walk back to the stage: the lantern is out, the skiff has drifted out into the channel with a cut line left on the cleat, the crate is open and empty with its lid on the boards. Mara is still at her lookout, pack and all. *Same camera, same place: is it clearly different, and does it read as a consequence rather than a texture swap?*
+5. **Power.** On either route, pull the leads at the Survey Launch. Come back: the string of bulbs along the stage, which hummed, is dark and quiet.
+6. **Relaunch.** F5, quit, relaunch, F9. Everything as saved.
+7. **Overall.** *Did it feel like a place someone made on purpose? Anything that reads as fake, floating, or blocking?*
+
+---
+
+# 8. Save and Backward Compatibility
+
+- No `SaveVersion` bump. No new save field. No renamed id, flag, stage, or asset.
+- The presence result is recomputed from flags on every load, so a save from any earlier version shows the stage in whatever state its flags imply, and the stage is undiscovered until walked onto.
+- New persistent ids (`landing.tackle`) and the new location are absent from older saves, which is the existing "added after the save" case: the container keeps its authored contents, the location is undiscovered.
+- Verified by `LandingStageSaves` (hand-written version-5 saves) and by the unchanged `LegacySave` test.
+
+---
+
+# 9. Performance and Regression
+
+- Budget: at most about 30 new actors in the persistent map, two new shadowless point lights (the lantern and one for the lamp string), one looping positional sound. Presence rules tick at 0.5 s and do nothing else between changes.
+- Measure the capture run's average frame time before (`Saved/Review/2026-09-29_2246` family, about 18.4 ms) and after WS-05 and WS-10. **A material regression is more than +1.0 ms average**, or any view more than 2 ms slower than its own earlier value; either stops the phase for a look. Otherwise the deferred ~54 FPS issue is left alone.
+- No new collision on the lake-side walk, the review route, the scavenger's patrol square, or the boathouse door. The firearm's traces, the interaction trace, and navigation are unchanged elsewhere; the deck adds walkable ground only.
+
+---
+
+# 10. Stop Conditions
+
+Stop and ask Anthony only when:
+
+- a creative decision outside the approved pilot blocks progress (anything beyond the state table in §2)
+- save compatibility would need a breaking change, or a shipped id would need renaming
+- the work would expand beyond World State (a companion system, travel, the prologue, the slice)
+- a Meshy generation beyond the spec's one Tier A row would be needed
+- two architectures with different long-term consequences cannot be settled from the project's rules
+
+---
+
+# 11. Definition of Done
+
+- WS-00..WS-10 implemented; WS-08 findings exist and WS-09 has answered them.
+- `ADCConditionalPresence` exists, is generic, is tested, and saves nothing.
+- The Landing Stage shows four legible states from the same camera, Mara moves on the coil route only, and every state survives save → diverge → F9 and a relaunch.
+- A pre-Phase-5 save loads correctly.
+- `DeadCurrentEditor` builds; `Tools\RunTests.bat -build` passes with at least 41 tests; `Tools\RebuildContent.bat` is clean and leaves the art layer; a Development Win64 package cooks and smoke-launches `Lvl_Boathouse`.
+- No material frame-time regression (§9).
+- Docs, the spec, the pilot metrics, the session report, and the checklist are current.
+- Stop. Anthony accepts. Do not start Phase 6.
