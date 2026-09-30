@@ -53,9 +53,17 @@ public:
 	/** Evaluate now (Tick calls this every CheckInterval). Public so tests can step it. */
 	void Evaluate();
 
+	/**
+	 *  Follow a wholesale state restore (a load) at once: a loop starts or stops without a fade, and a one-shot
+	 *  re-primes silently, so a load never replays the breaker throw. Bound to UDCWorldStateSubsystem::OnRestored.
+	 */
+	void Snap();
+
 protected:
 
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UAudioComponent> Audio;
@@ -92,4 +100,5 @@ private:
 	bool bFadingOut = false;
 	int32 TriggerCount = 0;
 	float TimeToCheck = 0.0f;
+	FDelegateHandle RestoredHandle;
 };

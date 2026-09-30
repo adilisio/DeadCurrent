@@ -82,6 +82,15 @@ bool FDCConditionalAudioTest::RunTest(const FString& Parameters)
 	// Presentation only: none of this wrote world state.
 	TestFalse(TEXT("The actors never set test.cut"), WorldState->HasFlag(TEXT("test.cut")));
 	TestFalse(TEXT("Nor invented any other flag"), WorldState->HasFlag(TEXT("test.already")));
+
+	// Phase 5: a load (the restore signal) is followed at once, with no tick, and never replays a one-shot.
+	WorldState->ReplaceFlags({ TEXT("test.cut") });
+	WorldState->NotifyRestored();
+	TestFalse(TEXT("Restore: the hum is silent at once"), Hum->IsAudible());
+	TestTrue(TEXT("Restore: the throw is primed on the restored state"), Throw->IsAudible());
+	TestEqual(TEXT("Restore: the throw does not replay on load"), Throw->GetTriggerCount(), 1);
+	Throw->Evaluate();
+	TestEqual(TEXT("Restore: nor on the next check"), Throw->GetTriggerCount(), 1);
 	return true;
 }
 

@@ -1,4 +1,5 @@
 #include "World/DCConditionalAudio.h"
+#include "World/DCWorldStateSubsystem.h"
 #include "Components/AudioComponent.h"
 #include "Core/DCGameplayRules.h"
 #include "Kismet/GameplayStatics.h"
@@ -30,8 +31,42 @@ void ADCConditionalAudio::BeginPlay()
 	}
 	Audio->SetVolumeMultiplier(VolumeMultiplier);
 
+	if (UDCWorldStateSubsystem* WorldState = UDCWorldStateSubsystem::Get(this))
+	{
+		RestoredHandle = WorldState->OnRestored.AddUObject(this, &ADCConditionalAudio::Snap);
+	}
+
 	TimeToCheck = 0.0f;
 	Evaluate();
+}
+
+void ADCConditionalAudio::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UDCWorldStateSubsystem* WorldState = UDCWorldStateSubsystem::Get(this))
+	{
+		WorldState->OnRestored.Remove(RestoredHandle);
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
+void ADCConditionalAudio::Snap()
+{
+	const bool bPass = ConditionsPass();
+	bPrimed = true;
+	bAudible = bPass;
+	if (Mode == EDCConditionalAudioMode::OnceWhenTrue)
+	{
+		return; // re-primed: the next rising edge plays, the restored state does not
+	}
+	bFadingOut = false;
+	if (!bPass && Audio->IsPlaying())
+	{
+		Audio->Stop();
+	}
+	else if (bPass && !Audio->IsPlaying() && Audio->GetSound())
+	{
+		Audio->Play();
+	}
 }
 
 bool ADCConditionalAudio::ConditionsPass() const
