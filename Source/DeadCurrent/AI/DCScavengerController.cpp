@@ -8,6 +8,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "UI/DCHUD.h"
 
 ADCScavengerController::ADCScavengerController()
 {
@@ -58,6 +59,7 @@ void ADCScavengerController::Tick(float DeltaSeconds)
 	switch (State)
 	{
 	case EDCScavengerState::Patrol:      TickPatrol(); break;
+	case EDCScavengerState::Warn:        TickWarn(); break;
 	case EDCScavengerState::Investigate: TickInvestigate(); break;
 	case EDCScavengerState::Chase:       TickChase(); break;
 	case EDCScavengerState::Attack:      TickAttack(); break;
@@ -90,6 +92,9 @@ void ADCScavengerController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 		return;
 	}
 
+	UE_LOG(LogDeadCurrent, Verbose, TEXT("[DCAI] sight %s %s at %.0f cm"), *GetNameSafe(Actor),
+		Stimulus.WasSuccessfullySensed() ? TEXT("seen") : TEXT("lost"),
+		GetPawn() ? FVector::Dist2D(GetPawn()->GetActorLocation(), Actor->GetActorLocation()) : -1.0f);
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		bSeeingTarget = true;
@@ -136,7 +141,8 @@ void ADCScavengerController::TryNotice()
 	AActor* Seen = Target.Get();
 	if (Seen && CanNotice(Seen))
 	{
-		SetState(EDCScavengerState::Chase);
+		// From his patrol he warns first; once alerted (investigating) he comes straight in.
+		SetState(State == EDCScavengerState::Patrol ? EDCScavengerState::Warn : EDCScavengerState::Chase);
 	}
 }
 
@@ -151,6 +157,12 @@ void ADCScavengerController::SetState(EDCScavengerState NewState)
 	PauseTimer = 0.0f;
 	LoseTimer = 0.0f;
 	UE_LOG(LogDeadCurrent, Log, TEXT("[DCAI] %s -> %s"), *GetNameSafe(GetPawn()), *GetStateName());
+
+	if (State == EDCScavengerState::Warn)
+	{
+		StopMovement();
+		ADCHUD::ShowMessageFor(Target.Get(), WarningLine, WarningSeconds);
+	}
 
 	if (State == EDCScavengerState::Patrol || State == EDCScavengerState::Dead)
 	{
@@ -168,6 +180,7 @@ FString ADCScavengerController::GetStateName() const
 	switch (State)
 	{
 	case EDCScavengerState::Patrol:      return TEXT("Patrol");
+	case EDCScavengerState::Warn:        return TEXT("Warn");
 	case EDCScavengerState::Investigate: return TEXT("Investigate");
 	case EDCScavengerState::Chase:       return TEXT("Chase");
 	case EDCScavengerState::Attack:      return TEXT("Attack");
@@ -210,6 +223,39 @@ void ADCScavengerController::TickPatrol()
 				PauseTimer = PatrolPause;
 			}
 		}
+	}
+}
+
+void ADCScavengerController::TickWarn()
+{
+	AActor* Actor = Target.Get();
+	if (!Actor || IsTargetDead())
+	{
+		Target = nullptr;
+		SetState(EDCScavengerState::Patrol);
+		return;
+	}
+
+	StopMovement();
+	SetFocus(Actor);
+	if (bSeeingTarget)
+	{
+		LoseTimer = 0.0f;
+		const float Dist = FVector::Dist2D(Scavenger->GetActorLocation(), Actor->GetActorLocation());
+		if (Dist <= WarnAttackRadius)
+		{
+			UE_LOG(LogDeadCurrent, Log, TEXT("[DCAI] warned target came within %.0f cm"), Dist);
+			SetState(EDCScavengerState::Chase);
+		}
+		return;
+	}
+
+	// The player backed off out of sight: he lets it go and walks his loop again.
+	LoseTimer += GetWorld()->GetDeltaSeconds();
+	if (LoseTimer >= LoseSightTime)
+	{
+		Target = nullptr;
+		SetState(EDCScavengerState::Patrol);
 	}
 }
 

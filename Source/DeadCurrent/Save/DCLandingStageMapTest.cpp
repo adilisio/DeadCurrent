@@ -1,4 +1,5 @@
 #include "AI/DCScavengerCharacter.h"
+#include "AI/DCScavengerController.h"
 #include "Character/DCPlayerCharacter.h"
 #include "Combat/DCHealthComponent.h"
 #include "Dialogue/DCDialogueComponent.h"
@@ -786,6 +787,93 @@ bool FDCCampCoverTest::RunTest(const FString& Parameters)
 				TestTrue(*FString::Printf(TEXT("Hidden from (%.0f, -60) at (%.0f, %.0f)"), X, Target.X, Target.Y), bByCover);
 			}
 		}
+		return true;
+	}));
+	QueueCleanup();
+	return true;
+}
+
+/**
+ *  The scavenger warns before he attacks (Phase 5 playtest: "how does the player know to avoid them VS shoot
+ *  them?"). Spotted from his patrol, he stops and warns; backing off out of sight sends him back to his loop;
+ *  coming within 6 m (or shooting him) starts the chase.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCScavengerWarningTest, "DeadCurrent.Map.Boathouse.ScavengerWarning",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCScavengerWarningTest::RunTest(const FString& Parameters)
+{
+	using namespace DCLandingStageTest;
+
+	struct FHelpers
+	{
+		static ADCScavengerCharacter* Scav() { return Cast<ADCScavengerCharacter>(Find(TEXT("boat.scavenger"))); }
+		static EDCScavengerState State()
+		{
+			const ADCScavengerController* AI = Scav() ? Cast<ADCScavengerController>(Scav()->GetController()) : nullptr;
+			return AI ? AI->GetState() : EDCScavengerState::Dead;
+		}
+		/**
+		 *  Keep the player standing at a point until he is in one of Wanted, or Seconds pass. With Toward > 0 the
+		 *  point is that far from him, on the line toward the given spot (so it stays in open ground).
+		 */
+		static void QueueAtUntil(FVector Spot, float Toward, float Seconds, TArray<EDCScavengerState> Wanted)
+		{
+			TSharedRef<double> Start = MakeShared<double>(-1.0);
+			ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([Spot, Toward, Seconds, Start, Wanted]()
+			{
+				const double Now = FPlatformTime::Seconds();
+				if (*Start < 0.0)
+				{
+					*Start = Now;
+				}
+				if (Wanted.Contains(State()))
+				{
+					return true;
+				}
+				ADCScavengerCharacter* S = Scav();
+				if (S && Player())
+				{
+					Player()->UnCrouch();
+					FVector At = Spot;
+					if (Toward > 0.0f)
+					{
+						At = S->GetActorLocation() + (Spot - S->GetActorLocation()).GetSafeNormal2D() * Toward;
+					}
+					Player()->SetActorLocation(FVector(At.X, At.Y, S->GetActorLocation().Z + 5.0), false, nullptr,
+						ETeleportType::TeleportPhysics);
+				}
+				return Now - *Start >= Seconds;
+			}));
+		}
+	};
+
+	QueueFreshMap();
+	FHelpers::QueueAtUntil(FVector(1500.0, 150.0, 0.0), 0.0f, 25.0f, { EDCScavengerState::Warn, EDCScavengerState::Chase, EDCScavengerState::Attack });
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		TestTrue(TEXT("Spotted from the path, he warns instead of charging"), FHelpers::State() == EDCScavengerState::Warn);
+		TestTrue(TEXT("The warning is shown"), Message().Contains(TEXT("Turn around")));
+		Teleport(FVector(300.0, 0.0, 100.0)); // back inside the boathouse, out of his sight
+		return true;
+	}));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(4.8f));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		TestTrue(TEXT("Backing off out of sight: he returns to his loop"), FHelpers::State() == EDCScavengerState::Patrol);
+		return true;
+	}));
+	FHelpers::QueueAtUntil(FVector(1500.0, 150.0, 0.0), 0.0f, 25.0f, { EDCScavengerState::Warn, EDCScavengerState::Chase, EDCScavengerState::Attack });
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		TestTrue(TEXT("Seen again: he warns again"), FHelpers::State() == EDCScavengerState::Warn);
+		return true;
+	}));
+	FHelpers::QueueAtUntil(FVector(1500.0, 150.0, 0.0), 300.0f, 3.0f, { EDCScavengerState::Chase, EDCScavengerState::Attack });
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		const EDCScavengerState S = FHelpers::State();
+		TestTrue(TEXT("Coming within 6 m: he attacks"), S == EDCScavengerState::Chase || S == EDCScavengerState::Attack);
 		return true;
 	}));
 	QueueCleanup();

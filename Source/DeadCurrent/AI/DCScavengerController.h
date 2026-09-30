@@ -14,6 +14,8 @@ UENUM(BlueprintType)
 enum class EDCScavengerState : uint8
 {
 	Patrol,
+	/** Phase 5 playtest: he has spotted the player and warns them off before attacking. */
+	Warn,
 	Investigate,
 	Chase,
 	Attack,
@@ -51,6 +53,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", Units="cm"))
 	float CrouchedSightRadius = 800.0f;
 
+	/** While warning, he attacks if the player comes this close (cm), or shoots him. */
+	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", Units="cm"))
+	float WarnAttackRadius = 600.0f;
+
+	/** What he shouts when he first spots the player. PROVISIONAL. */
+	UPROPERTY(EditAnywhere, Category="AI")
+	FText WarningLine = NSLOCTEXT("DCScavenger", "Warning", "Scavenger: \"This stretch is mine. Turn around.\"");
+
+	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", Units="s"))
+	float WarningSeconds = 3.5f;
+
 	/** Half-angle of the cone in which a crouched player is noticed. Standing uses the sense's 75. */
 	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", ClampMax="180", Units="deg"))
 	float CrouchedPeripheralDegrees = 45.0f;
@@ -78,6 +91,7 @@ private:
 	void SetState(EDCScavengerState NewState);
 
 	void TickPatrol();
+	void TickWarn();
 	void TickInvestigate();
 	void TickChase();
 	void TickAttack();
