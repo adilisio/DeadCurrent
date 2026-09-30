@@ -79,6 +79,9 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
 - **2026-09-30: "Mara looks like a floating head attached to a coat."** Her old face was a generated bust cut at the jaw over the body's thin neck. You chose a new generated head. It is done (`14c8e0a`, 30 Meshy credits): a head and neck rising out of a thick charcoal knit turtleneck ring, so her head meets the jacket cloth to cloth and moves with it. No skin can show at the collar. Captured at the lookout and on the stage (`mara_face`, `mara_face_stage`, run `Saved/Review/2026-09-30_1502`). **Recheck, and judge the face:** in open light it reads more weathered than the old one, and arguably more masculine. A few orange flecks show on the ring in daylight. If the face is wrong, the next step is a new texture or preview (10 to 20 credits, 40 left).
   - **Then, "she still appears to pop out of her clothes; make her one single model, with a distinctive look, for now":** done (`dba3476`). She is the one-piece Quinn mannequin (the UE template's female figure) in matte teal and dark brown. Nothing can separate, the same animations drive her, and she reads nothing like the scavenger. It is a faceless placeholder. A real one-piece Mara (for example a rigged generated character) is a later task. **Recheck:** does she read as Mara for now?
 - **2026-09-30: "When I open the door, the scavenger sees me and charges right away."** Done (`27245b8`). His standing sight is now 12 m (was 18), and his loop moved 3 m east, so from the door he is about 16 m off: you can see him and choose. Crouched is still 8 m. A test checks his whole loop stays beyond his sight from the door step. Side effect: he can no longer see the Landing Stage, so the stage tension you chose to keep (G-02) is gone; the spec says so. **Recheck:** step out, watch him, pick a route.
+- **2026-09-30: "The relay coil appears to be floating."** Fixed (`2eac178`): it rests on top of the relay housing.
+- **2026-09-30: "How does the player know to avoid them vs shoot them? There's no setup."** You chose: he warns first (`456ae1a`). When he spots you from his patrol, he stops, faces you, and says "This stretch is mine. Turn around." (PROVISIONAL line). He attacks only if you come within 6 m or shoot him. If you back out of sight, he returns to his loop. Test: `Map.Boathouse.ScavengerWarning`. **Recheck:** step out, let him see you, back off; then try walking up to him.
+- **2026-09-30: Mara as one model:** "looks cohesive now, like a robot / alien, but at least she doesn't look like she's falling apart." Kept as the placeholder. A real one-piece character is a later task.
 
 ## Decisions Needed From Anthony
 
@@ -110,7 +113,7 @@ Still open from before: the frame-time shortfall (deferred); the TERN name board
 ## Automated Status
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **44 of 44** (33 editor, 11 map) after the playtest fixes (42 after the critic revision). Phase 5 baseline was 38.
+- Tests: **45 of 45** (33 editor, 12 map) after the playtest fixes (42 after the critic revision). Phase 5 baseline was 38.
 - Captures: `Saved/Review/2026-09-30_1309` are clean.
 - Package: after the revision, the Development Win64 cook succeeded, and the smoke launch loaded `Lvl_Boathouse` with all 8 presence rules running.
 - Meshy spend: 30 in Phase 5 (`mara_head_collar`), 460 of 500 in total; account balance 437.
