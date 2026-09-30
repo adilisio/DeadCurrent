@@ -704,9 +704,10 @@ bool FDCLandingStagePlayerSaveTest::RunTest(const FString& Parameters)
 }
 
 /**
- *  The coil route's cover (Phase 5 playtest: the open camp forced a fight). Three crate stacks stand at the camp,
- *  outside the patrol square, and one of them breaks the sight line from the patrol's south leg to a player crouched
- *  behind it near the coil. Sight traces use the Visibility channel, which is what this checks.
+ *  The coil route's cover (Phase 5 playtest: the open camp forced a fight; "I need a clear path"). His loop runs
+ *  north of a scrap windbreak; the relay and the coil are on the beach side of it; three crate stacks stand at the
+ *  camp outside his loop. From anywhere on his south leg, a player crouched at the coil or on the beach approach is
+ *  out of his sight. Sight traces use the Visibility channel, which is what this checks.
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCCampCoverTest, "DeadCurrent.Map.Boathouse.CampCover",
 	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
@@ -723,21 +724,24 @@ bool FDCCampCoverTest::RunTest(const FString& Parameters)
 			return true;
 		}
 		int32 Covers = 0;
+		int32 Panels = 0;
 		for (TActorIterator<AActor> It(World); It; ++It)
 		{
-			if (It->Tags.Contains(TEXT("CampCover")))
+			const bool bCover = It->Tags.Contains(TEXT("CampCover"));
+			Panels += It->Tags.Contains(TEXT("CampWindbreak")) ? 1 : 0;
+			if (bCover)
 			{
 				++Covers;
 				FVector Center, Extent;
 				It->GetActorBounds(false, Center, Extent);
-				const bool bInsideSquare = Center.X > 2000.0 && Center.X < 2700.0 && Center.Y > -350.0 && Center.Y < 350.0;
-				TestFalse(TEXT("Cover stays out of the patrol square"), bInsideSquare);
+				const bool bInsideLoop = Center.X > 2000.0 && Center.X < 2700.0 && Center.Y > -60.0 && Center.Y < 350.0;
+				TestFalse(TEXT("Cover stays out of his patrol loop"), bInsideLoop);
 				TestTrue(TEXT("Cover blocks (it has collision)"), It->GetActorEnableCollision());
 			}
 		}
 		TestEqual(TEXT("Three cover stacks at the camp"), Covers, 3);
+		TestTrue(TEXT("The windbreak is placed"), Panels >= 4);
 
-		// His eye on the south leg, looking at a player crouched behind the stack south of the coil.
 		FCollisionQueryParams Params(TEXT("CampCoverTest"));
 		if (Player())
 		{
@@ -747,11 +751,22 @@ bool FDCCampCoverTest::RunTest(const FString& Parameters)
 		{
 			Params.AddIgnoredActor(Scav);
 		}
-		FHitResult Hit;
-		const bool bBlocked = World->LineTraceSingleByChannel(Hit, FVector(2350.0, -350.0, 160.0),
-			FVector(2560.0, -560.0, 60.0), ECC_Visibility, Params);
-		TestTrue(TEXT("The stack breaks his sight line to a crouched player behind it"),
-			bBlocked && Hit.GetActor() && Hit.GetActor()->Tags.Contains(TEXT("CampCover")));
+		// His eye anywhere on the south leg of his loop, looking at a crouched player (capsule centre 60 cm) at the
+		// coil, behind the relay, and on the beach approach.
+		const FVector Crouched[] = { FVector(2520.0, -300.0, 60.0), FVector(2480.0, -330.0, 60.0),
+			FVector(2200.0, -450.0, 60.0), FVector(1950.0, -500.0, 60.0) };
+		for (float X = 2000.0f; X <= 2700.0f; X += 100.0f)
+		{
+			for (const FVector& Target : Crouched)
+			{
+				FHitResult Hit;
+				const bool bBlocked = World->LineTraceSingleByChannel(Hit, FVector(X, -60.0, 160.0), Target,
+					ECC_Visibility, Params);
+				const bool bByCover = bBlocked && Hit.GetActor()
+					&& (Hit.GetActor()->Tags.Contains(TEXT("CampWindbreak")) || Hit.GetActor()->Tags.Contains(TEXT("CampCover")));
+				TestTrue(*FString::Printf(TEXT("Hidden from (%.0f, -60) at (%.0f, %.0f)"), X, Target.X, Target.Y), bByCover);
+			}
+		}
 		return true;
 	}));
 	QueueCleanup();

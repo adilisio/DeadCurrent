@@ -18,6 +18,20 @@
       "source": "PresentationPassPlan.txt §9 step 2; LongTermPlan.txt §18"
     },
     {
+      "id": "door_outside",
+      "location": [900, 0, 170],
+      "rotation": [0, 0, 0],
+      "expectation": "Two steps outside the door: the same daylight as further along the path, with no darker band just outside the doorway.",
+      "source": "Phase 5 acceptance playtest (Anthony, 2026-09-30): the lighting changes a lot leaving the boathouse"
+    },
+    {
+      "id": "camp_approach",
+      "location": [1800, -520, 150],
+      "rotation": [-4, 8, 0],
+      "expectation": "Crouched height on the beach approach to the camp: a scrap windbreak runs along the lake side of the camp with the relay on the beach side of it, and crate stacks on the sand give a clear low route to the coil.",
+      "source": "Phase 5 acceptance playtest (Anthony, 2026-09-30): I need a clear path to sneak past him"
+    },
+    {
       "id": "path_west",
       "location": [1500, -150, 170],
       "rotation": [10, 180, 0],
@@ -314,9 +328,10 @@
     "points": [
       [740, 0, 0],
       [1600, -80, 0],
-      [2400, -100, 0],
-      [2900, -200, 0],
-      [2000, -400, 0],
+      [2400, -80, 0],
+      [2850, -80, 0],
+      [2850, -550, 0],
+      [2000, -550, 0],
       [700, -450, 0],
       [-200, -400, 0],
       [-900, -350, 0]
