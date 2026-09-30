@@ -102,7 +102,7 @@ Still open from before: the frame-time shortfall (deferred); the TERN name board
 ## Automated Status
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **42 of 42** (32 editor, 10 map) after a full `Tools\RebuildContent.bat`. Phase 5 baseline was 38.
+- Tests: **44 of 44** (33 editor, 11 map) after the playtest fixes (42 after the critic revision). Phase 5 baseline was 38.
 - Captures: `Saved/Review/2026-09-30_1309` are clean.
 - Package: after the revision, the Development Win64 cook succeeded, and the smoke launch loaded `Lvl_Boathouse` with all 8 presence rules running.
 - Meshy spend: none in Phase 5 (still 430 of 500).
