@@ -15,9 +15,9 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | --- | --- |
 | WS-00 Plan | done (`5144257`) |
 | WS-01 Reconcile stale status | done (this commit) |
-| WS-02 Conditional presence capability + test | **next** |
-| WS-03 Landing Stage spec + handoffs | not started |
-| WS-04 Build the stage | not started |
+| WS-02 Conditional presence capability + test | done (`ea411a2`); 39 of 39 tests |
+| WS-03 Landing Stage spec + handoffs | done (this commit) |
+| WS-04 Build the stage | **next** |
 | WS-05 Presentation | not started |
 | WS-06 Stage tests | not started |
 | WS-07 Review views + review packet | not started |
