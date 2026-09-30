@@ -1098,6 +1098,10 @@ bool FDCBoathouseArtLayerTest::RunTest(const FString& Parameters)
 		int32 AudioActors = 0;
 		for (TActorIterator<ADCConditionalAudio> It(GameWorld()); It; ++It)
 		{
+			if (It->Tags.Contains(TEXT("LandingStage")))
+			{
+				continue; // Phase 5's stage has its own hum, checked by Map.Boathouse.LandingStage
+			}
 			++AudioActors;
 			Beds += It->Tags.Contains(TEXT("ShoreAudio")) ? 1 : 0;
 		}
