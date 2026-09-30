@@ -625,19 +625,31 @@ MESHY_PROPS = [
 # surface renders black. This scale keeps the map's variation and keeps the prop lit.
 PROP_METALLIC_SCALE = 0.25
 NON_METAL_PROPS = ("mara_head", "field_cot")
+# Props drawn only above a mesh-local Z (cm before the actor scale). The head is a bust: chin at about -5, base of the
+# bust at about -94. Cutting at -14 keeps the jaw and drops the neck, shoulders and chest; the body neck under it (skinned dark) takes over, because the bust neck carries a pale tan texture patch that read as a strap.
+CUT_PROPS = {"mara_head": -14.0}
 
 
-def ensure_prop_master():
-    """One default-lit master for every Meshy prop: BaseColor, Normal, Roughness, Metallic, Tint."""
-    if unreal.EditorAssetLibrary.does_asset_exist(PROP_MASTER):
-        if not unreal.EditorAssetLibrary.delete_asset(PROP_MASTER):
-            raise RuntimeError(f"Could not replace {PROP_MASTER}")
+PROP_CUT_MASTER = ENV_MATERIALS + "/M_DC_PropCut"
+
+
+def ensure_prop_master(cut=False):
+    """One default-lit master for every Meshy prop: BaseColor, Normal, Roughness, Metallic, Tint.
+
+    cut=True makes M_DC_PropCut: the same, masked, with everything below CutZ (mesh-local Z) not drawn. Mara's head
+    is generated as a bust; the chest below the neck is cut away so it cannot poke out of the jacket collar."""
+    master_path = PROP_CUT_MASTER if cut else PROP_MASTER
+    if unreal.EditorAssetLibrary.does_asset_exist(master_path):
+        if not unreal.EditorAssetLibrary.delete_asset(master_path):
+            raise RuntimeError(f"Could not replace {master_path}")
     material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        "M_DC_Prop", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+        master_path.rsplit("/", 1)[1], ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
     if not material:
-        raise RuntimeError(f"Could not create {PROP_MASTER}")
+        raise RuntimeError(f"Could not create {master_path}")
     material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
     material.set_editor_property("two_sided", True)
+    if cut:
+        material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_MASKED)
     uv = make(material, unreal.MaterialExpressionTextureCoordinate, -500, 0)
     base = sample_param(material, "BaseColor", uv, -60, -200)
     tint = make(material, unreal.MaterialExpressionVectorParameter, -60, 0)
@@ -671,11 +683,31 @@ def ensure_prop_master():
     connect(floor, "", floored, "B")
     mel.connect_material_property(floored, "", unreal.MaterialProperty.MP_ROUGHNESS)
     mel.connect_material_property(scaled_metal, "", unreal.MaterialProperty.MP_METALLIC)
+    if cut:
+        local = make(material, unreal.MaterialExpressionLocalPosition, -500, 900)
+        height = mask(material, local, "b", -300, 900)
+        cut_z = make(material, unreal.MaterialExpressionScalarParameter, -300, 1040)
+        cut_z.set_editor_property("parameter_name", "CutZ")
+        cut_z.set_editor_property("default_value", -30.0)
+        above = make(material, unreal.MaterialExpressionSubtract, -100, 960)
+        connect(height, "", above, "A")
+        connect(cut_z, "", above, "B")
+        # Masked: drawn where the opacity mask is above the clip value (0.3333). Steep so the cut edge is clean.
+        steep = mul(material, above, make_constant(material, 1000.0, -100, 1100), 60, 960)
+        keep = make(material, unreal.MaterialExpressionSaturate, 220, 960)
+        connect(steep, "", keep, "")
+        mel.connect_material_property(keep, "", unreal.MaterialProperty.MP_OPACITY_MASK)
     mel.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
-        raise RuntimeError(f"Could not save {PROP_MASTER}")
-    log(f"created {PROP_MASTER}")
+        raise RuntimeError(f"Could not save {master_path}")
+    log(f"created {master_path}")
     return material
+
+
+def make_constant(material, value, x, y):
+    node = make(material, unreal.MaterialExpressionConstant, x, y)
+    node.set_editor_property("r", value)
+    return node
 
 
 def set_prop_texture_kinds(base, normal, rough, metal, cap):
@@ -835,6 +867,11 @@ def import_meshy_prop(prop_id, cap):
         if not instance:
             raise RuntimeError(f"Could not create {inst_path}")
     bind_prop_instance(instance, textures["base"], textures["normal"], textures["rough"], textures["metal"])
+    if prop_id in CUT_PROPS:
+        unreal.MaterialEditingLibrary.set_material_instance_parent(instance, unreal.load_asset(PROP_CUT_MASTER))
+        unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(instance, "CutZ", CUT_PROPS[prop_id])
+        unreal.MaterialEditingLibrary.update_material_instance(instance)
+        unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False)
     if prop_id in NON_METAL_PROPS:
         # Skin is not metal. PlayTest has no reflections, so any metallic value renders it dark and blue-grey.
         unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(instance, "MetallicScale", 0.0)
@@ -851,6 +888,7 @@ def import_meshy_prop(prop_id, cap):
 
 def import_meshy_props():
     ensure_prop_master()
+    ensure_prop_master(cut=True)
     for prop_id, cap in MESHY_PROPS:
         import_meshy_prop(prop_id, cap)
 
@@ -1217,6 +1255,34 @@ def ensure_survival_costumes():
             pack_eye, "Base Color", unreal.LinearColor(0.05, 0.035, 0.025, 1.0))
         unreal.MaterialEditingLibrary.update_material_instance(pack_eye)
         unreal.EditorAssetLibrary.save_loaded_asset(pack_eye, only_if_is_dirty=False)
+    # Mara's neck shows through the jacket collar and must match her new head. The pack skin is paler and pinker.
+    # A flat warm instance is enough: her face is her own head, and her hands are gloved.
+    skin_path = f"{ENV_MATERIALS}/MI_DC_MaraSkin"
+    if unreal.EditorAssetLibrary.does_asset_exist(skin_path):
+        skin = unreal.load_asset(skin_path)
+    else:
+        skin = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            "MI_DC_MaraSkin", ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    unreal.MaterialEditingLibrary.set_material_instance_parent(
+        skin, unreal.load_asset("/Game/LevelPrototyping/Materials/M_FlatCol"))
+    unreal.MaterialEditingLibrary.set_material_instance_vector_parameter_value(
+        skin, "Base Color", unreal.LinearColor(0.20, 0.105, 0.065, 1.0))
+    unreal.MaterialEditingLibrary.update_material_instance(skin)
+    unreal.EditorAssetLibrary.save_loaded_asset(skin, only_if_is_dirty=False)
+    # The pack hair is skinned partly to the neck, so with the head hidden a strand of it showed as a pale strap over
+    # the collar. Mara's hair is on her own head now; the leftover pack hair becomes plain dark brown like it.
+    hair_path = f"{ENV_MATERIALS}/MI_DC_MaraHair"
+    if unreal.EditorAssetLibrary.does_asset_exist(hair_path):
+        hair = unreal.load_asset(hair_path)
+    else:
+        hair = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            "MI_DC_MaraHair", ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    unreal.MaterialEditingLibrary.set_material_instance_parent(
+        hair, unreal.load_asset("/Game/LevelPrototyping/Materials/M_FlatCol"))
+    unreal.MaterialEditingLibrary.set_material_instance_vector_parameter_value(
+        hair, "Base Color", unreal.LinearColor(0.02, 0.013, 0.009, 1.0))
+    unreal.MaterialEditingLibrary.update_material_instance(hair)
+    unreal.EditorAssetLibrary.save_loaded_asset(hair, only_if_is_dirty=False)
     for name, (parent, tint) in COSTUMES.items():
         path = f"{ENV_MATERIALS}/{name}"
         if unreal.EditorAssetLibrary.does_asset_exist(path):

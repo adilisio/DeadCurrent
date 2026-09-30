@@ -11,7 +11,14 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 **Presentation Pass: playtest 1 fixes are in; ready for a SECOND playtest. Not accepted.** Phase 5 has not been started.
 
-## Playtest 1 fixes (2026-09-29): please recheck these first
+## Playtest 2 fixes (2026-09-29): please recheck these
+
+1. **Life jackets** (on the stones near the boarding plank): now lie flat. Better?
+2. **TERN sign**: now stands on two stakes in the stones instead of hovering. Does it read as a sign someone stood up? Or should it hang on the hull?
+3. **Mara**: the pale strap at her collar is gone; the jacket collar meets her chin. Still off? Tell me what (head size, angle, skin tone, hair).
+4. **Hum**: about twice as loud at the relay and the water. Audible now?
+
+## Playtest 1 fixes (2026-09-29): rechecked in playtest 2 unless noted above
 
 1. **Cot** (boathouse, north-west of the door): a folding camp cot with olive canvas and a rolled blanket. Would someone sleep on it?
 2. **Hums and wind**: walk to the relay (they are louder, and the relay hum stops when you take the coil) and stand near the wreck water. Wind is louder than before. Is the hum audible now? Too loud?

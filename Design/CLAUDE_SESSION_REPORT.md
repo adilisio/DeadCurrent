@@ -1,5 +1,15 @@
 # Development Session Report
 
+## Playtest 2 (Anthony, 2026-09-29): what he said and what changed
+
+Anthony: Mara looks way better but is still a little off (screenshot); the life jackets and the TERN sign look like they float; everything else looks really good and passes; the hum is barely audible.
+
+- **Life jackets:** the library mesh is modelled upright, as if worn, so it stood on end over the stones. It is now rolled onto its back and flattened to a stuffed vest's thickness, lying on the ground.
+- **TERN sign:** the generated hull does not reach the blockout bow where the board was placed, so the board hovered about a metre in front of it. It now stands on two stakes driven into the stones behind it (PROVISIONAL: someone stood the name board up on the beach). Stakes have no collision. If you would rather it hang on the hull, the hull mesh needs to reach the bow first; say so.
+- **Mara, "a little off":** from your screenshot, a pale tan strap lay across the left of her collar. It was the bust's neck: Meshy painted a tan patch there. The head is now cut at the jaw by a mask (new `M_DC_PropCut`, which draws only above a mesh-local height) so the jacket collar meets the chin cleanly. Her leftover pack hair and neck skin were also matched to her head (dark brown, a warm flat skin tone) so nothing pale shows through the collar.
+- **Hum:** raised again, relay 0.30 to 0.60 and live water 0.07 to 0.16. I can confirm from the log that both play; I cannot judge loudness by ear.
+
+Tests: 38 of 38 pass. Captures: `Saved/Review/2026-09-29_2246`. New views: `bow_side`, `clue_jackets`.
 ## Playtest 1 (Anthony, 2026-09-29): what he said and what changed
 
 The pass is **not accepted**. Anthony held it back for these fixes and asked for a new face for Mara.

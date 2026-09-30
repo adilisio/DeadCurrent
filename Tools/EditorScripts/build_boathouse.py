@@ -394,9 +394,11 @@ SURVIVAL_MESH = "/Game/Survival_Character/Meshes/SK_Survival_Character"
 SURVIVAL_JACKET_SLOT = 7
 SURVIVAL_JEANS_SLOT = 8
 SURVIVAL_EYE_SLOT = 3
+SURVIVAL_SKIN_SLOT = 0
+SURVIVAL_HAIR_SLOTS = (4, 5)
 
 
-def assign_mannequin(actor, *mesh_paths, costume=None):
+def assign_mannequin(actor, *mesh_paths, costume=None, skin=None, hair=None):
     """Point an actor at the first skeletal mesh that loads. costume=("MI_DC_XJacket", "MI_DC_XJeans") tints the
     Survival_Character mesh; it is ignored for a fallback mannequin."""
     mesh_path, mesh_asset = first_of_class(unreal.SkeletalMesh, *mesh_paths)
@@ -413,6 +415,11 @@ def assign_mannequin(actor, *mesh_paths, costume=None):
             for slot, name in zip((SURVIVAL_JACKET_SLOT, SURVIVAL_JEANS_SLOT), costume):
                 mesh_comp.set_material(slot, surface(name))
             mesh_comp.set_material(SURVIVAL_EYE_SLOT, surface("MI_DC_Eye"))
+            if skin:
+                mesh_comp.set_material(SURVIVAL_SKIN_SLOT, surface(skin))
+            if hair:
+                for slot in SURVIVAL_HAIR_SLOTS:
+                    mesh_comp.set_material(slot, surface(hair))
     else:
         log(f"{actor.get_actor_label()} no mannequin skeletal mesh found")
     if abp_path:
@@ -771,7 +778,7 @@ def build_scavenger():
            persistent_id="boat.pickup_coil")
     # The hum matches the rig's silent variants: it stops when the player holds the coil, when the relay is
     # recovered, or when the scavenger is dead. Inspecting the rig does not stop it, and the actor sets nothing.
-    conditional_audio("Audio_RelayHum", folder, (2480, -220, 60), "/Game/Audio/Ambience/S_DC_HumRelay", 0.3,
+    conditional_audio("Audio_RelayHum", folder, (2480, -220, 60), "/Game/Audio/Ambience/S_DC_HumRelay", 0.6,
                       conditions=[cond("HAS_ITEM", id="radio_coil", negate=True),
                                   cond("WORLD_FLAG", id="shore.relay_recovered", negate=True),
                                   cond("ACTOR_DEAD", id="boat.scavenger", negate=True)],
@@ -801,6 +808,8 @@ def build_cover_and_npc():
         "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
         costume=("MI_DC_MaraJacket", "MI_DC_MaraJeans"),
+        skin="MI_DC_MaraSkin",
+        hair="MI_DC_MaraHair",
     )
     # Her own head, so she does not read as the scavenger in a different jacket. PROVISIONAL: a face for the
     # provisional character, not a decision about her history. Bone space: X is up, Y is forward, Z is lateral.
@@ -1051,7 +1060,7 @@ def build_survey_launch():
         snap.set_editor_property("flash_attenuation", audio_asset("/Game/Audio/SA_DC_Snap"))
     # The live water hums while it is live, and the breaker clunks once when the leads come off.
     # Levels are the starting points in C:\FO5_AssetLibrary\Audio\SOURCING_NOTES.md.
-    conditional_audio("Audio_LiveWaterHum", folder, (-1500, -1390, 60), "/Game/Audio/Ambience/S_DC_HumLiveWater", 0.07,
+    conditional_audio("Audio_LiveWaterHum", folder, (-1500, -1390, 60), "/Game/Audio/Ambience/S_DC_HumLiveWater", 0.16,
                       conditions=live, attenuation="SA_DC_Hum")
     bank = battery.get_actor_location()
     conditional_audio("Audio_BreakerThrow", folder, (bank.x, bank.y, bank.z),
@@ -1143,7 +1152,10 @@ def dress_library_clues():
               (origin.x, origin.y, origin.z), keep_rotation=True)
 
     jackets = actor_by_label("LifeJackets")
-    wear_mesh(jackets, first_mesh("/Game/Art/PolyHaven/life_jacket"), 70.0, (-1080.0, -380.0, 16.0), yaw=25.0)
+    # The library jacket is modelled upright, as if worn. Rolled onto its back it lies on the stones, and the
+    # thickness (mesh Y) is flattened to a stuffed vest's.
+    wear_mesh(jackets, first_mesh("/Game/Art/PolyHaven/life_jacket"), 70.0, (-1080.0, -380.0, 16.0),
+              rotation=(0.0, 25.0, 90.0), stretch=(1.0, 0.5, 1.0))
     origin, extent = jackets.get_actor_bounds(False)
     loc = jackets.get_actor_location()
     jackets.set_actor_location(
@@ -1217,6 +1229,17 @@ def place_name_letters():
     comp.set_editor_property("cast_shadow", False)
     # The plane is 100 x 100 cm. The board is about 120 x 34 cm; the name fills the middle of it.
     plane.set_actor_scale3d(unreal.Vector(LETTER_SCALE[0], LETTER_SCALE[1], 1.0))
+
+    # The board hung in the air: the generated hull does not reach the blockout bow it was placed on. It is now
+    # propped on two stakes driven into the stones behind it (PROVISIONAL: someone stood the name board up on
+    # the beach). Stakes have no collision, so they change no route and block no trace.
+    stake_mat = surface("MI_DC_RustPaint")
+    top = origin.z + extent.z - 6.0
+    for side, offset in (("L", -(extent.x - 14.0)), ("R", extent.x - 14.0)):
+        stake = block(f"NameBoardStake_{side}", "SurveyLaunch", origin.x + offset - 4.0, origin.x + offset + 4.0,
+                      origin.y - extent.y - 9.0, origin.y - extent.y - 1.0, -4.0, top, material=stake_mat)
+        stake.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(
+            unreal.CollisionEnabled.NO_COLLISION)
 
 
 LETTER_ROT = (0.0, 0.0, -90.0)

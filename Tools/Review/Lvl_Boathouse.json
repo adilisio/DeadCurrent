@@ -170,6 +170,20 @@
       "source": "PresentationPassPlan.txt §6 name_board_tern; Design/game_design.md Wrecked Survey Launch"
     },
     {
+      "id": "bow_side",
+      "location": [-1780, -120, 90],
+      "rotation": [0, 0, 0],
+      "expectation": "Seen edge-on from the west, the name board is attached to something: it rests against the bow or stands on posts in the stones. It does not hover in the air.",
+      "source": "Presentation Pass playtest 2 (2026-09-29): the TERN sign looked like it floats"
+    },
+    {
+      "id": "clue_jackets",
+      "location": [-1080, -250, 95],
+      "rotation": [-22, -90, 0],
+      "expectation": "The life jackets lie on the stones. They do not stand up or hover, and the straps read as cut.",
+      "source": "Presentation Pass playtest 2 (2026-09-29): the life jackets looked like they float"
+    },
+    {
       "id": "clue_beacon",
       "location": [-1500, -1330, 130],
       "rotation": [0, 90, 0],

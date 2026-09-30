@@ -1,4 +1,4 @@
-"""Read-only: dump the graph feeding M_DC_Prop's base color. Log prefix [DCPROP]."""
+"""Read-only: the head instance, its master, and the masked graph. Log prefix [DCPROP]."""
 import unreal
 
 mel = unreal.MaterialEditingLibrary
@@ -8,19 +8,14 @@ def log(msg):
     unreal.log_warning("[DCPROP] " + msg)
 
 
-material = unreal.load_asset("/Game/Environment/Materials/M_DC_Prop")
-log(f"shading={material.get_editor_property('shading_model')} blend={material.get_editor_property('blend_mode')} two_sided={material.get_editor_property('two_sided')}")
-for prop in (unreal.MaterialProperty.MP_BASE_COLOR, unreal.MaterialProperty.MP_ROUGHNESS, unreal.MaterialProperty.MP_METALLIC, unreal.MaterialProperty.MP_NORMAL):
-    node = mel.get_material_property_input_node(material, prop)
-    log(f"{prop.name}: {node.get_class().get_name() if node else None} out={mel.get_material_property_input_node_output_name(material, prop) if node else ''}")
-    if node:
-        try:
-            for i, inp in enumerate(mel.get_inputs_for_material_expression(material, node)):
-                log(f"   input {i}: {inp.get_class().get_name() if inp else None} {inp.get_editor_property('parameter_name') if inp and hasattr(inp, 'parameter_name') else ''}")
-                if inp:
-                    for j, inp2 in enumerate(mel.get_inputs_for_material_expression(material, inp)):
-                        log(f"      input {j}: {inp2.get_class().get_name() if inp2 else None}")
-        except Exception as exc:
-            log(f"   inputs: {exc}")
-log(f"used textures: {[t.get_name() for t in mel.get_used_textures(material)] if hasattr(mel, 'get_used_textures') else 'n/a'}")
-log("done")
+mi = unreal.load_asset("/Game/Art/Meshy/mara_head/MI_mara_head")
+parent = mi.get_editor_property("parent")
+log(f"instance parent={parent.get_path_name() if parent else None} CutZ={mel.get_material_instance_scalar_parameter_value(mi, 'CutZ')}")
+mat = unreal.load_asset("/Game/Environment/Materials/M_DC_PropCut")
+log(f"cut master blend={mat.get_editor_property('blend_mode')} clip={mat.get_editor_property('opacity_mask_clip_value')}")
+node = mel.get_material_property_input_node(mat, unreal.MaterialProperty.MP_OPACITY_MASK)
+log(f"opacity mask node={node.get_class().get_name() if node else None}")
+mesh = unreal.load_asset("/Game/Art/Meshy/mara_head/SM_mara_head")
+log("slots: " + str([s.get_editor_property('material_interface').get_path_name() for s in mesh.get_editor_property('static_materials')]))
+b = mesh.get_bounding_box()
+log(f"bounds z {b.min.z:.1f}..{b.max.z:.1f}")
