@@ -155,7 +155,9 @@ MARA_INTRO = dict(
              ]),
         dict(id="reward_kill", line="Twenty-four rounds. He won't need them. You will.", choices=[BYE]),
         dict(id="reward_coil",
-             line="Two dressings. All I can spare. He's still out there, so don't get careless. I'm going to sit up with this coil tonight and listen.",
+             # Phase 5 (Gameplay Critic G-01): the old closing clause promised she would sit up with the coil, but on
+             # this route she packs and waits at the landing. PROVISIONAL; it names no destination.
+             line="Two dressings. All I can spare. He's still out there, so don't get careless. I've got packing to do.",
              choices=[BYE]),
 
         # After the quest: what Mara says depends on how it ended.
