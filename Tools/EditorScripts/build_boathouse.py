@@ -11,7 +11,8 @@ UnrealEditor-Cmd.exe DeadCurrent.uproject -run=pythonscript -script=<this file> 
 Layout (X is out the door, Z is up, units are cm; the lake is -Y):
   Boathouse  X 0..720, Y -320..320     wake, inspect, pistol on the workbench, door out; west window
   Path       X 720..1800               shoreline walk to the scavenger
-  Scavenger  X 2000..2700, Y -350..350 patrols the path; loot after death; relay rig + coil at his camp
+  Scavenger  X 2000..2700, Y -60..350 patrols the path; loot after death; relay rig + coil at his camp, on the beach
+                                       side of a windbreak (Y -155..-130) his loop stays north of
   Cover      Y 550..650                wall so Mara is out of the scavenger's sight
   Mara       X 3100, Y 1300            Shore Watch quest giver; lookout crate reacts to the outcome
   West shore X -3200..-200             Exploration Loop POI: the Wrecked Survey Launch, bow on the
@@ -744,8 +745,10 @@ def build_scavenger():
     scav.set_actor_label("Scavenger")
     scav.set_folder_path(folder)
     scav.set_editor_property("patrol_points", [
-        unreal.Vector(2000.0, -350.0, 0.0),
-        unreal.Vector(2700.0, -350.0, 0.0),
+        # Phase 5 playtest: the south leg used to run at Y -350, right past the relay, so the coil could not be
+        # reached unseen. It now runs at Y -60, and a windbreak (build_camp_cover) stands between it and the relay.
+        unreal.Vector(2000.0, -60.0, 0.0),
+        unreal.Vector(2700.0, -60.0, 0.0),
         unreal.Vector(2700.0, 350.0, 0.0),
         unreal.Vector(2000.0, 350.0, 0.0),
     ])
@@ -814,7 +817,7 @@ def build_camp_cover():
     """Cover for the coil route (Phase 5 playtest: the open camp forced a fight). Three crate stacks the player can
     move between, crouched, to reach the coil: one west of the camp off the path, two on the beach south of the
     patrol's south leg. Each is a hidden block (collision, which is what breaks the scavenger's sight trace) under
-    closed crates. All stay outside the patrol square (X 2000..2700, Y -350..350), the path, and the review walk."""
+    closed crates. All stay outside the patrol square (X 2000..2700, Y -60..350) and the path."""
     folder = "CampCover"
     # centre x, y, yaw (degrees). A stack is two crates side by side with one on top: about 214 x 53 x 123 cm.
     for index, (x, y, yaw) in enumerate([(1880.0, 250.0, 90.0), (2250.0, -470.0, 0.0), (2560.0, -470.0, 0.0)]):
@@ -828,6 +831,18 @@ def build_camp_cover():
             crate_visual(f"CampCover_{index}_Crate{int(side)}", folder, x + across.x * 53.5 * side,
                          y + across.y * 53.5 * side, 0.0, yaw)
         crate_visual(f"CampCover_{index}_Top", folder, x + across.x * 20.0, y + across.y * 20.0, 41.0, yaw + 8.0)
+
+    # A windbreak of scrap sheet along the lake side of his camp (Phase 5 playtest: "I need a clear path"). His
+    # loop now stays north of it; the relay and the coil are on the beach side, so a player coming along the
+    # waterline, crouched, is out of his sight all the way to the coil. Overlapping panels, no gaps. Collision on:
+    # it is what breaks his sight trace, and he walks around it when chasing.
+    steel = surface("MI_DC_Steel")
+    rust = surface("MI_DC_RustPaint")
+    for index, (x0, dy, height) in enumerate([(1850, 0, 188), (2025, 6, 196), (2200, -4, 184), (2375, 5, 198),
+                                              (2550, -3, 190)]):
+        panel = block(f"CampWindbreak_{index}", folder, x0, x0 + 200, -155 + dy, -137 + dy, 0, height,
+                      material=steel if index % 2 == 0 else rust)
+        panel.set_editor_property("tags", [unreal.Name("CampWindbreak")])
 
 
 def build_cover_and_npc():
@@ -1375,7 +1390,11 @@ def destroy_persistent_actors():
         if package_name(outer) != persistent_package:
             spared += 1
             continue
-        if isinstance(actor, (unreal.WorldSettings, unreal.Brush)):
+        # Spare the level's builder brush only. Volumes are brushes too; skipping every Brush left each rebuild's
+        # post-process and nav-bounds volumes behind (Phase 5 playtest found 42 interior grades and 78 unbound
+        # post-process volumes stacked in the map).
+        if isinstance(actor, unreal.WorldSettings) or (
+                isinstance(actor, unreal.Brush) and not isinstance(actor, unreal.Volume)):
             continue
         doomed.append(actor)
     if not doomed and spared > 3:
