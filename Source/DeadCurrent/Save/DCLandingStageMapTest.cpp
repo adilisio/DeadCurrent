@@ -15,6 +15,7 @@
 #include "Save/DCSaveSubsystem.h"
 #include "Tests/AutomationCommon.h"
 #include "UI/DCHUD.h"
+#include "World/DCConditionalAudio.h"
 #include "World/DCConditionalPresence.h"
 #include "World/DCFlickerLight.h"
 #include "World/DCInspectableActor.h"
@@ -44,7 +45,9 @@ namespace DCLandingStageTest
 	const FVector SkiffAdrift(1720.0, -2080.0, 0.0);
 	const FVector OnGangway(1010.0, -700.0, 110.0);    // inside the discovery volume, 3 m from the deck
 	const FVector NearMara(3100.0, 1120.0, 100.0);     // talking range
-	const FVector FarAway(-1100.0, -250.0, 100.0);     // the Survey Launch beach: far from the lookout and the stage
+	// On the real walk back from the lookout: west of the ridge, north of the door, outside both 15 m bubbles
+	// (about 16 m from the lookout, 20 m from the stage). Gameplay Critic G-03.
+	const FVector ReturnPath(1500.0, 950.0, 100.0);
 
 	UWorld* GameWorld() { return AutomationCommon::GetAnyGameWorld(); }
 
@@ -153,6 +156,33 @@ namespace DCLandingStageTest
 			}
 		}
 		return nullptr;
+	}
+
+	/** The bulbs' hum (the stage's only sound). */
+	ADCConditionalAudio* BulbHum()
+	{
+		for (TActorIterator<ADCConditionalAudio> It(GameWorld()); It; ++It)
+		{
+			if (It->Tags.Contains(TEXT("LandingStage")))
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
+	ADCFlickerLight* Bulb();
+
+	/** The wreck's power, cut elsewhere, darkens the bulbs and stops their hum without touching the Shore Watch picture. */
+	void ExpectPowerCut(FAutomationTestBase* Test, const FString& When, FName MaraState)
+	{
+		auto Label = [&When](const TCHAR* What) { return FString::Printf(TEXT("%s: %s"), *When, What); };
+		Test->TestFalse(*Label(TEXT("bulbs dark")), Bulb() && Bulb()->IsLightActive());
+		Test->TestTrue(*Label(TEXT("hum placed")), BulbHum() != nullptr);
+		Test->TestFalse(*Label(TEXT("hum silent")), BulbHum() && BulbHum()->IsAudible());
+		Test->TestEqual(*Label(TEXT("Mara's rule unchanged")), StateOf(TEXT("Mara")), MaraState);
+		Test->TestEqual(*Label(TEXT("skiff rule unchanged")), StateOf(TEXT("Skiff")),
+			MaraState == FName(TEXT("coil")) ? FName() : MaraState);
 	}
 
 	ADCFlickerLight* Bulb()
@@ -419,15 +449,25 @@ bool FDCLandingStageTest::RunTest(const FString& Parameters)
 		// She does not vanish in front of the player.
 		TestTrue(TEXT("Mara's move waits while the player is with her"), Rule(TEXT("Mara"))->HasPendingChange());
 		TestTrue(TEXT("Mara still at the lookout mid-conversation"), Dist2D(Mara(), Lookout) < 80.0);
-		Teleport(FarAway);
+		Teleport(ReturnPath);
 		return true;
 	}));
 	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.2f));
 	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
 	{
-		ExpectCoil(this, TEXT("Coil route, player away"));
+		ExpectCoil(this, TEXT("Coil route, on the walk back"));
 		TestTrue(TEXT("Crate reads packed"), Read(TEXT("Crate")).Contains(TEXT("lashed")));
 		TestEqual(TEXT("Mara talks from the stage"), TalkToMara(), FName(TEXT("done_coil")));
+
+		// The wreck's power crossed with the coil picture (Gameplay Critic G-04).
+		WorldState()->SetFlag(TEXT("wreck.power_cut"));
+		if (BulbHum())
+		{
+			BulbHum()->Evaluate();
+		}
+		ExpectPowerCut(this, TEXT("Coil route, power cut"), TEXT("coil"));
+		ExpectCoil(this, TEXT("Coil route, power cut"));
+		WorldState()->ClearFlag(TEXT("wreck.power_cut"));
 
 		// Save standing on the stage, so only the restore snap (not a later tick) can put Mara there on load.
 		Teleport(OnGangway);
@@ -501,9 +541,13 @@ bool FDCLandingStageTest::RunTest(const FString& Parameters)
 		ExpectCombat(this, TEXT("Kill, then coil"));
 		WorldState()->ClearFlag(TEXT("shore.relay_recovered"));
 
+		// The combat save also carries the wreck's power cut, so the load must bring back both, at once, and the
+		// bulbs' hum must not start and fade on the reopened map (G-04).
+		WorldState()->SetFlag(TEXT("wreck.power_cut"));
 		Teleport(OnGangway);
-		TestTrue(TEXT("Save on the stage (combat)"), Saves()->SaveCurrentGame());
+		TestTrue(TEXT("Save on the stage (combat, power cut)"), Saves()->SaveCurrentGame());
 		WorldState()->ClearFlag(TEXT("shore.path_cleared"));
+		WorldState()->ClearFlag(TEXT("wreck.power_cut"));
 		return true;
 	}));
 
@@ -515,6 +559,7 @@ bool FDCLandingStageTest::RunTest(const FString& Parameters)
 			return true;
 		}
 		ExpectCombat(this, TEXT("F9 (combat), at once"));
+		ExpectPowerCut(this, TEXT("F9 (combat, power cut), at once"), TEXT("combat"));
 		TestEqual(TEXT("F9 (combat): Mara's epilogue"), TalkToMara(), FName(TEXT("done_killed")));
 		return true;
 	}));
