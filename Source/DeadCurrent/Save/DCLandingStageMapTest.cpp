@@ -703,4 +703,59 @@ bool FDCLandingStagePlayerSaveTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ *  The coil route's cover (Phase 5 playtest: the open camp forced a fight). Three crate stacks stand at the camp,
+ *  outside the patrol square, and one of them breaks the sight line from the patrol's south leg to a player crouched
+ *  behind it near the coil. Sight traces use the Visibility channel, which is what this checks.
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDCCampCoverTest, "DeadCurrent.Map.Boathouse.CampCover",
+	EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+
+bool FDCCampCoverTest::RunTest(const FString& Parameters)
+{
+	using namespace DCLandingStageTest;
+	QueueFreshMap();
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		UWorld* World = GameWorld();
+		if (!TestNotNull(TEXT("World"), World))
+		{
+			return true;
+		}
+		int32 Covers = 0;
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			if (It->Tags.Contains(TEXT("CampCover")))
+			{
+				++Covers;
+				FVector Center, Extent;
+				It->GetActorBounds(false, Center, Extent);
+				const bool bInsideSquare = Center.X > 2000.0 && Center.X < 2700.0 && Center.Y > -350.0 && Center.Y < 350.0;
+				TestFalse(TEXT("Cover stays out of the patrol square"), bInsideSquare);
+				TestTrue(TEXT("Cover blocks (it has collision)"), It->GetActorEnableCollision());
+			}
+		}
+		TestEqual(TEXT("Three cover stacks at the camp"), Covers, 3);
+
+		// His eye on the south leg, looking at a player crouched behind the stack south of the coil.
+		FCollisionQueryParams Params(TEXT("CampCoverTest"));
+		if (Player())
+		{
+			Params.AddIgnoredActor(Player());
+		}
+		if (AActor* Scav = Find(TEXT("boat.scavenger")))
+		{
+			Params.AddIgnoredActor(Scav);
+		}
+		FHitResult Hit;
+		const bool bBlocked = World->LineTraceSingleByChannel(Hit, FVector(2350.0, -350.0, 160.0),
+			FVector(2560.0, -560.0, 60.0), ECC_Visibility, Params);
+		TestTrue(TEXT("The stack breaks his sight line to a crouched player behind it"),
+			bBlocked && Hit.GetActor() && Hit.GetActor()->Tags.Contains(TEXT("CampCover")));
+		return true;
+	}));
+	QueueCleanup();
+	return true;
+}
+
 #endif

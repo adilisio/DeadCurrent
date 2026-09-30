@@ -788,6 +788,48 @@ def build_scavenger():
                       attenuation="SA_DC_Hum")
 
 
+CRATE_BODY = "/Game/Art/PolyHaven/wooden_crate_01/wooden_crate_01_2k/StaticMeshes/wooden_crate_01"
+CRATE_LID = "/Game/Art/PolyHaven/wooden_crate_01/wooden_crate_01_2k/StaticMeshes/wooden_crate_01_lid"
+CRATE_SCALE = 1.3  # 107 x 53 x 41 cm
+
+
+def crate_visual(label, folder, x, y, bottom_z, yaw):
+    """One closed PolyHaven crate, NoCollision (its cover block does the blocking)."""
+    parts = []
+    for suffix, path in (("", CRATE_BODY), ("_Lid", CRATE_LID)):
+        actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x, y, bottom_z),
+                                              unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0))
+        actor.set_actor_label(label + suffix)
+        actor.set_folder_path(folder)
+        actor.set_actor_scale3d(unreal.Vector(CRATE_SCALE, CRATE_SCALE, CRATE_SCALE))
+        comp = actor.get_component_by_class(unreal.StaticMeshComponent)
+        comp.set_static_mesh(unreal.load_asset(path))
+        comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        actor.set_actor_enable_collision(False)
+        parts.append(actor)
+    return parts
+
+
+def build_camp_cover():
+    """Cover for the coil route (Phase 5 playtest: the open camp forced a fight). Three crate stacks the player can
+    move between, crouched, to reach the coil: one west of the camp off the path, two on the beach south of the
+    patrol's south leg. Each is a hidden block (collision, which is what breaks the scavenger's sight trace) under
+    closed crates. All stay outside the patrol square (X 2000..2700, Y -350..350), the path, and the review walk."""
+    folder = "CampCover"
+    # centre x, y, yaw (degrees). A stack is two crates side by side with one on top: about 214 x 53 x 123 cm.
+    for index, (x, y, yaw) in enumerate([(1880.0, 250.0, 90.0), (2250.0, -470.0, 0.0), (2560.0, -470.0, 0.0)]):
+        across = unreal.Vector(math.cos(math.radians(yaw)), math.sin(math.radians(yaw)), 0.0)
+        long_x, long_y = (214.0, 55.0) if yaw == 0.0 else (55.0, 214.0)
+        cover = block(f"CampCover_{index}", folder, x - long_x / 2, x + long_x / 2, y - long_y / 2, y + long_y / 2,
+                      0.0, 123.0)
+        cover.get_component_by_class(unreal.StaticMeshComponent).set_visibility(False)
+        cover.set_editor_property("tags", [unreal.Name("CampCover")])
+        for side in (-1.0, 1.0):
+            crate_visual(f"CampCover_{index}_Crate{int(side)}", folder, x + across.x * 53.5 * side,
+                         y + across.y * 53.5 * side, 0.0, yaw)
+        crate_visual(f"CampCover_{index}_Top", folder, x + across.x * 20.0, y + across.y * 20.0, 41.0, yaw + 8.0)
+
+
 def build_cover_and_npc():
     folder = "Cover"
     # LOS wall: scavenger patrols south of this, Mara stands north.
@@ -1445,6 +1487,7 @@ def main():
     build_boathouse()
     build_exterior()
     build_scavenger()
+    build_camp_cover()
     build_cover_and_npc()
     build_west_shore()
     build_survey_launch()
