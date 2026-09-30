@@ -58,6 +58,15 @@ public:
 
 	FSimpleMulticastDelegate OnChanged;
 
+	/**
+	 *  Tell listeners that state was replaced wholesale (a save was applied, or a review tool set up a
+	 *  scene), so presentation that normally changes out of sight should snap to the new state now.
+	 *  Not a change signal: nothing re-runs consequences on it.
+	 */
+	void NotifyRestored();
+
+	FSimpleMulticastDelegate OnRestored;
+
 	/** A location was discovered for the first time (not fired on save restore). */
 	FDCLocationDiscovered OnLocationDiscovered;
 

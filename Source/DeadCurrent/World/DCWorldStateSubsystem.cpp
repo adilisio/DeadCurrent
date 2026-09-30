@@ -82,3 +82,9 @@ void UDCWorldStateSubsystem::NotifyChanged(const UObject* WorldContextObject)
 		WorldState->NotifyChanged();
 	}
 }
+
+void UDCWorldStateSubsystem::NotifyRestored()
+{
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCWORLD] state restored"));
+	OnRestored.Broadcast();
+}

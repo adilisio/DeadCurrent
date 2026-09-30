@@ -176,6 +176,11 @@ void UDCSaveSubsystem::ApplyPendingLoad(UWorld* World)
 	ApplyWorldState(Save, World->GetSubsystem<UDCWorldStateSubsystem>());
 	ApplyWorld(Save, World);
 	ApplyPlayer(Save, Player);
+	// Everything is in place: presentation that normally changes out of sight (conditional presence) snaps now.
+	if (UDCWorldStateSubsystem* WorldState = World->GetSubsystem<UDCWorldStateSubsystem>())
+	{
+		WorldState->NotifyRestored();
+	}
 	ADCHUD::ShowMessageFor(Player, NSLOCTEXT("DCSave", "Loaded", "Loaded."), 2.0f);
 	UE_LOG(LogDeadCurrent, Log, TEXT("[DCSAVE] load applied (%d world actors, %d quests, %d flags, %d locations)"),
 		Save->WorldActors.Num(), Save->Quests.Num(), Save->WorldFlags.Num(), Save->DiscoveredLocations.Num());

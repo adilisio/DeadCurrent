@@ -1423,7 +1423,16 @@ namespace DCReviewCapture
 			FString Error;
 			FVector Eye;
 			FRotator Rotation;
-			if (!ApplySetup(Shot, Error) || !PlaceShot(Shot, Eye, Rotation, Error))
+			const bool bSetUp = ApplySetup(Shot, Error);
+			if (bSetUp)
+			{
+				// The setup is a restore, not play: presence rules snap to it before the camera is aimed.
+				if (UDCWorldStateSubsystem* WorldState = Player() ? UDCWorldStateSubsystem::Get(Player()) : nullptr)
+				{
+					WorldState->NotifyRestored();
+				}
+			}
+			if (!bSetUp || !PlaceShot(Shot, Eye, Rotation, Error))
 			{
 				Fail(Run, FString::Printf(TEXT("%s: %s"), *Shot.Id, *Error));
 				Run.ViewpointResults.Add(MakeShared<FJsonValueObject>(ShotRecord(Shot, Shot.Id + TEXT(".png"), FVector::ZeroVector, FRotator::ZeroRotator, false, Error)));

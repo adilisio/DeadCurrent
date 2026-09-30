@@ -51,6 +51,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 | `DeadCurrent.Exploration.WorldConditions` | Damage volume and flicker light switched by a world flag, including silent restore |
 | `DeadCurrent.Content.Exploration.MaraWreckLine` | The shipped dialogue: Mara's wreck exchange across Shore Watch states, offered once, survives save/reload |
 | `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. `BuildChecks`: the same actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks and the Sounder Chart, then a real F9 restores the build. Scratch save slot |
+| `DeadCurrent.World.ConditionalPresence` | `ADCConditionalPresence`: default, first match, move with offsets, hide and re-show, deferral while observed, restore snaps, destroyed target, writes nothing |
 | `DeadCurrent.Presentation.ConditionalAudio` | `ADCConditionalAudio` follows a world flag (hum until cut, one-shot on the rising edge, silent when already set at start, re-arms after a silent restore) and writes no world state |
 | `DeadCurrent.World.InspectVariants`, `.Save.*`, `.Inventory.*`, `.Combat.*` | Inspectable variants (including per-variant verbs) and the first-playable systems |
 
@@ -333,6 +334,26 @@ Tags for this set live in `DCCharacterProgressionComponent.cpp` (`DCProgressionT
 
 `UDCWorldStateSubsystem` (`World/`, world subsystem) owns named world flags (`shore.path_cleared`) and the `OnChanged` signal. Flags are set by consequences and read by conditions. `NotifyChanged` fires on flag changes and on any health-component death; quests re-check their transitions on it. Flags are saved and restored with the game. Name flags `<area>.<fact>`. The subsystem also holds `DiscoveredLocations`: `DiscoverLocation(Id)` returns true only the first time and fires `OnLocationDiscovered` and `OnChanged`; `IsLocationDiscovered(Id)`; `ReplaceDiscoveredLocations` (silent, used by load).
 
+`OnRestored` / `NotifyRestored()` (Phase 5) says "state was replaced wholesale": `UDCSaveSubsystem::ApplyPendingLoad` fires it after the world, the player, and the quest log are applied, and the review capture fires it after a viewpoint's setup. It is not a change signal and nothing re-runs consequences on it; presentation that normally changes out of sight (conditional presence) snaps on it.
+
+## Conditional presence
+
+`ADCConditionalPresence` (`World/`, Phase 5) is the rule "these actors are here, somewhere else, or not here at all, when these conditions pass". It is a rule actor placed where its targets are authored; it is their pivot.
+
+- `Targets`: actors in the same level. Each keeps its offset from the rule actor's authored transform (captured at BeginPlay).
+- `States`: ordered `{StateId, Conditions, bPresent, bMove, Placement}`. The first state whose `FDCGameplayCondition` list passes wins. None passing: authored transforms, present. An empty condition list always passes, so an unconditioned last state is an explicit default ("hidden unless ...").
+- `bMove`: the pivot takes `Placement` (world transform) and each target follows with its offset. Targets that move must be **Movable** (a warning is logged otherwise).
+- `bPresent = false`: targets are hidden in game with collision off, so traces, bullets, and the player pass through. Nothing is destroyed; registry and save are untouched.
+- Conditions run against the local player's pawn when there is one (item, quest, and build checks work), otherwise against the rule actor, as in `ADCConditionalAudio`.
+- Evaluated at BeginPlay (snap), on `OnRestored` (snap), on `OnChanged` (flags, deaths, discoveries), and every `CheckInterval` (0.5 s; quest and inventory changes).
+- **Deferral** (`bDeferWhileObserved`, on by default): a change that is not a snap waits while the player is within `ObservedDistance` (15 m) of the pivot's current or next place, or while a target was on screen in the last half second (`GetLastRenderTime`; a world that never rendered does not count). So a character does not vanish mid-conversation and nothing appears at the player's feet. `HasPendingChange()` reports it; `Snap()` forces it; `SetObserverOverride` lets tests and tools judge "observed" from a point.
+- It **saves nothing and sets nothing**. Its result is recomputed from state that is already saved, so a save from before a rule existed shows whatever its flags imply. Do not use it for something that must be remembered on its own (an object the player moved, a door left open); that is `IDCPersistent`.
+- `GetActiveStateId()` (`NAME_None` for the default) is what tests and review read.
+
+Test: `DeadCurrent.World.ConditionalPresence` (default, first match, move with offsets and yaw, hide disables collision and re-show restores it, deferral near the current and the new place, restore snaps, replaced flags followed on restore, a destroyed target skipped, no flag written, no persistent id).
+
+Authoring from a map script: spawn the rule at the targets' authored pivot, set `targets` to the actor list and `states` to a list of `DCPresenceState`. One rule per group that changes together (the skiff and its cargo move as one).
+
 ## Exploration
 
 **Locations.** `ADCLocationVolume` (`World/`) is a box with `LocationId` and `DisplayName`. It **polls player positions at 4 Hz instead of using collision**, for two reasons: the firearm traces WorldStatic/WorldDynamic/Pawn, so a trigger box would stop bullets, and overlap events fire during the load teleport. It stops ticking once its location is discovered. First discovery shows a `LOCATION DISCOVERED / <name>` banner on the HUD, and the Tab journal has a PLACES list. Display names live on the volume actors; a future map screen or multi-map setup will want a location data asset.
@@ -421,7 +442,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `Save/` | Save game, persistent IDs, persistence interfaces |
 | `UI/` | HUD and widget base classes |
 | `Audio/` | Presentation cue helper (`DCAudioCues`): a sound played beside an existing action, by path, silent when the asset is missing |
-| `World/` | Persistent world objects, inspectables, `UDCWorldStateSubsystem` (world flags), and the cosmetic presentation actors (`ADCFlickerLight`, `ADCConditionalAudio`) |
+| `World/` | Persistent world objects, inspectables, `UDCWorldStateSubsystem` (world flags), conditional presence (`ADCConditionalPresence`), and the cosmetic presentation actors (`ADCFlickerLight`, `ADCConditionalAudio`) |
 
 Split into more modules only when a boundary is proven (for example an editor-only tools module).
 
