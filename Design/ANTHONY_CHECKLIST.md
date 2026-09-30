@@ -55,7 +55,7 @@ Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for 
 
 Open, for whenever you want to decide (none blocks anything):
 
-- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` Â§12).
+- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` §12).
 - Chase the frame-time shortfall (about 54 FPS against 60, cause not found) now or later?
 - Choose the next phase. Phase 5 (World State) is next on the roadmap; it has not been started.
 - Answered: the Presentation Pass is accepted; Mara has her own head (provisional); the grade and hull stay as they are; the wind bed keeps its faint birds.
