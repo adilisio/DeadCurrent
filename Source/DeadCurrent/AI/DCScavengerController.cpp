@@ -1,6 +1,7 @@
 #include "AI/DCScavengerController.h"
 #include "AI/DCScavengerCharacter.h"
 #include "Character/DCPlayerCharacter.h"
+#include "GameFramework/Character.h"
 #include "Combat/DCHealthComponent.h"
 #include "DeadCurrent.h"
 #include "DrawDebugHelpers.h"
@@ -51,6 +52,8 @@ void ADCScavengerController::Tick(float DeltaSeconds)
 		return;
 	}
 
+	TryNotice();
+
 	switch (State)
 	{
 	case EDCScavengerState::Patrol:      TickPatrol(); break;
@@ -92,15 +95,47 @@ void ADCScavengerController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 		Target = Actor;
 		LastKnownLocation = Actor->GetActorLocation();
 		LoseTimer = 0.0f;
-		if (State == EDCScavengerState::Patrol || State == EDCScavengerState::Investigate)
-		{
-			SetState(EDCScavengerState::Chase);
-		}
+		TryNotice();
 	}
 	else if (Target.Get() == Actor)
 	{
 		bSeeingTarget = false;
 		LastKnownLocation = Stimulus.StimulusLocation;
+	}
+}
+
+bool ADCScavengerController::CanNoticeAt(bool bTargetCrouched, float Distance, float AngleFromFacingDegrees,
+	float CrouchedRadius, float CrouchedHalfAngleDegrees)
+{
+	return !bTargetCrouched || (Distance <= CrouchedRadius && AngleFromFacingDegrees <= CrouchedHalfAngleDegrees);
+}
+
+bool ADCScavengerController::CanNotice(const AActor* Actor) const
+{
+	const APawn* Self = GetPawn();
+	const ACharacter* TargetCharacter = Cast<ACharacter>(Actor);
+	if (!Self || !Actor)
+	{
+		return false;
+	}
+	const FVector ToTarget = Actor->GetActorLocation() - Self->GetActorLocation();
+	const FVector Facing = Self->GetActorForwardVector();
+	const float Angle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(
+		FVector::DotProduct(Facing.GetSafeNormal2D(), ToTarget.GetSafeNormal2D()), -1.0f, 1.0f)));
+	return CanNoticeAt(TargetCharacter && TargetCharacter->bIsCrouched, ToTarget.Size2D(), Angle, CrouchedSightRadius,
+		CrouchedPeripheralDegrees);
+}
+
+void ADCScavengerController::TryNotice()
+{
+	if ((State != EDCScavengerState::Patrol && State != EDCScavengerState::Investigate) || !bSeeingTarget)
+	{
+		return;
+	}
+	AActor* Seen = Target.Get();
+	if (Seen && CanNotice(Seen))
+	{
+		SetState(EDCScavengerState::Chase);
 	}
 }
 
@@ -179,12 +214,7 @@ void ADCScavengerController::TickPatrol()
 
 void ADCScavengerController::TickInvestigate()
 {
-	if (bSeeingTarget && Target.IsValid())
-	{
-		SetState(EDCScavengerState::Chase);
-		return;
-	}
-
+	// Seeing the target again is handled by TryNotice, which applies the crouch rule.
 	if (GetMoveStatus() != EPathFollowingStatus::Moving)
 	{
 		if (FVector::Dist2D(Scavenger->GetActorLocation(), LastKnownLocation) > 120.0f)

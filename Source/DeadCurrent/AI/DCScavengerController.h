@@ -37,7 +37,23 @@ public:
 
 	FString GetStateName() const;
 
+	/**
+	 *  Whether a target his sight sense already reports can actually be noticed. Standing, the sense decides
+	 *  (SightRadius, PeripheralVisionAngleDegrees). Crouched, the target must also be within CrouchedSightRadius
+	 *  and CrouchedPeripheralDegrees of where he faces: staying low is how the quiet route gets past him.
+	 */
+	static bool CanNoticeAt(bool bTargetCrouched, float Distance, float AngleFromFacingDegrees,
+		float CrouchedRadius, float CrouchedHalfAngleDegrees);
+
 protected:
+
+	/** A crouched player is noticed only this close (cm). Standing uses the sight sense's 18 m. */
+	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", Units="cm"))
+	float CrouchedSightRadius = 800.0f;
+
+	/** Half-angle of the cone in which a crouched player is noticed. Standing uses the sense's 75. */
+	UPROPERTY(EditAnywhere, Category="AI", meta=(ClampMin="0", ClampMax="180", Units="deg"))
+	float CrouchedPeripheralDegrees = 45.0f;
 
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -67,6 +83,13 @@ private:
 	void TickAttack();
 
 	bool IsTargetDead() const;
+
+	/** CanNoticeAt for the current target, from this pawn's position and facing. */
+	bool CanNotice(const AActor* Actor) const;
+
+	/** Patrol or Investigate: chase once the seen target can be noticed (re-checked every tick, because the sight
+	 *  sense reports a target only when it first comes into view). */
+	void TryNotice();
 
 	TObjectPtr<ADCScavengerCharacter> Scavenger;
 
