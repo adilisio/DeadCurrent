@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main`, with the VS-00 plan commit on top of `9640c05` (see `git log -1`).
+- `main`, with the VS-00 plan commits (the plan, then its revision pass) on top of `9640c05` (see `git log -3`).
 - **`origin/main` matched `9640c05` at plan time** (`git fetch`; 0 ahead, 0 behind). The Phase 5 commits *are* pushed. Earlier text here said "local, not pushed"; that was stale. The VS-00 commit itself is local until you push it.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
@@ -18,10 +18,10 @@ Plan: `VerticalSlicePhasePlan.txt` (VS-00..VS-25). No Phase 6 code, map, asset, 
 
 - **The slice:** "The Wrong Characteristic" at Pointe Sombre, built as written in `Design/Narrative/SLICE_*`: the played crossing, the harbor, the settlement, the lighthouse, the vault dungeon, Hale's midway arrival, False Light, the decision made with your hands, Marthe's net loft, the second storm, and the end card. It runs 60–90 minutes.
 - **Two proofs:** that it works as a game, and that more of it can now be made cheaply (the kit, the shoreline recipe, seven cells built through the contract, production metrics).
-- **Three small new capabilities, nothing else in C++:**
-  - a cell portal (a fade, a move, a fade back; locked by conditions; a "scene cut" that lets presence snap)
-  - an authored light sequence (the tower's characteristic, plus three seconds of the pattern, played once when you are looking)
-  - a story card (the end card)
+- **Three small new capabilities, nothing else in C++. Each is built just in time, by the first content that needs it:**
+  - a cell portal (a fade, a move, a fade back; locked by conditions; a "scene cut" that lets presence snap). Built early, in VS-03, because the map architecture needs it.
+  - an authored light sequence (the tower's characteristic, plus a one-time three-second pattern). Built at the start of VS-17, when the tower is first lit. The pattern plays as you step out of the net loft onto the night quay after the meeting: the loft stair sets a flag, and that flag starts it. It never replays on load, and no rendering state is involved.
+  - a story card (the end card). Built at the start of VS-19.
 - **No save-format change and no `SaveVersion` bump.**
 - **Four playable checkpoints for you before the final run** (§16): A the island's shape; B people and the first clue; C the dungeon; D the decision.
 - **The final run** (§22) comes after them.
@@ -42,22 +42,23 @@ Plan: `VerticalSlicePhasePlan.txt` (VS-00..VS-25). No Phase 6 code, map, asset, 
 - **Interior-cell abstraction:** yes, where it saves cost without breaking the view (the vault, the loft, the stair). Not for the lamp room.
 - **Modular settlement kit (Tier B):** shell modules plus material skins plus library trim, composed from data. It must build 10 or more structures with 0 bespoke buildings. Target: 75% or more of structural placements are kit pieces. The library survey found no timber-building kit, so the shells and a CC0 wood texture are new.
 - **First biome recipe (Tier C):** a "Great Lakes rocky shoreline" recipe, data-driven, seeded, and deterministic. It writes HISM instances, NoCollision, with authored plus automatic exclusions. PCG is adopted only if a one-day spike shows it regenerates headless and deterministically with no runtime cost; otherwise the tool is a scripted HISM scatter.
-- **Content-cell model:** seven cell specs (crossing, harbor, settlement, lighthouse + vault as one integrated contract, net loft, cable hut, headland + *Ashland Grey* stern). An id ledger means no two builders mint the same id. A late cell is built "contract-only" by a fresh agent, to measure the cost curve.
+- **Content-cell model:** seven cell specs (crossing, harbor, settlement, lighthouse + vault as one integrated contract, net loft, cable hut, headland + *Ashland Grey* stern). An id ledger means no two builders mint the same id. Late in the phase, a fresh agent builds one cell from its contract alone, to measure the cost curve. It is only real slice content, never filler: a provisional story cell that earned its place in playtests, or the held-back Remy's marker and boat. If nothing worthwhile is left, the report records that.
 - **Planned agent parallelism:**
   - Claude: lead, integrator, narrative, most cells.
-  - Grok: the three capabilities, the biome tool, possibly the vault; gameplay critic.
+  - Grok: the three capabilities (each just in time), the biome tool, possibly the vault interior; gameplay critic.
+  - The lighthouse and the vault: if Grok builds the vault, Claude owns the tower, the lamp room, and the outside ends of the vault entrances. Grok owns only what is inside the vault. The integrator owns the shared portal anchors, the spec, the ledger, and the map. If that split isn't clean in the real scripts, the two are built one after the other instead.
   - Gemini: the kit survey (docs only); visual critic.
   - Rules: generated maps are build products that only the integrator commits; content specs are per file; tests and review views are per cell; one worktree per builder.
 
 ## Decisions Needed From Anthony (before VS-01)
 
-1. **Approve or change the plan.** Approving it also approves the Phase 6 Meshy ceiling of **350 credits** (balance 437), spent only through a cell spec's Tier A row.
+1. **Approve or change the plan.** Approving it also approves a Phase 6 Meshy **stop ceiling** of 350 credits (balance 437). It is a limit, not a budget. Library assets, the kit, Geometry Script, and composition come first, so real spend should be much lower. Every generation needs its cell spec's Tier A justification. Tier B and Tier C never use credits.
 2. **The prologue boundary.** Default: the prologue is *not* in Phase 6; the slice stands alone (plan §3.2). Say so if you want it in.
 3. **Which agents you will run, and as what.** Default:
-   - Grok: the Systems Engineer for VS-03 and the biome tool, then the gameplay critic.
+   - Grok: the Systems Engineer for each capability, just in time (the portal in VS-03, the light sequence for VS-17, the card for VS-19), and the biome tool; then the gameplay critic.
    - Gemini: the visual critic and the kit-survey researcher.
    - Claude: everything else.
-   - If you want Grok to build the vault too, say so.
+   - If you want Grok to build the vault interior too (WP-VAULT, with the ownership split above), say so. Otherwise Claude builds the lighthouse and the vault one after the other.
 
 Everything else has a default in the plan and is decided at a checkpoint:
 
@@ -86,7 +87,7 @@ Everything else has a default in the plan and is decided at a checkpoint:
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds (Phase 5 acceptance).
-- Tests: **45 of 45** (33 editor, 12 map). The Phase 6 target is at least 70.
+- Tests: **45 of 45** (33 editor, 12 map). Phase 6 expects about 70 by the end. That is an estimate, not a target: what counts is that every behavior in the plan's test matrix is covered and green.
 - Package: the Development Win64 cook plus smoke of `Lvl_Boathouse` succeeded after Phase 5 acceptance.
 - Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only (plan §20).
 - Meshy: 460 of the earlier 500 spent; balance 437.
