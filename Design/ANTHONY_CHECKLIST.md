@@ -77,14 +77,16 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
   - Crouched on the beach, you are out of his sight all the way to the coil (checked against his whole south leg by `Map.Boathouse.CampCover`).
   - **Recheck:** come along the waterline, crouched, take the coil.
 - **2026-09-30: "Mara looks like a floating head attached to a coat."** Her old face was a generated bust cut at the jaw over the body's thin neck. You chose a new generated head. It is done (`14c8e0a`, 30 Meshy credits): a head and neck rising out of a thick charcoal knit turtleneck ring, so her head meets the jacket cloth to cloth and moves with it. No skin can show at the collar. Captured at the lookout and on the stage (`mara_face`, `mara_face_stage`, run `Saved/Review/2026-09-30_1502`). **Recheck, and judge the face:** in open light it reads more weathered than the old one, and arguably more masculine. A few orange flecks show on the ring in daylight. If the face is wrong, the next step is a new texture or preview (10 to 20 credits, 40 left).
+  - **Then, "she still appears to pop out of her clothes; make her one single model, with a distinctive look, for now":** done (`dba3476`). She is the one-piece Quinn mannequin (the UE template's female figure) in matte teal and dark brown. Nothing can separate, the same animations drive her, and she reads nothing like the scavenger. It is a faceless placeholder. A real one-piece Mara (for example a rigged generated character) is a later task. **Recheck:** does she read as Mara for now?
+- **2026-09-30: "When I open the door, the scavenger sees me and charges right away."** Done (`27245b8`). His standing sight is now 12 m (was 18), and his loop moved 3 m east, so from the door he is about 16 m off: you can see him and choose. Crouched is still 8 m. A test checks his whole loop stays beyond his sight from the door step. Side effect: he can no longer see the Landing Stage, so the stage tension you chose to keep (G-02) is gone; the spec says so. **Recheck:** step out, watch him, pick a route.
 
 ## Decisions Needed From Anthony
 
-- **Mara's new face:** keep it, or regenerate (see her playtest entry above)? Answered already: a new head over the pack head (the pack head is the scavenger's face) and over the old bust.
+- **Mara's body:** answered: one single model for now (the Quinn mannequin). Say if you want a real one-piece character generated later.
 
 None other open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
 
-1. **The scavenger's sight (G-02):** keep the tension. The stage stays where it is.
+1. **The scavenger's sight (G-02):** keep the tension. The stage stays where it is. (Superseded by the later "more distance" fix: he can no longer see the stage.)
 2. **Mara's pack (V-06):** keep the duffel. No Meshy spend.
 3. **The lookout shed (V-07) and the upright driftwood branch (V-02):** leave them.
 4. **The lookout crate's notebook line on the coil route:** leave it.
