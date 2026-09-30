@@ -60,7 +60,14 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
 6. **Overall.**
    - Ask: is anything floating, fake, in the way, or off the shore's look?
 
+## Your Playtest Findings (WS-11)
+
+- **2026-09-30, coil route: "Mara looks weird at the docks."** Compared from the same framing at the lookout and on the stage (review views `mara_face`, `mara_face_stage`, run `Saved/Review/2026-09-30_1334`), the model and head fit are identical. The move broke nothing. The difference is light: the shed's shade had hidden how she reads under open sky. Changed: her jacket tint was tuned for the shade and washed out to near-white in the open, so it is now about 57% of that and still reads teal in the shed; her face has a higher roughness floor so it reads less glossy. Still visible in full light: warm skin and the line where the generated head meets the body's neck. **Question for you below.**
+
 ## Decisions Needed From Anthony
+
+- **What reads weird about Mara on the stage?** The head's size or shape, the join at the jaw, the skin tone, the jacket, or the pose? Tell me which and I will target it. A cheap option: stand her in the lean-to's shade instead of the open deck. [until you say: the tint and roughness changes above only]
+
 
 None open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
 
