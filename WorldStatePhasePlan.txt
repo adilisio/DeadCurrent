@@ -1,6 +1,6 @@
 # DEAD CURRENT — Phase 5: World State Plan
 
-Status: started 2026-09-30 on Anthony's go-ahead. WS-00..WS-07 done the same day (conditional presence, the Landing Stage, 42 tests). WS-08 (independent critics) waits on Anthony running them; the stage is a CANDIDATE, not accepted. Update this line as tasks land; do not rewrite the scope lock without Anthony.
+Status: started 2026-09-30 on Anthony's go-ahead. WS-00..WS-10 done the same day: conditional presence, the Landing Stage, both independent critics (Gemini visual, Grok gameplay), the revision, and re-verification (42 tests, a same-session frame-time A/B, a Development Win64 package). The stage is READY FOR ANTHONY (WS-11); only he accepts. Do not rewrite the scope lock without Anthony.
 
 ## Mission
 
