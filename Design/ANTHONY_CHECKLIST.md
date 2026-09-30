@@ -4,12 +4,12 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- Local `main` = `origin/main` after the final push (see `git log -1`). Session started at local `822aa16`; `origin/main` was `7a3fc58`, merged as `7d2a3d9`.
+- Local `main` = `origin/main` after the acceptance push (see `git log -1`).
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers).
 
 ## Current Milestone / Task
 
-**Presentation Pass: playtest 1 fixes are in; ready for a SECOND playtest. Not accepted.** Phase 5 has not been started.
+**Presentation Pass: ACCEPTED by Anthony (2026-09-29), after two playtests.** Nothing is in progress. Phase 5 has not been started and needs his go-ahead.
 
 ## Playtest 2 fixes (2026-09-29): please recheck these
 
@@ -37,6 +37,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 - Earlier this session: PP-06 to PP-09 (see the session report), `Design/POIs/` templates.
 
 ## READY FOR ANTHONY TO CHECK
+
+Nothing pending. The Presentation Pass passed. The lists below are history.
 
 Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for a clean run).
 
@@ -92,4 +94,4 @@ Also in `Design/content_production_strategy.md` §5.
 
 ## Next Autonomous Task
 
-None. Stop and wait for Anthony's acceptance decision and his answer on the production pilot. Do not start Phase 5.
+None. Wait for Anthony to choose the next step (Phase 5, the production pilot, or the frame-time investigation). Do not start Phase 5 without his go-ahead.

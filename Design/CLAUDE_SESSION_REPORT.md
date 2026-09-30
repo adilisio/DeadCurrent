@@ -12,7 +12,7 @@ Anthony: Mara looks way better but is still a little off (screenshot); the life 
 Tests: 38 of 38 pass. Captures: `Saved/Review/2026-09-29_2246`. New views: `bow_side`, `clue_jackets`.
 ## Playtest 1 (Anthony, 2026-09-29): what he said and what changed
 
-The pass is **not accepted**. Anthony held it back for these fixes and asked for a new face for Mara.
+The pass is **not accepted**. Anthony held it back for these fixes and asked for a new face for Mara. (Accepted after playtest 2, below.)
 
 | Feedback | Response |
 | --- | --- |
@@ -32,7 +32,7 @@ Meshy: 100 more credits (`field_cot` 50, `mara_head` 50), 430 of 500 in total. O
 Tests: 38 of 38 still pass. Captures: `Saved/Review/2026-09-29_2210`. New views: `cot`, `mara_face`.
 ## Executive Summary
 
-The Presentation Pass (PP-00 to PP-10) is implemented. Anthony's first playtest sent it back for fixes (see the section above); it is **not accepted** and is ready for a second look, not for acceptance. This session finished PP-06 to PP-10: every clue prop and pickup now wears a Meshy mesh, the water is a dark rippled freshwater material, Mara and the scavenger wear the `Survival_Character` pack in different jackets on the existing animations, and the shore has sound (wind and lap beds, the relay and live-water hums, spark snaps, a breaker clunk, CC0 pistol shots, pickup and inventory cues). No quest, NPC, item, dialogue line, flag, or save field was added.
+The Presentation Pass (PP-00 to PP-10) is implemented. Anthony's first playtest sent it back for fixes (see the section above); after a second playtest **Anthony accepted it (2026-09-29)**. This session finished PP-06 to PP-10: every clue prop and pickup now wears a Meshy mesh, the water is a dark rippled freshwater material, Mara and the scavenger wear the `Survival_Character` pack in different jackets on the existing animations, and the shore has sound (wind and lap beds, the relay and live-water hums, spark snaps, a breaker clunk, CC0 pistol shots, pickup and inventory cues). No quest, NPC, item, dialogue line, flag, or save field was added.
 
 38 automated tests pass (36 baseline). `DeadCurrentEditor` builds. `Tools\RebuildContent.bat` is clean and leaves the art layer and its audio beds in place. A Development Win64 cook and a null-RHI smoke launch of `Lvl_Boathouse` succeeded. Average frame time in the review captures is **18.4 ms (about 54 FPS)**, short of the 16.7 ms target; see Known Issues.
 
