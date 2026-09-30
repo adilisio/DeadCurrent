@@ -184,6 +184,24 @@ PROPS = {
         ),
         "target_polycount": 15000,
     },
+    # Phase 5 playtest (2026-09-30): the mara_head bust had shoulders and no neck that could sit inside a collar, so
+    # she read as a floating head on a coat. This one brings its own high collar ring, so the join to the jacket is
+    # cloth against cloth. Approved by Anthony: about 50 credits.
+    "mara_head_collar": {
+        "prompt": (
+            "A realistic adult woman's head and neck rising out of a high, thick, rolled knitted turtleneck "
+            "collar, about 30 centimeters tall from the bottom of the collar to the crown. Only the head, the "
+            "neck, and the collar ring; the collar ring ends in a flat horizontal cut at the bottom. Late "
+            "thirties, weathered wind-chapped skin, calm watchful eyes, mouth closed, strong cheekbones, dark "
+            "hair cut short and tied back. Facing straight forward. No shoulders, no chest, no body, no hat, "
+            "no jewelry, no glasses."
+        ),
+        "texture_prompt": (
+            "Realistic weathered human skin, slightly sunburnt, small freckles, dark brown hair, grey-green "
+            "eyes, matte; the turtleneck is a dark charcoal-grey coarse wool knit, no pattern, no logo"
+        ),
+        "target_polycount": 15000,
+    },
 }
 
 

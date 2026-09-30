@@ -875,10 +875,11 @@ def build_cover_and_npc():
     # provisional character, not a decision about her history. Bone space: X is up, Y is forward, Z is lateral.
     # The mesh is authored Z-up; pitch -90 turns its up onto the bone's up.
     swap = npc.get_editor_property("head_swap")
-    swap.set_editor_property("head_mesh", first_mesh("/Game/Art/Meshy/mara_head"))
+    swap.set_editor_property("head_mesh", first_mesh("/Game/Art/Meshy/mara_head_collar"))
     swap.set_editor_property("rotation", unreal.Rotator(pitch=-90.0, yaw=0.0, roll=0.0))
-    # Phase 5 playtest ("a floating head attached to a coat"): seated 1.5 cm lower so the jaw meets the collar.
-    swap.set_editor_property("offset", unreal.Vector(-3.5, 1.0, 0.0))
+    # Phase 5 playtest ("a floating head attached to a coat"): a new head that brings its own knit collar ring, so
+    # the join to the jacket is cloth against cloth. Its chin sits about 6 mesh units higher than the old bust's.
+    swap.set_editor_property("offset", unreal.Vector(-4.8, 1.0, 0.0))
     swap.set_editor_property("scale", 0.22)
     set_persistent_id(npc, "boat.mara")
 

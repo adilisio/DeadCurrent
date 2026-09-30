@@ -620,16 +620,19 @@ MESHY_PROPS = [
     ("field_dressing", 512),
     ("field_cot", 1024),
     ("mara_head", 1024),
+    ("mara_head_collar", 1024),
 ]
 # Meshy's metallic maps read near 1 on painted steel. PlayTest has no reflections, so a metal
 # surface renders black. This scale keeps the map's variation and keeps the prop lit.
 PROP_METALLIC_SCALE = 0.25
-NON_METAL_PROPS = ("mara_head", "field_cot")
+NON_METAL_PROPS = ("mara_head", "mara_head_collar", "field_cot")
 # Skin read glossy under open sky on the Landing Stage (Phase 5 playtest); the head gets a higher roughness floor.
-ROUGHNESS_FLOORS = {"mara_head": 0.85}
+ROUGHNESS_FLOORS = {"mara_head": 0.85, "mara_head_collar": 0.85}
+# Always resident at full size (4 x 1K): the head is read up close, and streamed-down mips smeared its collar.
+NEVER_STREAM_PROPS = ("mara_head_collar",)
 # Props drawn only above a mesh-local Z (cm before the actor scale). The head is a bust: chin at about -5, base of the
 # bust at about -94. Cutting at -14 keeps the jaw and drops the neck, shoulders and chest; the body neck under it (skinned dark) takes over, because the bust neck carries a pale tan texture patch that read as a strap.
-CUT_PROPS = {"mara_head": -14.0}
+CUT_PROPS = {"mara_head": -14.0, "mara_head_collar": -30.0}  # the collar head keeps its knit ring, drops the shoulders
 
 
 PROP_CUT_MASTER = ENV_MATERIALS + "/M_DC_PropCut"
@@ -860,6 +863,11 @@ def import_meshy_prop(prop_id, cap):
         cap_copy(os.path.join(src_dir, filename), capped, cap)
         textures[key] = import_texture(capped, dest, name, kind, max_size=cap)
     set_prop_texture_kinds(textures["base"], textures["normal"], textures["rough"], textures["metal"], cap)
+    if prop_id in NEVER_STREAM_PROPS:
+        # A face seen at conversation range: stream it at low mips and the UV islands bleed into each other.
+        for tex in textures.values():
+            tex.set_editor_property("never_stream", True)
+            unreal.EditorAssetLibrary.save_loaded_asset(tex, only_if_is_dirty=False)
     inst_path = f"{dest}/MI_{prop_id}"
     if unreal.EditorAssetLibrary.does_asset_exist(inst_path):
         instance = unreal.load_asset(inst_path)

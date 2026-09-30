@@ -104,6 +104,10 @@ Prompting for DEAD CURRENT: the earlier prompts said "post-apocalyptic wasteland
 
 Budget 500. Spent **430** in total: **330** on the ten `PresentationPassPlan.txt` §6 props: `relay_housing` 50 (including one rejected preview), `depth_sounder` 40, and `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` 30 each. Per-asset figures are in each `source.json`. Playtest 1 (2026-09-29) added two props for 100 credits: `field_cot` (the cot was a white block) and `mara_head` (Mara needed her own face), each 50 (a wrong first preview, a second preview, and a refine). One of those rejects was wasted when a prompt rewrite failed to save and the same prompt ran again. 70 credits of the pass budget remain, and no further generation is planned.
 
+### Phase 5 spend (2026-09-30)
+
+Approved by Anthony during the Phase 5 acceptance playtest ("Mara looks like a floating head attached to a coat"; about 50 credits). **30** spent on `mara_head_collar`: a head and neck rising out of a thick knitted turtleneck ring, so her head joins the jacket cloth-to-cloth. One preview (20) and one refine (10), no rejects. The preview again had shoulders under the ring; `CUT_PROPS` cuts at -30 through the lower ring, and the shoulders under it are the same charcoal knit, so no skin patch can show at the collar. Its textures never stream (a face read up close smeared at low mips). Account balance after: 437. Total generation budget spent: 460 of 500. Raw output and `source.json`: `C:FO5_AssetLibraryMeshymara_head_collar`. The old `mara_head` stays in the project, unused.
+
 ### Record keeping
 
 For every generated asset, keep the raw output outside the repo, in `C:\FO5_AssetLibrary\Meshy\<snake_case_id>\` (same layout as the existing folders). That includes `source.json` with: `id`, `date`, `ai_model`, `target_polycount`, every prompt tried (mark failures and why), `texture_prompt`, `task_ids`, `credits_used`, and `generated_with: "generated with the owner's Meshy Pro account"`. Only the imported, downsized result enters `Content/`.
@@ -165,6 +169,7 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `lighthouse_logbook` (survey log) | `Meshy/lighthouse_logbook` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `relay_housing` | `Meshy/relay_housing` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `field_cot`, `mara_head` (2026-09-29, playtest 1) | `Meshy/<id>` | Meshy Pro | generated with the owner's Meshy Pro account |
+| `mara_head_collar` (2026-09-30, Phase 5 playtest) | `Meshy/mara_head_collar` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `depth_sounder`, `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` | `Meshy/<id>` (2026-09-29) | Meshy Pro | generated with the owner's Meshy Pro account |
 | `Survival_Character` (`SK_Survival_Character`, skeleton, physics asset, 11 material instances, 43 textures cut to 1K) | `FO5_AssetLibrary/Content/Survival_Character` | marketplace pack owned by Anthony (from the earlier project) | pack author |
 | `SM_boat_dutch_small_02` (the Landing Stage skiff), `SM_wooden_pier_planks`, `SM_wooden_pier_poles`, their materials, `M_props_master` and its default textures (12 textures cut to 1K by `ToolsImportPackAssets.ps1`, 21 MB) | `FO5_AssetLibrary/Content/Smugglers_cove` | marketplace pack owned by Anthony (from the earlier project) | pack author |
