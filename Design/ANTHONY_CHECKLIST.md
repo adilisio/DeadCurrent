@@ -62,14 +62,13 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
 
 ## Decisions Needed From Anthony
 
-None blocking. Defaults in brackets.
+None open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
 
-1. **The scavenger's sight (G-02).** On the coil route he is alive and can see the stage from his patrol, so standing there can start a chase. Keep that as tension, or move the deck out of his view? [keep]
-2. **Mara's pack (V-06).** There is no backpack mesh in the library. Spend about 30 Meshy credits on one (70 of 500 left)? [keep the duffel stand-in]
-3. **The lookout shed (V-07).** The critic calls it greybox; it is Presentation Pass content you accepted. [leave for a later pass]
-4. **The upright driftwood branch** by the path (V-02; Presentation Pass). Lay it down? [leave]
-5. **The lookout crate on the coil route** still says her notebook lies open on it (noted by Grok, not filed). Does that read as left behind? [leave]
-6. **Mara's new payout line:** "I've got packing to do." PROVISIONAL; it names no destination. [keep]
+1. **The scavenger's sight (G-02):** keep the tension. The stage stays where it is.
+2. **Mara's pack (V-06):** keep the duffel. No Meshy spend.
+3. **The lookout shed (V-07) and the upright driftwood branch (V-02):** leave them.
+4. **The lookout crate's notebook line on the coil route:** leave it.
+5. **Mara's payout line "I've got packing to do.":** keep it (still PROVISIONAL lore).
 
 Made inside the approved pilot (unchanged, defaults in the spec's Open Creative Decisions):
 - The stage stands east of the door.

@@ -27,3 +27,7 @@ Visual fixes were made on a separate worktree branch (`ws09-revision`) while thi
 | G-04 power cut not crossed with the routes; hum untested | **Accept** | The power cut was only set in the default picture, and the hum's audibility was never read. On a load, `ADCConditionalAudio` played from BeginPlay (flags not restored yet) until its first tick, the same brief leak the relay and live-water hums have. | The test now cuts the power in the coil picture, and saves a combat picture with the power cut and loads it: bulbs dark, hum silent, Mara's and the skiff's rules unchanged, all asserted right after F9. `ADCConditionalAudio` now snaps on `OnRestored` (a loop starts or stops without a fade, a one-shot re-primes and never replays on load), with restore steps added to `DeadCurrent.Presentation.ConditionalAudio`. Generic; it also fixes the two older hums. |
 
 Noted by the Gameplay Critic but not filed, left for Anthony: on the coil route the empty lookout's crate still reads "Mara's notebook lies open on the crate", which may now read as left behind.
+
+## Anthony's answers to the parked items (2026-09-30)
+
+All as the defaults: G-02, keep the tension (the deck stays in the scavenger's sight on the coil route); V-06, keep the duffel stand-in (no Meshy spend); V-07 and V-02, leave the lookout shed and the upright branch; the lookout crate's notebook line, leave it; Mara's payout line "I've got packing to do.", keep it (PROVISIONAL). Nothing further changes in the game for these.

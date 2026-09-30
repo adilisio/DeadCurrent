@@ -37,7 +37,7 @@ Coordinates are cm in `Lvl_Boathouse`'s frame: +X is out of the boathouse door, 
 ## Gameplay
 
 - **Core interaction:** look. Four inspectables (crate, lantern, bulbs, note on the post), one inspectable that is either the moored skiff or the cut line, one small loot container (tackle box).
-- **Possible danger:** the scavenger, on the coil route only (he is alive there). From the south-west corner of his patrol, facing west, the gangway and deck are about 11 m away and inside his sight cone, and nothing blocks the line, so standing on the stage to take in the coil picture can start a chase. The stage does not change his behavior; it sits inside his existing sight. Kept by default as the tension the reward line already names ("He's still out there"). **Parked for Anthony** (Gameplay Critic G-02): keep it, or move the deck out of the cone.
+- **Possible danger:** the scavenger, on the coil route only (he is alive there). From the south-west corner of his patrol, facing west, the gangway and deck are about 11 m away and inside his sight cone, and nothing blocks the line, so standing on the stage to take in the coil picture can start a chase. The stage does not change his behavior; it sits inside his existing sight. Kept by default as the tension the reward line already names ("He's still out there"). **Decided by Anthony (2026-09-30): keep the tension** (Gameplay Critic G-02). The deck stays where it is.
 - **Combat route:** Shore Watch by the kill route changes the stage (see State). No fighting at the stage.
 - **Non-combat route:** Shore Watch by the coil route changes it differently; Mara comes to the stage.
 - **RPG / build checks:** none. A character with nothing spent sees everything. (A build variant would be new writing; not in the pilot.)
