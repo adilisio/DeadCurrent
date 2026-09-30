@@ -29,6 +29,9 @@
 #include "Save/DCSaveSubsystem.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#if WITH_EDITOR
+#include "ShaderCompiler.h"
+#endif
 #include "Tests/AutomationCommon.h"
 #include "UI/DCHUD.h"
 #include "UnrealClient.h"
@@ -1446,6 +1449,15 @@ namespace DCReviewCapture
 				}
 				return false;
 			}
+#if WITH_EDITOR
+			// A material whose shaders are still compiling renders as the engine's grey fallback, and the compile
+			// competes for the CPU. Content rebuilds recreate the prop masters, so finish compiling before judging a
+			// frame or timing one (Phase 5: Mara's head rendered grey in several runs for this reason).
+			if (GShaderCompilingManager)
+			{
+				GShaderCompilingManager->FinishAllCompilation();
+			}
+#endif
 			Run.Frames = 0;
 			Run.PhaseStart = Now;
 			BeginViewpointCapture(Run);
