@@ -15,7 +15,7 @@ Built on Anthony's decisions (2026-09-30): the player chooses their tie to Liv; 
 
 The player finds **Liv's letter** by the cot and reads it, which starts a second, quiet quest. Asking Mara about Liv leads to **"Who is she to you?"**: the tie choice (sister, partner, the one who took them in) happens in conversation, which the dialogue system already supports. Mara deflects and keeps her promise to Liv until the player earns it (Persuasion), shows it (the handwriting under the scavenger's KEEP OUT, or the call sign in the coil), or has her trust (the coil route). Pressing her about the *Tern* line reveals **the watch**. Once Shore Watch is resolved and Mara has admitted Liv went east, she decides to come, **leaves the watch's page on the boathouse door**, and the *Ida*'s boat takes them both to Pointe Sombre.
 
-**Change from the earlier draft:** `CHARACTERS.md` proposed making the tie choice when the letter is first read. An inspectable cannot offer choices, and a "readable with choices" object would be a new system. Having Mara ask is free, and it is a better scene. In the standalone slice demo, Varga asks the same question at the harbor.
+**Change from the earlier draft:** `CHARACTERS.md` proposed making the tie choice when the letter is first read. An inspectable cannot offer choices, and a "readable with choices" object would be a new system. Having Mara ask is free, and it is a better scene. In the standalone slice demo, Mara asks the same question on the crossing (Varga already knows the player and Liv).
 
 ## 2. Beats
 

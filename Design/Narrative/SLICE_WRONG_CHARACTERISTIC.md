@@ -10,7 +10,7 @@ Built on Anthony's decisions of 2026-09-30: the player's tie to Liv is chosen (s
 
 ## 1. Assumptions
 
-- **The tie flag may exist before the slice.** One of `player.tie.sister`, `player.tie.partner`, `player.tie.took_in` is set when Mara asks "Who is she to you?" in the prologue (`PROLOGUE_POSTED_FROM_THE_SHORE.md` P2). In the **standalone demo**, a recap card (Liv's letter, a one-screen map) sets `watch.mara_travelling` and gives `liv_letter`, and **Varga asks the tie question at the harbor** (B1). If no tie is ever chosen, tie lines fall back to neutral ones.
+- **The tie flag may exist before the slice.** One of `player.tie.sister`, `player.tie.partner`, `player.tie.took_in` is set when Mara asks "Who is she to you?" in the prologue (`PROLOGUE_POSTED_FROM_THE_SHORE.md` P2). In the **standalone demo**, a recap card (Liv's letter, a one-screen map) sets `watch.mara_travelling` and gives `liv_letter`, and **Mara asks the tie question on the crossing** (B0; `SLICE_DIALOGUE.md` §1). If no tie is ever chosen, tie lines fall back to neutral ones.
 - **The slice starts in the storm.** `sombre.storm` is set on arrival and drives the storm's sound, lightning flicker, the vault's live water, and the direction-finding loop. The quest clears it at the halfway point and sets it again for the last beat.
 - **Mara is placed, not following** (fallback for a companion system): she stands at authored spots that change with the quest stage (§8, capability 1).
 - The slice is **60 to 90 minutes**, with one dungeon (the vault). The *Ashland Grey* is an exterior and deck only.
@@ -45,7 +45,7 @@ Built on Anthony's decisions of 2026-09-30: the player's tie to Liv is chosen (s
 
 ### B1 — Harbor
 - **Varga** (on the *Ida*'s deck, pumps going): "I read that light as the point and put us on the reef for it. Somebody lit it on purpose. The *Ida* isn't leaving this harbor while the point's dark. Find out why, or find me a keeper who'll light it."
-- She also knows why the player came: "Your listener came through here. Four months back. Ask the keeper." (Tie-aware line variants only if the player asks her about Liv.) If no tie flag is set yet, she asks: "Who is she to you, anyway?" (the same three choices, plus "Does it matter?", as in the prologue).
+- She also knows why the player came: "Your listener came through here. Four months back. Ask the keeper." (Tie-aware line variants only if the player asks her about Liv.)
 - **Starts False Light** (`sombre.false_light` quest) with the same conversation: "And whoever lit that lantern, I want a name."
 - **Location:** `sombre.harbor` discovered.
 
@@ -148,12 +148,12 @@ Mutual exclusion is done with negated conditions, so the node ends in exactly on
 | Act | Where (actor, variant verb) | Conditions | Consequences |
 | --- | --- | --- | --- |
 | **Splice the feed** | Lamp room feed box: "Splice the feed" | `SkillAtLeast Skill.Engineering 2` **or** (second variant) `WorldFlag sombre.hale_crew_up` (Hale dialogue: "Send your crew up") | `SetWorldFlag sombre.feed_spliced` |
-| **Seat the card** (on the Line) | Node panel: "Seat the card" | `HasItem section_key_compact`, `WorldFlag sombre.feed_spliced`, `!sombre.node_destroyed`, `!sombre.power_settlement`, `!sombre.light_hand` | `RemoveItem section_key_compact`, `SetWorldFlag sombre.light_line` |
-| **Throw the settlement feed** (redirect) | Node panel: "Throw the settlement feed" (two variants: with the card, or with a jumper) | `!sombre.node_destroyed`, `!sombre.light_line`, and either `HasItem section_key_compact` or `SkillAtLeast Skill.Engineering 2` | `SetWorldFlag sombre.power_settlement` (and `RemoveItem section_key_compact` in the card variant) |
-| **Open the sea cock** (destroy) | Sea cock: "Open it" | `!sombre.light_line`, and either `WorldFlag sombre.sigrun_helping` (she has the wrench) or `SkillAtLeast Skill.Engineering 2` | `SetWorldFlag sombre.node_destroyed` |
+| **Seat the card** (on the Line) | Node panel: "Seat the card" | `HasItem section_key_compact`, `WorldFlag sombre.feed_spliced`, `!sombre.node_destroyed`, `!sombre.power_settlement`, `!sombre.light_hand` | `RemoveItem section_key_compact`, `SetWorldFlag sombre.light_line`, `SetWorldFlag sombre.light_decided` |
+| **Throw the settlement feed** (redirect) | Node panel: "Throw the settlement feed" (two variants: with the card, or with a jumper) | `!sombre.node_destroyed`, `!sombre.light_line`, and either `HasItem section_key_compact` or `SkillAtLeast Skill.Engineering 2` | `SetWorldFlag sombre.power_settlement` (and `RemoveItem section_key_compact` in the card variant), `SetWorldFlag sombre.light_decided` |
+| **Open the sea cock** (destroy) | Sea cock: "Open it" | `!sombre.light_line`, and either `WorldFlag sombre.sigrun_helping` (she has the wrench) or `SkillAtLeast Skill.Engineering 2` | `SetWorldFlag sombre.node_destroyed`, `SetWorldFlag sombre.light_decided` |
 | **Free the clockwork** | Clockwork: "Fit the pawl" / "File a pawl" | `HasItem clockwork_pawl` (from the *Ashland Grey*'s deck winch) **or** `SkillAtLeast Skill.Engineering 2` | `SetWorldFlag sombre.clockwork_freed` (and `RemoveItem clockwork_pawl`) |
 | **Render oil** | Smokehouse: "Render a can" | none (takes the player's time; a small scene) | `GiveItem lamp_oil` |
-| **Light it by hand** | Lamp: "Fill and light the burner" | `WorldFlag sombre.clockwork_freed`, `HasItem lamp_oil`, `!sombre.light_line` | `RemoveItem lamp_oil`, `SetWorldFlag sombre.light_hand` |
+| **Light it by hand** | Lamp: "Fill and light the burner" | `WorldFlag sombre.clockwork_freed`, `HasItem lamp_oil`, `!sombre.light_line` | `RemoveItem lamp_oil`, `SetWorldFlag sombre.light_hand`, `SetWorldFlag sombre.light_decided` |
 | **Choose a keeper** | Dialogue with Odette ("Will you keep it?") or Dell (after confessing) | Odette: `!sombre.exposed_odette` **or** she has been forgiven at the loft; Dell: `sombre.dell_confessed` | `SetWorldFlag sombre.keeper_odette` / `sombre.keeper_dell` |
 
 **Panel read-outs by state** (inspect variants, first match wins): destroyed ("Dark. Water to the second rung."); Line ("RESYNC PENDING: 4 OF 5." Engineering 2 adds: "Only confirmation left. It's asking."); Settlement ("RESYNC PENDING: 3 OF 5. The feed runs to the town now. The count is still climbing."); default ("2 OF 5").
@@ -167,8 +167,8 @@ Mutual exclusion is done with negated conditions, so the node ends in exactly on
 - **Chair:** Marthe (decided, 2026-09-30). **Present:** Odette, the Pruitts (unless dead), the Leclairs, Sigrun (unless gone), Hale (if arrived), Varga, and Mara.
 - **Available** once the quest is at `knows` or later. Opening line: "Is the light burning tonight, or isn't it?"
   - "Not yet." → ends the conversation, nothing set (the player can go and act).
-  - "It's done." → shown when any of `sombre.light_line`, `sombre.light_hand`, `sombre.power_settlement`, `sombre.node_destroyed` is set.
-  - "Leave it as she left it." → shown only when **none** of those four flags is set (four negated `WorldFlag` conditions). The untouched choice, stated plainly.
+  - "It's done." → shown when `sombre.light_decided` is set (every act in §4 sets it; see `SLICE_DIALOGUE.md`).
+  - "Leave it as she left it." → shown only when `sombre.light_decided` is **not** set. The untouched choice, stated plainly.
 - **Then, evidence.** Each choice is shown only if the player **carries the object**, and giving it removes it (`RemoveItem`) and sets a flag. The player can bring several, one, or none.
 
 | Choice (shown if carrying) | Line | Sets |
