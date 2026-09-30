@@ -77,7 +77,9 @@ void ADCConditionalAudio::Evaluate()
 		bFadingOut = false;
 		if (!Audio->IsPlaying() && Audio->GetSound())
 		{
-			Audio->FadeIn(0.5f, 1.0f);
+			Audio->Play();
+			UE_LOG(LogTemp, Log, TEXT("ConditionalAudio %s playing %s at volume %.2f (attenuation %s)"), *GetName(),
+				*GetNameSafe(Audio->GetSound()), VolumeMultiplier, *GetNameSafe(Audio->AttenuationSettings));
 		}
 	}
 	else if (!bFadingOut && Audio->IsPlaying())

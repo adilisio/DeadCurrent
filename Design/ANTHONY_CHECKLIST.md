@@ -9,7 +9,17 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Milestone / Task
 
-**Presentation Pass (PP-00..PP-10): READY FOR ANTHONY ACCEPTANCE. Not accepted.** Work stopped here on purpose. Phase 5 has not been started.
+**Presentation Pass: playtest 1 fixes are in; ready for a SECOND playtest. Not accepted.** Phase 5 has not been started.
+
+## Playtest 1 fixes (2026-09-29): please recheck these first
+
+1. **Cot** (boathouse, north-west of the door): a folding camp cot with olive canvas and a rolled blanket. Would someone sleep on it?
+2. **Hums and wind**: walk to the relay (they are louder, and the relay hum stops when you take the coil) and stand near the wreck water. Wind is louder than before. Is the hum audible now? Too loud?
+3. **Mara's face**: a new head. Talk to her. Does she read as a person, and not as the scavenger? I did not decide anything about her beyond the face; tell me what you want changed.
+4. **Live water**: dark water with thin electric filaments instead of a flat cyan sheet. Better, or still off? Pull the leads: the filaments, sparks, and hum stop.
+5. **Falling off the map**: I closed the east half's edges with invisible walls and checked by flood-fill that no reachable edge is open. **Please try to fall again and tell me where if you can.**
+6. **Props have real colors now.** Every Meshy prop (relay, breaker panel, battery bank, beacon, sounder, fish, coil, chart, dressing) had been rendering as a pale default material because their master material never compiled. They look very different: check they read right.
+7. Mara has no voice lines (text only), so nothing to hear there.
 
 ## Completed Since Last Update
 
@@ -71,7 +81,7 @@ Also in `Design/content_production_strategy.md` §5.
 - Rebuild: `Tools\RebuildContent.bat` clean, exit 0; art level keeps the sentinel and audio beds.
 - Review captures: final run `Saved/Review/2026-09-29_1758`; no defaults, missing textures, warnings, or errors.
 - Package: Development Win64 cook to `Saved\Packaged\Windows` succeeded; null-RHI smoke launch loaded `Lvl_Boathouse` and its art level.
-- Meshy spend: 330 of 500 credits, ten props.
+- Meshy spend: 430 of 500 credits, twelve props (cot and Mara's head added after playtest 1).
 
 ## Next Autonomous Task
 

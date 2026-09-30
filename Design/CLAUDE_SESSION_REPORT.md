@@ -1,8 +1,28 @@
 # Development Session Report
 
+## Playtest 1 (Anthony, 2026-09-29): what he said and what changed
+
+The pass is **not accepted**. Anthony held it back for these fixes and asked for a new face for Mara.
+
+| Feedback | Response |
+| --- | --- |
+| Boathouse looks mostly great; dry fire works; the pistol is loud enough | No change. |
+| The cot is still a white block nobody would sleep on | New Meshy prop `field_cot` (a folding army cot, olive canvas, rolled blanket), squashed to a camp cot's proportions. |
+| I can't hear the hum; I only hear the water lapping | The hums and wind were set too low (the wind at 0.07 and the live-water hum at 0.02 were both under the lap). Raised: wind 0.22, relay hum 0.30, live-water hum 0.07, with a wider hum attenuation (inner 450, falloff 3800). Looping hums now start with a plain `Play()`; a start line is logged so a capture proves they play. I can confirm they start and their volumes, not how loud they are to your ears. |
+| I can't hear Mara speaking | Mara has no voice lines; her dialogue is text, and there is no CC0 voice in the library. Nothing was broken. Left as a gap. |
+| Mara and the scavenger look the same except the jacket, like twins | Mara has her own head: a new Meshy head (dark hair tied back, weathered skin) attached to the shared body through a small new presentation component, `UDCHeadSwapComponent`. Also fixed the pack's broken eye material. |
+| The cyan glow of the water looks like a little swimming pool | Replaced the flat cyan sheet with `M_DC_Current`: dark water with thin electric filaments that crawl across it. Same actor, same conditions, same damage. |
+| The RPG builds work normally; the shore looks good | No change. |
+| I fall off the map | The east half had no edge (north, east, and the far side of the channel were open void). Invisible walls now close it; a flood-fill probe of the walkable area finds no reachable edge. I did not learn which spot you fell from, so please tell me if you can still fall. |
+
+**A bug found on the way, that predates this session:** `M_DC_Prop`, the master material for every Meshy prop, has failed to compile since PP-06, so every Meshy prop (relay, breaker panel, battery bank, beacon, sounder, fish, coil, chart, dressing, and the name board's base) rendered as the engine's default material. That is why they all looked pale grey, and it is why the cot stayed a "white block". Fixed. Props now show their real colors (the battery bank is dark, the breaker panel is faded white, the fish is a fish). The review tool's material check missed it because an instance of a broken master is not flagged as default, so `Tools\ReviewCapture.bat` now fails when the capture log contains `Failed to compile Material`. The earlier visual findings in this report about props "reading as objects" were judged on that default material.
+
+Meshy: 100 more credits (`field_cot` 50, `mara_head` 50), 430 of 500 in total. One reject was wasted: a rewrite of the prompt did not save, so the "new" preview used the old prompt.
+
+Tests: 38 of 38 still pass. Captures: `Saved/Review/2026-09-29_2210`. New views: `cot`, `mara_face`.
 ## Executive Summary
 
-The Presentation Pass (PP-00 to PP-10) is implemented and **READY FOR ANTHONY ACCEPTANCE**. It is not accepted. This session finished PP-06 to PP-10: every clue prop and pickup now wears a Meshy mesh, the water is a dark rippled freshwater material, Mara and the scavenger wear the `Survival_Character` pack in different jackets on the existing animations, and the shore has sound (wind and lap beds, the relay and live-water hums, spark snaps, a breaker clunk, CC0 pistol shots, pickup and inventory cues). No quest, NPC, item, dialogue line, flag, or save field was added.
+The Presentation Pass (PP-00 to PP-10) is implemented. Anthony's first playtest sent it back for fixes (see the section above); it is **not accepted** and is ready for a second look, not for acceptance. This session finished PP-06 to PP-10: every clue prop and pickup now wears a Meshy mesh, the water is a dark rippled freshwater material, Mara and the scavenger wear the `Survival_Character` pack in different jackets on the existing animations, and the shore has sound (wind and lap beds, the relay and live-water hums, spark snaps, a breaker clunk, CC0 pistol shots, pickup and inventory cues). No quest, NPC, item, dialogue line, flag, or save field was added.
 
 38 automated tests pass (36 baseline). `DeadCurrentEditor` builds. `Tools\RebuildContent.bat` is clean and leaves the art layer and its audio beds in place. A Development Win64 cook and a null-RHI smoke launch of `Lvl_Boathouse` succeeded. Average frame time in the review captures is **18.4 ms (about 54 FPS)**, short of the 16.7 ms target; see Known Issues.
 

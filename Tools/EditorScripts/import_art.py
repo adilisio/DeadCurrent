@@ -618,10 +618,13 @@ MESHY_PROPS = [
     ("radio_coil", 512),
     ("dead_fish", 512),
     ("field_dressing", 512),
+    ("field_cot", 1024),
+    ("mara_head", 1024),
 ]
 # Meshy's metallic maps read near 1 on painted steel. PlayTest has no reflections, so a metal
 # surface renders black. This scale keeps the map's variation and keeps the prop lit.
 PROP_METALLIC_SCALE = 0.25
+NON_METAL_PROPS = ("mara_head", "field_cot")
 
 
 def ensure_prop_master():
@@ -646,8 +649,11 @@ def ensure_prop_master():
     if not default_normal:
         raise RuntimeError("Missing /Engine/EngineMaterials/DefaultNormal")
     normal.set_editor_property("texture", default_normal)
-    rough = sample_param(material, "Roughness", uv, -60, 420, unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
-    metal = sample_param(material, "Metallic", uv, -60, 640, unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+    # SAMPLERTYPE_COLOR, not LINEAR_COLOR: the default texture (an sRGB engine texture) fails compilation against a
+    # linear sampler, and a master that does not compile gives every instance the engine default material. The
+    # instance textures are still non-sRGB data maps; the texture asset decides the decode.
+    rough = sample_param(material, "Roughness", uv, -60, 420, unreal.MaterialSamplerType.SAMPLERTYPE_COLOR)
+    metal = sample_param(material, "Metallic", uv, -60, 640, unreal.MaterialSamplerType.SAMPLERTYPE_COLOR)
     scale = make(material, unreal.MaterialExpressionScalarParameter, 260, 700)
     scale.set_editor_property("parameter_name", "MetallicScale")
     scale.set_editor_property("default_value", PROP_METALLIC_SCALE)
@@ -655,7 +661,15 @@ def ensure_prop_master():
     mel = unreal.MaterialEditingLibrary
     mel.connect_material_property(color, "", unreal.MaterialProperty.MP_BASE_COLOR)
     mel.connect_material_property(normal, "", unreal.MaterialProperty.MP_NORMAL)
-    mel.connect_material_property(mask(material, rough, "r", 120, 420), "", unreal.MaterialProperty.MP_ROUGHNESS)
+    # Meshy's roughness maps run very smooth. With the sky as the only reflection that reads as a milky sheen over
+    # the base color (an olive cot came out pale grey-blue). A floor keeps painted and woven surfaces matte.
+    floor = make(material, unreal.MaterialExpressionScalarParameter, 260, 480)
+    floor.set_editor_property("parameter_name", "RoughnessFloor")
+    floor.set_editor_property("default_value", 0.6)
+    floored = make(material, unreal.MaterialExpressionMax, 420, 440)
+    connect(mask(material, rough, "r", 120, 420), "", floored, "A")
+    connect(floor, "", floored, "B")
+    mel.connect_material_property(floored, "", unreal.MaterialProperty.MP_ROUGHNESS)
     mel.connect_material_property(scaled_metal, "", unreal.MaterialProperty.MP_METALLIC)
     mel.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
@@ -689,6 +703,7 @@ def bind_prop_instance(instance, base, normal, rough, metal):
     mel.set_material_instance_texture_parameter_value(instance, "Normal", normal)
     mel.set_material_instance_texture_parameter_value(instance, "Roughness", rough)
     mel.set_material_instance_texture_parameter_value(instance, "Metallic", metal)
+    mel.set_material_instance_vector_parameter_value(instance, "Tint", unreal.LinearColor(1.0, 1.0, 1.0, 1.0))
     mel.update_material_instance(instance)
     if not unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False):
         raise RuntimeError(f"Could not save {instance.get_path_name()}")
@@ -820,6 +835,11 @@ def import_meshy_prop(prop_id, cap):
         if not instance:
             raise RuntimeError(f"Could not create {inst_path}")
     bind_prop_instance(instance, textures["base"], textures["normal"], textures["rough"], textures["metal"])
+    if prop_id in NON_METAL_PROPS:
+        # Skin is not metal. PlayTest has no reflections, so any metallic value renders it dark and blue-grey.
+        unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(instance, "MetallicScale", 0.0)
+        unreal.MaterialEditingLibrary.update_material_instance(instance)
+        unreal.EditorAssetLibrary.save_loaded_asset(instance, only_if_is_dirty=False)
     # Slot 0 is the prop's material, so a placed actor or a pickup renders it without an override.
     mesh.set_material(0, instance)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False)
@@ -1060,6 +1080,95 @@ def ensure_lake_instance(name, deep_color, tile_cm):
     log(f"instance {path}")
 
 
+CURRENT_MASTER = ENV_MATERIALS + "/M_DC_Current"
+
+
+def ensure_current():
+    """M_DC_Current: the live water. Unlit translucent, nearly clear, with thin bright filaments that crawl
+    across the surface (contour lines of animated gradient noise). It replaces the flat cyan sheet, which read as
+    a swimming pool. Parameters: Color (filament color), TileCm, Speed, Sharpness, Gain, Base (opacity between
+    filaments)."""
+    if unreal.EditorAssetLibrary.does_asset_exist(CURRENT_MASTER):
+        if not unreal.EditorAssetLibrary.delete_asset(CURRENT_MASTER):
+            raise RuntimeError(f"Could not replace {CURRENT_MASTER}")
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_DC_Current", ENV_MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError(f"Could not create {CURRENT_MASTER}")
+    material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
+    material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
+    material.set_editor_property("two_sided", True)
+
+    def scalar(name, value, x, y):
+        node = make(material, unreal.MaterialExpressionScalarParameter, x, y)
+        node.set_editor_property("parameter_name", name)
+        node.set_editor_property("default_value", value)
+        return node
+
+    world = make(material, unreal.MaterialExpressionWorldPosition, -1400, 0)
+    xy = mask(material, world, "rg", -1160, 0)
+    tile = scalar("TileCm", 240.0, -1160, 160)
+    speed = scalar("Speed", 0.45, -1160, 300)
+    time = make(material, unreal.MaterialExpressionTime, -1400, 300)
+    scaled = div(material, xy, tile, -900, 0)
+    moving = mul(material, time, speed, -900, 300)
+    position = append(material, scaled, moving, -660, 100)
+
+    noise = make(material, unreal.MaterialExpressionNoise, -420, 100)
+    for prop, value in (("noise_function", unreal.NoiseFunction.NOISEFUNCTION_GRADIENT_ALU), ("scale", 1.0),
+                        ("levels", 2), ("output_min", -1.0), ("output_max", 1.0), ("turbulence", False)):
+        try:
+            noise.set_editor_property(prop, value)
+        except Exception as exc:
+            log(f"M_DC_Current noise {prop}: {exc}")
+    connect(position, "", noise, "")
+
+    sharp = scalar("Sharpness", 9.0, -420, 320)
+    gain = scalar("Gain", 2.4, -100, 420)
+    base = scalar("Base", 0.03, -100, 560)
+    magnitude = make(material, unreal.MaterialExpressionAbs, -200, 100)
+    connect(noise, "", magnitude, "")
+    widened = mul(material, magnitude, sharp, -20, 100)
+    inverted = make(material, unreal.MaterialExpressionOneMinus, 160, 100)
+    connect(widened, "", inverted, "")
+    line = make(material, unreal.MaterialExpressionSaturate, 320, 100)
+    connect(inverted, "", line, "")
+    thin = make(material, unreal.MaterialExpressionPower, 480, 100)
+    connect(line, "", thin, "Base")
+    exponent = make(material, unreal.MaterialExpressionConstant, 320, 240)
+    exponent.set_editor_property("r", 3.0)
+    connect(exponent, "", thin, "Exp")
+
+    color = make(material, unreal.MaterialExpressionVectorParameter, 480, -100)
+    color.set_editor_property("parameter_name", "Color")
+    color.set_editor_property("default_value", unreal.LinearColor(0.4, 1.1, 3.0, 1.0))
+    bright = mul(material, thin, gain, 640, 200)
+    emissive = mul(material, color, bright, 820, 100)
+    opacity_line = mul(material, thin, scalar("LineOpacity", 0.9, 640, 360), 820, 300)
+    opacity_sum = add(material, opacity_line, base, 1000, 300)
+    opacity = make(material, unreal.MaterialExpressionSaturate, 1160, 300)
+    connect(opacity_sum, "", opacity, "")
+
+    mel = unreal.MaterialEditingLibrary
+    mel.connect_material_property(emissive, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.connect_material_property(opacity, "", unreal.MaterialProperty.MP_OPACITY)
+    mel.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {CURRENT_MASTER}")
+    log(f"created {CURRENT_MASTER}")
+
+    path = f"{ENV_MATERIALS}/MI_DC_LiveWater"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        mi = unreal.load_asset(path)
+    else:
+        mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            "MI_DC_LiveWater", ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    unreal.MaterialEditingLibrary.set_material_instance_parent(mi, unreal.load_asset(CURRENT_MASTER))
+    unreal.MaterialEditingLibrary.update_material_instance(mi)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+
+
 SURVIVAL = "/Game/Survival_Character"
 SURVIVAL_MESH = SURVIVAL + "/Meshes/SK_Survival_Character"
 # Jacket and jeans tints for the two costumes. Faded, cold, and different enough to read apart at a distance.
@@ -1084,6 +1193,30 @@ def ensure_survival_costumes():
         if not unreal.EditorAssetLibrary.save_loaded_asset(skeleton, only_if_is_dirty=False):
             raise RuntimeError("Could not save the Survival_Character skeleton")
         log("Survival_Character skeleton now accepts the mannequin animation blueprint")
+    # The pack's eye master does not compile (a null texture parameter), which gives the engine default material.
+    # A plain dark iris instance stands in. It is behind the head's lids and lashes.
+    eye_path = f"{ENV_MATERIALS}/MI_DC_Eye"
+    if unreal.EditorAssetLibrary.does_asset_exist(eye_path):
+        eye = unreal.load_asset(eye_path)
+    else:
+        eye = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            "MI_DC_Eye", ENV_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    unreal.MaterialEditingLibrary.set_material_instance_parent(
+        eye, unreal.load_asset("/Game/LevelPrototyping/Materials/M_FlatCol"))
+    unreal.MaterialEditingLibrary.set_material_instance_vector_parameter_value(
+        eye, "Base Color", unreal.LinearColor(0.05, 0.035, 0.025, 1.0))
+    unreal.MaterialEditingLibrary.update_material_instance(eye)
+    unreal.EditorAssetLibrary.save_loaded_asset(eye, only_if_is_dirty=False)
+    # The mesh's own slot still points at the pack's eye instance, whose master does not compile and logs on load.
+    # Re-parent that instance onto the same plain material so nothing loads the broken master.
+    pack_eye = unreal.load_asset(SURVIVAL + "/Materials/MI_Survival_Character_Eye")
+    if pack_eye:
+        unreal.MaterialEditingLibrary.set_material_instance_parent(
+            pack_eye, unreal.load_asset("/Game/LevelPrototyping/Materials/M_FlatCol"))
+        unreal.MaterialEditingLibrary.set_material_instance_vector_parameter_value(
+            pack_eye, "Base Color", unreal.LinearColor(0.05, 0.035, 0.025, 1.0))
+        unreal.MaterialEditingLibrary.update_material_instance(pack_eye)
+        unreal.EditorAssetLibrary.save_loaded_asset(pack_eye, only_if_is_dirty=False)
     for name, (parent, tint) in COSTUMES.items():
         path = f"{ENV_MATERIALS}/{name}"
         if unreal.EditorAssetLibrary.does_asset_exist(path):
@@ -1128,6 +1261,7 @@ def main():
         raise RuntimeError("Missing rusty_painted_metal base color for the Tern grime blend")
     ensure_wreck_instance("MI_DC_TernU1", boat[0], grime)
     ensure_wreck_instance("MI_DC_TernU2", boat[1], grime)
+    ensure_current()
     ensure_lake()
     ensure_lake_instance("MI_DC_OpenLake", (0.010, 0.024, 0.030, 1.0), 1400.0)
     # Same look as the open lake so the basin slab does not read as a lighter rectangle.

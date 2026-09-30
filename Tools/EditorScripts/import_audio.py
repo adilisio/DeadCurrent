@@ -31,7 +31,7 @@ SOUNDS = [
 
 # name, inner radius cm, falloff cm
 ATTENUATIONS = [
-    ("SA_DC_Hum", 250.0, 2200.0),     # relay and live water: a hum you find by walking toward it
+    ("SA_DC_Hum", 450.0, 3800.0),     # relay and live water: a hum you find by walking toward it
     ("SA_DC_Snap", 200.0, 1800.0),    # sparks over the water
     ("SA_DC_Clunk", 300.0, 3000.0),   # the breaker throw
 ]

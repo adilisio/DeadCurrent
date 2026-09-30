@@ -7,6 +7,7 @@
 #include "DCFriendlyNPC.generated.h"
 
 class UDCDialogueAsset;
+class UDCHeadSwapComponent;
 class UDCPersistentIdComponent;
 
 /**
@@ -35,6 +36,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UDCPersistentIdComponent> PersistentIdComponent;
+
+	/** Presentation: a different head on the shared body. Does nothing until a HeadMesh is set. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UDCHeadSwapComponent> HeadSwap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC")
 	FText DisplayName;

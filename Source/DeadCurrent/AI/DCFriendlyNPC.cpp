@@ -8,6 +8,7 @@
 #include "Dialogue/DCDialogueComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Character/DCHeadSwapComponent.h"
 #include "Save/DCPersistentIdComponent.h"
 #include "UI/DCHUD.h"
 #include "UObject/ConstructorHelpers.h"
@@ -21,6 +22,7 @@ ADCFriendlyNPC::ADCFriendlyNPC()
 	AutoPossessAI = EAutoPossessAI::Disabled;
 
 	PersistentIdComponent = CreateDefaultSubobject<UDCPersistentIdComponent>(TEXT("PersistentId"));
+	HeadSwap = CreateDefaultSubobject<UDCHeadSwapComponent>(TEXT("HeadSwap"));
 
 	GetCapsuleComponent()->SetCapsuleSize(42.0f, 92.0f);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);

@@ -102,7 +102,7 @@ Prompting for DEAD CURRENT: the earlier prompts said "post-apocalyptic wasteland
 
 ### Presentation Pass spend (2026-09-29)
 
-Budget 500. Spent **330** on the ten `PresentationPassPlan.txt` §6 props: `relay_housing` 50 (including one rejected preview), `depth_sounder` 40, and `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` 30 each. Per-asset figures are in each `source.json`. 170 credits of the pass budget remain unspent, and no further generation is planned for this pass.
+Budget 500. Spent **430** in total: **330** on the ten `PresentationPassPlan.txt` §6 props: `relay_housing` 50 (including one rejected preview), `depth_sounder` 40, and `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` 30 each. Per-asset figures are in each `source.json`. Playtest 1 (2026-09-29) added two props for 100 credits: `field_cot` (the cot was a white block) and `mara_head` (Mara needed her own face), each 50 (a wrong first preview, a second preview, and a refine). One of those rejects was wasted when a prompt rewrite failed to save and the same prompt ran again. 70 credits of the pass budget remain, and no further generation is planned.
 
 ### Record keeping
 
@@ -164,6 +164,7 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `life_jacket` | `CC0/polyhaven/life_jacket` | CC0 | Poly Haven |
 | `lighthouse_logbook` (survey log) | `Meshy/lighthouse_logbook` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `relay_housing` | `Meshy/relay_housing` | Meshy Pro | generated with the owner's Meshy Pro account |
+| `field_cot`, `mara_head` (2026-09-29, playtest 1) | `Meshy/<id>` | Meshy Pro | generated with the owner's Meshy Pro account |
 | `depth_sounder`, `breaker_panel`, `battery_bank`, `emergency_beacon`, `name_board_tern`, `sounder_chart`, `radio_coil`, `dead_fish`, `field_dressing` | `Meshy/<id>` (2026-09-29) | Meshy Pro | generated with the owner's Meshy Pro account |
 | `Survival_Character` (`SK_Survival_Character`, skeleton, physics asset, 11 material instances, 43 textures cut to 1K) | `FO5_AssetLibrary/Content/Survival_Character` | marketplace pack owned by Anthony (from the earlier project) | pack author |
 | `MI_DC_MaraJacket`, `MI_DC_MaraJeans`, `MI_DC_ScavJacket`, `MI_DC_ScavJeans` | tints on the pack's jacket and jeans instances, in `import_art.py` | project | DEAD CURRENT |

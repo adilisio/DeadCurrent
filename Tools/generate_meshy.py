@@ -155,6 +155,35 @@ PROPS = {
         ),
         "target_polycount": 20000,
     },
+    # Presentation Pass playtest 1 (2026-09-29): the cot was a white block, and Mara needed her own face.
+    "field_cot": {
+        "prompt": (
+            "A folding army field cot, about 190 centimeters long, 70 wide, and 45 tall. A "
+            "steel tube frame with crossed scissor legs, and a taut canvas sleeping surface "
+            "stretched between two long side rails, sagging slightly in the middle. A rolled "
+            "grey wool blanket lies at the head end. Chunky, solid, sitting flat on the ground. "
+            "No logo, no brand, no letters, no pillow."
+        ),
+        "texture_prompt": (
+            "Faded olive-drab canvas stiff with white salt tide-line stains, dull oxidized "
+            "steel frame with rust at the joints, grey wool blanket, no logo, no lettering"
+        ),
+        "target_polycount": 12000,
+    },
+    "mara_head": {
+        "prompt": (
+            "A realistic adult woman's head and neck only, about 22 centimeters tall from the "
+            "chin to the crown, in a neutral A-pose bust style. Late thirties, weathered "
+            "wind-chapped skin, calm watchful eyes, straight relaxed mouth closed, strong "
+            "cheekbones, dark hair cut short and tied back. The neck ends in a flat horizontal "
+            "cut. No clothing, no hat, no jewelry, no glasses, no shoulders, no body."
+        ),
+        "texture_prompt": (
+            "Realistic human skin, weathered and slightly sunburnt, small freckles, dark "
+            "brown hair, grey-green eyes, matte, no makeup, no tattoos"
+        ),
+        "target_polycount": 15000,
+    },
 }
 
 

@@ -393,6 +393,7 @@ def first_of_class(asset_class, *paths):
 SURVIVAL_MESH = "/Game/Survival_Character/Meshes/SK_Survival_Character"
 SURVIVAL_JACKET_SLOT = 7
 SURVIVAL_JEANS_SLOT = 8
+SURVIVAL_EYE_SLOT = 3
 
 
 def assign_mannequin(actor, *mesh_paths, costume=None):
@@ -411,6 +412,7 @@ def assign_mannequin(actor, *mesh_paths, costume=None):
         if costume and mesh_path == SURVIVAL_MESH:
             for slot, name in zip((SURVIVAL_JACKET_SLOT, SURVIVAL_JEANS_SLOT), costume):
                 mesh_comp.set_material(slot, surface(name))
+            mesh_comp.set_material(SURVIVAL_EYE_SLOT, surface("MI_DC_Eye"))
     else:
         log(f"{actor.get_actor_label()} no mannequin skeletal mesh found")
     if abp_path:
@@ -685,8 +687,13 @@ def build_boathouse():
     pickup("Pickup_FieldDressing", folder, "/Game/Items/DA_Item_FieldDressing", 1, 470, 180, bench_top,
            persistent_id="boat.pickup_dressing")
 
-    inspectable("Cot", folder, (160, -180, 25), (190, 80, 50), "Salt-stiff cot",
-                "The canvas is stiff with salt and old sweat. You slept here, or passed out here. Hard to tell which.")
+    cot = inspectable("Cot", folder, (160, -180, 25), (190, 80, 50), "Salt-stiff cot",
+                      "The canvas is stiff with salt and old sweat. You slept here, or passed out here. Hard to tell which.")
+    # The generated cot is taller than a real one (about half as tall as it is long), so it is squashed to a
+    # camp cot's proportions. The interaction box keeps the old footprint.
+    wear_mesh(cot, first_mesh("/Game/Art/Meshy/field_cot"), 190.0, (160.0, -180.0, 24.0), yaw=0.0,
+              stretch=(1.0, 0.72, 0.5))
+    seat(cot, 0.0)
     inspectable("Radio", folder, (80, 180, 18), (28, 22, 36), "Dead radio",
                 "The casing is faintly warm. Nothing in this building should still be drawing power.")
     inspectable("Notice", folder, (30, 0, 150), (6, 80, 90), "Faded notice",
@@ -764,7 +771,7 @@ def build_scavenger():
            persistent_id="boat.pickup_coil")
     # The hum matches the rig's silent variants: it stops when the player holds the coil, when the relay is
     # recovered, or when the scavenger is dead. Inspecting the rig does not stop it, and the actor sets nothing.
-    conditional_audio("Audio_RelayHum", folder, (2480, -220, 60), "/Game/Audio/Ambience/S_DC_HumRelay", 0.06,
+    conditional_audio("Audio_RelayHum", folder, (2480, -220, 60), "/Game/Audio/Ambience/S_DC_HumRelay", 0.3,
                       conditions=[cond("HAS_ITEM", id="radio_coil", negate=True),
                                   cond("WORLD_FLAG", id="shore.relay_recovered", negate=True),
                                   cond("ACTOR_DEAD", id="boat.scavenger", negate=True)],
@@ -795,6 +802,14 @@ def build_cover_and_npc():
         "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
         costume=("MI_DC_MaraJacket", "MI_DC_MaraJeans"),
     )
+    # Her own head, so she does not read as the scavenger in a different jacket. PROVISIONAL: a face for the
+    # provisional character, not a decision about her history. Bone space: X is up, Y is forward, Z is lateral.
+    # The mesh is authored Z-up; pitch -90 turns its up onto the bone's up.
+    swap = npc.get_editor_property("head_swap")
+    swap.set_editor_property("head_mesh", first_mesh("/Game/Art/Meshy/mara_head"))
+    swap.set_editor_property("rotation", unreal.Rotator(pitch=-90.0, yaw=0.0, roll=0.0))
+    swap.set_editor_property("offset", unreal.Vector(-2.0, 1.0, 0.0))
+    swap.set_editor_property("scale", 0.22)
     set_persistent_id(npc, "boat.mara")
 
     inspectable("Lookout", folder, (3160, 1220, 40), (40, 30, 80), "Lookout crate",
@@ -828,6 +843,21 @@ def build_west_shore():
     # Basin-facing skins. The outer blocks' inner sides were reading as an untextured black wall.
     block("Breakwater_South_Inner", folder, -3200, -220, -2360, -2320, -20, 150, material=rock)
     block("Breakwater_East_Inner", folder, -300, -240, -2360, -1400, -20, 150, material=rock)
+    # The east half had no edge: the player could walk off the north and east sides, or wade off the far side of
+    # the channel, and fall. Invisible walls (collision, no mesh visibility) close it. The lake keeps its open
+    # horizon; these stand in the water and at the land edges.
+    wall_bottom, wall_top = -120, 700
+    for label, x0, x1, y0, y1 in [
+        ("Edge_North", -200, 3640, 1800, 1840),
+        ("Edge_East", 3600, 3640, -1440, 1840),
+        ("Edge_ChannelEast", 2800, 2840, -4240, -1400),
+        ("Edge_ChannelNorth", 2800, 3640, -1440, -1400),
+        ("Edge_South", -200, 2840, -4240, -4200),
+        ("Edge_ChannelWest", -240, -160, -4240, -1400),
+        ("Edge_BasinSouth", -3240, -160, -2440, -2400),
+    ]:
+        edge = block(label, folder, x0, x1, y0, y1, wall_bottom, wall_top)
+        edge.get_component_by_class(unreal.StaticMeshComponent).set_visibility(False)
     # Beach stones.
     block("Boulder_A", folder, -2250, -2080, -520, -400, 0, 70, material=rock)
     block("Boulder_B", folder, -880, -760, -560, -470, 0, 45, material=rock)
@@ -851,7 +881,7 @@ def build_survey_launch():
     ensure_glow_material()
     amber = material_instance("MI_DC_GlowAmber", MAT_GLOW, {"Color": (9.0, 4.0, 0.9, 1.0)})
     spark = material_instance("MI_DC_GlowSpark", MAT_GLOW, {"Color": (2.0, 4.5, 10.0, 1.0)})
-    live_water = material_instance("MI_DC_LiveWater", MAT_GLOW, {"Color": (0.2, 1.4, 4.0, 0.5)})
+    live_water = surface("MI_DC_LiveWater")
     water_mat = surface("MI_DC_Water")
     fish_mat = material_instance("MI_DC_DeadFish", MAT_FLAT, {"Base Color": (0.78, 0.8, 0.72, 1.0)})
     live = [cond("WORLD_FLAG", id=WRECK_POWER_CUT, negate=True)]
@@ -1021,7 +1051,7 @@ def build_survey_launch():
         snap.set_editor_property("flash_attenuation", audio_asset("/Game/Audio/SA_DC_Snap"))
     # The live water hums while it is live, and the breaker clunks once when the leads come off.
     # Levels are the starting points in C:\FO5_AssetLibrary\Audio\SOURCING_NOTES.md.
-    conditional_audio("Audio_LiveWaterHum", folder, (-1500, -1390, 60), "/Game/Audio/Ambience/S_DC_HumLiveWater", 0.02,
+    conditional_audio("Audio_LiveWaterHum", folder, (-1500, -1390, 60), "/Game/Audio/Ambience/S_DC_HumLiveWater", 0.07,
                       conditions=live, attenuation="SA_DC_Hum")
     bank = battery.get_actor_location()
     conditional_audio("Audio_BreakerThrow", folder, (bank.x, bank.y, bank.z),

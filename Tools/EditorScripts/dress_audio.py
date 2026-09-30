@@ -18,7 +18,7 @@ TAG = "ShoreAudio"
 
 # label, sound, volume multiplier
 BEDS = [
-    ("ShoreAudio_Wind", "/Game/Audio/Ambience/S_DC_LakeWind", 0.07),
+    ("ShoreAudio_Wind", "/Game/Audio/Ambience/S_DC_LakeWind", 0.22),
     ("ShoreAudio_Lap", "/Game/Audio/Ambience/S_DC_WaterLap", 0.46),
 ]
 

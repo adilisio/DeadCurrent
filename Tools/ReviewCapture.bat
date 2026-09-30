@@ -37,6 +37,14 @@ if not errorlevel 1 (
 	echo Review capture failed. See %LOG%
 	exit /b 1
 )
+rem A material that fails to compile renders as the engine default with no other sign. Presentation Pass
+rem playtest 1 found every Meshy prop had been doing that. Any such line in the capture log fails the run.
+findstr /C:"Failed to compile Material" "%LOG%" >nul
+if not errorlevel 1 (
+	echo Review capture found materials that fail to compile ^(they render as the engine default^):
+	findstr /C:"Failed to compile Material" "%LOG%" | findstr /C:"Content"
+	exit /b 1
+)
 if not exist "%OUT%\manifest.json" (
 	echo Review capture wrote no manifest. See %LOG%
 	exit /b 1

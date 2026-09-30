@@ -59,6 +59,16 @@
       "source": "PresentationPassPlan.txt §9 step 3; Design/game_design.md Shore Watch"
     },
     {
+      "id": "cot",
+      "location": [260, -20, 150],
+      "rotation": [0, 0, 0],
+      "subject": "Salt-stiff cot",
+      "view_offset": [90, 150, 90],
+      "view_offset_space": "world",
+      "expectation": "The cot reads as a folding army camp bed with a stiff canvas sleeping surface, low to the ground, not a white block. Someone could have slept there.",
+      "source": "Presentation Pass playtest 1 (2026-09-29): the cot was a white block"
+    },
+    {
       "id": "mara_close",
       "location": [3100, 1000, 180],
       "rotation": [0, 90, 0],
@@ -67,6 +77,13 @@
       "view_offset_space": "local",
       "expectation": "Mara reads as a person in a cold-weather jacket, teal and faded, standing normally (not in a T-pose or a reference pose), and distinct from the scavenger.",
       "source": "PresentationPassPlan.txt §6 PP-08; Design/world_bible.md (no fixed face or backstory)"
+    },
+    {
+      "id": "mara_face",
+      "location": [3100, 1190, 172],
+      "rotation": [-2, 90, 0],
+      "expectation": "At conversation range Mara has her own face: a woman with dark hair tied back, weathered skin, visibly not the scavenger's head. Skin reads as skin, not grey.",
+      "source": "Presentation Pass playtest 1 (2026-09-29): Mara and the scavenger looked like twins"
     },
     {
       "id": "scavenger_close",

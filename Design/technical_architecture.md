@@ -182,6 +182,10 @@ Presentation Pass (2026-09-29) added art and sound to `Lvl_Boathouse` with no ga
 - Starting levels come from `C:\FO5_AssetLibrary\Audio\SOURCING_NOTES.md` (wind 0.07, lap 0.46, live hum 0.02, relay 0.06, sparks 0.22, breaker 0.56, pistol 1.0). They are tuned by ear in `import_audio.py` and `build_boathouse.py`.
 - `Config/DefaultGame.ini` always cooks `/Game/Audio` and `/Game/Interface_And_Item_Sounds`, because those are loaded by path.
 
+**Bodies, heads, and perimeter (playtest 1).** `UDCHeadSwapComponent` (`Character/`, a default subobject on `ADCFriendlyNPC`, inert until `HeadMesh` is set) hides everything the skeletal mesh skins to the `head` bone and attaches a static head there, so a named character can have her own face on the shared body. Mara uses the Meshy `mara_head`; offset, rotation, and scale are set in `build_boathouse.py` in bone space (X up, Y forward). `M_DC_Current` (`import_art.py`) is the live water: unlit translucent filaments (contour lines of animated noise) over clear water, instead of the flat cyan sheet. The east half of the map is closed by invisible walls (`Edge_*` in `build_west_shore`); `Tools/EditorScripts/inspect_bounds.py` flood-fills the walkable area from the player start and reports any reachable cell bordering void (it reports none).
+
+**A material that fails to compile renders as the engine default and says nothing.** `M_DC_Prop`, the master for every Meshy prop, failed to compile from PP-06 until playtest 1 (its roughness and metallic samplers were the wrong type for the default texture), so every Meshy prop rendered as a pale default material. The pack's eye master also fails; its instance is re-parented onto a plain material. `Tools\ReviewCapture.bat` now fails when the capture log contains `Failed to compile Material`.
+
 **Packaging.** `Tools\Package.bat` runs a Development Win64 `BuildCookRun` to `Saved\Packaged` and a null-RHI smoke launch of `Lvl_Boathouse`. The packaged game target compiles the review capture code, so it must not use editor-only API outside `#if WITH_EDITOR` (`GetActorLabel`).
 
 ## Interaction
