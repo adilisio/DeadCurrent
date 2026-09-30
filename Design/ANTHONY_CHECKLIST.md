@@ -53,14 +53,13 @@ Launch `Tools\PlayTest.bat` (delete `Saved\SaveGames\DeadCurrent.sav` first for 
 
 ## Decisions Needed From Anthony
 
-Status (2026-09-30): the frame-time shortfall is deferred, the production pilot is pending Anthony's approval, and Anthony is running a narrative phase next and will check the pilot plan there. Nothing here is being worked on.
+Status (2026-09-30): the frame-time shortfall is deferred. The production pilot is approved to run inside Phase 5, which has not been started. Nothing here is being worked on.
 
 Open, for whenever you want to decide (none blocks anything):
 
-- Approve, change, or drop the production pilot and its conditional presence capability (`Design/POIs/PRODUCTION_PILOT.md` §12).
 - Chase the frame-time shortfall (about 54 FPS against 60, cause not found) now or later?
 - Choose the next phase. Phase 5 (World State) is next on the roadmap; it has not been started.
-- Answered: the Presentation Pass is accepted; Mara has her own head (provisional); the grade and hull stay as they are; the wind bed keeps its faint birds.
+- Answered: the production pilot is approved as written (the Landing Stage, the conditional presence capability, Mara moving to the stage on the coil route, run during Phase 5; `PRODUCTION_PILOT.md` §12). The Presentation Pass is accepted; Mara has her own head (provisional); the grade and hull stay as they are; the wind bed keeps its faint birds.
 
 ## Known Issues
 
@@ -96,4 +95,4 @@ Also in `Design/content_production_strategy.md` §5.
 
 ## Next Autonomous Task
 
-None. Anthony is doing a narrative phase. Do not start Phase 5, the production pilot, or the frame-time investigation without his go-ahead.
+None. Anthony is doing a narrative phase. Do not start Phase 5 or the frame-time investigation without his go-ahead. The production pilot is approved but runs inside Phase 5, so it waits for that go-ahead too.

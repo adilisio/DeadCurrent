@@ -7,7 +7,7 @@ This folder holds the production contract for points of interest. Strategy and r
 | `TEMPLATE.md` | Copy to `<poi_id>.md` before building anything. |
 | `AGENT_HANDOFF_TEMPLATE.md` | The contract passed from one role to the next. |
 | `<poi_id>.md` | One spec per POI. Created when a POI is approved, not before. |
-| `PRODUCTION_PILOT.md` | Plan only: how the model will be piloted. Not approved for build. |
+| `PRODUCTION_PILOT.md` | How the model will be piloted. Approved by Anthony (2026-09-30) to run inside Phase 5; not started. |
 
 ## Rules
 
@@ -40,4 +40,4 @@ Only accepted content becomes the baseline for the next POI.
 - Confirm the files each agent owns do not overlap.
 - Confirm the baseline commit and test count in every handoff.
 - Prefer one branch or worktree per owner. Integrate in small batches and rerun the full suite after each.
-- Do not start parallel POI production before the Vertical Slice is accepted unless Anthony approves a pilot (`PRODUCTION_PILOT.md`).
+- Do not start parallel POI production before the Vertical Slice is accepted except the approved pilot (`PRODUCTION_PILOT.md`), which runs inside Phase 5.

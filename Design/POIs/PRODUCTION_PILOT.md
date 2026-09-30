@@ -1,6 +1,6 @@
-# Production Pilot — PLAN ONLY
+# Production Pilot — APPROVED, NOT STARTED
 
-Status: **proposal for Anthony. Nothing here is built, approved, or scheduled.** It does not start Phase 5. It describes how the content-production model (`Design/content_production_strategy.md`) would be piloted on one small cell during Phase 5 or the vertical slice, so Anthony can approve, change, or drop it.
+Status: **approved by Anthony, 2026-09-30, to run inside Phase 5 (World State). Nothing is built yet.** Approval does not start Phase 5: the pilot begins only after Anthony gives the go-ahead for Phase 5 and its `WorldStatePhasePlan.txt` is committed with the pilot in its scope lock. The decisions are recorded in section 12.
 
 Everything below marked PROVISIONAL is a suggestion to react to, not canon. Faction, backstory, and the Current stay unexplained.
 
@@ -115,9 +115,11 @@ Record for the pilot: time from approved spec to playable candidate, time from c
 - A shared file (`build_boathouse.py`, `Source/**`) would need an edit by the POI Builder: stop and hand it to the Integrator.
 - Meshy spend would exceed the spec's number: stop.
 
-## 12. Decisions needed from Anthony
+## 12. Decisions (Anthony, 2026-09-30)
 
-- Approve or change the cell (the Landing Stage), or name a different one.
-- Approve the conditional presence capability, or choose the cosmetic-only fallback.
-- Is Mara moving to the stage acceptable, or should she stay at her lookout in every state?
-- Pilot during Phase 5, or hold until the vertical slice?
+1. **Cell:** the Landing Stage (`shore.landing_stage`) is approved. The name is still a working name.
+2. **Conditional presence:** approved. The Systems Engineer builds it, with its own test, before the POI Builder starts. The cosmetic-only fallback in section 6 is not needed unless the capability fails.
+3. **Mara:** she moves to the stage on the coil route, as in section 2. This fits her role as the companion (`Design/Narrative/CHARACTERS.md` §2): the packed crate and loaded skiff read as the watch getting ready to travel.
+4. **Timing:** the pilot runs during Phase 5, not the vertical slice.
+
+Still out of scope for the pilot: the narrative draft's proposal that a talked-down scavenger keeps the watch while Mara is away (`QUEST_ARCS.md`). It is a candidate for the second cell.
