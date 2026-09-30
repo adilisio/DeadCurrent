@@ -877,7 +877,8 @@ def build_cover_and_npc():
     swap = npc.get_editor_property("head_swap")
     swap.set_editor_property("head_mesh", first_mesh("/Game/Art/Meshy/mara_head"))
     swap.set_editor_property("rotation", unreal.Rotator(pitch=-90.0, yaw=0.0, roll=0.0))
-    swap.set_editor_property("offset", unreal.Vector(-2.0, 1.0, 0.0))
+    # Phase 5 playtest ("a floating head attached to a coat"): seated 1.5 cm lower so the jaw meets the collar.
+    swap.set_editor_property("offset", unreal.Vector(-3.5, 1.0, 0.0))
     swap.set_editor_property("scale", 0.22)
     set_persistent_id(npc, "boat.mara")
 
