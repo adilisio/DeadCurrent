@@ -64,6 +64,13 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
 
 - **2026-09-30, coil route: "Mara looks weird at the docks."** Compared from the same framing at the lookout and on the stage (review views `mara_face`, `mara_face_stage`, run `Saved/Review/2026-09-30_1334`), the model and head fit are identical. The move broke nothing. The difference is light: the shed's shade had hidden how she reads under open sky. Changed: her jacket tint was tuned for the shade and washed out to near-white in the open, so it is now about 57% of that and still reads teal in the shed; her face has a higher roughness floor so it reads less glossy. Still visible in full light: warm skin and the line where the generated head meets the body's neck. **Question for you below.**
 
+- **2026-09-30: "Leaving the first building, the lighting changes a lot."** Cause: the boathouse's interior exposure grade (Presentation Pass) switched within one stride at the door. Fixed (`44f9eb7`): it now eases off over the last 2.5 m inside and is gone about 0.5 m outside the door. The interior itself looks the same. **Recheck:** walk out of the door slowly.
+- **2026-09-30: "Almost impossible to grab the relay coil without the scavenger chasing you."** Cause: he saw you anywhere within 18 m and a 75° cone on open beach, and crouching did nothing, although Mara says "Stay low, time his walk". You chose both fixes:
+  - `efde3cf`: crouched (Ctrl or C), he notices you only within 8 m and a 45° cone in front of him. Once he is chasing, crouching does not shake him.
+  - `63f342c`: three crate stacks at the camp, all outside his patrol loop. One stands west of the camp, north of the path. Two stand on the beach just south of his south leg, the nearer one right below the coil.
+  - **Recheck:** crouch, work from stack to stack, grab the coil when he is walking away. Is it now possible but still tense?
+- Tests: 44 of 44 (33 editor, 11 map), with the new `AI.ScavengerNotice` and `Map.Boathouse.CampCover`.
+
 ## Decisions Needed From Anthony
 
 - **What reads weird about Mara on the stage?** The head's size or shape, the join at the jaw, the skin tone, the jacket, or the pose? Tell me which and I will target it. A cheap option: stand her in the lean-to's shade instead of the open deck. [until you say: the tint and roughness changes above only]
