@@ -84,7 +84,7 @@ Debt. Dues. A ledger that decides whose light stays on. Hale.
 - They greet each other with "**Again**" (from the *Tern* sounder's pencilled AGAIN, existing in game). It means "it is still there; we are still listening."
 
 ### Territory
-**Tall Masts**, a high island with a pre-collapse navigation transmitter station: guyed masts, a transmitter hall, copper ground radials staked across the hillside, listening huts. Small listening posts on other islands.
+**Tall Masts**, a high island on Lower just below the Aubin lock, with a pre-collapse navigation transmitter station: guyed masts, a transmitter hall, copper ground radials staked across the hillside, listening huts. Small listening posts on other islands.
 
 ### Leadership
 - **First Reader Abigail Tennant**, Ellis Tennant's granddaughter.

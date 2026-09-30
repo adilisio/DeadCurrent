@@ -18,6 +18,7 @@ Status: **everything in `Design/Narrative/` is PROVISIONAL.** Nothing here is ca
 
 - **Complete first draft** of every requested document, plus `AUDITS.md`.
 - **Audited and revised:** originality (Fallout 4's succession beat, Far Harbor's destroy-the-base password, and an Oxenfree-style voice trick were revised out; the Death Stranding and New Vegas resemblances were differentiated with rules), pacing (the midpoint moved from ~70% to the middle by splitting faction arcs across it; one quiet story per region; exploration shortcuts; a six-word player vocabulary), and scope (the slice has one dungeon, as `LongTermPlan.txt` §23 says; the second dungeon belongs to the initial production region).
+- **Consistency pass** after the audits: every place now sits on Upper or Lower, and Tall Masts is below the lock, so Liv's route and the player's route agree. Lock permission no longer depends on the post-midpoint Floor vote. Key custody, Kestrel, and the Floor vote are explicitly after the midpoint. The Loss Book (losses) and the resync ledger (rejoin counts) are separate documents everywhere. The Crib's light flashes the pattern, not an "irregular rhythm". Added a continuity timeline and sample transmissions (tone only) to the ledger.
 - **Not done:** beat-level scripts, dialogue, POI specs, anything for the Kenning / Crib levels beyond arcs. Each is a later task, after Anthony's decisions.
 
 ## Strongest New Ideas

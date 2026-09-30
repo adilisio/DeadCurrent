@@ -17,7 +17,7 @@ Things the player can eventually know with high confidence. Each lists **where**
 | E3 | "**Current events**" was ordinary pre-collapse public jargon for induced-current surges during storms. | Prologue (existing notice, reread); Act I (vault log) |
 | E4 | The Maritime Authority built a lake-bed-linked continuity network, **the Line**, that could run lights, locks, pumps, and warnings without people. | Act I (vault), Act III (headquarters) |
 | E5 | The Line was **deliberately cut into sections** on the collapse night: the **Severance**. | Act I (SECTION 14 — SEVERED), Act III (the record) |
-| E6 | Severed sections **try to rejoin** when their nodes have power. Relighting lights and Current storms both supply that power. | Act I (RESYNC PENDING), Act II (Compact Loss Book cross-referenced with node logs) |
+| E6 | Severed sections **try to rejoin** when their nodes have power. Relighting lights and Current storms both supply that power. | Act I (RESYNC PENDING), Act II (the Surveyors' resync ledger at Port Carrow) |
 | E7 | Long conductors in the lakes pick up **induced current** during storms. This explains *some* live equipment (the *Tern*'s battery bank; relays that talk only in storms). | Act I (Sigrun or an Engineering reading), Act II (Local powerhouse logs) |
 | E8 | The Line still **tracks vessels** and reads Compact ships' salvaged Authority transponders. That is how transmissions know ship names. | Act II (Port Carrow) |
 | E9 | **Protocol phrases** spoken on a section's channel operate its infrastructure. The sailors' taboo against repeating the words is folk memory of that. | Act II (the lock) |
@@ -130,6 +130,23 @@ In rough proportion:
 - **~10% archived distress calls** from the collapse week. Real people, sixty years dead. The Mourners' evidence.
 - **~10% protocol**: calls and replies between nodes.
 - **Rare, unaccounted**: something that is none of the above. One per act at most. Never a full sentence of explanation.
+
+### 5.4 Sample transmissions (tone reference only; PROPOSAL)
+
+Not dialogue assets. Examples of register: flat, procedural, clipped, and human only by accident.
+
+| Kind | Sample |
+| --- | --- |
+| Archive: storm traffic | "All vessels, all vessels. Current event in progress, section one-four. Make for nearest shelter. Stay off the rails and the wire." |
+| Archive: a loop | "Aubin lock, downbound, chamber one. Holding at storm protocol. Holding at storm protocol. Holding." |
+| Live data, Authority voice | "*Ida Lamberton*. Making six knots. Heading zero-eight-five. Current event advisory in effect." (the prologue relay, if the player listens long enough) |
+| Archive: distress, collapse week | "—this is the *Marguerite*, we're taking water, we can see the light but it's wrong, it's the wrong light—" (plants the idea of a wrong characteristic before Pointe Sombre) |
+| Protocol | "Section fourteen requests resync. Section fourteen requests resync. Awaiting controller." |
+| Protocol, call and reply | "Aubin, Crib. Confirm gates." / "Crib, Aubin. Gates confirm." |
+| Unaccounted (Act II, the lock) | The player speaks the Crib's call ("Aubin, Crib. Confirm gates."), the lock replies ("Crib, Aubin. Gates confirm."), and the gates move. Then a third voice on the channel: "Crib acknowledges." Nobody called the Crib, and the player is not at it. (Liv is at the Crib by then, which gives the player a mundane explanation to hold for most of the game. In the Crib she says she heard the gates move and did not answer.) |
+| Voice of the known (midpoint) | Liv: "...every light you relight wakes a section. You're rebuilding their tables. I can't hold it by myself. Not yet. Not yet." |
+
+Rules for writing more: no transmission explains anything; no complete sentence from an unknown speaker; at most one unaccounted line per act; the Authority voice never changes.
 
 ---
 

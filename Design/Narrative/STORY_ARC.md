@@ -41,17 +41,17 @@ The player's question moves through three stages, matching `LongTermPlan.txt`'s 
 
 A fictional stretch of the upper Great Lakes: a river junction between two lakes and the archipelago around it. It borrows the *kind* of place the St. Marys River, the Straits, and the northern Huron islands are, without reproducing any real town. Whether to anchor it to a real area is an Anthony decision (`STORY_REVIEW.md`).
 
-Locals call the two lakes **Upper** and **Lower**. The river and its islands are **the Narrows**. Only one lock still lifts ships between Upper and Lower.
+Locals call the two lakes **Upper** and **Lower**. The river and its islands are **the Narrows**. Only one lock still lifts ships between Upper and Lower. The prologue, Act I, and Port Carrow are on Upper; Tall Masts, Kenning, and the Crib are on Lower. The lock is the gate between the two halves of the story, and between the Compact's harbors and half their markets.
 
 | Place | What it is | Act |
 | --- | --- | --- |
-| **The Authority Shore** | The existing boathouse, shore path, scavenger camp, Mara's lookout, and the *Tern*. The far west edge of the Narrows, on Upper. | Prologue |
-| **Pointe Sombre** | A small island settlement under a lighthouse on a reef-guarded point, a night's sail east. The vertical slice. | I |
-| **Port Carrow** | The largest living harbor in the region, on Carrow Island. Walled breakwater, relit lights, market, the Compact's Board. | II |
-| **Aubin Locks and Powerhouse** | A river town at the only working lock between Upper and Lower, beside a hydro dam that has run by hand for sixty years. The Local. | II |
-| **Tall Masts** | A high island with a pre-collapse navigation transmitter station: guyed masts, a transmitter hall, listening huts. The Sounding. | II |
-| **Kenning** | A drowned lake city on the far shore of Lower. Streets under water to the second storey. The Authority's regional headquarters tower, a pumping station, and the intake tunnel. | III |
-| **The Four-Mile Crib** | A round stone water-intake crib four miles off Kenning, visible from the drowned waterfront. A light on it has flashed the same irregular rhythm for sixty years. The network's central continuity node. | III / Endgame |
+| **The Authority Shore** (Upper) | The existing boathouse, shore path, scavenger camp, Mara's lookout, and the *Tern*. The far west edge of the Narrows. | Prologue |
+| **Pointe Sombre** (Upper) | A small island settlement under a lighthouse on a reef-guarded point, a night's sail east. The vertical slice. | I |
+| **Port Carrow** (Upper) | The largest living harbor in the region, on Carrow Island. Walled breakwater, relit lights, market, the Compact's Board. | II |
+| **Aubin Locks and Powerhouse** (the river between) | A river town at the only working lock between Upper and Lower, beside a hydro dam that has run by hand for sixty years. The Local. | II |
+| **Tall Masts** (Lower) | A high island just below the lock, with a pre-collapse navigation transmitter station: guyed masts, a transmitter hall, listening huts. The Sounding. | II |
+| **Kenning** (Lower) | A drowned lake city on the far shore of Lower. Streets under water to the second storey. The Authority's regional headquarters tower, a pumping station, and the intake tunnel. | III |
+| **The Four-Mile Crib** (Lower) | A round stone water-intake crib four miles off Kenning, visible from the drowned waterfront. A light on it has flashed the pattern, not any charted characteristic, for sixty years. The network's central continuity node. | III / Endgame |
 
 Side-story places (see `QUEST_ARCS.md`): a flooded resort hotel, a salt mine under the lake bed, a pre-collapse automatic ferry that still runs its schedule, an ice road, a lock chamber that has held a freighter for sixty years.
 
@@ -173,7 +173,7 @@ Timing is a rough full-game estimate for a player doing most content. The vertic
 
 ### ACT II — The Crossings: "Whose Lights"
 
-Three regions, loosely ordered. The player can visit Port Carrow and the Locks in either order; Tall Masts opens once the player has heard of it from either.
+Three regions, loosely ordered. The player can visit Port Carrow and the Locks in either order. Tall Masts lies just below the lock on Lower, so it opens once the player is through (Liv went the same way).
 
 **Pacing rule (revised after the pacing audit, `AUDITS.md` §3):** each faction arc is split across the midpoint. Before "Kallio at the Crib" the player meets each faction, earns or loses its trust, and learns what it holds. The arcs' **decisions** (Kestrel Light, the Floor vote, the Vigil's aftermath, custody of the Pointe Sombre key) land **after** the broadcast, when every faction is racing for the Crib and each decision decides who comes. This puts the midpoint near the true middle of the game instead of about 70% through it, and makes Act III carry faction climaxes rather than only a dungeon. Each region is introduced by a **different verb** so Act II is not three trips to a relay: Port Carrow by **convoy** (sailing), the Locks by **passage** (negotiation or break-in), Tall Masts by **vigil** (a night of listening).
 
@@ -181,12 +181,12 @@ Three regions, loosely ordered. The player can visit Port Carrow and the Locks i
 
 - **Immediate goal:** find out where Liv went past the Locks, and why both factions want her.
 - **Discoveries:**
-  - Port Carrow: the Compact's convoys carry salvaged Authority transponders; the Line reads them, which is how the transmissions know the *Ida*'s name. The Compact's **Loss Book** (every vessel lost for forty years) shows losses fall sharply where lights were relit, and that relit nodes are rejoining. Liv's contract with Hale, and her unpaid-back advance.
+  - Port Carrow: the Compact's convoys carry salvaged Authority transponders; the Line reads them, which is how the transmissions know the *Ida*'s name. The Compact's **Loss Book** (every vessel lost for forty years) shows losses fall sharply where lights were relit. The Surveyors' **resync ledger**, kept off the Board's table, shows those same relit nodes asking to rejoin. Liv's contract with Hale, and her unpaid-back advance.
   - Aubin Locks: the Local's history (lock and powerhouse workers automated out by the Line, locked out on the collapse night, broke back in and saved the town). Liv's confiscated gear. The Local holds the **Pointe Sombre section key**: Liv traded it for passage.
   - At the lock: speaking a **protocol phrase** on the lock channel moves the gates. The taboo "don't repeat them on the boats" was folk memory of something real. And one of the lock's replies is not in any manual.
 - **NPC introductions:** Commissioner **Aurelie Dumont** (Compact Board); Captain Varga again (Open Water wing); Chief Operator **Bram Kowalczyk** (the Local); **Nadia Sobczak** (the Cutters inside the Local).
 - **Key quests:** **Light Dues** (Compact), **Hand Log** (Local), **Lock Passage** (main: get through the lock by permission, by convoy force, by protocol, or by stealth).
-- **Major decision:** how the player passes the lock, and whether the Pointe Sombre key stays with the Local, goes to the Compact, or goes with the player.
+- **Major decision:** how the player passes the lock. (Custody of the Pointe Sombre key is raised here and settled after the midpoint, under the pacing rule.)
 - **Mystery reveal:** the Line **still watches** and still **obeys words**.
 - **World-state consequence:** lock access for the rest of the game, convoy routes, Compact and Local standing; if the protocol was used, the Local knows the Line can override their gates, and the Cutters escalate.
 - **Missing-person thread:** Liv is manipulative, not only reckless: she took money she never meant to earn and put a key in the hands of people she knew would never use it well.

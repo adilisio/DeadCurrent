@@ -44,7 +44,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 ### MQ-A1 — The Wrong Characteristic: see §2.
 
 ### MQ-X — Cross Bearings (Acts I–II)
-- **Hook:** at Pointe Sombre the player finds **Liv's chart** in the vault (her pencil line from the *Tern*'s bearing, a second line, and a long thin question mark where they cross).
+- **Hook:** at Pointe Sombre the player finds **Liv's chart** in the vault (her pencil line from the Authority Shore, taken with her own direction-finding set, a second line, and a long thin question mark where they cross).
 - **Mechanic (no new system needed beyond inspect variants on an item):** the chart's description changes as bearings are added: *Tern* (prologue, needs the Sounder Chart), Pointe Sombre's direction-finding loop (Act I, in a storm), Tall Masts (Act II). Two bearings from nearby points give a long, loose cross (true to navigation practice); the third, from far off, closes it on **the Four-Mile Crib**.
 - **Build:** Schematic Eye reads bearings cleanly; Engineering 2 can power the DF loop outside a storm; Survival *(future)* can take a rough bearing on a hum by ear and compass.
 - **Consequence:** the player finds the Crib **by method**, the way Liv did. If the player destroyed the Pointe Sombre node before taking its bearing, a substitute bearing must come from the Local's powerhouse loop (a detour and a favor owed).
@@ -52,7 +52,7 @@ Status: **PROVISIONAL, 2026-09-29.** Arcs, not a quest list. No quest asset, id,
 ### MQ-B1 — Lock Passage (Act II)
 - **Hook:** Kenning and the Crib are on Lower. The only lock is Aubin's, and the Local has closed it to the player (or to Compact ships, or to everyone after Pointe Sombre, depending on history).
 - **Approaches (each is a world act):**
-  1. **Permission:** earn the Floor's vote (the Local arc, §3.2).
+  1. **Permission:** bring Kowalczyk the proof he asks for (the Local arc's hook, §3.2). The chief can grant a single passage without the Floor.
   2. **Force:** join Hale's convoy running the lock; combat at the gates; the lock is damaged.
   3. **Protocol:** speak the lock's phrase on its channel (from Mara's transcripts, the Lexicon, or Liv's notes). The gates move. The lock also answers with a phrase that is in no manual. Every cardholder hears the gates obey someone else.
   4. **Stealth:** climb the dam at night and work the gates by hand (Engineering 2; Survival for the climb).
@@ -201,6 +201,7 @@ No new faction HQ, no companion recruitment scene beyond Mara, no Sounding prese
 
 ### 3.1 The Compact: "Light Dues" [FULL; one beat INITIAL]
 - **Hook:** at Port Carrow, Dumont offers the player work: escort a relight crew to **Kestrel Light** on a small island outside the charter. Varga (Open Water) asks the player to see that Kestrel is lit **free**.
+- **Timing:** the hook and the ledger come before the midpoint; the Kestrel decision comes **after** it, when Hale needs every lit route for the run to Kenning.
 - **Escalation:** in the Lights Office the player finds the Surveyors' **resync ledger**: every relight's node count, climbing. Hale has been keeping it off the Board's table.
 - **Approaches:** publish it by the Post; give it to Kowalczyk; use it to press Dumont (Persuasion); bury it for Hale (his trust, later).
 - **Build:** Engineering reads the ledger's meaning; Persuasion with the Captains' Hall; Survival for the crossing to Kestrel in weather.
@@ -210,9 +211,10 @@ No new faction HQ, no companion recruitment scene beyond Mara, no Sounding prese
 
 ### 3.2 The Local: "Hand Log" [FULL]
 - **Hook:** Aubin's lock is closed to the player. Kowalczyk will talk if the player can prove what the Compact's relights are doing (the resync ledger, or first-hand evidence from Pointe Sombre).
-- **Escalation:** the Cutters are planning to bring down Port Carrow's breakwater light in a storm, with a convoy due. The Stewards propose sending a crew to seize the Crib.
+- **Timing:** the hook comes before the midpoint (it is how the player earns passage). The escalation and the Floor vote come **after** "Kallio at the Crib", when the Local must decide what to do about the Crib. (The Local has always known the Crib as the place Aubin was once run from; the broadcast tells them it is live.)
+- **Escalation:** the Cutters plan to bring down Port Carrow's breakwater light in a storm, with a convoy due, so the Compact cannot sail for Kenning. The Stewards propose sending a crew to seize the Crib first.
 - **Approaches:** stop the Cutters (stealth, combat, or talking Sobczak down with the Loss Book, Persuasion 3 *(future)*); let them (the convoy loses a ship); warn Port Carrow (the Local learns who warned).
-- **Decision (by doing):** at the **Floor vote** at shift change, the player can speak, and the evidence physically laid on the table (the Table Day printout, the Loss Book, the resync ledger, Liv's census) decides which wing leads.
+- **Decision (by doing):** at the **Floor vote** at shift change, the player can speak, and the evidence physically laid on the table (the Table Day printout, the Loss Book, the resync ledger, the Sounding's seiche records) decides which wing leads.
 - **Persistent consequence:** Hands, Cutters, or Stewards lead the Local into Act III.
 - **Later callback:** Cutters at Kenning bring charges; Stewards bring a seizure crew; Hands stay home, and the dam only opens for a black start if the Floor votes it.
 
