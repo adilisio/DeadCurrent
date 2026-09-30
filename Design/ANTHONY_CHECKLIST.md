@@ -76,14 +76,13 @@ Run `Tools\PlayTest.bat`. Your own save (version 3) loads fine with the stage in
   - A scrap windbreak now runs along the lake side of his camp, with the relay and coil on the beach side of it.
   - Crouched on the beach, you are out of his sight all the way to the coil (checked against his whole south leg by `Map.Boathouse.CampCover`).
   - **Recheck:** come along the waterline, crouched, take the coil.
-- **2026-09-30: "Mara looks like a floating head attached to a coat."** Her face is a separate generated bust fixed to the body's head bone and cut at the jaw, with only the body's thin neck under it. Seating it 1.5 cm lower (`58d81b1`) shortens the gap but cannot remove it: any cut low enough to keep a neck shows the bust's shoulder patch at the collar. A real fix needs a different head (question below).
+- **2026-09-30: "Mara looks like a floating head attached to a coat."** Her old face was a generated bust cut at the jaw over the body's thin neck. You chose a new generated head. It is done (`14c8e0a`, 30 Meshy credits): a head and neck rising out of a thick charcoal knit turtleneck ring, so her head meets the jacket cloth to cloth and moves with it. No skin can show at the collar. Captured at the lookout and on the stage (`mara_face`, `mara_face_stage`, run `Saved/Review/2026-09-30_1502`). **Recheck, and judge the face:** in open light it reads more weathered than the old one, and arguably more masculine. A few orange flecks show on the ring in daylight. If the face is wrong, the next step is a new texture or preview (10 to 20 credits, 40 left).
 
 ## Decisions Needed From Anthony
 
-- **Mara's head (answered: the floating head).** Options: (a) generate a new head with its own neck made to sit inside a collar (Meshy, about 50 credits of the 70 left); (b) go back to the body pack's own head, which is rigged and moves with her perfectly, and tell her apart from the scavenger with hair and skin tint; (c) keep the current bust, seated lower. [no default; waiting on you]
+- **Mara's new face:** keep it, or regenerate (see her playtest entry above)? Answered already: a new head over the pack head (the pack head is the scavenger's face) and over the old bust.
 
-
-None open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
+None other open from Phase 5. **Answered by Anthony (2026-09-30), all as the defaults:**
 
 1. **The scavenger's sight (G-02):** keep the tension. The stage stays where it is.
 2. **Mara's pack (V-06):** keep the duffel. No Meshy spend.
@@ -112,7 +111,7 @@ Still open from before: the frame-time shortfall (deferred); the TERN name board
 - Tests: **44 of 44** (33 editor, 11 map) after the playtest fixes (42 after the critic revision). Phase 5 baseline was 38.
 - Captures: `Saved/Review/2026-09-30_1309` are clean.
 - Package: after the revision, the Development Win64 cook succeeded, and the smoke launch loaded `Lvl_Boathouse` with all 8 presence rules running.
-- Meshy spend: none in Phase 5 (still 430 of 500).
+- Meshy spend: 30 in Phase 5 (`mara_head_collar`), 460 of 500 in total; account balance 437.
 
 ## Next Autonomous Task
 
