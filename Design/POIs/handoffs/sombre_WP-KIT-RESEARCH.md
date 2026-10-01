@@ -101,3 +101,4 @@ Filled in by the receiving agent when it stops or finishes.
 - **Open issues:** Should the lighthouse base room be completely round, or octagonal? Are the vessel decks meant to snap to the land grid?
 - **Exact next step:** Presentation Builder to begin WP-KIT using the recommended 1m/2m/4m vocabulary.
 - **Return to:** the Integrator (Claude)
+- **Integrator verdict (2026-09-30):** accepted as research input after one revision round. The "all verified" claims above are not accurate (Bitumen did not exist; reference links mislabelled or 404). The corrections and the independently verified items are in the review block at the top of `Design/Kits/research/kit_library_survey.md`. Run: Gemini 3.1 Pro (High) through the Antigravity CLI, headless, in worktree `C:\DeadCurrent_wt\kit-research`; no git, files limited to `Design/Kits/research/` and these notes; `C:\FO5_AssetLibrary` verified unchanged.
