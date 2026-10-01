@@ -54,6 +54,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 | `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. `BuildChecks`: the same actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks and the Sounder Chart, then a real F9 restores the build. `LandingStage` (Phase 5): the stage and Mara through both Shore Watch routes, deferral while the player is with Mara, save, diverge, F9 snaps back, the power cut, the tackle box, the dressing. `LandingStageSaves`: hand-written version-5 saves show the derived state, undiscovered. `LandingStagePlayerSave`: the player's own save, copied to a scratch slot. `CampCover`: three crate stacks outside the patrol square, one breaking his sight line to a crouched player near the coil. Scratch save slots |
 | `DeadCurrent.Map.Boathouse.TestHelpers` | (VS-02) The shared in-map harness on the real map: find by id and display name, talk and pick replies, teleport, F5, diverge, F9, and `QueueWaitUntil` |
 | `DeadCurrent.World.ConditionalPresence` | `ADCConditionalPresence`: default, first match, move with offsets, hide and re-show, deferral while observed, restore snaps, destroyed target, writes nothing |
+| `DeadCurrent.World.CellPortal` | (VS-03) `ADCCellPortal`: locked text and prompts, first-match variants, consequences once per use, arrival at the destination at rest, the scene cut snapping deferred presence (and never standing in for a restore), the timed transition, no destination refused, saves nothing |
 | `DeadCurrent.AI.ScavengerNotice` | The scavenger's notice rule: standing, the sight sense decides; crouched, only within 8 m and 45° |
 | `DeadCurrent.Map.Boathouse.ScavengerWarning` | Spotted from the path he warns, backing off returns him to his loop, he warns again, and coming within 3 m starts the chase |
 | `DeadCurrent.Presentation.ConditionalAudio` | `ADCConditionalAudio` follows a world flag (hum until cut, one-shot on the rising edge, silent when already set at start, re-arms after a silent restore) and writes no world state |
@@ -523,7 +524,7 @@ Single runtime module `DeadCurrent`. The module root is a public include path, s
 | `Save/` | Save game, persistent IDs, persistence interfaces |
 | `UI/` | HUD and widget base classes |
 | `Audio/` | Presentation cue helper (`DCAudioCues`): a sound played beside an existing action, by path, silent when the asset is missing |
-| `World/` | Persistent world objects, inspectables, `UDCWorldStateSubsystem` (world flags), conditional presence (`ADCConditionalPresence`), and the cosmetic presentation actors (`ADCFlickerLight`, `ADCConditionalAudio`) |
+| `World/` | Persistent world objects, inspectables, `UDCWorldStateSubsystem` (world flags), conditional presence (`ADCConditionalPresence`), the cell portal (`ADCCellPortal`), and the cosmetic presentation actors (`ADCFlickerLight`, `ADCConditionalAudio`) |
 
 Split into more modules only when a boundary is proven (for example an editor-only tools module).
 

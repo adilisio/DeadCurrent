@@ -4,14 +4,14 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` = `origin/main` (checked after the last push). Code baseline for the wave: the VS-02 commit **`e833811`** (full `e833811f03d36c80fe96bde7c0914a512c30ae8d`), on top of VS-01 `00d8d22` and the approved plan commits `24d3e0d` and `034cbc7`. The wave-handoff commit follows it (docs only; `git log -2`).
+- `main` = `origin/main` after the VS-03 merge (see `git log -3`). VS-03 was built on branch `vs/sys-portal` (`224457d`) and merged with `--no-ff`. Earlier: VS-02 `e833811`, VS-01 `00d8d22`, the approved plan `24d3e0d` + `034cbc7`.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
 
 **PHASE 6: STARTED** (Anthony approved the plan, 2026-09-30).
 
-**VS-01: COMPLETE. VS-02: COMPLETE. Next: FIRST PARALLEL WAVE READY** (prepared, not launched; only you launch it).
+**VS-01, VS-02, VS-03: COMPLETE.** The kit research is merged. Next: **VS-04** (the map architecture proof, now unblocked) and **VS-05** (the kit), both waiting for your go-ahead.
 
 | Task | State |
 | --- | --- |
@@ -19,8 +19,10 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-01 Baseline** | **COMPLETE** (`00d8d22`) |
 | **VS-02 Production foundations** | **COMPLETE** (`e833811`) |
 | First parallel wave: kit research (Gemini) | **DONE and merged** (accepted as input after one revision; see below) |
-| First parallel wave: VS-03 portal (Grok), VS-05 kit (Claude) | **READY, not launched** |
-| VS-04 onward | not started (VS-04 waits for the portal) |
+| **VS-03 Cell portal + scene cut** | **COMPLETE** (built by Claude at your request, merged; see below) |
+| VS-05 Settlement kit (Claude) | ready, not started |
+| VS-04 Map architecture proof | unblocked, not started |
+| VS-06 onward | not started |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -55,6 +57,39 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
   - `Tools\ReviewCapture.bat Lvl_Boathouse` through the new parameterised path: the same 36 views in the same order, 17 route frames, every view captured, no default material, missing texture, or error. Average view time **33.6 ms vs the 35.7 ms same-session reference**: no regression. Draw-call peaks per view: 67 to 487. (`Saved/Review/2026-09-30_1939`; reference `..._1924`.)
   - `Tools\Package.bat` with the new explicit `-map=`: cooked, packaged, `Lvl_Boathouse` smoke-loaded, all 8 presence rules evaluated, 0 errors.
 - **Problems found and fixed on the way (recorded, not hidden):** a batch `shift` had broken `%~dp0` in `RunTests.bat` (caught by an error-path test before any run); `PlayTest.bat` originally called the map resolver inside a parenthesised block, so cmd expanded its variables too early and **launched the game with no map while I was testing its error paths**. I killed those two stray game windows, rewrote that section with `goto` labels, and re-tested both the error paths (no launch) and the happy paths (map passed; no-argument form unchanged).
+
+## VS-03 Record: the Cell Portal (2026-10-01)
+
+You asked Claude to build this package instead of launching Grok. It was built exactly to its handoff (`Design/POIs/handoffs/sombre_WP-SYS-PORTAL.md`), on its own branch and worktree, then merged by the Integrator.
+
+- **What exists now:** `ADCCellPortal` (`World/`): a door, hatch, or stair that moves the player within the same map.
+  - **Variants:** ordered, first match wins, like inspect variants. Each has conditions, a verb, and consequences.
+  - **Locked:** when no variant passes it shows `LockedText` and nothing else happens. This is the slice's locked access, with no separate locked-door class.
+  - **Using it:** the screen fades out with input locked; at black the portal applies the variant's consequences, moves the player to `Destination` at rest, facing its yaw, and signals a **scene cut**; then it fades back in.
+  - **Instant mode:** all fade durations zero, for tests and tools.
+  - **Saves nothing:** no persistent id, no save field, no `SaveVersion` change.
+- **Scene cut:** `UDCWorldStateSubsystem::OnSceneCut` / `NotifySceneCut()`. Conditional presence now snaps on it as well as on a restore. That is what lets the net loft fill while the player climbs the stair. A scene cut is deliberately *not* a restore; later work (the tower's one-time pattern) depends on the difference.
+- **Test:** `DeadCurrent.World.CellPortal`. It covers:
+  - locked text and prompts
+  - first-match variants
+  - consequences once per use
+  - arrival at rest and facing
+  - the scene cut snapping a deferred presence change, while a plain flag change still defers
+  - the scene cut and the restore never standing in for each other
+  - the timed fade
+  - a missing destination is refused
+  - it saves nothing
+- **Verification on `main` after the merge:**
+  - `Tools\RunTests.bat -build`: **47 of 47** (34 editor, 13 map).
+  - `Tools\Package.bat`: cooked with 0 errors and 0 warnings; the smoke launch loaded `Lvl_Boathouse` with all 8 presence rules.
+  - No accepted behavior changed. The only edit to an existing class is presence binding one more signal to its existing `Snap`.
+- **Not yet seen in a rendered game:** the camera fade and the input lock are first exercised for real by VS-04's map test, `Map.Sombre.Architecture`.
+- **One engine detail found while testing (recorded, harmless):** a timer set during a frame starts at the next tick, so a timed fade-out lasts one frame longer than set.
+- **Decisions I made inside the contract** (listed in the handoff notes, all easy to change):
+  - the default verbs "Go" and "Try", and the locked line "It won't open."
+  - fades of 0.35 / 0.15 / 0.35 s
+  - a `TryUse` result enum, so tests can tell locked from passed without a HUD
+  - a portal with no destination refuses and logs an error
 
 ## Decisions
 
@@ -92,15 +127,29 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Automated Baseline
 
-- Build: `DeadCurrentEditor` builds (with the new `RHI` module dependency for the review capture's draw-call counts).
-- Tests: **46 of 46** (33 editor, 13 map). Phase 6 expects about 70 by the end; that is an estimate, not a target.
-- Package: the Development Win64 cook (explicit `-map=`) and the smoke launch of `Lvl_Boathouse` succeeded.
-- Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only (the VS-02 capture was 2 ms faster than the reference).
+- Build: `DeadCurrentEditor` builds.
+- Tests: **47 of 47** (34 editor, 13 map). Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Package: the Development Win64 cook (0 errors, 0 warnings) and the smoke launch of `Lvl_Boathouse` succeeded after the VS-03 merge.
+- Frame time: about 54 FPS at low spec, deferred. Phase 6 uses same-session A/B gates only. VS-03 adds no actors to any map, so no capture was needed.
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350.
 
-## Next: the First Parallel Wave (READY, not launched)
+## Next (your call)
 
-Three packages, three agents, no overlapping files. The wave plan, ownership table, merge order, launch prompt, and worktree commands are in **`Design/POIs/handoffs/PHASE6_WAVE1.md`**.
+- **VS-04, the map architecture proof**, is now unblocked. It is the Integrator's task (plan §15):
+  - the `Lvl_PointeSombre` core script and per-cell hooks
+  - the terrain-method spike
+  - a test cell with a two-way portal
+  - the storm, calm, and night atmosphere spike
+  - respawn after the crossing
+  - cooking and smoke-loading both maps
+  - `Map.Sombre.Architecture`
+  - It needs no new decision from you, only the go-ahead.
+- **VS-05, the settlement kit** (`Design/POIs/handoffs/sombre_WP-KIT.md`), is still ready and can run alongside VS-04: the files don't overlap. Its research input is merged (`Design/Kits/research/`, with the Integrator's corrections at the top).
+- I have not started either.
+
+## First Parallel Wave: Record (research merged; portal built by Claude and merged; kit not started)
+
+As prepared: three packages, three agents, no overlapping files. The research and the portal are done (above); WP-KIT remains. The wave plan, ownership table, merge order, launch prompt, and worktree commands are in **`Design/POIs/handoffs/PHASE6_WAVE1.md`**.
 
 | Package | Plan task | Agent | Handoff |
 | --- | --- | --- | --- |
