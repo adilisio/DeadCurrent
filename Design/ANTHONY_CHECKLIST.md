@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries **VS-08, the exterior greybox** (the VS-08 commit; its hash is recorded in the commit after it), on VS-07 (`7126435`) and VS-06 (`ad50261`). See the Checkpoint A section and the VS-08 Record.
+- `main` carries **VS-08, the exterior greybox** (`3cdadb4`, pushed; this checklist line was recorded in the commit after it), on VS-07 (`7126435`) and VS-06 (`ad50261`). See the Checkpoint A section and the VS-08 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
