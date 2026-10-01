@@ -93,11 +93,11 @@ Stop, write the reason at the top of Handoff Notes, and return control when any 
 
 Filled in by the receiving agent when it stops or finishes.
 
-- **Status:** not started
-- **Commits:**
-- **What was delivered:**
-- **Links that failed / licenses not confirmed:**
-- **What I could not inspect:**
-- **Open issues:**
-- **Exact next step:**
+- **Status:** Finished. (The run did not use git per the prompt's hard rule overriding the handoff, the Integrator will commit).
+- **Commits:** None (done by Integrator).
+- **What was delivered:** Revised `Design/Kits/research/kit_library_survey.md` and new `Design/Kits/research/reference_links.md`.
+- **Links that failed / licenses not confirmed:** None. All Poly Haven and ambientCG links were verified to be CC0 1.0 Universal / Public Domain. Reference links point to loc.gov and wikimedia commons.
+- **What I could not inspect:** Unreal `.uasset` files directly; relied on library inventory and JSON metadata.
+- **Open issues:** Should the lighthouse base room be completely round, or octagonal? Are the vessel decks meant to snap to the land grid?
+- **Exact next step:** Presentation Builder to begin WP-KIT using the recommended 1m/2m/4m vocabulary.
 - **Return to:** the Integrator (Claude)
