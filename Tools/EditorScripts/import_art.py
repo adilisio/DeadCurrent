@@ -273,6 +273,9 @@ def ensure_master():
     # The normal pin is a world-space vector. A scaled cube's UV0 tangents turn a
     # world-UV normal sample into black-and-white lighting.
     material.set_editor_property("tangent_space_normal", False)
+    # Phase 6: the settlement kit and the shoreline recipe draw these surfaces on instanced meshes. Without the usage
+    # flag the renderer silently swaps in the engine's default checker material (seen in the VS-05 kit gym capture).
+    material.set_editor_property("used_with_instanced_static_meshes", True)
 
     world = make(material, unreal.MaterialExpressionWorldPosition, -1800, 0)
     tile = make(material, unreal.MaterialExpressionScalarParameter, -1800, 200)

@@ -43,9 +43,15 @@ set "NAME=%NAME:/=\%"
 set "LOGNAME=%NAME:\=_%"
 set "LOG=%~dp0..\Saved\Logs\RebuildContent_%LOGNAME%.log"
 echo Running %NAME%...
+rem A fresh log every run: if the engine never starts, an old clean log must not read as a pass (Codex, VS-04 audit).
+if exist "%LOG%" del /q "%LOG%"
 "%UE_CMD%" "%PROJECT%" -run=pythonscript -script="%SCRIPTS%\%NAME%.py" -unattended -nullrhi -nosplash -log -abslog="%LOG%" >nul 2>&1
 rem A runtime error prints a Traceback; a syntax error does not (VS-04 found one reported as success), so the
 rem commandlet's own "executed with errors" line counts too.
+if not exist "%LOG%" (
+	echo %NAME% FAILED: the engine wrote no log. %LOG%
+	exit /b 1
+)
 findstr /C:"Traceback (most recent call last)" /C:"Python script executed with errors" "%LOG%" >nul
 if not errorlevel 1 (
 	echo %NAME% FAILED. See %LOG%
