@@ -21,7 +21,9 @@
   "ramp_zones": [
     {"name": "quay wall", "center": [-88.0, 8.0], "radius": 42.0, "ramp": 1.0},
     {"name": "Pointe sea cliff", "center": [28.0, 188.0], "radius": 42.0, "ramp": 2.5},
-    {"name": "tower north face", "center": [62.0, 160.0], "radius": 26.0, "ramp": 3.0}
+    {"name": "tower north face", "center": [62.0, 160.0], "radius": 26.0, "ramp": 3.0},
+    {"name": "north shore", "center": [104.0, 15.0], "radius": 48.0, "ramp": 5.0, "about": "VS-08: the exposed north side drops to the water in a short scarp, not a beach."},
+    {"name": "west head", "center": [-12.0, -236.0], "radius": 24.0, "ramp": 3.5, "about": "VS-08: the headland tip ends in a low cliff."}
   ],
   "hills": [
     {"name": "tower rock", "center": [25.0, 165.0], "height": 24.0, "radius": 34.0},
@@ -38,7 +40,8 @@
     {"name": "headland post", "center": [-18.0, -215.0], "radius": 7.0, "height": 10.5, "blend": 6.0}
   ],
   "causeways": [
-    {"name": "reef causeway", "points": [[-46.0, -222.0], [-75.0, -225.0], [-108.0, -227.0]], "height": 0.6, "width": 7.0, "falloff": 4.0}
+    {"name": "reef causeway", "points": [[-46.0, -222.0], [-55.0, -224.2], [-64.0, -222.6], [-74.0, -225.8], [-84.0, -224.4], [-95.0, -227.4], [-108.0, -227.0]], "height": 0.6, "width": 7.0, "falloff": 4.0,
+     "roughness": {"about": "VS-08 critic pass: a broken bedrock spine, its crest rising and dipping (0.3 to 0.9 m) and its edge wandering, not a level bank.", "seed": 4409, "cell": 5.0, "height_m": 0.3, "width_m": 0.8}}
   ],
   "rock_pads": [
     {"name": "Ashland Grey reef", "center": [-118.0, -228.0], "radius": 12.0, "height": 0.8, "falloff": 6.0}
@@ -48,11 +51,12 @@
     {"name": "south reef east", "points": [[-128.0, 48.0], [-118.0, 72.0], [-104.0, 92.0]], "height": 0.25, "width": 6.0, "falloff": 5.0}
   ],
   "noise": {"seed": 1931, "amplitude": 0.6, "cell": 10.0},
+  "folds": {"about": "VS-08 critic pass: a broader octave (metres over tens of metres) so the land rises and dips, hides and reveals, instead of reading as a smooth bank. Pads stay level.", "seed": 2207, "amplitude": 2.6, "cell": 30.0},
   "bounds": {
-    "about": "The walkable region. Hidden walls stand along this outline (core script). It follows the coast about 5 m out in shallow water, hugs the quay edge, and takes in the reef causeway and the Ashland Grey's reef.",
-    "height": 12.0,
+    "about": "The walkable region. Hidden walls stand along this outline (core script), from 3 m below the sea to 'height' (above the tower's gallery, so no high ground can step over them, VS-08). It follows the coast about 5 m out in shallow water, hugs the quay edge except for the Ida's berth (a pocket the moored Ida and her fender fill), and takes in the reef causeway and the Ashland Grey's reef. A hidden floor just under the water inside the fence (core script) catches anyone who goes off a cliff where the sea floor has no triangles.",
+    "height": 55.0,
     "points": [
-      [-88.6, -30.0], [-88.6, 45.0], [-85.0, 72.0], [-66.0, 108.0], [-44.0, 144.0], [-18.0, 177.0],
+      [-88.6, -30.0], [-88.6, -3.0], [-97.5, -3.0], [-97.5, 27.0], [-88.6, 27.0], [-88.6, 45.0], [-85.0, 72.0], [-66.0, 108.0], [-44.0, 144.0], [-18.0, 177.0],
       [10.0, 197.0], [40.0, 201.0], [63.0, 180.0], [77.0, 152.0], [91.0, 121.0], [99.0, 92.0],
       [105.0, 55.0], [109.0, 15.0], [105.0, -31.0], [95.0, -77.0], [76.0, -123.0], [52.0, -163.0],
       [26.0, -201.0], [5.0, -232.0], [-23.0, -245.0], [-44.0, -232.5], [-75.0, -230.0], [-105.0, -232.0],
@@ -61,6 +65,29 @@
       [-90.6, -38.0]
     ]
   },
+  "paths": [
+    {"id": "quay_store", "about": "Up from the quay to the store's porch, winding round the gear shed rather than straight up the scarp.",
+     "points": [[-84.0, 10.0], [-76.0, 0.0], [-66.0, -8.0], [-56.0, -10.0], [-48.0, -8.0], [-45.0, -6.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 24.0},
+    {"id": "quay_tower", "about": "The climb from the quay to the tower door: east along the harbor, then up the tower rock's south flank.",
+     "points": [[-84.0, 10.0], [-70.0, 24.0], [-58.0, 46.0], [-42.0, 74.0], [-24.0, 100.0], [-6.0, 124.0], [6.0, 142.0], [14.0, 152.0], [18.0, 156.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 24.0},
+    {"id": "settle_hut", "about": "The north path: from the settlement over the end of the north ridge and down to the cable hut.",
+     "points": [[-26.0, -8.0], [-8.0, 6.0], [14.0, 30.0], [36.0, 52.0], [58.0, 74.0], [74.0, 90.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 24.0},
+    {"id": "tower_hut", "about": "The cut stair down the tower rock's north side to the cable hut.",
+     "points": [[24.0, 150.0], [40.0, 138.0], [54.0, 124.0], [66.0, 110.0], [76.0, 98.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 28.0},
+    {"id": "lower_door", "about": "A spur off the cut stair to the vault's lower door at the foot of the tower rock's north face.",
+     "points": [[54.0, 124.0], [58.0, 134.0], [62.0, 145.0]],
+     "half_width_m": 1.6, "falloff_m": 3.0, "max_grade_deg": 26.0},
+    {"id": "quay_head", "about": "West from the quay, past the Pruitts' shed, along the south shore and up onto the west headland.",
+     "points": [[-84.0, 10.0], [-72.0, -10.0], [-62.0, -36.0], [-54.0, -62.0], [-48.0, -96.0], [-42.0, -130.0], [-34.0, -164.0], [-24.0, -192.0], [-20.0, -208.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 24.0},
+    {"id": "head_grey", "about": "Down off the headland and along the reef causeway to the Ashland Grey's stern.",
+     "points": [[-20.0, -212.0], [-34.0, -221.0], [-46.0, -222.0], [-55.0, -224.2], [-64.0, -222.6], [-74.0, -225.8], [-84.0, -224.4], [-95.0, -227.4], [-104.0, -227.2], [-112.0, -228.0]],
+     "half_width_m": 2.0, "falloff_m": 4.0, "max_grade_deg": 24.0}
+  ],
   "places": {
     "about": "Reference points for anchors, respawn, and the route-timing report. VS-08 refines them; cell specs (VS-07) own what stands there.",
     "quay_arrival": [-84.0, 10.0],

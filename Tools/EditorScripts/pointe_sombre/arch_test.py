@@ -14,7 +14,9 @@ MOVED = "dev.arch_moved"          # the test crate belongs inside the cell
 UNLOCKED = "dev.arch_unlocked"    # the cell's back door opens
 LOCKED_TEXT = "The back door is locked. (Architecture test door: dev.arch_unlocked opens it.)"
 
-HUT = (-7400.0, -2400.0)          # by the west end of the quay apron, clear of the arrival point
+# By the west end of the quay apron, clear of the arrival point. VS-08 moved it 7 m down the shore (from -7400, -2400),
+# off the line from the quay arrival to the false-light post (plan §5.5's landmark overlap; greybox_quay_west).
+HUT = (-7900.0, -2900.0)
 HALF = 150.0
 ROOM_X, ROOM_Y, ROOM_H = 400.0, 300.0, 350.0
 
@@ -30,8 +32,12 @@ def build(tk):
     tk.block("Test_Footing", CELL, hx - HALF - 40, hx + HALF + 40, hy - HALF - 40, hy + HALF + 40, low - 60.0, floor,
              material=concrete)
     tk.block("Test_Hut", CELL, hx - HALF, hx + HALF, hy - HALF, hy + HALF, floor, floor + 260.0, material=concrete)
-    outside = tk.marker("Test_Outside", CELL, (hx, hy + HALF + 160.0, floor + 100.0), 90.0, "ArchTest:Outside")
-    behind = tk.marker("Test_Behind", CELL, (hx - HALF - 160.0, hy, floor + 100.0), 180.0, "ArchTest:Behind")
+    # The exterior markers stand on the ground under them (portal rule: capsule height above the floor you land on);
+    # VS-08's folds left the ground outside the door below the hut's floor.
+    outside = tk.marker("Test_Outside", CELL, (hx, hy + HALF + 160.0, tk.ground_z(hx, hy + HALF + 160.0) + 100.0), 90.0,
+                        "ArchTest:Outside")
+    behind = tk.marker("Test_Behind", CELL, (hx - HALF - 160.0, hy, tk.ground_z(hx - HALF - 160.0, hy) + 100.0), 180.0,
+                       "ArchTest:Behind")
 
     # The interior cell, in its slot far from the island.
     o = tk.interior_origin(CELL)

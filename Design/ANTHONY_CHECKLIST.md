@@ -4,12 +4,12 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries VS-07 (the seven cell specs, the id ledger, the production report; docs only) on VS-06 (`ad50261`, the rocky-shoreline recipe). See the VS-07 and VS-06 Records. Earlier: `main` carried VS-05 on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
+- `main` carries **VS-08, the exterior greybox** (the VS-08 commit; its hash is recorded in the commit after it), on VS-07 (`7126435`) and VS-06 (`ad50261`). See the Checkpoint A section and the VS-08 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
 
-**PHASE 6: STARTED.** Working autonomously toward **Checkpoint A** (the island's shape), and stopping there for you.
+**PHASE 6: STARTED.** **Stopped at Checkpoint A** (the island's shape). Your playtest and decision come next; nothing after it has been started.
 
 | Task | State |
 | --- | --- |
@@ -22,14 +22,42 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-05 Settlement kit (WP-KIT)** | **COMPLETE** (merge `54aa7b5`; see the VS-05 Record) |
 | **VS-06 Shoreline recipe (WP-BIOME)** | **COMPLETE** (see the VS-06 Record) |
 | **VS-07 Slice specs and the id ledger** | **COMPLETE** (docs only; see the VS-07 Record) |
-| VS-08 Greybox | next; it ends at **Checkpoint A** |
+| **VS-08 Exterior greybox** | **COMPLETE** (see the VS-08 Record) |
+| **Checkpoint A** | **waiting for you** (see below) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
+
+## CHECKPOINT A: the Island's Shape (stopped here for you)
+
+**VS-08 is complete and I have stopped.** Nothing after Checkpoint A has been started: no VS-09, no narrative, no cell content. The island's layout and the cell footprints freeze when you accept it.
+
+**Play it:** `Tools\PlayTest.bat Lvl_PointeSombre` (close the editor first). You start on the *Ida*'s deck. The wheelhouse door ("Tell Varga about the light") fades you to the quay. Walk from there (plan §16: 15–20 min):
+- quay → tower door: the trail east along the harbor, then up the tower rock. Inside, "Climb the stair (greybox)" takes you to the lamp room; walk out onto the gallery.
+- tower → cable hut: the cut stair down the north side. A spur goes to the iron door at the rock's foot.
+- settlement → cable hut: the north path over the ridge's end
+- quay → west headland: past the Pruitts' shed to the post and its hide
+- headland → *Ashland Grey*: down onto the reef causeway, then the ramp onto the stern deck
+- Stub doors are labelled "(greybox)" and are all open: the tower stair, the hatch to the vault, the iron door, the conduit, and the loft stair from the store. They only prove that each cell can be reached; the real doors and their locks come with each cell.
+
+**What only you can judge** (the tests and the critic cannot):
+1. Does the island feel like a coherent place rather than a level?
+2. Does it feel larger than its physical footprint (about 435 × 245 m)?
+3. Are the route lengths right? (The timings are below.) Is any stretch empty just because it is long? The critic thinks the quay → headland walk is.
+4. Is the lighthouse a useful dominant landmark without making the island feel miniature?
+5. Does the settlement feel organically accumulated rather than grid-built? Its buildings stand 20–35 m apart, at the cell spec's positions. **The critic says too spread out. I left it for you, because it moves the spec's positions.**
+6. Do the harbor and the exposed shore feel geographically different (the sheltered cobble bight vs the north and west scarps with talus)?
+7. Is the cable hut isolated enough? From the settlement you see only the mast's top over the ridge; the hut appears at the crest.
+8. Does the west headland / *Ashland Grey* reveal work? From the quay the *Grey* is a small, far shape (plan §5.5 wants it seen from there); it looms only from the headland crest. Gemini's brief preferred it hidden from the quay. Which do you want?
+9. Does any place feel theme-park adjacent?
+10. Does anything look obviously procedural or generic? (The turf texture visibly tiles from height. That is art, later.)
+11. Do collision and visible terrain ever disagree? (Trails are painted per 2 m triangle, so their edges are saw-toothed; the collision is the same mesh you see.)
+12. Can you reach anything you should not (over the fence, off the map, into a void)?
 
 ## Inspect When You Return
 
 Things only you can judge, kept current as work lands (newest first):
 
+0. **Checkpoint A, the island's shape** (VS-08): the section above. `Tools\PlayTest.bat Lvl_PointeSombre`.
 1. **VS-05, the kit gym — accepted.** Anthony playtested `Lvl_KitGym` (2026-10-01). The store, lean-to, and cottage read as distinct structures; the shared kit looks convincing and not obviously repetitive; the visual quality is good enough to accept the kit concept. The one defect, a crate floating in the lean-to, is fixed (it now sits on the crate below). Recapture: `Saved/Review/2026-10-01_1033_Lvl_KitGym/contact_sheet.png`. The map is still development-only and is not part of the slice.
 2. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
    - You start on a stub of the *Ida*'s deck, offshore in the storm.
@@ -163,6 +191,113 @@ The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `e
 
 **Next task:** VS-06, the rocky shoreline recipe. Not started.
 
+## VS-08 Record: the Exterior Greybox (2026-10-01)
+
+**COMPLETE.** Every done-when item is met. Details: `Design/technical_architecture.md`, "The exterior greybox".
+
+**Recovered state.** This session took over from one that ran out of usage after building most of VS-08 (uncommitted on `7126435`). I re-checked everything against the repository before continuing: the routes, reach, the biome verifier, the map tests, and the captures, image by image. That work was coherent and is kept. On top of it this session:
+- found Gate 1 invalid (the toggle had toggled nothing) and fixed the tool
+- found the white capture frames were lightning
+- fixed the shore band reading as water
+- fixed the broken cable-hut reveal view
+- opened the quay sightline to the false-light post
+- ran the Gemini critic twice and reshaped the terrain in response
+- re-measured everything on the final geometry
+
+**The post-merge audit.** `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` did not exist at any point in this session; its scratch files stopped at 16:34. There was nothing to apply, so there were no repair commits. If it lands later, read it before VS-09.
+
+**What exists now:**
+- **Landmarks:** the tower (base room with a door, shaft, gallery with a rail, lamp room), the false-light post and its hide, the *Ashland Grey*'s tilted stern on its reef, the Authority mast, and the vault's iron door at the tower rock's foot.
+- **Kit shells**, all from the accepted VS-05 kit, seated on pilings over the real ground with nothing flattened: the store, Odette's cottage, a stand-in for the Leclair house (the cottage turned and re-skinned), the Pruitts' shed, the smokehouse, two harbor sheds, and the cable hut.
+- **Occluders:** three rock outcrops, so the tower slides out of view on the climb and returns.
+- **Stub interiors** (the vault, the net loft) and open stub portals to every interior and the lamp room.
+- **The six location volumes** with their final ids, and every ledger anchor. `Anchor_RemyMarker` is placed and held; nothing of Remy's is built, and the `remy_holdback` exclusion keeps his shore clear.
+- **The *Ida*:** after the strike, the same vessel lies at her berth on the quay (presence), with a fender.
+- **The three real shore zones** (`harbor.json`, `cable_hut.json`, `headland.json`, in the landed VS-06 schema plus `exclude_paths`). `_test.json` is retired from the map and kept as a verifier fixture.
+- **Trails** in `island.json`, graded (fill only) and painted.
+- **Containment:** the fence now rises to 55 m (it was 12 m, under the 26.5 m tower pad), on the `InvisibleWall` profile so it never blocks a sightline. A hidden floor at −1.25 m catches a fall off a cliff, so there is no `FellOutOfWorld`.
+- **New tests and tools:**
+  - `Map.Sombre.Greybox`
+  - the route-timing report `pointe_sombre/routes.py`
+  - the reachable-space flood fill `pointe_sombre/reach.py`
+  - 14 `greybox_*` review views
+
+**Frame kept: 435 × 245 m.** The short axis is under the plan's 300–400 m, but every route times inside its window on it, so the compression stays. Nothing was enlarged.
+
+**Route-timing report** (`py -3 Tools\EditorScripts\pointe_sombre\routes.py`). The table walks each trail on the terrain mesh at the player's 450 cm/s, on the final geometry (island hash `9fab64703e4707fc`). `Map.Sombre.Greybox` then walks the real player along the same trails; its times are in the verification below.
+
+| Leg (trail) | Walked | Climb | Steepest 2 m | Time | Target | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| Quay → Marthe's store (`quay_store`) | 48.3 m | 3.2 m | 24.0° | 10.7 s | 10–15 s | inside the window |
+| Quay → tower door (`quay_tower`) | 184.9 m | 30.0 m | 25.3° | 41.1 s | 35–50 s | inside |
+| Settlement → cable hut (`settle_hut`) | 143.1 m | 7.6 m | 31.9° | 31.8 s | 25–40 s | inside |
+| Tower → cable hut (`tower_hut`) | 79.5 m | 0.0 m | 32.8° | 17.7 s | 15–25 s | inside |
+| Quay → west-headland post (`quay_head`) | 231.2 m | 15.4 m | 25.2° | 51.4 s | 45–60 s | inside |
+| Headland → *Ashland Grey* stern (`head_grey`) | 98.2 m | 0.9 m | 26.5° | 21.8 s | 20–30 s | inside |
+
+**No reachable void** (`reach.py`):
+- From the quay on foot: 16,458 cells (6.6 ha), 0 void, with 127 of them in the shallows on the safety floor.
+- The store, the tower door, the cable hut, the headland post, the reef by the *Grey*, the iron door, and the settlement are all reachable.
+- The highest reachable ground is 26.5 m, against a 55 m fence.
+- In the engine, `Map.Sombre.Greybox` also sweeps every 5 m inside the fence (0 void) and pushes a pawn at 30 m and 50 m against every fence segment.
+
+**Landmarks** (the capture's trace check, `Saved/Review/2026-10-01_1824_Lvl_PointeSombre_checkpointA`): 13 of 13 pass.
+- The tower is in frame with a clear line of sight from every exterior cell's view: the deck, the quay (three looks), the settlement, the tower path, the cable hut, the headland post, and the *Grey*'s stern.
+- From the quay, the false-light post and the *Grey*'s hull are also clear (`greybox_quay_west`, plan §5.5's landmark overlap).
+- Moved to get there: the west harbor shed (8 m along the shore) and the TEST fixture door (7 m). Both stood on the line from the quay to the post.
+
+**Shore zones:**
+- 328 recipe instances in 20 components: talus 71, cobble 220, driftwood 11, scrub 26 (cap 800, not reached). 0 hand-placed Tier C (100% recipe).
+- Manifest hash `aaa46ba8…`; `verify_plan.py --manifest` re-plans it exactly.
+- Sheltered vs exposed is decided by data. Cobble collects in the reef-sheltered bight; talus is on the north and west scarps.
+- Nothing lies inside an authored, pad, trail, or automatic exclusion. The berths, Remy's holdback, the hide, Dell's post, the conduit, and the iron door are all clear.
+
+**Performance gate 1 (against gate 0, same session, final geometry):** `Saved/Review/2026-10-01_1826_Lvl_PointeSombre_gate1_final_ab`.
+- **Method:** one uncapped run. At every view, the greybox and the recipe (`Greybox+Biome` tags) are hidden and shown in alternating windows (ABBA, 4 cycles of 2 s), with lightning hidden. This laptop flips between two clock states even inside one view (windows near 4 ms beside windows near 11 ms), so each view compares off and on within the slow state. Separate before and after runs are meaningless here (VS-06 saw 1–9 ms swings).
+- **Greybox plus recipe cost:** median **+0.59 ms**, mean +0.67 ms over the 23 exterior views (range −0.38 to +1.75). The two control views, where nothing toggled is in view, read +0.18 and +0.77 ms, so the cost sits about at this machine's noise.
+- **Whole map, everything on:** 8–13 ms per view in the slow state and 3.6–6.2 ms in the fast one. Every view is under 16.7 ms (gate 0's views all sat at the 60 FPS cap, so gate 0 only bounds them from above). Nothing is hidden by the cap: this run was uncapped.
+- **Route** (the trail from the quay to the tower door, on the surface, everything on): mean 10.4 ms, p90 12.7 ms, max 17.1 ms. Gate 0's 21.3 ms route is not a valid baseline (VS-06 showed its frames were not on the surface).
+- **Cost columns:** 13–167 visible components and 0–510 instances per exterior view. Draw-call peaks (418–1542) are unstable on this machine (the same scene read 441 and 1340 in two runs), so they are recorded but not used as a gate signal; the VS-04 watch item stands.
+- An earlier valid run on the pre-critic terrain gave median +0.52 ms (`..._1756_..._gate1_ab`). The very first VS-08 run (`..._1553_..._gate1`) toggled nothing; it is the bug fixed below and is not counted.
+
+**Gemini critic (filed: `Design/POIs/reviews/sombre_greybox_gemini.md`):**
+- Round 1 said **NOT READY**, with three blockers. I checked each against the images:
+  - **The causeway read as a paved bridge.** Confirmed, and fixed: it is now a wandering, broken bedrock spine (crest 0.36–0.9 m), with no trail paint in the splash band.
+  - **The shores were gentle beaches everywhere.** Confirmed, and fixed: the exposed north and west now drop in scarps, and broad folds break up the smooth bank.
+  - **The settlement is too spread out.** Left for you.
+- Round 1 also misread two views, the tower-path outcrop and the cable-hut reveal. I found the pale "second water sheet" along the shore myself; it was also the white waterline slivers, and it is fixed (dark wet stone).
+- Round 2 said **READY WITH NAMED FIXES**. Its one blocker, the tower "swallowed" at the cable hut, is a misreading: the tower stands large in that frame, and the trace passes. Still FAIL in its view, and left for you: the settlement's spacing and the long western walk.
+
+**Review captures:**
+- `Saved/Review/2026-10-01_1824_Lvl_PointeSombre_checkpointA/contact_sheet.png` is the Checkpoint A set: 25 views and the 41-frame route, with lightning hidden (`-ReviewHideTag=Lightning`). Start with the `greybox_*` views.
+- `..._1754_..._checkpointA` is the pre-critic layout, for comparison.
+
+**Fixed on the way:**
+- **The capture's toggle A/B toggled nothing without `-ReviewToggleViews`** (`FString::StartsWith("")` is false). The first gate-1 run was therefore invalid; the tool is fixed (one line).
+- **Storm-look lightning whitened random capture frames.** Review sets for judging now hide it.
+- **The TEST fixture's exterior markers assumed level ground.** After the folds, the ground outside its door fell 0.65 m below the hut floor, and `Map.Sombre.Architecture` failed ("Back outside at the door") in the first final run. The markers now stand on the ground under them (the portal rule).
+- **The terrain's height bands compared cm with m** (the shingle band was 1.4 cm). Once it showed, its gravel mirrored the sky. It is now coast rock, and the white slivers along the waterline went with it.
+
+**Known limitations, deferred (none blocks Checkpoint A):**
+- Sun-facing slopes wash out pale in the dusk storm (most visible on the tower rock from the south-west). This is the storm look, not the greybox; it is for the storm's look-dev (VS-19/VS-21).
+- Trail edges are saw-toothed: they are painted per 2 m triangle.
+- The turf texture visibly tiles from height (art).
+- The quay is bare terrain. The built quay, the harbor dressing, and the real portals come with their cells.
+- The store's porch may sit high on its pilings; VS-11 owns its steps.
+- The lightning flash itself may be too strong (it whitens the ground); that is VS-19's storm.
+- Draw-call peaks are not a stable signal on this machine; frame time is measured A/B.
+
+- The package logs 2 cook warnings: the VS-06 driftwood meshes `DriftWood_7_LowPoly` and `Driftwood_11_LowPoly` "must be resaved before it will cook deterministically". They predate VS-08; resave them with the next pack-asset touch.
+
+**Verification after the last change (all on the committed state):**
+- `py -3 Tools\EditorScripts\pointe_sombre\routes.py --check`: 6 of 6 legs inside their windows.
+- `reach.py`: 0 void, every place reachable, fence clear.
+- `biome\verify_plan.py --manifest`: all checks pass, and the committed manifest re-plans to its own hash.
+- `Tools\RunTests.bat -build`: **53 of 53** (34 editor, 13 Boathouse, 6 Sombre). `Map.Sombre.Greybox` walked the real player: 10.3 s, 39.6 s, 31.0 s, 16.3 s, 50.6 s, 21.0 s, all inside their windows; 2,640 fence points, 0 void; 28 anchors; 6 location volumes.
+- `Tools\Package.bat`: the Development Win64 cook succeeded (0 errors, 2 warnings, above), and **both** `Lvl_Boathouse` and `Lvl_PointeSombre` smoke-load with 0 errors.
+- Review capture `..._1824_..._checkpointA` (25 of 25 views, 13 of 13 landmarks, no default material, missing texture, or error) and gate 1 `..._1826_..._gate1_final_ab`.
+- Meshy spend: **0**. No save-format change, no new condition or consequence type, no new foundational C++ (two test files and a one-line review-tool fix).
+
 ## VS-07 Record: the Slice Specs and the Id Ledger (2026-10-01)
 
 **COMPLETE (docs only: no Unreal, no C++, no actors).**
@@ -294,14 +429,14 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **52 of 52** (34 editor, 13 Boathouse map, 5 Sombre map) after VS-06 (`Map.Sombre.BiomeExclusions` added). 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
-- Package: the Development Win64 cook of **both** production maps (0 errors, 0 warnings), and both smoke-load. Re-run after the VS-05 merge (2026-10-01). `Lvl_KitGym` is not cooked.
+- Tests: **53 of 53** (34 editor, 13 Boathouse map, 6 Sombre map) after VS-08 (`Map.Sombre.Greybox` added). 52 after VS-06, 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Package: the Development Win64 cook of **both** production maps, and both smoke-load (re-run after VS-08, 2026-10-01: 0 errors, 2 warnings, the VS-06 driftwood meshes asking to be resaved). `Lvl_KitGym` is not cooked.
 - Frame time: about 54 FPS at low spec on the shore, deferred. Phase 6 uses same-session A/B gates only. Gate 0 is recorded in the VS-04 Record.
-- Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0**.
+- Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0** (through VS-08).
 
 ## Next
 
-Continuing autonomously toward Checkpoint A: **VS-08** (the exterior greybox) is next. Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started.
+**Stopped at Checkpoint A.** Waiting for your playtest and decision on the island's shape. After you accept it (with or without changes), the layout and the cell footprints freeze, and VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) can start when you say so. If `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` lands meanwhile, it is read before any of that.
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 
@@ -343,3 +478,5 @@ Launch prompt and worktree commands: `PHASE6_WAVE1.md` ("Launching an agent").
 - Mara is a placeholder mannequin; two unused generated heads remain in Content.
 - `DCLandingStageMapTest.cpp` keeps its own helper copies (an accepted file left unchanged on purpose; migrate later if wanted).
 - Untracked leftovers, not ours: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py`.
+- Two VS-06 driftwood meshes need a resave for a deterministic cook (package warnings).
+- Sun-facing slopes wash out pale in the dusk storm, and the lightning flash whitens the ground: storm look-dev, VS-19/VS-21.

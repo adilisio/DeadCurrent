@@ -17,7 +17,7 @@ import os
 import unreal
 
 HASH_TAG = "DCIslandHash"
-KINDS = ("turf", "rock", "shore", "seabed")
+KINDS = ("turf", "rock", "shore", "seabed", "path")
 ROCK_SLOPE_DEG = 38.0
 SHORE_TOP_M = 1.4
 SEABED_TOP_M = -0.4
@@ -27,19 +27,30 @@ def _log(msg):
     unreal.log_warning("[DCSOMBRE] " + msg)
 
 
-def _triangle_kind(p0, p1, p2):
+def _triangle_kind(p0, p1, p2, island=None, origin=(0.0, 0.0)):
     ax, ay, az = p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]
     bx, by, bz = p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]
     nx, ny, nz = ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx
     length = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
     slope = math.degrees(math.acos(min(1.0, abs(nz) / length)))
-    mean = (p0[2] + p1[2] + p2[2]) / 3.0
+    # Vertices are in cm (tile-local); the height thresholds are metres. (VS-08 fix: until FORMULA_VERSION 7 the mean
+    # was compared in cm, so the shingle band was under 1.4 cm instead of 1.4 m and the shore had almost no shingle.)
+    mean = (p0[2] + p1[2] + p2[2]) / 300.0
     if mean < SEABED_TOP_M:
         return "seabed"
+    if mean < SHORE_TOP_M:
+        # The splash band is wave-washed stone even under a trail (VS-08 critic pass: the trail painted along the reef
+        # causeway made it read as a paved bridge).
+        return "shore"
+    if island is not None and island.paths:
+        # A trail (island.json "paths", VS-08): the path surface under its walking width, whatever the slope.
+        cx = (p0[0] + p1[0] + p2[0]) / 300.0 + origin[0] / 100.0
+        cy = (p0[1] + p1[1] + p2[1]) / 300.0 + origin[1] / 100.0
+        d, path = island.path_distance(cx, cy)
+        if path is not None and d <= path.half_width:
+            return "path"
     if slope > ROCK_SLOPE_DEG:
         return "rock"
-    if mean < SHORE_TOP_M:
-        return "shore"
     return "turf"
 
 
@@ -83,7 +94,8 @@ def _tile_geometry(island, xs, ys, heights, i0, i1, j0, j1):
                 if ha < drop and hb < drop and hc < drop:
                     continue
                 ka, kb, kc = vid(*a), vid(*b), vid(*c)
-                tris[_triangle_kind(verts[ka], verts[kb], verts[kc])].append((ka, kb, kc))
+                tris[_triangle_kind(verts[ka], verts[kb], verts[kc], island, (ox * 100.0, oy * 100.0))].append(
+                    (ka, kb, kc))
     return (ox * 100.0, oy * 100.0), verts, tris
 
 

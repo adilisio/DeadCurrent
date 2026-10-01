@@ -1,0 +1,263 @@
+{
+  "map": "/Game/Maps/Lvl_PointeSombre",
+  "units": "cm",
+  "rotation_order": "pitch, yaw, roll",
+  "about": "VS-08's greybox views (Integrator): the composition Checkpoint A judges, after Gemini's VS-08 spatial brief. Retired cell by cell as each cell's own review file takes over. Views only: the core file owns the route and art_sentinels.",
+  "viewpoints": [
+    {
+      "id": "greybox_quay_arrival",
+      "location": [
+        -8300,
+        900,
+        350
+      ],
+      "rotation": [
+        4.5,
+        21.6,
+        0
+      ],
+      "expectation": "From the quay where the crossing lands you: the store anchoring the settlement up the slope, the harbor sheds at the water, and the tower above it all to the north-east; the whole island not given away at once.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5; Gemini VS-08 brief \u00a79.2",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_settlement_core",
+      "location": [
+        -4400,
+        -600,
+        670
+      ],
+      "rotation": [
+        10.6,
+        68.3,
+        0
+      ],
+      "expectation": "From the store's porch looking up toward the Pointe: varied rooflines in front, the tower above and beyond them, larger than any building; partly hidden is fine.",
+      "source": "Gemini VS-08 brief \u00a76, \u00a79.3",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_tower_path_mid",
+      "location": [
+        -4200,
+        7400,
+        478
+      ],
+      "rotation": [
+        17.2,
+        53.3,
+        0
+      ],
+      "expectation": "Halfway up the trail: the ground rising, the path's surface changing underfoot, the tower ahead and above, an outcrop beside the trail that hides it a few steps on.",
+      "source": "Gemini VS-08 brief \u00a72, \u00a79.4",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_tower_base_reversal",
+      "location": [
+        1650,
+        15450,
+        2820
+      ],
+      "rotation": [
+        -9.6,
+        -111.4,
+        0
+      ],
+      "expectation": "From the tower door looking back down over the island: the settlement small below, the quay and harbor, the headland far off; the climb was real.",
+      "source": "Gemini VS-08 brief \u00a79.5"
+    },
+    {
+      "id": "greybox_ridge_crest",
+      "location": [
+        4310,
+        5910,
+        1045
+      ],
+      "rotation": [
+        -6,
+        40,
+        0
+      ],
+      "expectation": "From the north path where it crests the ridge's end (96 m out of the settlement, the first point on the trail with a line of sight to the hut, by a terrain trace): the cable hut and its mast below on the north shore, the open lake beyond; the hut was not visible from the settlement (only the mast's top, over the ridge).",
+      "source": "Gemini VS-08 brief \u00a71, \u00a79.6"
+    },
+    {
+      "id": "greybox_headland_approach",
+      "location": [
+        -5600,
+        -6000,
+        484
+      ],
+      "rotation": [
+        2.6,
+        -76.2,
+        0
+      ],
+      "expectation": "On the trail west past the Pruitts' shed: the shed beside the path, the false-light post on the headland ahead across the bight; the sheltered harbor shore giving way to the exposed head.",
+      "source": "Gemini VS-08 brief \u00a72, \u00a79.7"
+    },
+    {
+      "id": "greybox_grey_reveal",
+      "location": [
+        -3000,
+        -20800,
+        729
+      ],
+      "rotation": [
+        -2.7,
+        -166.7,
+        0
+      ],
+      "expectation": "Cresting the headland: the Ashland Grey's broken stern on its reef at the end of the causeway, looming; seen here, not from the settlement.",
+      "source": "Gemini VS-08 brief \u00a71, \u00a77, \u00a79.8"
+    },
+    {
+      "id": "greybox_gallery",
+      "location": [
+        1950,
+        15750,
+        4860
+      ],
+      "rotation": [
+        -12.7,
+        -106.8,
+        0
+      ],
+      "expectation": "From the tower's gallery: the whole island at once (quay, settlement, headland, cable hut, the Grey's reef); plan \u00a721 gallery_view's shape.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5 (from the tower gallery, the whole island), \u00a721"
+    },
+    {
+      "id": "greybox_shore_transition",
+      "location": [
+        -8600,
+        -6400,
+        205
+      ],
+      "rotation": [
+        -0.0,
+        -73.1,
+        0
+      ],
+      "expectation": "Along the south shore from the sheltered bight toward the west headland: cobble and driftwood on the sheltered shore, barer rock and talus toward the exposed head.",
+      "source": "Gemini VS-08 brief \u00a75, \u00a79.10"
+    },
+    {
+      "id": "greybox_cable_hut",
+      "location": [
+        7600,
+        9700,
+        490
+      ],
+      "rotation": [
+        23.4,
+        130.6,
+        0
+      ],
+      "expectation": "At the cable hut: the hut and the mast beside you, the dark tower above the rock to the south-east.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5 (the tower pulls; visible from every exterior cell)",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_headland_post",
+      "location": [
+        -2200,
+        -20600,
+        1152
+      ],
+      "rotation": [
+        1.7,
+        83.1,
+        0
+      ],
+      "expectation": "At the false-light post on the west head: the hide and the post here, the dark tower far across the harbor to the north-east.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5, \u00a721 headland_post",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_grey_stern",
+      "location": [
+        -11300,
+        -22600,
+        490
+      ],
+      "rotation": [
+        2.3,
+        70.7,
+        0
+      ],
+      "expectation": "On the Ashland Grey's stern deck: the hull underfoot, the causeway behind, the tower small and far but there.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5 (the tower is never behind the player for long)",
+      "landmarks": [
+        {
+          "id": "tower_site",
+          "subject": "Tower_Shaft"
+        }
+      ]
+    },
+    {
+      "id": "greybox_ida_berth",
+      "location": [
+        -7800,
+        2200,
+        360
+      ],
+      "rotation": [
+        -4,
+        -139,
+        0
+      ],
+      "setup": {
+        "flags": [
+          "sombre.reef_struck"
+        ]
+      },
+      "expectation": "After the strike: the Ida moored along the quay wall at her berth (the same vessel as the crossing deck, moved by presence), her deck level with the quay across the fender.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.4 (two placements of the same art); Design/POIs/sombre.harbor.md"
+    },
+    {
+      "id": "greybox_quay_west",
+      "location": [
+        -8300,
+        900,
+        350
+      ],
+      "rotation": [
+        1,
+        -86,
+        0
+      ],
+      "expectation": "From the same quay spot as greybox_quay_arrival, turned west along the harbor: the false-light post small on the west head across the water, and the Ashland Grey's hull far beyond at the end of the reef. Both are far and quiet here; the headland crest is where the Grey looms (greybox_grey_reveal). With greybox_quay_arrival (the tower, NE) this is the plan's landmark overlap from the quay.",
+      "source": "VerticalSlicePhasePlan.txt \u00a75.5 (landmarks overlap: tower NE, post W, the Grey SW from the quay); C:/DeadCurrent_reviews/GEMINI_VS08_SPATIAL_BRIEF.md (the Grey as a delayed reveal)",
+      "landmarks": [
+        {"id": "false_light_post", "subject": "FalseLight_Post"},
+        {"id": "ashland_grey", "subject": "Grey_Hull"}
+      ]
+    }
+  ]
+}

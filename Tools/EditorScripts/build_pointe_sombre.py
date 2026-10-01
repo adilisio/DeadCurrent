@@ -29,6 +29,7 @@ if SOMBRE_SCRIPTS not in sys.path:
     sys.path.insert(0, SOMBRE_SCRIPTS)
 
 import island as island_mod  # noqa: E402
+import layout as layout_mod  # noqa: E402
 import terrain_mesh  # noqa: E402
 import toolkit as tk  # noqa: E402
 
@@ -39,8 +40,9 @@ PROBE_FILE = os.path.normpath(os.path.join(SCRIPTS, "..", "PointeSombre", "out",
 CORE = "Core"   # the outliner folder (Cells/Core) and tag (Cell:Core) of everything this script makes itself
 
 # Cell scripts, called in this order with the toolkit. Each owns only its own actors (Cells/<cell>, Cell:<cell>).
-# arch_test is the Integrator's architecture fixture (VS-04); crossing is the deck stub that VS-10 grows.
-CELLS = ["crossing", "arch_test"]
+# arch_test is the Integrator's architecture fixture (VS-04); crossing is the deck stub that VS-10 grows; greybox is the
+# Integrator's exterior greybox (VS-08, Checkpoint A), which each cell's builder replaces piece by piece.
+CELLS = ["crossing", "greybox", "arch_test"]
 
 # Interior cells are built far from the island (2.5 km east, 400 m up), 150 m apart: out of every exterior sightline,
 # out of the exterior fog, ambience, and lightning, and drawn only from inside (toolkit.make_interior).
@@ -76,7 +78,7 @@ def on_ground(name, up=100.0):
 def anchors_table():
     qx, qy, qz = on_ground("quay_arrival")
     deck = DECK_TOP
-    return [
+    shipped = [
         ("Anchor_NewGame_Deck", (DECK_CENTER[0], DECK_CENTER[1], deck + 100.0), 25.0,
          "the player start on the Ida's deck (crossing); the respawn rule's default place"),
         ("Anchor_CrossingExit_Quay", (qx, qy, qz), 40.0,
@@ -84,6 +86,11 @@ def anchors_table():
         ("Anchor_Respawn_TowerBase", on_ground("tower_base"), 200.0,
          "respawn once the vault is open (lighthouse cell builds the base around it)"),
     ]
+    # VS-08: every anchor reserved in the ledger (Design/POIs/sombre_ids.md §9), placed from Tools/PointeSombre/greybox.json.
+    lay = layout_mod.Layout.load(ISLAND)
+    reserved = [(name, loc, yaw, "reserved in the ledger" + (" (held for VS-20)" if held else ""))
+                for name, loc, yaw, held in lay.anchors(INTERIOR_SLOTS, deck=(DECK_CENTER, DECK_TOP, 25.0))]
+    return shipped + reserved
 
 
 # The Ida's deck: the crossing cell builds on it, the core needs it for the player start.
@@ -124,8 +131,13 @@ def build_terrain():
     materials = {
         "turf": tk.tinted_surface("MI_DC_Sombre_Turf", "MI_DC_LandRock", (0.78, 0.84, 0.66), tile_cm=520.0),
         "rock": tk.tinted_surface("MI_DC_Sombre_Rock", "MI_DC_CoastRock", (0.70, 0.72, 0.75), tile_cm=420.0),
-        "shore": tk.tinted_surface("MI_DC_Sombre_Shingle", "MI_DC_Gravel", (0.95, 0.94, 0.92), tile_cm=140.0),
+        # Wet dark stone: the VS-04 tint (0.95) was never seen (the band was 1.4 cm deep until the VS-08 unit fix) and read
+        # as white sand once it showed. On the gravel surface, even darkened, the band mirrored the sky and read as a
+        # second sheet of water (and as the white fringe along the causeway), so it is the coast rock, rough and dark.
+        "shore": tk.tinted_surface("MI_DC_Sombre_Shingle", "MI_DC_CoastRock", (0.40, 0.39, 0.37), tile_cm=140.0),
         "seabed": tk.tinted_surface("MI_DC_Sombre_Seabed", "MI_DC_Mud", (0.35, 0.36, 0.34)),
+        # VS-08: the trails (island.json "paths"), trodden earth and grit, so the ground changes underfoot.
+        "path": tk.tinted_surface("MI_DC_Sombre_Path", "MI_DC_Mud", (0.46, 0.43, 0.39), tile_cm=260.0),
     }
     tiles = terrain_mesh.ensure_tiles(ISLAND, TERRAIN_FOLDER, materials)
     for path, origin in tiles:
@@ -148,8 +160,19 @@ def build_walls():
     height = ISLAND.spec["bounds"]["height"] * 100.0
     for i, a in enumerate(points):
         b = points[(i + 1) % len(points)]
-        tk.own(tk.wall_segment(f"Edge_{i:02d}", CORE, a, b, -300.0, height, hidden=True), CORE, "SombreEdge")
-    tk.log(f"walls along {len(points)} outline points")
+        wall = tk.own(tk.wall_segment(f"Edge_{i:02d}", CORE, a, b, -300.0, height, hidden=True), CORE, "SombreEdge")
+        # Stops the player, not sight lines (InvisibleWall ignores the Visibility channel): an invisible fence must not
+        # block a landmark trace or the view from the crossing (VS-08).
+        wall.get_component_by_class(unreal.StaticMeshComponent).set_collision_profile_name("InvisibleWall")
+    # VS-08 containment: a hidden floor just under the water across the grid. Where the shore is a cliff the sea floor
+    # drops past drop_below within a few metres and has no triangles, so a player who stepped off the Pointe fell
+    # through the world (FellOutOfWorld, not the respawn rule; Codex VS-04 review). Now they land in the shallows,
+    # inside the fence, and walk out. The walls rise above the tower's gallery (island.json bounds.height).
+    g = ISLAND.spec["grid"]
+    floor_top = (float(g["drop_below"]) - 0.05) * 100.0
+    tk.own(tk.block("SafetyFloor", CORE, g["x_min"] * 100.0, g["x_max"] * 100.0, g["y_min"] * 100.0, g["y_max"] * 100.0,
+                    floor_top - 50.0, floor_top, hidden=True), CORE, "SombreSafetyFloor")
+    tk.log(f"walls along {len(points)} outline points, {height / 100.0:.0f} m tall; safety floor at {floor_top / 100.0:.2f} m")
 
 
 def build_nav():

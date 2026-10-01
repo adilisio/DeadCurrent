@@ -1783,7 +1783,9 @@ namespace DCReviewCapture
 			GatherSceneChecks(Run);
 			Run.ToggleOffMs.Reset();
 			Run.ToggleOnMs.Reset();
-			if (!ToggleTag().IsEmpty() && Run.Shots[Run.Index].Id.StartsWith(ToggleViews()))
+			// No -ReviewToggleViews means every view (FString::StartsWith is false for an empty prefix; VS-08's first
+			// gate-1 run toggled nothing because of it).
+			if (!ToggleTag().IsEmpty() && (ToggleViews().IsEmpty() || Run.Shots[Run.Index].Id.StartsWith(ToggleViews())))
 			{
 				Run.ToggleWindow = 0;
 				Run.WindowStart = Now;

@@ -232,23 +232,23 @@ Created by the Integrator in `build_pointe_sombre.py` `anchors_table()` before a
 | `Anchor_NewGame_Deck` | the *Ida*'s deck (−330 m, −360 m) | core player start; crossing | **shipped** |
 | `Anchor_CrossingExit_Quay` | the quay arrival | crossing portal (destination); harbor builds around it | **shipped** |
 | `Anchor_Respawn_TowerBase` | outside the tower base | core respawn rule only | **shipped** |
-| `Anchor_TowerStair_Base` | inside the base room, at the stair foot | `TowerStair_Down` destination | reserved |
-| `Anchor_TowerStair_Lamp` | in the lamp room, at the stair head | `TowerStair_Up` destination | reserved |
-| `Anchor_VaultHatch_Top` | base room, beside the hatch | `VaultHatch_In` destination | reserved |
-| `Anchor_VaultHatch_Bottom` | vault upper room, under the hatch (slot `vault`) | `VaultHatch_Out` destination | reserved |
-| `Anchor_VaultLower_Out` | the sea cliff below the tower, outside the jammed door | `VaultLower_In` destination | reserved |
-| `Anchor_VaultLower_In` | vault lower gallery, inside the door (slot `vault`) | `VaultLower_Out` destination | reserved |
-| `Anchor_VaultConduit_Out` | the cable hut, at the conduit mouth | `VaultConduit_In` destination | reserved |
-| `Anchor_VaultConduit_In` | vault cable gallery (slot `vault`) | `VaultConduit_Out` destination | reserved |
-| `Anchor_LoftStair_Store` | the foot of the store's outside stair | `LoftStair_Down` `day` destination | reserved |
-| `Anchor_LoftStair_Loft` | inside the loft, at the stair head (slot `net_loft`) | `LoftStair_Up` destination | reserved |
-| `Anchor_LoftStair_NightQuay` | the night quay, facing the tower | `LoftStair_Down` `night` destination | reserved |
-| `Anchor_IdaBerth` | the *Ida*'s berth along the quay wall | `crossing.py`'s *Ida* presence rule (deck → berth after `sombre.reef_struck`); the harbor builds the berth around it | reserved |
-| `Anchor_Mara_Rail` | the *Ida*'s rail on the deck | `harbor.py`'s Mara presence rule (her new-game placement) | reserved |
-| `Anchor_Mara_Porch` | the store porch | `harbor.py`'s Mara presence rule | reserved |
-| `Anchor_DellPost` | beside the false-light post's hide | `settlement.py`'s Dell presence rule (first storm, VS-16) | reserved |
-| `Anchor_LoftSeat_Marthe`, `_Odette`, `_Jonas`, `_Tem`, `_Dell`, `_Sigrun`, `_Hale`, `_Varga`, `_Mara` | the meeting's places in the loft (slot `net_loft`) | each person's owner script (`settlement.py`: Marthe, Odette, Jonas, Tem, Dell, Sigrun; `harbor.py`: Hale, Varga, Mara), a `loft` presence state each; `net_loft.py` builds the room around them | reserved |
-| `Anchor_RemyMarker` | harbor-mouth shore, inside the harbor zone's `remy_holdback` exclusion | VS-20 only; harbor owns the exclusion | **held** |
+| `Anchor_TowerStair_Base` | inside the base room, at the stair foot | `TowerStair_Down` destination | **placed** (VS-08) |
+| `Anchor_TowerStair_Lamp` | in the lamp room, at the stair head | `TowerStair_Up` destination | **placed** (VS-08) |
+| `Anchor_VaultHatch_Top` | base room, beside the hatch | `VaultHatch_In` destination | **placed** (VS-08) |
+| `Anchor_VaultHatch_Bottom` | vault upper room, under the hatch (slot `vault`) | `VaultHatch_Out` destination | **placed** (VS-08) |
+| `Anchor_VaultLower_Out` | the sea cliff below the tower, outside the jammed door | `VaultLower_In` destination | **placed** (VS-08) |
+| `Anchor_VaultLower_In` | vault lower gallery, inside the door (slot `vault`) | `VaultLower_Out` destination | **placed** (VS-08) |
+| `Anchor_VaultConduit_Out` | the cable hut, at the conduit mouth | `VaultConduit_In` destination | **placed** (VS-08) |
+| `Anchor_VaultConduit_In` | vault cable gallery (slot `vault`) | `VaultConduit_Out` destination | **placed** (VS-08) |
+| `Anchor_LoftStair_Store` | the foot of the store's outside stair | `LoftStair_Down` `day` destination | **placed** (VS-08) |
+| `Anchor_LoftStair_Loft` | inside the loft, at the stair head (slot `net_loft`) | `LoftStair_Up` destination | **placed** (VS-08) |
+| `Anchor_LoftStair_NightQuay` | the night quay, facing the tower | `LoftStair_Down` `night` destination | **placed** (VS-08) |
+| `Anchor_IdaBerth` | the *Ida*'s berth along the quay wall | `crossing.py`'s *Ida* presence rule (deck → berth after `sombre.reef_struck`); the harbor builds the berth around it | **placed** (VS-08) |
+| `Anchor_Mara_Rail` | the *Ida*'s rail on the deck | `harbor.py`'s Mara presence rule (her new-game placement) | **placed** (VS-08) |
+| `Anchor_Mara_Porch` | the store porch | `harbor.py`'s Mara presence rule | **placed** (VS-08) |
+| `Anchor_DellPost` | beside the false-light post's hide | `settlement.py`'s Dell presence rule (first storm, VS-16) | **placed** (VS-08) |
+| `Anchor_LoftSeat_Marthe`, `_Odette`, `_Jonas`, `_Tem`, `_Dell`, `_Sigrun`, `_Hale`, `_Varga`, `_Mara` | the meeting's places in the loft (slot `net_loft`) | each person's owner script (`settlement.py`: Marthe, Odette, Jonas, Tem, Dell, Sigrun; `harbor.py`: Hale, Varga, Mara), a `loft` presence state each; `net_loft.py` builds the room around them | **placed** (VS-08) |
+| `Anchor_RemyMarker` | harbor-mouth shore, inside the harbor zone's `remy_holdback` exclusion | VS-20 only; harbor owns the exclusion | **placed, held** (VS-08 placed the empty anchor; VS-20 only) |
 
 **People between cells.** Each person is one actor spawned by one script (§7). A placement in another cell's space goes to an anchor, never to that cell's actor or a coordinate the other cell owns. The keeper on the gallery at night is not Odette or Dell moved there. It is a lighthouse-owned silhouette (`Keeper_Silhouette`, two presence states, reading `keeper_odette` / `keeper_dell` and `meeting_done`), so no person's rule targets the tower.
 
@@ -261,14 +261,15 @@ Created by the Integrator in `build_pointe_sombre.py` `anchors_table()` before a
 | Id | File | Owner | Status |
 | --- | --- | --- | --- |
 | recipe `great_lakes_rocky_shore` | `Tools/Biomes/great_lakes_rocky_shore.json` | WP-BIOME (VS-06) | **shipped** (`ad50261`) |
-| zone `shore_test`, polygons `sheltered_bight`, `headland_tip`, exclusion `test_landing_clear` | `Tools/Biomes/zones/_test.json` | WP-BIOME. A proof, not a cell; not extended into the slice. VS-08 retires it when the three cell zones cover those shores | **shipped** |
-| zone `harbor`, polygons `harbor_shore`, `harbor_bight` | `Tools/Biomes/zones/harbor.json` | the harbor cell | reserved |
-| zone `cable_hut`, polygons `north_shore` | `Tools/Biomes/zones/cable_hut.json` | the cable-hut cell | reserved |
-| zone `headland`, polygons `headland_tip`, `causeway_shore`, `grey_reef` | `Tools/Biomes/zones/headland.json` | the headland cell | reserved |
+| zone `shore_test`, polygons `sheltered_bight`, `headland_tip`, exclusion `test_landing_clear` | `Tools/Biomes/zones/_test.json` | WP-BIOME. A proof, not a cell; not extended into the slice | **retired from the map** (VS-08): a fixture now (a `_` file is read by `verify_plan.py`, never put on the map) |
+| zone `harbor`, polygons `harbor_shore`, `harbor_bight` | `Tools/Biomes/zones/harbor.json` | the harbor cell (written by the Integrator in VS-08; the harbor's file from VS-10) | **placed** (VS-08) |
+| zone `cable_hut`, polygons `north_shore` | `Tools/Biomes/zones/cable_hut.json` | the cable-hut cell (Integrator in VS-08; the cell's file from VS-13) | **placed** (VS-08) |
+| zone `headland`, polygons `headland_tip`, `causeway_shore`, `grey_reef` | `Tools/Biomes/zones/headland.json` | the headland cell (Integrator in VS-08; the cell's file from VS-16) | **placed** (VS-08) |
 
 **Exactly three cell zones** (plan §10.4 reuse row): harbor, cable hut, headland. The crossing, settlement, lighthouse, and loft have no zone. Their keep-clear needs on a zoned shore are written as exclusions in the zone owner's file, requested by name. Zone exclusions use the **landed VS-06 schema** (`_test.json`):
 - shapes `box` (`center`, `half`, `yaw`), `circle` (`center`, `radius`), or `polygon` (`points`), in metres, each with a stable `id` and an optional `margin_m`
 - pads by name (`exclude_pads`: `name`, `margin_m`, joined to `island.json`)
+- trails by id (`exclude_paths`: `id`, `margin_m`, joined to `island.json` `paths`; added in VS-08, the same pattern as pads: the trail's half width plus the margin stays clear)
 - automatic radii around every interactable, portal, player start, character, and location volume
 - `BiomeExclude`-tagged actors are honored by the tool; cells may use them for corridors without a zone edit
 
@@ -290,7 +291,7 @@ Unique across `Tools/Review/Lvl_PointeSombre.json` and every `Tools/Review/Lvl_P
 | `loft_meeting` | `net_loft.json` | reserved |
 | `cable_hut_approach`, `cable_hut_door` | `cable_hut.json` | reserved |
 | `headland_post`, `grey_stern`, `night_headland` | `headland.json` | reserved |
-| `greybox_*` (VS-08's footprint and landmark views) | `greybox.json` (Integrator, VS-08; retired cell by cell as cell files take over) | reserved |
+| `greybox_quay_arrival`, `greybox_quay_west`, `greybox_settlement_core`, `greybox_tower_path_mid`, `greybox_tower_base_reversal`, `greybox_ridge_crest`, `greybox_headland_approach`, `greybox_grey_reveal`, `greybox_gallery`, `greybox_shore_transition`, `greybox_cable_hut`, `greybox_headland_post`, `greybox_grey_stern`, `greybox_ida_berth` | `greybox.json` (Integrator, VS-08; retired cell by cell as cell files take over) | **shipped** (VS-08) |
 | `remy_*` | `remy.json` | **held** (VS-20) |
 
 These are plan §21's minimum set, assigned to files. `harbor_mouth_remy`'s expectation until VS-20 is **clear rocks where Remy's boat will be, not a boat**.
@@ -302,7 +303,7 @@ These are plan §21's minimum set, assigned to files. `harbor_mouth_remy`'s expe
 | `Map.Sombre.Architecture`, `CrossMapLoad`, `Respawn`, `Atmosphere` | `DCSombreArchitectureMapTest.cpp` | Integrator | **shipped** |
 | `Map.Sombre.BiomeExclusions` | `DCSombreBiomeMapTest.cpp` | WP-BIOME | **shipped** (VS-06) |
 | `World.CellPortal` | `World/DCCellPortalTest.cpp` | Systems (VS-03) | **shipped** |
-| `Map.Sombre.Greybox` | `DCSombreGreyboxMapTest.cpp` | Integrator (VS-08) | reserved |
+| `Map.Sombre.Greybox` | `DCSombreGreyboxMapTest.cpp` | Integrator (VS-08) | **shipped** (VS-08) |
 | `Map.Sombre.Crossing` (B0 and B1: the harbor arrival lives here; there is **no** `Map.Sombre.Harbor`) | `DCSombreCrossingMapTest.cpp` | crossing + harbor (VS-10) | reserved |
 | `Map.Sombre.Settlement` | `DCSombreSettlementMapTest.cpp` | settlement (VS-11) | reserved |
 | `Map.Sombre.Lighthouse` | `DCSombreLighthouseMapTest.cpp` | lighthouse (VS-12) | reserved |

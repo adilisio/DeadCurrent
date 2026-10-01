@@ -574,7 +574,9 @@ bool FDCSombreCrossMapLoadTest::RunTest(const FString& Parameters)
 	{
 		TestEqual(TEXT("F9 of a slice save from the shore opens the slice"), Level(), FString(TEXT("Lvl_PointeSombre")));
 		TestTrue(TEXT("Slice state restored"), WorldState() && WorldState()->HasFlag(SliceFlag) && WorldState()->HasFlag(ReefStruck));
-		TestTrue(TEXT("Slice position restored (the quay)"), Player() && FVector::Dist2D(Player()->GetActorLocation(), *Quay) < 50.0);
+		const FVector Here = Player() ? Player()->GetActorLocation() : FVector::ZeroVector;
+		TestTrue(*FString::Printf(TEXT("Slice position restored (the quay): %.0f cm away at (%.0f, %.0f, %.0f)"),
+			FVector::Dist2D(Here, *Quay), Here.X, Here.Y, Here.Z), Player() && FVector::Dist2D(Here, *Quay) < 50.0);
 		return true;
 	}));
 

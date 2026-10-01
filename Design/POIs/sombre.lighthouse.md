@@ -79,7 +79,7 @@ Copied from `TEMPLATE.md`. Contract: **integrated** (`VerticalSlicePhasePlan.txt
   - the base room, lamp room, and gallery are walkable (gallery by hidden collision)
   - the tower shell is a landmark silhouette with hidden collision only where walked
   - the lower door's shore is reachable on the terrain collision (VS-08 proves it in `Map.Sombre.Greybox`)
-  - **Containment:** the high ground here is above the VS-04 fence (12 m vs the 26.5 m pad). VS-08 fixes containment before Anthony plays (Checkpoint A).
+  - **Containment:** the high ground here was above the VS-04 fence (12 m vs the 26.5 m pad). Fixed in VS-08: the fence rises to 55 m (above the gallery at 46.5 m), and a hidden floor at −1.25 m catches a fall off the cliffs inside it. `Map.Sombre.Greybox` pushes a pawn at 30 m and 50 m against every fence segment.
   - Vault: walkable floors, the catwalk and pipe route across the lower gallery; no AI.
 
 ## Gameplay

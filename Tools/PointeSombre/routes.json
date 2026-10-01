@@ -1,0 +1,15 @@
+{
+  "about": "Pointe Sombre's compressed-geography legs (VerticalSlicePhasePlan.txt §5.5) and their walking-time targets. Each leg names a path in island.json. Measured by Tools/EditorScripts/pointe_sombre/routes.py (terrain) and DeadCurrent.Map.Sombre.Greybox (the real player walking). VS-08's done-when: every leg within ±20% of its target window.",
+  "walk_speed_cm_s": 450.0,
+  "tolerance": 0.2,
+  "walkable_max_deg": 40.0,
+  "lowest_allowed_m": 0.2,
+  "legs": [
+    {"id": "quay_to_store", "path": "quay_store", "target_s": [10, 15], "fills": "the Ida pumping, net racks, a dues chit on a door"},
+    {"id": "quay_to_tower", "path": "quay_tower", "target_s": [35, 50], "fills": "the tower in view the whole climb; Remy's marker just off the path (VS-20)"},
+    {"id": "settlement_to_cable_hut", "path": "settle_hut", "target_s": [25, 40], "fills": "the mast seen over the ridge; the hut's loose door heard before it is seen (later content)"},
+    {"id": "tower_to_cable_hut", "path": "tower_hut", "target_s": [15, 25], "fills": "a cut stair down the north side; the mussel lines visible from above"},
+    {"id": "quay_to_headland", "path": "quay_head", "target_s": [45, 60], "fills": "the false-light post in view across the harbor; the Pruitts' shed on the way"},
+    {"id": "headland_to_grey", "path": "head_grey", "target_s": [20, 30], "fills": "reef rocks at low water; the hull looming"}
+  ]
+}

@@ -73,12 +73,14 @@ def load_recipe(path=None):
     return recipe
 
 
-def load_zones(directory=None):
-    """Every *.json in the zones folder, in file-name order. A cell adds its own file; nothing here changes."""
+def load_zones(directory=None, include_fixtures=False):
+    """Every *.json in the zones folder, in file-name order. A cell adds its own file; nothing here changes. Files whose
+    name starts with "_" are fixtures (VS-06's _test.json), read only when asked (verify_plan.py), never put on the map
+    (the same rule as Tools/ContentSpecs)."""
     directory = directory or ZONES_DIR
     zones = []
     for name in sorted(os.listdir(directory)):
-        if not name.endswith(".json"):
+        if not name.endswith(".json") or (name.startswith("_") and not include_fixtures):
             continue
         with open(os.path.join(directory, name), encoding="utf-8") as handle:
             zone = json.load(handle)
@@ -127,63 +129,9 @@ def clamp01(t):
     return 0.0 if t < 0.0 else 1.0 if t > 1.0 else t
 
 
-# --- The terrain mesh's own surface
+# --- The terrain mesh's own surface: island_mod.MeshSurface (shared with the route-timing report)
 
-class Surface:
-    """Heights on the terrain grid's vertices, interpolated on the same triangles terrain_mesh.py builds."""
-
-    def __init__(self, island):
-        self.island = island
-        g = island.spec["grid"]
-        self.x0, self.y0, self.step = float(g["x_min"]), float(g["y_min"]), float(g["step"])
-        self.drop = float(g["drop_below"])
-        self.ni = int(round((float(g["x_max"]) - self.x0) / self.step))
-        self.nj = int(round((float(g["y_max"]) - self.y0) / self.step))
-        self._v = {}
-
-    def vertex(self, i, j):
-        key = (i, j)
-        h = self._v.get(key)
-        if h is None:
-            h = self.island.height(self.x0 + i * self.step, self.y0 + j * self.step)
-            self._v[key] = h
-        return h
-
-    def triangle(self, x, y):
-        """(height, (dhdx, dhdy)) of the triangle under (x, y), or None where the mesh has no triangle."""
-        fx, fy = (x - self.x0) / self.step, (y - self.y0) / self.step
-        i, j = math.floor(fx), math.floor(fy)
-        if i < 0 or j < 0 or i >= self.ni or j >= self.nj:
-            return None   # off the terrain grid: no tile there
-        u, v = fx - i, fy - j
-        h00, h10 = self.vertex(i, j), self.vertex(i + 1, j)
-        h11, h01 = self.vertex(i + 1, j + 1), self.vertex(i, j + 1)
-        # terrain_mesh._tile_geometry: split along the diagonal with the smaller height difference.
-        if abs(h00 - h11) <= abs(h10 - h01):
-            if u >= v:   # (00, 10, 11)
-                tri = (h00, h10, h11)
-                h = h00 + (h10 - h00) * u + (h11 - h10) * v
-                grad = (h10 - h00, h11 - h10)
-            else:        # (00, 11, 01)
-                tri = (h00, h11, h01)
-                h = h00 + (h11 - h01) * u + (h01 - h00) * v
-                grad = (h11 - h01, h01 - h00)
-        else:
-            if u + v <= 1.0:   # (00, 10, 01)
-                tri = (h00, h10, h01)
-                h = h00 + (h10 - h00) * u + (h01 - h00) * v
-                grad = (h10 - h00, h01 - h00)
-            else:              # (10, 11, 01)
-                tri = (h10, h11, h01)
-                h = h11 + (h11 - h01) * (u - 1.0) + (h11 - h10) * (v - 1.0)
-                grad = (h11 - h01, h11 - h10)
-        if all(t < self.drop for t in tri):
-            return None
-        return h, (grad[0] / self.step, grad[1] / self.step)
-
-    def height(self, x, y):
-        tri = self.triangle(x, y)
-        return None if tri is None else tri[0]
+Surface = island_mod.MeshSurface
 
 
 # --- Exposure
@@ -250,6 +198,8 @@ def _shape_hit(shape, x, y, extra=0.0):
         lx = (x - cx) * math.cos(a) + (y - cy) * math.sin(a)
         ly = -(x - cx) * math.sin(a) + (y - cy) * math.cos(a)
         return abs(lx) <= float(hx) + extra and abs(ly) <= float(hy) + extra
+    if kind == "polyline":
+        return island_mod.polyline_distance(x, y, [tuple(p) for p in shape["points"]]) <= float(shape["radius"]) + extra
     if kind == "polygon":
         pts = [tuple(p) for p in shape["points"]]
         if island_mod.point_in_polygon(x, y, pts):
@@ -269,6 +219,14 @@ def exclusion_set(island, recipe, zone, automatic):
             raise RecipeError(f"zone {zone['id']}: no pad named '{ref['name']}' in island.json")
         pad = pads[ref["name"]]
         out.append((f"pad:{ref['name']}", {"shape": "circle", "center": pad["center"], "radius": pad["radius"]},
+                    float(ref.get("margin_m", 0.0))))
+    paths = {p["id"]: p for p in island.spec.get("paths", [])}
+    for ref in zone.get("exclude_paths", []):
+        if ref["id"] not in paths:
+            raise RecipeError(f"zone {zone['id']}: no path '{ref['id']}' in island.json")
+        path = paths[ref["id"]]
+        out.append((f"path:{ref['id']}", {"shape": "polyline", "points": path["points"],
+                                          "radius": float(path.get("half_width_m", 1.5))},
                     float(ref.get("margin_m", 0.0))))
     radii = recipe["automatic_radii_m"]
     for item in automatic:

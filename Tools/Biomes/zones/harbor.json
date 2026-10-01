@@ -1,0 +1,28 @@
+{
+  "about": "The harbor cell's shoreline zone (Design/POIs/sombre.harbor.md). Written by the Integrator in VS-08 (the greybox) because the cell's builder has not started; it becomes the harbor owner's file in VS-10. The south shore round the quay and the bight behind the south reef; exposure auto (fetch reads the reef's shelter). Metres; X north, Y east.",
+  "id": "harbor",
+  "recipe": "great_lakes_rocky_shore",
+  "seed": 23,
+  "density_scale": 1.0,
+  "polygons": [
+    {"id": "harbor_shore", "exposure": "auto",
+     "points": [[-100.0, -60.0], [-100.0, 76.0], [-68.0, 76.0], [-68.0, -60.0]]},
+    {"id": "harbor_bight", "exposure": "auto",
+     "points": [[-100.0, -60.0], [-93.0, -104.0], [-82.0, -152.0], [-58.0, -152.0], [-62.0, -104.0], [-68.0, -60.0]]}
+  ],
+  "exclusions": [
+    {"id": "ida_berth", "shape": "box", "center": [-92.0, 12.0], "half": [5.0, 14.0], "yaw": 0.0},
+    {"id": "hale_berth", "shape": "box", "center": [-92.0, -18.0], "half": [4.0, 12.0], "yaw": 0.0},
+    {"id": "remy_holdback", "shape": "box", "center": [-82.0, 58.0], "half": [8.0, 8.0], "yaw": 0.0,
+     "about": "Held clear for VS-20's fresh-agent cell (Remy's marker; Design/POIs/sombre_ids.md §13). Empty on purpose."}
+  ],
+  "exclude_pads": [
+    {"name": "quay apron", "margin_m": 4.0},
+    {"name": "settlement terrace", "margin_m": 6.0}
+  ],
+  "exclude_paths": [
+    {"id": "quay_store", "margin_m": 1.0},
+    {"id": "quay_tower", "margin_m": 1.0},
+    {"id": "quay_head", "margin_m": 1.0}
+  ]
+}

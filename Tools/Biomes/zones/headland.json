@@ -1,0 +1,30 @@
+{
+  "about": "The headland cell's shoreline zone (Design/POIs/sombre.headland.md): the west headland's tip, the reef causeway's shore, and the Ashland Grey's reef. Written by the Integrator in VS-08; the headland owner's file from VS-16 (the plan's 20-line agent test is a zone added like this, with no tool change). Exposure auto: fetch reads the open tip as exposed and the causeway's lee as sheltered. Metres.",
+  "id": "headland",
+  "recipe": "great_lakes_rocky_shore",
+  "seed": 59,
+  "density_scale": 1.0,
+  "polygons": [
+    {"id": "headland_tip", "exposure": "auto",
+     "points": [[-58.0, -186.0], [-58.0, -258.0], [32.0, -258.0], [32.0, -186.0]]},
+    {"id": "causeway_shore", "exposure": "auto",
+     "points": [[-108.0, -236.0], [-58.0, -233.0], [-58.0, -212.0], [-108.0, -216.0]]},
+    {"id": "grey_reef", "exposure": "auto",
+     "points": [[-137.0, -229.0], [-132.0, -242.0], [-119.0, -247.0], [-106.0, -242.0], [-101.0, -229.0], [-106.0, -216.0],
+                [-119.0, -211.0], [-132.0, -216.0]]}
+  ],
+  "exclusions": [
+    {"id": "post_hide", "shape": "circle", "center": [-18.0, -215.0], "radius": 5.0},
+    {"id": "footprint_read", "shape": "box", "center": [-21.0, -209.0], "half": [2.0, 3.0], "yaw": 0.0},
+    {"id": "dell_post", "shape": "circle", "center": [-16.0, -212.5], "radius": 2.0},
+    {"id": "grey_combat", "shape": "circle", "center": [-119.0, -229.0], "radius": 11.0,
+     "about": "The fight's ground round the stern: cover is the hull's, not scattered rocks."}
+  ],
+  "exclude_pads": [
+    {"name": "headland post", "margin_m": 4.0}
+  ],
+  "exclude_paths": [
+    {"id": "head_grey", "margin_m": 1.5},
+    {"id": "quay_head", "margin_m": 1.0}
+  ]
+}

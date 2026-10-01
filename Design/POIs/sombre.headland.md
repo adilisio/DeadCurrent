@@ -42,6 +42,7 @@ Copied from `TEMPLATE.md`. Contract: standard (`VerticalSlicePhasePlan.txt` §11
   - `winch_approach`, `cache_approach`: boxes, half (1.5, 1.5), at each
   - automatic radii: the wrecker, the inspectables, the containers, the location volumes
   - sightlines to the tower and across the harbor: `N/A — Tier C instances are under 3 m tall; no box.`
+  - **Landed in VS-08** (`zones/headland.json`, written by the Integrator; this cell's file from VS-16): `exclude_pads` `headland post` (4); `post_hide` r 5; `footprint_read` box (−21, −209) half (2, 3); `dell_post` r 2; `grey_combat` circle centred on the hull (−119, −229), **r 11** (planned r 14 at (−118, −228); widen it here if the fight needs it); and, in place of `causeway_corridor`, `exclude_paths` `head_grey` (margin 1.5: the trail's 2 m half width plus 1.5 m, the planned 3.5 m) and `quay_head` (margin 1). `winch_approach` and `cache_approach` wait for the winch and the cache (VS-16). The causeway is now a rough, wandering bedrock spine (crest 0.36–0.9 m; `island.json` `roughness`), and the trail follows it.
 - **Navigation requirements:** the causeway is walkable (terrain collision); the stern deck by hidden collision; **the wrecker needs a nav area on the stern deck** (a `NavMeshBoundsVolume` added by the Integrator when VS-16 needs it; VS-04's nav bounds cover the terrain grid, which includes the reef).
 
 ## Gameplay

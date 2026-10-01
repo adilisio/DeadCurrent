@@ -42,6 +42,7 @@ Copied from `TEMPLATE.md`. Contract: standard (`VerticalSlicePhasePlan.txt` §11
   - Requested by the settlement spec, if they fall inside this zone: `store_door`, `net_racks`, `smokehouse_front`, `loft_stair_foot`. The settlement owns the names and positions; this zone file carries the boxes.
   - Automatic radii (the tool): Varga, Mara, Hale, the portals and anchors' actors, the location volume.
   - Sightline to `tower_site`: `N/A — Tier C instances are under 3 m tall and cannot block the view of a tower on a 26 m rock; no box.`
+  - **Landed in VS-08** (`zones/harbor.json`, written by the Integrator; the harbor's file from VS-10): the two pads; `ida_berth` (half (5, 14)), `hale_berth`, `remy_holdback` as planned; the two route boxes became `exclude_paths` `quay_store`, `quay_tower`, `quay_head` (margin 1 each), which follow the trails as built. The west harbor shed stands at (−82, −20), off the line from the quay arrival to the false-light post, and the TEST fixture moved to (−79, −29) for the same reason; from the quay the post and the *Grey* both pass the landmark trace (`greybox_quay_west`), the *Grey* far and small.
 - **Navigation requirements:** the quay apron and the shore path are walkable terrain (the 2 m collision mesh). Varga and Hale stand on vessel decks (hidden collision, the Landing Stage pattern). No AI patrols.
 
 ## Gameplay

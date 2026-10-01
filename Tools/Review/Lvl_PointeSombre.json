@@ -11,7 +11,7 @@
       "rotation": [4, 55, 0],
       "expectation": "From the quay arrival point in the dusk storm (the new-game look): the island rises toward the tower rock on the Pointe, and its shape still reads as land against a storm sky, dark but not black.",
       "source": "VerticalSlicePhasePlan.txt §5.4, §6 #8 (dusk storm); VS-04 atmosphere spike",
-      "landmarks": [{"id": "tower_site", "location": [2200, 16000, 2700]}]
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
     },
     {
       "id": "quay_calm",
@@ -20,7 +20,7 @@
       "setup": {"flags": ["sombre.hale_arrived"]},
       "expectation": "The same view after the storm passes (calm evening): warmer, clearer, the far shore and the tower rock read further away; clearly a different time and weather from the storm, not just a brighter one.",
       "source": "VerticalSlicePhasePlan.txt §6 #8 (calm evening after knows); VS-04 atmosphere spike",
-      "landmarks": [{"id": "tower_site", "location": [2200, 16000, 2700]}]
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
     },
     {
       "id": "quay_night",
@@ -29,14 +29,15 @@
       "setup": {"flags": ["sombre.hale_arrived", "sombre.meeting_done"]},
       "expectation": "The same view in the second storm, at night: dark and cold blue, the island's skyline still readable against the sky so a lit tower would read later.",
       "source": "VerticalSlicePhasePlan.txt §6 #8 (night storm after the meeting); VS-04 atmosphere spike",
-      "landmarks": [{"id": "tower_site", "location": [2200, 16000, 2700]}]
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
     },
     {
       "id": "crossing_deck",
       "location": [-33000, -36000, 470],
       "rotation": [3, 40, 0],
       "expectation": "From the Ida's deck (stub) in the storm: open water ahead, the island low on the horizon to the north-east; the deck and rail read as a vessel, not a floating box.",
-      "source": "VerticalSlicePhasePlan.txt §5.4 (the crossing); VS-04 crossing-deck stub"
+      "source": "VerticalSlicePhasePlan.txt §5.4 (the crossing); VS-04 crossing-deck stub",
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
     },
     {
       "id": "island_overview",
@@ -52,7 +53,7 @@
       "rotation": [6, 75, 0],
       "expectation": "From the settlement terrace in the storm: the tower rock on the Pointe is the highest thing in view and pulls the eye.",
       "source": "VerticalSlicePhasePlan.txt §5.5 (the tower pulls)",
-      "landmarks": [{"id": "tower_site", "location": [2200, 16000, 2700]}]
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
     },
     {
       "id": "arch_cell_inside",
@@ -70,11 +71,11 @@
     }
   ],
   "route": {
-    "expectation": "Walking up from the quay toward the tower rock in the storm: continuous ground, the rock ahead, nothing floating.",
+    "expectation": "Walking the trail from the quay up to the tower door in the storm (island.json path quay_tower): continuous ground underfoot, the tower slipping behind the outcrops and found again, nothing floating.",
     "source": "VerticalSlicePhasePlan.txt §5.5 (quay to tower base, 35-50 s)",
     "look_pitch": 2,
     "ground_tag": "SombreTerrain",
     "probe_from_cm": 20000,
-    "points": [[-8400, 1000], [-7000, 5000], [-4500, 9500], [-1500, 13000], [1000, 15200]]
+    "points": [[-8400, 1000], [-7000, 2400], [-5800, 4600], [-4200, 7400], [-2400, 10000], [-600, 12400], [600, 14200], [1400, 15200], [1800, 15600]]
   }
 }

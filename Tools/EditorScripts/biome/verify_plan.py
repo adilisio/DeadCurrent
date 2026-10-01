@@ -35,8 +35,11 @@ def in_window(value, window):
 def main():
     island = plan.island_mod.Island.load()
     recipe = plan.load_recipe()
-    zones = plan.load_zones()
-    test = next(z for z in zones if z["id"] == "shore_test")
+    # The VS-06 fixture zone (_test.json) carries the contrast and exclusion proofs; the map's own zones are checked by
+    # the same rules below as part of the full plan.
+    zones = [z for z in plan.load_zones(include_fixtures=True) if z["_file"] == "_test.json"]
+    map_zones = plan.load_zones()
+    test = zones[0]
     families = {f["id"]: f for f in recipe["families"] if f.get("enabled", True)}
 
     # A fake door inside the sheltered bight, in its densest pocket (23 instances within 4 m without it): its
@@ -145,12 +148,25 @@ def main():
     except plan.RecipeError:
         check(True, "a family with collision is refused")
 
+    print("The map's zones")
+    m = plan.generate(island, recipe, map_zones, [])
+    check(plan.generate(island, recipe, map_zones, [])["hash"] == m["hash"], f"the map's zones plan deterministically ({m['hash'][:16]})")
+    mpolys = {(z["id"], p["id"]): [tuple(q) for q in p["points"]] for z in map_zones for p in z["polygons"]}
+    check(all(plan.island_mod.point_in_polygon(p["x_mm"] / 1000.0, p["y_mm"] / 1000.0, mpolys[(p["zone"], p["polygon"])])
+              for p in m["placements"]), "every map placement is inside its polygon")
+    for z in map_zones:
+        exs = plan.exclusion_set(island, recipe, z, [])
+        inside = sum(1 for p in m["placements"] if p["zone"] == z["id"] for _i, shape, extra in exs
+                     if plan._shape_hit(shape, p["x_mm"] / 1000.0, p["y_mm"] / 1000.0, extra - 0.001))
+        check(inside == 0, f"zone {z['id']}: nothing inside its authored, pad, or path exclusions")
+    print(f"  map plan counts {m['counts']} total {sum(m['counts'].values())} capped {m['capped']}")
+
     if "--manifest" in sys.argv:
         print("Committed manifest")
         with open(MANIFEST, encoding="utf-8") as handle:
             manifest = json.load(handle)
         check(plan.payload_hash(manifest) == manifest["hash"], "the manifest's hash matches its own payload")
-        again = plan.generate(island, recipe, zones, manifest["inputs"]["automatic"])
+        again = plan.generate(island, recipe, map_zones, manifest["inputs"]["automatic"])
         check(again["hash"] == manifest["hash"],
               f"re-planning from the committed inputs gives the committed hash ({again['hash'][:16]})")
 

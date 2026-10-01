@@ -189,7 +189,7 @@ namespace DCSombreBiomeTest
 	struct FShape
 	{
 		FString Id;
-		FString Kind;        // circle, box, polygon
+		FString Kind;        // circle, box, polygon, polyline (a trail: within Radius of its centre line)
 		FVector2D Center = FVector2D::ZeroVector;
 		double Radius = 0.0;
 		FVector2D Half = FVector2D::ZeroVector;
@@ -210,6 +210,17 @@ namespace DCSombreBiomeTest
 				const double LX = D.X * FMath::Cos(A) + D.Y * FMath::Sin(A);
 				const double LY = -D.X * FMath::Sin(A) + D.Y * FMath::Cos(A);
 				return FMath::Abs(LX) <= Half.X + Margin && FMath::Abs(LY) <= Half.Y + Margin;
+			}
+			if (Kind == TEXT("polyline"))
+			{
+				for (int32 I = 1; I < Points.Num(); ++I)
+				{
+					if (FVector2D::Distance(P, FMath::ClosestPointOnSegment2D(P, Points[I - 1], Points[I])) <= Radius + Margin)
+					{
+						return true;
+					}
+				}
+				return false;
 			}
 			// Polygon: inside, or within the margin of an edge.
 			bool bInside = false;
@@ -392,6 +403,25 @@ bool FDCSombreBiomeExclusionsTest::RunTest(const FString& Parameters)
 		}
 
 		// 4. Authored and pad exclusions, read from the zone files and island.json (the test cannot drift from them).
+		TMap<FString, TArray<FVector2D>> PathPoints;
+		TMap<FString, double> PathHalfWidths;
+		const TArray<TSharedPtr<FJsonValue>>* IslandPaths = nullptr;
+		if (Island->TryGetArrayField(TEXT("paths"), IslandPaths))
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *IslandPaths)
+			{
+				const TSharedPtr<FJsonObject> Path = Value->AsObject();
+				TArray<FVector2D> Points;
+				for (const TSharedPtr<FJsonValue>& Point : Path->GetArrayField(TEXT("points")))
+				{
+					Points.Add(Pair(Point->AsArray()));
+				}
+				double HalfWidth = 1.5;
+				Path->TryGetNumberField(TEXT("half_width_m"), HalfWidth);
+				PathPoints.Add(Path->GetStringField(TEXT("id")), Points);
+				PathHalfWidths.Add(Path->GetStringField(TEXT("id")), HalfWidth);
+			}
+		}
 		TMap<FString, FVector2D> PadCenters;
 		TMap<FString, double> PadRadii;
 		for (const TSharedPtr<FJsonValue>& Value : Island->GetArrayField(TEXT("pads")))
@@ -434,6 +464,21 @@ bool FDCSombreBiomeExclusionsTest::RunTest(const FString& Parameters)
 					Value->AsObject()->TryGetNumberField(TEXT("margin_m"), Pad.Margin);
 					TestTrue(*FString::Printf(TEXT("Pad '%s' exists in island.json"), *Name), PadRadii.Contains(Name));
 					ZoneShapes.Add(Pad);
+				}
+			}
+			if (Zone->TryGetArrayField(TEXT("exclude_paths"), Values))
+			{
+				for (const TSharedPtr<FJsonValue>& Value : *Values)
+				{
+					const FString Id = Value->AsObject()->GetStringField(TEXT("id"));
+					FShape Trail;
+					Trail.Id = TEXT("path ") + Id;
+					Trail.Kind = TEXT("polyline");
+					Trail.Points = PathPoints.FindRef(Id);
+					Trail.Radius = PathHalfWidths.FindRef(Id);
+					Value->AsObject()->TryGetNumberField(TEXT("margin_m"), Trail.Margin);
+					TestTrue(*FString::Printf(TEXT("Path '%s' exists in island.json"), *Id), PathPoints.Contains(Id));
+					ZoneShapes.Add(Trail);
 				}
 			}
 			Shapes += ZoneShapes.Num();
