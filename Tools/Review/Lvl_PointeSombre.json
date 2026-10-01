@@ -73,6 +73,8 @@
     "expectation": "Walking up from the quay toward the tower rock in the storm: continuous ground, the rock ahead, nothing floating.",
     "source": "VerticalSlicePhasePlan.txt §5.5 (quay to tower base, 35-50 s)",
     "look_pitch": 2,
+    "ground_tag": "SombreTerrain",
+    "probe_from_cm": 20000,
     "points": [[-8400, 1000], [-7000, 5000], [-4500, 9500], [-1500, 13000], [1000, 15200]]
   }
 }

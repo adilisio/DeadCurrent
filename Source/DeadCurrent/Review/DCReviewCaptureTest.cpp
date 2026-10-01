@@ -51,7 +51,14 @@
  *  The map is `-ReviewMap=/Game/Maps/<name>` (Tools\ReviewCapture.bat passes it; the default is Lvl_Boathouse).
  *  Viewpoints live in Tools/Review/<name>.json plus every Tools/Review/<name>/*.json (one file per content cell,
  *  each owned by one builder). A file may set "art_sentinels" (how many ArtLayerSentinel actors mark the art
- *  sublevels as loaded; default 1, 0 to not wait) and, in exactly one file, the "route".
+ *  sublevels as loaded; default 1, 0 to not wait) and, in exactly one file, the "route". A route may name the
+ *  terrain it walks on ("ground_tag"): each frame is then placed by a trace from "probe_from_cm" (default 20000)
+ *  straight down, and a frame whose first hit is not an actor with that tag fails the capture (VS-06: the old
+ *  4 m probe started inside the tower rock and silently shot from inside the island).
+ *  Same-session A/B (Phase 6 gates): -ReviewMaxFPS=<n> replaces the PlayTest 60 FPS cap (0 = uncapped), and
+ *  -ReviewHideTag=<tag> hides every actor with that tag after each load (the biome ON/OFF pair), and
+ *  -ReviewSampleSeconds=<s> samples each view's frame time for longer than the default half second, and
+ *  -ReviewNoRoute skips the walking route.
  */
 namespace DCReviewCapture
 {
@@ -68,6 +75,76 @@ namespace DCReviewCapture
 			return Value;
 		}();
 		return Path;
+	}
+
+	/** -ReviewMaxFPS=<n>: the frame cap during capture (PlayTest's 60 by default; 0 removes it). */
+	int32 MaxFps()
+	{
+		int32 Value = 60;
+		FParse::Value(FCommandLine::Get(), TEXT("ReviewMaxFPS="), Value);
+		return FMath::Max(0, Value);
+	}
+
+	/** -ReviewSampleSeconds=<s>: how long each view's frame time is sampled once it has settled (0.5 by default).
+	 *  The same-session A/B gates use several seconds: half a second varied by about 1 ms per view between runs. */
+	double SampleSeconds()
+	{
+		double Value = 0.5;
+		FParse::Value(FCommandLine::Get(), TEXT("ReviewSampleSeconds="), Value);
+		return FMath::Max(0.5, Value);
+	}
+
+	/** -ReviewToggleTag=<tag>[+<tag>...]: an A/B inside one run. At each view (or only those whose id starts with
+	 *  -ReviewToggleViews=<prefix>), after the normal sample, the tagged actors or components are hidden and shown in
+	 *  windows of -ReviewSampleSeconds, in ABBA order (off, on, on, off, ...), -ReviewToggleCycles times (default 4),
+	 *  and the view records the mean frame time of each state. Clock and thermal drift between runs falls on both
+	 *  states alike, so a sub-millisecond cost is measurable on this laptop (VS-06: separate runs swung by 1-9 ms). */
+	const FString& ToggleTag()
+	{
+		static const FString Tag = []()
+		{
+			FString Value;
+			FParse::Value(FCommandLine::Get(), TEXT("ReviewToggleTag="), Value);
+			return Value;
+		}();
+		return Tag;
+	}
+
+	const FString& ToggleViews()
+	{
+		static const FString Prefix = []()
+		{
+			FString Value;
+			FParse::Value(FCommandLine::Get(), TEXT("ReviewToggleViews="), Value);
+			return Value;
+		}();
+		return Prefix;
+	}
+
+	int32 ToggleCycles()
+	{
+		int32 Value = 4;
+		FParse::Value(FCommandLine::Get(), TEXT("ReviewToggleCycles="), Value);
+		return FMath::Clamp(Value, 1, 16);
+	}
+
+	/** -ReviewNoRoute: skip the walking route (a timing pair over the fixed views only). */
+	bool NoRoute()
+	{
+		return FParse::Param(FCommandLine::Get(), TEXT("ReviewNoRoute"));
+	}
+
+	/** -ReviewHideTag=<tag>[+<tag>...]: actors, or single components, with one of these tags are hidden after every load
+	 *  (empty: none). A component tag hides one part of an actor: Biome:scrub hides only the recipe's weeds. */
+	const FString& HideTag()
+	{
+		static const FString Tag = []()
+		{
+			FString Value;
+			FParse::Value(FCommandLine::Get(), TEXT("ReviewHideTag="), Value);
+			return Value;
+		}();
+		return Tag;
 	}
 
 	const TCHAR* TestSlot = TEXT("DeadCurrent_Review");
@@ -168,6 +245,15 @@ namespace DCReviewCapture
 		FString RouteExpectation;
 		FString RouteSource;
 		float RoutePitch = -6.0f;
+		FName RouteGroundTag;            // empty: the original short probe (Lvl_Boathouse)
+		float RouteProbeFrom = 20000.0f;
+		FString RouteError;
+		int32 HiddenActors = 0;
+		int32 ToggleWindow = 0;
+		double WindowStart = 0.0;
+		TArray<double> WindowSamples;
+		TArray<double> ToggleOffMs;
+		TArray<double> ToggleOnMs;
 		FString OutDir;
 		bool bFailed = false;
 		int32 Index = 0;
@@ -201,6 +287,7 @@ namespace DCReviewCapture
 			Wait,
 			Setup,
 			Settle,
+			Toggle,
 			Shot,
 			WaitFile,
 			RouteOpen,
@@ -377,6 +464,16 @@ namespace DCReviewCapture
 		{
 			Run.RoutePitch = static_cast<float>(Pitch);
 		}
+		FString GroundTag;
+		if ((*Route)->TryGetStringField(TEXT("ground_tag"), GroundTag) && !GroundTag.IsEmpty())
+		{
+			Run.RouteGroundTag = FName(*GroundTag);
+		}
+		double ProbeFrom = Run.RouteProbeFrom;
+		if ((*Route)->TryGetNumberField(TEXT("probe_from_cm"), ProbeFrom))
+		{
+			Run.RouteProbeFrom = static_cast<float>(ProbeFrom);
+		}
 		const TArray<TSharedPtr<FJsonValue>>* Points = nullptr;
 		if (!(*Route)->TryGetArrayField(TEXT("points"), Points) || !Points || Points->Num() < 2)
 		{
@@ -481,12 +578,56 @@ namespace DCReviewCapture
 			TEXT("r.ScreenPercentage 70"),
 			TEXT("scalability 0"),
 			TEXT("sg.ResolutionQuality 70"),
-			TEXT("t.MaxFPS 60"),
 		};
 		for (const TCHAR* Command : Commands)
 		{
 			GEngine->Exec(World, Command);
 		}
+		GEngine->Exec(World, *FString::Printf(TEXT("t.MaxFPS %d"), MaxFps()));
+	}
+
+	/** Hide every actor carrying the -ReviewHideTag tag (rendering only; nothing else about the level changes). */
+	int32 SetTaggedHidden(const FString& TagList, bool bHidden);
+
+	int32 HideTaggedActors()
+	{
+		return SetTaggedHidden(HideTag(), true);
+	}
+
+	/** Hide or show every actor, or single component, carrying one of the '+'-separated tags. Returns how many. */
+	int32 SetTaggedHidden(const FString& TagList, bool bHidden)
+	{
+		UWorld* World = GameWorld();
+		if (!World || TagList.IsEmpty())
+		{
+			return 0;
+		}
+		TArray<FString> Tags;
+		TagList.ParseIntoArray(Tags, TEXT("+"));
+		int32 Hidden = 0;
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			for (const FString& TagText : Tags)
+			{
+				const FName Tag(*TagText);
+				if (It->ActorHasTag(Tag))
+				{
+					It->SetActorHiddenInGame(bHidden);
+					++Hidden;
+					continue;
+				}
+				TInlineComponentArray<UPrimitiveComponent*> Primitives(*It);
+				for (UPrimitiveComponent* Primitive : Primitives)
+				{
+					if (Primitive->ComponentHasTag(Tag))
+					{
+						Primitive->SetHiddenInGame(bHidden);
+						++Hidden;
+					}
+				}
+			}
+		}
+		return Hidden;
 	}
 
 	void UseScratchSlot()
@@ -923,11 +1064,33 @@ namespace DCReviewCapture
 		}
 		FVector Forward;
 		FVector Feet = PointOnRoute(Run.RoutePoints, Run.RouteDistance, Forward);
-		const FVector Probe(Feet.X, Feet.Y, Feet.Z + 400.0);
 		FHitResult Hit;
-		if (World->LineTraceSingleByChannel(Hit, Probe, Probe - FVector(0.0, 0.0, 1200.0), ECC_WorldStatic))
+		if (!Run.RouteGroundTag.IsNone())
 		{
+			// From well above the highest ground, straight down past the sea floor; the first thing hit must be the
+			// named terrain, or the frame is not a walk on the surface and the capture fails.
+			const FVector Probe(Feet.X, Feet.Y, Run.RouteProbeFrom);
+			const FCollisionQueryParams Params(SCENE_QUERY_STAT(ReviewRouteProbe), true, Pawn);   // not the player's own capsule
+			if (!World->LineTraceSingleByChannel(Hit, Probe, FVector(Feet.X, Feet.Y, -50000.0), ECC_WorldStatic, Params))
+			{
+				Run.RouteError = FString::Printf(TEXT("no ground under route point (%.0f, %.0f)"), Feet.X, Feet.Y);
+				return false;
+			}
+			if (!Hit.GetActor() || !Hit.GetActor()->ActorHasTag(Run.RouteGroundTag))
+			{
+				Run.RouteError = FString::Printf(TEXT("route point (%.0f, %.0f) first hits %s, not %s"), Feet.X, Feet.Y,
+					Hit.GetActor() ? *Hit.GetActor()->GetActorNameOrLabel() : TEXT("nothing"), *Run.RouteGroundTag.ToString());
+				return false;
+			}
 			Feet.Z = Hit.ImpactPoint.Z;
+		}
+		else
+		{
+			const FVector Probe(Feet.X, Feet.Y, Feet.Z + 400.0);
+			if (World->LineTraceSingleByChannel(Hit, Probe, Probe - FVector(0.0, 0.0, 1200.0), ECC_WorldStatic))
+			{
+				Feet.Z = Hit.ImpactPoint.Z;
+			}
 		}
 		const float HalfHeight = Pawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 		const FVector ActorLocation(Feet.X, Feet.Y, Feet.Z + HalfHeight + 2.0);
@@ -1013,6 +1176,19 @@ namespace DCReviewCapture
 			GLog->RemoveOutputDevice(Run.Log.Get());
 			Run.bLogAttached = false;
 		}
+	}
+
+	/** Median of frame times (seconds) in ms. This laptop flips between two clock states (frames of about 3 and about
+	 *  11 ms for the same view, VS-06), so the toggle uses medians: a window and a state each report their majority. */
+	double MedianMs(TArray<double> Samples)
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		Samples.Sort();
+		const int32 Mid = Samples.Num() / 2;
+		return (Samples.Num() % 2 ? Samples[Mid] : 0.5 * (Samples[Mid - 1] + Samples[Mid])) * 1000.0;
 	}
 
 	float AverageFrameMs(const TArray<double>& Samples)
@@ -1416,6 +1592,12 @@ namespace DCReviewCapture
 		}
 		Root->SetArrayField(TEXT("view_files"), ViewFileValues);
 		Root->SetStringField(TEXT("render"), TEXT("Tools/PlayTest.bat cvars, scalability 0, 1280x720"));
+		Root->SetNumberField(TEXT("max_fps"), MaxFps());
+		Root->SetNumberField(TEXT("sample_seconds"), SampleSeconds());
+		Root->SetBoolField(TEXT("route_skipped"), NoRoute());
+		Root->SetStringField(TEXT("toggle_tag"), ToggleTag());
+		Root->SetStringField(TEXT("hidden_tag"), HideTag());
+		Root->SetNumberField(TEXT("hidden_actors"), Run.HiddenActors);
 		Root->SetStringField(TEXT("contact_sheet"), TEXT("contact_sheet.png"));
 		Root->SetArrayField(TEXT("viewpoints"), Run.ViewpointResults);
 		TSharedRef<FJsonObject> Route = MakeShared<FJsonObject>();
@@ -1537,6 +1719,7 @@ namespace DCReviewCapture
 				return false;
 			}
 			ApplyPlayTestCvars();
+			Run.HiddenActors = HideTaggedActors();
 			Run.Frames = 0;
 			Run.PhaseStart = Now;
 			Run.Phase = Run.Phase == FRun::EPhase::RouteWait ? FRun::EPhase::RouteSettle : FRun::EPhase::Setup;
@@ -1592,14 +1775,53 @@ namespace DCReviewCapture
 			Run.PeakRhiDrawCalls = FMath::Max(Run.PeakRhiDrawCalls, GNumDrawCallsRHI[0]);
 			Run.PeakRhiPrimitives = FMath::Max(Run.PeakRhiPrimitives, GNumPrimitivesDrawnRHI[0]);
 			++Run.Frames;
-			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < 0.5)
+			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < SampleSeconds())
 			{
 				return false;
 			}
 			Run.PendingFrameMs = AverageFrameMs(Run.FrameSamples);
 			GatherSceneChecks(Run);
+			Run.ToggleOffMs.Reset();
+			Run.ToggleOnMs.Reset();
+			if (!ToggleTag().IsEmpty() && Run.Shots[Run.Index].Id.StartsWith(ToggleViews()))
+			{
+				Run.ToggleWindow = 0;
+				Run.WindowStart = Now;
+				Run.WindowSamples.Reset();
+				SetTaggedHidden(ToggleTag(), true);
+				Run.Phase = FRun::EPhase::Toggle;
+				return false;
+			}
 			Run.Phase = FRun::EPhase::Shot;
 			return false;
+
+		case FRun::EPhase::Toggle:
+		{
+			// ABBA: off, on, on, off, repeated. A window discards its first 0.3 s (the change settling), then samples.
+			static const bool Pattern[4] = { true, false, false, true };   // true = hidden (off)
+			const double Elapsed = Now - Run.WindowStart;
+			if (Elapsed > 0.3)
+			{
+				Run.WindowSamples.Add(FApp::GetDeltaTime());
+			}
+			if (Elapsed < 0.3 + SampleSeconds())
+			{
+				return false;
+			}
+			(Pattern[Run.ToggleWindow % 4] ? Run.ToggleOffMs : Run.ToggleOnMs).Add(MedianMs(Run.WindowSamples));
+			++Run.ToggleWindow;
+			Run.WindowSamples.Reset();
+			Run.WindowStart = Now;
+			if (Run.ToggleWindow >= 2 * ToggleCycles())
+			{
+				SetTaggedHidden(ToggleTag(), false);
+				HideTaggedActors();
+				Run.Phase = FRun::EPhase::Shot;
+				return false;
+			}
+			SetTaggedHidden(ToggleTag(), Pattern[Run.ToggleWindow % 4]);
+			return false;
+		}
 
 		case FRun::EPhase::RouteSettle:
 			if (Run.Frames == 0)
@@ -1609,14 +1831,14 @@ namespace DCReviewCapture
 				FRotator Rotation;
 				if (!PlaceOnRoute(Run, Eye, Rotation))
 				{
-					Fail(Run, TEXT("Could not place the route camera"));
+					Fail(Run, FString::Printf(TEXT("Could not place the route camera: %s"), *Run.RouteError));
 					Run.Phase = FRun::EPhase::Finish;
 					return false;
 				}
 			}
 			Run.FrameSamples.Add(FApp::GetDeltaTime());
 			++Run.Frames;
-			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < 0.5)
+			if (Run.Frames < SettleFrames || Now - Run.PhaseStart < SampleSeconds())
 			{
 				return false;
 			}
@@ -1636,7 +1858,7 @@ namespace DCReviewCapture
 				ImageName = FString::Printf(TEXT("route_%02d.png"), Run.RouteResults.Num());
 				if (!PlaceOnRoute(Run, Eye, Rotation))
 				{
-					Fail(Run, TEXT("Could not place the route camera"));
+					Fail(Run, FString::Printf(TEXT("Could not place the route camera: %s"), *Run.RouteError));
 					Run.Phase = FRun::EPhase::Finish;
 					return false;
 				}
@@ -1734,6 +1956,31 @@ namespace DCReviewCapture
 				StopViewpointCapture(Run);
 				TSharedRef<FJsonObject> Record = ShotRecord(Shot, ImageName, CameraLocation, CameraRotation, true, FString());
 				AddCaptureChecks(Record, Run.PendingFrameMs, BuildChecks(Run));
+				if (Run.ToggleOffMs.Num() > 0 && Run.ToggleOnMs.Num() > 0)
+				{
+					auto Mean = [](const TArray<double>& Values)
+					{
+						// Median of the windows (ms); MedianMs takes seconds.
+						TArray<double> Seconds;
+						for (const double V : Values) { Seconds.Add(V / 1000.0); }
+						return MedianMs(Seconds);
+					};
+					auto Rounded = [](const TArray<double>& Values)
+					{
+						TArray<TSharedPtr<FJsonValue>> Out;
+						for (const double V : Values) { Out.Add(MakeShared<FJsonValueNumber>(FMath::RoundToDouble(V * 100.0) / 100.0)); }
+						return Out;
+					};
+					TSharedRef<FJsonObject> Toggle = MakeShared<FJsonObject>();
+					Toggle->SetStringField(TEXT("tag"), ToggleTag());
+					Toggle->SetStringField(TEXT("order"), TEXT("ABBA, off first; each window its median frame, each state the median window"));
+					Toggle->SetArrayField(TEXT("off_ms"), Rounded(Run.ToggleOffMs));
+					Toggle->SetArrayField(TEXT("on_ms"), Rounded(Run.ToggleOnMs));
+					Toggle->SetNumberField(TEXT("off_median_ms"), FMath::RoundToDouble(Mean(Run.ToggleOffMs) * 100.0) / 100.0);
+					Toggle->SetNumberField(TEXT("on_median_ms"), FMath::RoundToDouble(Mean(Run.ToggleOnMs) * 100.0) / 100.0);
+					Toggle->SetNumberField(TEXT("delta_ms"), FMath::RoundToDouble((Mean(Run.ToggleOnMs) - Mean(Run.ToggleOffMs)) * 100.0) / 100.0);
+					Record->SetObjectField(TEXT("toggle"), Toggle);
+				}
 				Run.ViewpointResults.Add(MakeShared<FJsonValueObject>(Record));
 				UE_LOG(LogDeadCurrent, Display, TEXT("[DCREVIEW] %s"), *Shot.Id);
 				++Run.Index;
@@ -1752,6 +1999,11 @@ namespace DCReviewCapture
 		}
 
 		case FRun::EPhase::RouteOpen:
+			if (NoRoute())
+			{
+				Run.Phase = FRun::EPhase::Finish;
+				return false;
+			}
 			Run.RouteDistance = 0.0f;
 			BeginOpen(Run);
 			Run.Phase = FRun::EPhase::RouteWait;

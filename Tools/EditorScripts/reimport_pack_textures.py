@@ -18,7 +18,7 @@ with open(os.path.join(WORK, "settings.json")) as handle:
 done = 0
 for package, saved in settings.items():
     name = package.split("/")[-1]
-    png = os.path.join(SMALL, name + ".png")
+    png = os.path.join(SMALL, package.strip("/").replace("/", "__") + ".png")   # export_pack_textures.png_name
     if not os.path.exists(png):
         log(f"NO PNG for {package}")
         continue

@@ -1,0 +1,37 @@
+{
+  "about": "VS-06's test zone (WP-BIOME): two shore stretches on the VS-04 blockout, one sheltered by the south reef, one on the exposed west headland, both classified by the recipe's own fetch measure (exposure auto). It proves the recipe, its exclusions, and the contrast; the real cell zones are their owners' files (Tools/Biomes/zones/<cell>.json, VS-08 onward). Metres; X north, Y east.",
+  "id": "shore_test",
+  "recipe": "great_lakes_rocky_shore",
+  "seed": 7,
+  "density_scale": 1.0,
+  "polygons": [
+    {
+      "id": "sheltered_bight",
+      "about": "The south shore west of the quay, behind the south reef (mean fetch about 60 m).",
+      "exposure": "auto",
+      "points": [[-100.0, -18.0], [-100.0, -60.0], [-93.0, -104.0], [-82.0, -152.0], [-58.0, -152.0], [-62.0, -104.0],
+                 [-72.0, -60.0], [-72.0, -18.0]]
+    },
+    {
+      "id": "headland_tip",
+      "about": "The west headland's tip, open to the lake on three sides (mean fetch over 200 m).",
+      "exposure": "auto",
+      "points": [[-58.0, -186.0], [-58.0, -258.0], [32.0, -258.0], [32.0, -186.0]]
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "test_landing_clear",
+      "about": "A stretch of the bight's shore kept clear on purpose (where a path would meet the water): the authored exclusion the map test proves, placed where instances would otherwise be.",
+      "shape": "box",
+      "center": [-86.0, -82.0],
+      "half": [9.0, 7.0],
+      "yaw": 0.0
+    }
+  ],
+  "exclude_pads": [
+    {"name": "quay apron", "margin_m": 4.0},
+    {"name": "settlement terrace", "margin_m": 6.0},
+    {"name": "headland post", "margin_m": 4.0}
+  ]
+}

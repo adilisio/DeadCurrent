@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries VS-05 (the settlement kit) on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
+- `main` carries VS-06 (the rocky-shoreline recipe) on VS-05 (the settlement kit). See the VS-06 Record. Earlier: `main` carried VS-05 on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
@@ -20,7 +20,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-03 Cell portal + scene cut** | **COMPLETE** (merged `2c1d2b6`) |
 | **VS-04 Map architecture proof** | **COMPLETE** (see the VS-04 Record) |
 | **VS-05 Settlement kit (WP-KIT)** | **COMPLETE** (merge `54aa7b5`; see the VS-05 Record) |
-| VS-06 Shoreline recipe, VS-07 Specs and ledger, VS-08 Greybox | VS-06 is next; then VS-07, then VS-08, which ends at **Checkpoint A** |
+| **VS-06 Shoreline recipe (WP-BIOME)** | **COMPLETE** (see the VS-06 Record) |
+| VS-07 Specs and ledger, VS-08 Greybox | VS-07 is next; then VS-08, which ends at **Checkpoint A** |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -161,6 +162,56 @@ The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `e
 
 **Next task:** VS-06, the rocky shoreline recipe. Not started.
 
+## VS-06 Record: the Rocky-Shoreline Recipe (2026-10-01)
+
+**COMPLETE.** Tier C by recipe: a zone is data, and the recipe fills it. Details: `Design/technical_architecture.md`, "Shoreline recipe".
+
+- **PCG or scripted HISM: scripted HISM.** The plan's spike was fail-fast (about 5 minutes; PCG enabled on the command line only, nothing saved). It failed gate 1: in the headless commandlet `RebuildContent.bat` uses, `generate()` only schedules the graph and never runs (`generated` false, `ExecutionSource cancelled` at shutdown), and the spawner's mesh list cannot be set from Python. No PCG plugin, graph, or level is committed.
+- **What exists:**
+  - `Tools/Biomes/great_lakes_rocky_shore.json`: the recipe, four families (talus, cobble, driftwood, sparse scrub), every number a tuning value
+  - `Tools/Biomes/zones/_test.json`: the test zone, two polygons (the sheltered bight west of the quay, the west headland's tip), one authored exclusion, three pads
+  - `Tools/EditorScripts/biome/`: `plan.py` (pure Python, the only placement authority), `scatter.py` (writes the HISM sublevel and the manifest), `verify_plan.py` (pure checks), `prepare_biome_meshes.py` (one-time mesh preparation)
+  - `/Game/Maps/Lvl_PointeSombre_Biome` (always loaded, linked once; `Lvl_PointeSombre.umap` changed only to link it) and `Tools/Biomes/out/Lvl_PointeSombre.json`
+  - `Map.Sombre.BiomeExclusions` (`Source/DeadCurrent/Save/DCSombreBiomeMapTest.cpp`)
+  - `biome\scatter` is now the last step of a full `RebuildContent.bat`
+- **Meshes, all from your library, no Meshy:** three Megascans stones from the `Scene_Junkyard` pack (talus and cobble, drawn with our own rock surfaces), two `DriftWoodPack` low-poly logs, and two small `Smugglers_cove` weeds that are common on Great Lakes shores (Canada lettuce, sorrel). Provenance rows are in `art_pipeline.md`.
+- **Manifest hash `5c2076d57d954a767cc1711793d0328060fca0d6`.** 262 instances in 8 components (talus 27, cobble 176, driftwood 18, scrub 41; cap 800, not reached).
+  - Two clean `biome\scatter` runs on the final recipe wrote byte-identical manifests.
+  - `verify_plan.py` re-plans the committed manifest from its recorded inputs, with no Unreal, and gets the same hash.
+  - A core map rebuild keeps the sublevel linked and its instances intact.
+- **The harbor and the exposed shore differ, decided by data.** Exposure is measured as open-water fetch, so the reef-sheltered south shore reads as protected and the headland as exposed. Cobble: 124 sheltered vs 52 exposed. Talus: 1 vs 22. The test checks that contrast.
+  - Codex's suggested coast-turn rule would have read the quay as exposed. The harbor is sheltered by the reef, not by a bay.
+- **Exclusions work, authored and automatic.**
+  - Nothing lies inside the authored box, the pads, or the automatic radii.
+  - The tests also prove each exclusion would otherwise have held instances.
+  - The arch-test door stands inside the bight polygon and leaves its hole.
+- **Every Tier C component is NoCollision** and out of navigation, with no default material. No instance floats (the map test traces each one).
+- **Tests:** `Tools\RunTests.bat -build`: **52 of 52** (34 editor, 13 Boathouse, 5 Sombre).
+- **Cost gate (biome on vs off, ≤ 0.5 ms): passed, +0.18 ms and +0.28 ms.**
+  - Measured inside one run: the biome is hidden and shown at each biome view, in alternating windows.
+  - Why not two separate runs: this laptop flips between two clock states mid-capture (the same view at about 3 ms or about 11 ms). Separate OFF and ON runs differed by 1 to 9 ms even on views the biome cannot touch, so they could not resolve 0.5 ms. Those inconclusive pairs are kept and not counted.
+  - Draw-call peaks rose by at most 16 on the biome views; the quay views are unchanged.
+  - Talus draws from LOD2 and cobble from LOD3, because the scanned stones carry 5–9k triangles at LOD0.
+  - Captures:
+    - `Saved/Review/2026-10-01_1427_Lvl_PointeSombre_biome_ab2` and `..._1430_..._biome_ab3`: the gate
+    - `..._1320_..._biome_off_a` / `..._1324_..._biome_on_a` and `..._1327_..._biome_off_b` / `..._1331_..._biome_on_b`: full runs with the route
+- **Review views:** `Tools/Review/Lvl_PointeSombre/biome.json`, three views:
+  - `biome_harbor`: the cobble line at the bight's waterline
+  - `biome_exposed`: dark talus on the headland's south face
+  - `biome_overview`: the headland from the water, both exposures in one frame
+- **Fixed on the way (shared tools):**
+  - **The review route now walks on the terrain.** It traces from 200 m down, ignores the player, and fails unless it hits `SombreTerrain`. The last route frame is now at 21.7 m on the tower rock. **The VS-04 gate-0 route figure (21.3 ms) is not a valid comparison basis.**
+  - **`ImportPackAssets.ps1` dropped textures named like `AO_512`.** The engine stores such a name as `AO` plus a number. Every texture of each log was missing.
+  - **The texture export named PNGs by short name,** so three `Normal_512`s overwrote each other. They are now named by full path; earlier migrations were checked and had no collisions.
+  - **The driftwood pack's master material did not compile** (two empty texture defaults), and its instances showed the engine checker at a distance. Both are fixed in our copies.
+- **New capture options** for same-session gates: uncapped FPS, longer sampling, no route, hide by tag, and the in-run on/off toggle. They are set through `DC_REVIEW_ARGS`; see Review capture in `technical_architecture.md`.
+- **Deferred, not VS-06:**
+  - the island's short axis, the fence below the tower, the 2 m collision mesh (VS-08)
+  - the real cell zones and the 20-line zone test (VS-08, VS-16)
+  - white slivers along the waterline where terrain triangles meet the water sheet. They predate the recipe and are a VS-08 watch item.
+  - Litter, decals, trees, and wet-band were left out on purpose.
+- **What you judge at Checkpoint A:** whether the shore reads as a Great Lakes place rather than random scatter. The recipe is deliberately conservative (one test zone); VS-08 adds the real zones.
+
 ## Decisions
 
 Your approval settled all three pre-VS-01 decisions: the plan, the prologue staying out of Phase 6, and the agent roles (the plan's defaults). Nothing is open. The Meshy stop ceiling for Phase 6 is **350 credits** (balance 437); it is a limit, not a target.
@@ -198,14 +249,14 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **51 of 51** (34 editor, 13 Boathouse map, 4 Sombre map) after VS-05, same count as VS-04. Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Tests: **52 of 52** (34 editor, 13 Boathouse map, 5 Sombre map) after VS-06 (`Map.Sombre.BiomeExclusions` added). 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
 - Package: the Development Win64 cook of **both** production maps (0 errors, 0 warnings), and both smoke-load. Re-run after the VS-05 merge (2026-10-01). `Lvl_KitGym` is not cooked.
 - Frame time: about 54 FPS at low spec on the shore, deferred. Phase 6 uses same-session A/B gates only. Gate 0 is recorded in the VS-04 Record.
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0**.
 
 ## Next
 
-Continuing autonomously toward Checkpoint A: **VS-06** (the shoreline recipe) is next, then VS-07 (specs and the id ledger), then VS-08 (the greybox). Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started. This integration does not start VS-06.
+Continuing autonomously toward Checkpoint A: **VS-07** (specs and the id ledger) is next, then VS-08 (the greybox). Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started.
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 

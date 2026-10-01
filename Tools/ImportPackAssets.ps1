@@ -36,7 +36,23 @@ while ($queue.Count) {
     $p = $queue.Dequeue()
     if ($seen.Contains($p) -or $p -notlike "/Game/*" -or $p -like "*/Maps/*" -or $p -like "*/Demo/*") { continue }
     $file = Join-Path $src ($p.Substring(6).Replace("/", "\") + ".uasset")
-    if (-not (Test-Path $file)) { continue }
+    if (-not (Test-Path $file)) {
+        # A name ending in _<digits> (AO_512) is stored as its base (AO) plus a number, so the scan reads the base.
+        # Queue the numbered siblings that exist (found in VS-06: the driftwood textures were silently left out).
+        # This can over-include a sibling resolution (AO_1k is not _<digits>, so it is not taken); textures are cut
+        # to -MaxSize anyway.
+        $dir = Split-Path $file
+        $base = [IO.Path]::GetFileNameWithoutExtension($file)
+        if (Test-Path $dir) {
+            foreach ($f in Get-ChildItem $dir -Filter "$($base)_*.uasset") {
+                if ($f.BaseName -match "^$([regex]::Escape($base))_\d+$") {
+                    $sibling = $p.Substring(0, $p.LastIndexOf("/") + 1) + $f.BaseName
+                    if (-not $seen.Contains($sibling)) { $queue.Enqueue($sibling) }
+                }
+            }
+        }
+        continue
+    }
     $seen[$p] = 1
     $text = $enc.GetString([IO.File]::ReadAllBytes($file))
     foreach ($m in [regex]::Matches($text, "/Game/[A-Za-z0-9_/\-]+")) {

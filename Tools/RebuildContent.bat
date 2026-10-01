@@ -1,6 +1,7 @@
 @echo off
 rem Regenerate every script-generated asset, in dependency order:
-rem items -> quests -> dialogue (references items) -> test gym -> boathouse map -> Pointe Sombre map.
+rem items -> quests -> dialogue (references items) -> test gym -> boathouse map -> Pointe Sombre map -> its shoreline
+rem recipe (biome\scatter writes Lvl_PointeSombre_Biome and Tools\Biomes\out from the map just built).
 rem import_art brings in the CC0 surfaces the boathouse materials resolve; import_audio the CC0 sounds.
 rem   Tools\RebuildContent.bat              all of them
 rem   Tools\RebuildContent.bat create_quest run one script from Tools\EditorScripts
@@ -26,7 +27,7 @@ rem One script: resolved outside a parenthesised block, so %errorlevel% is read 
 rem expanded at parse time and a failed script exited 0; found in VS-04).
 if not "%~1"=="" goto :one
 
-for %%S in (import_art import_audio create_items create_quest create_dialogue build_test_gym build_boathouse build_pointe_sombre) do (
+for %%S in (import_art import_audio create_items create_quest create_dialogue build_test_gym build_boathouse build_pointe_sombre biome\scatter) do (
 	call :run %%S
 	if errorlevel 1 exit /b 1
 )

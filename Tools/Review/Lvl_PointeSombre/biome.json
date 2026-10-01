@@ -1,0 +1,53 @@
+{
+  "map": "/Game/Maps/Lvl_PointeSombre",
+  "units": "cm",
+  "rotation_order": "pitch, yaw, roll",
+  "about": "The shoreline recipe's views (VS-06, WP-BIOME): the test zone's sheltered and exposed stretches, and both in one frame. The biome ON/OFF gate is the average frame time over these three views, same session, uncapped. Views only: the core file owns the route and art_sentinels.",
+  "viewpoints": [
+    {
+      "id": "biome_harbor",
+      "location": [
+        -5500,
+        -11200,
+        485
+      ],
+      "rotation": [
+        -10,
+        -132,
+        0
+      ],
+      "expectation": "Down onto the sheltered bight west of the quay, behind the south reef, in the storm: a pocket of pale cobble at the waterline, driftwood lying along the shore above it, a few low weeds higher up, the terrain still the ground underneath. Nothing floats, nothing is a checker, nothing is a grid.",
+      "source": "VerticalSlicePhasePlan.txt §10.1-10.4; Tools/Biomes/great_lakes_rocky_shore.json (protected weights); Tools/Biomes/zones/_test.json sheltered_bight"
+    },
+    {
+      "id": "biome_exposed",
+      "location": [
+        -3200,
+        -25600,
+        250
+      ],
+      "rotation": [
+        1,
+        52,
+        0
+      ],
+      "expectation": "From the water off the west headland's tip, in the storm: dark broken talus blocks along the foot of the steep south face, little cobble, almost no driftwood; a harder, barer shore than the harbor view, not the same texture.",
+      "source": "VerticalSlicePhasePlan.txt §10.4 (look); Gemini VS-06 shoreline brief §6 (exposed shore); Tools/Biomes/zones/_test.json headland_tip"
+    },
+    {
+      "id": "biome_overview",
+      "location": [
+        -5500,
+        -25000,
+        700
+      ],
+      "rotation": [
+        -6,
+        55,
+        0
+      ],
+      "expectation": "From the water south-west of the west headland, both exposures in one frame: on the right the open south face with dark talus along its foot, on the left the inner shore by the reef causeway, sheltered by it, with a cobble pocket and driftwood. The same zone polygon, told apart only by the recipe's fetch measure; the terrain carries the shape.",
+      "source": "VerticalSlicePhasePlan.txt §10.4; Tools/Biomes/great_lakes_rocky_shore.json exposure (fetch); Codex VS-06 brief §10 (both exposures in one frame)"
+    }
+  ]
+}

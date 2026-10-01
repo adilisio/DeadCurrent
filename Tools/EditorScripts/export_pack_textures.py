@@ -12,6 +12,11 @@ def log(msg):
     unreal.log_warning("[DCPACK] " + msg)
 
 
+def png_name(package):
+    """The PNG for a texture package, unique across folders (reimport_pack_textures.py uses the same name)."""
+    return package.strip("/").replace("/", "__") + ".png"
+
+
 with open(os.path.join(WORK, "packages.txt"), encoding="utf-8-sig") as handle:
     packages = [line.strip() for line in handle if line.strip()]
 
@@ -31,7 +36,9 @@ for package in packages:
     task = unreal.AssetExportTask()
     task.object = asset
     task.exporter = None
-    task.filename = os.path.join(FULL, package.split("/")[-1] + ".png")
+    # The whole package path in the file name: textures in different folders often share a short name (the driftwood
+    # pack's Driftwood7/Normal_512 and Driftwood11/Normal_512), and a short name made them overwrite each other (VS-06).
+    task.filename = os.path.join(FULL, png_name(package))
     task.automated = True
     task.prompt = False
     task.replace_identical = True
