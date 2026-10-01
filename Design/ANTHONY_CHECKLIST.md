@@ -18,7 +18,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | VS-00 Plan | complete, approved |
 | **VS-01 Baseline** | **COMPLETE** (`00d8d22`) |
 | **VS-02 Production foundations** | **COMPLETE** (`e833811`) |
-| First parallel wave (VS-03 portal, VS-05 kit, kit research) | **READY, not launched** |
+| First parallel wave: kit research (Gemini) | **DONE and merged** (accepted as input after one revision; see below) |
+| First parallel wave: VS-03 portal (Grok), VS-05 kit (Claude) | **READY, not launched** |
 | VS-04 onward | not started (VS-04 waits for the portal) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
@@ -105,7 +106,16 @@ Three packages, three agents, no overlapping files. The wave plan, ownership tab
 | --- | --- | --- | --- |
 | WP-SYS-PORTAL: the cell portal and scene cut (the one capability VS-04 cannot start without) | VS-03 | Grok / Cursor | `Design/POIs/handoffs/sombre_WP-SYS-PORTAL.md` |
 | WP-KIT: the Great Lakes Working Settlement Kit and its dev gym map | VS-05 | Claude | `Design/POIs/handoffs/sombre_WP-KIT.md` |
-| WP-KIT-RESEARCH: library and CC0 survey, visual reference analysis (docs only) | feeds VS-05 | Gemini | `Design/POIs/handoffs/sombre_WP-KIT-RESEARCH.md` |
+| WP-KIT-RESEARCH: library and CC0 survey, visual reference analysis (docs only). **DONE, merged.** | feeds VS-05 | Gemini | `Design/POIs/handoffs/sombre_WP-KIT-RESEARCH.md` |
+
+**Kit research result:** `Design/Kits/research/kit_library_survey.md` (+ `reference_links.md`). It was run headless by Claude through Google's Antigravity CLI (Gemini 3.1 Pro High) in its own worktree.
+- **Permissions:** temporary domain-scoped web reads and three read-only PowerShell cmdlets. Your `agy` settings were restored byte-identical afterwards, and `C:\FO5_AssetLibrary` was verified unchanged.
+- **Review:** the first draft claimed a CC0 "Bitumen" roofing texture was verified, but it does not exist. The revision fixed most review points, but its reference links are mislabelled (boats, not buildings) or 404.
+- **Verdict:** accepted as **input**. The Integrator's verification and corrections sit at the top of the survey.
+- **Still open for WP-KIT:**
+  - a weathered grey wood skin
+  - a tar-paper or shingle roofing source
+  - building reference photos
 
 Each handoff fixes: the role, the starting commit (`e833811`), allowed and forbidden files, dependencies, deliverables, tests (with exact counts), review artifacts, stop conditions, commit and push permissions (own branch `vs/<package>` only; never `main`), and the integration owner (Claude). Merge order: research, then the portal, then the kit.
 
