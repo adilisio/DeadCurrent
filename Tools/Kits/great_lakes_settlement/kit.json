@@ -1,0 +1,38 @@
+{
+  "about": "The Great Lakes Working Settlement Kit (Phase 6 WP-KIT, VS-05): skins, library attachments, and defaults. Modules are authored in Tools/EditorScripts/kit/modules.py and imported by Tools/EditorScripts/import_kit_settlement.py. Catalog: Design/Kits/great_lakes_settlement_kit.md.",
+  "module_folder": "/Game/World/Kits/GreatLakesSettlement/Meshes",
+  "skins": {
+    "GreyShingle": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_GreyShingle",
+    "ShingleRoof": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_ShingleRoof",
+    "BoardGrey": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_BoardGrey",
+    "Tarred": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Tarred",
+    "RedBoard": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_RedBoard",
+    "Corrugated": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Corrugated",
+    "RustTrim": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_RustTrim",
+    "Whitewash": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Whitewash",
+    "Concrete": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Concrete",
+    "Underside": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Underside",
+    "Pane": "/Game/World/Kits/GreatLakesSettlement/Materials/MI_DC_Kit_Pane"
+  },
+  "default_skins": {
+    "walls": "GreyShingle",
+    "trim": "Tarred",
+    "door": "BoardGrey",
+    "pane": "Pane",
+    "roof": "ShingleRoof",
+    "porch_roof": "ShingleRoof",
+    "underside": "Underside",
+    "deck": "BoardGrey",
+    "piling": "Tarred",
+    "masonry": "Concrete"
+  },
+  "attachments": {
+    "Barrel": {"mesh": "/Game/Smugglers_cove/meshes/props/SM_wooden_barrels_01_a", "scale": 1.0, "source": "Smugglers_cove (owned pack)"},
+    "BarrelStack": {"mesh": "/Game/Smugglers_cove/meshes/props/SM_wooden_barrels_01_b", "scale": 1.0, "source": "Smugglers_cove (owned pack)"},
+    "Bucket": {"mesh": "/Game/Smugglers_cove/meshes/props/SM_wooden_bucket_01", "scale": 1.0, "source": "Smugglers_cove (owned pack)"},
+    "CrateSlat": {"mesh": "/Game/Smugglers_cove/meshes/props/SM_wooden_crate_02", "scale": 1.0, "source": "Smugglers_cove (owned pack)"},
+    "Crate": {"mesh": "/Game/Art/PolyHaven/wooden_crate_01/wooden_crate_01_2k/StaticMeshes/wooden_crate_01", "scale": 1.3, "source": "Poly Haven wooden_crate_01 (CC0), already in the project"},
+    "Lantern": {"mesh": "/Game/Art/PolyHaven/Lantern_01/Lantern_01_2k/StaticMeshes/Lantern_01", "scale": 1.0, "source": "Poly Haven Lantern_01 (CC0), already in the project"},
+    "Pole": {"mesh": "/Game/Smugglers_cove/meshes/structures/SM_wooden_pier_poles", "scale": 1.0, "source": "Smugglers_cove (owned pack), already in the project"}
+  }
+}

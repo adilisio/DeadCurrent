@@ -1,0 +1,34 @@
+{
+  "id": "kit_smokehouse",
+  "type": "smokehouse",
+  "gym": false,
+  "about": "A small tarred-board smokehouse with a stack (composition only; VS-11 places the slice's).",
+  "footprint": [
+    3,
+    3
+  ],
+  "storeys": 1,
+  "base": 0,
+  "skins": {
+    "walls": "Tarred",
+    "trim": "RustTrim",
+    "roof": "Corrugated"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "door",
+        "at": 0
+      }
+    ]
+  },
+  "roof": {
+    "type": "gable",
+    "ridge": "x",
+    "overhang": 25
+  },
+  "chimney": [
+    1.2,
+    0.5
+  ]
+}

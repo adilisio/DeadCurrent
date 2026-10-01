@@ -1,0 +1,82 @@
+{
+  "id": "kit_cottage",
+  "type": "cottage",
+  "gym": true,
+  "about": "Low one-storey shingled cottage on a short foundation, eaves to the front, a small porch, a chimney: the shape of Odette's cottage.",
+  "footprint": [
+    5,
+    6
+  ],
+  "storeys": 1,
+  "base": 30,
+  "skins": {
+    "walls": "GreyShingle",
+    "trim": "Whitewash",
+    "door": "Tarred",
+    "roof": "ShingleRoof",
+    "porch_roof": "ShingleRoof"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "window",
+        "at": 0
+      },
+      {
+        "type": "door",
+        "at": 2
+      }
+    ],
+    "left": [
+      {
+        "type": "window",
+        "at": 2
+      }
+    ],
+    "right": [
+      {
+        "type": "window",
+        "at": 2
+      }
+    ],
+    "back": [
+      {
+        "type": "window",
+        "at": 1
+      }
+    ]
+  },
+  "roof": {
+    "type": "gable",
+    "ridge": "x",
+    "overhang": 35
+  },
+  "porch": {
+    "side": "front",
+    "depth": 1.6,
+    "from": 1.0,
+    "to": 5.0
+  },
+  "chimney": [
+    3.9,
+    4.6
+  ],
+  "attachments": [
+    {
+      "piece": "Bucket",
+      "at": [
+        4.6,
+        -1.0,
+        0.3
+      ]
+    },
+    {
+      "piece": "Lantern",
+      "at": [
+        3.0,
+        -0.3,
+        2.1
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "kit_net_loft_shell",
+  "type": "interior shell",
+  "gym": false,
+  "about": "The net loft's room as an interior shell in its interior slot: board walls with windows, the gable roof seen from inside (composition only; VS-18 builds the cell).",
+  "footprint": [
+    6,
+    8
+  ],
+  "storeys": 1,
+  "base": 0,
+  "skins": {
+    "walls": "BoardGrey",
+    "trim": "Tarred",
+    "roof": "ShingleRoof"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "door",
+        "at": 2
+      }
+    ],
+    "left": [
+      {
+        "type": "window",
+        "at": 1
+      },
+      {
+        "type": "window",
+        "at": 5
+      }
+    ],
+    "right": [
+      {
+        "type": "window",
+        "at": 1
+      },
+      {
+        "type": "window",
+        "at": 5
+      }
+    ],
+    "back": [
+      {
+        "type": "window",
+        "at": 2
+      }
+    ]
+  },
+  "roof": {
+    "type": "gable",
+    "ridge": "y",
+    "overhang": 20
+  }
+}

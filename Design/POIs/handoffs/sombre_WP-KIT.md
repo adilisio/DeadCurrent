@@ -131,16 +131,25 @@ Stop, write the reason at the top of Handoff Notes, and return control when any 
 
 ## Handoff Notes
 
-Filled in by the receiving agent when it stops or finishes.
+Filled 2026-10-01 by the takeover session (Grok), continuing Claude's `vs/kit` worktree. Not merged.
 
-- **Status:** not started
-- **Commits:**
-- **What changed:**
-- **Kit measures (from `report_kit_usage.py`):**
-- **Tests run and results:**
-- **Review captures:**
-- **Library sources and gaps:**
-- **Did any structure need a unique building asset?:**
-- **Open issues:**
-- **Exact next step:**
+### Takeover record
+
+- **Branch and HEAD:** `vs/kit` at `dec285f` in `C:\DeadCurrent_wt\kit`, pushed to `origin/vs/kit`. Inherited `ff611d1` (also local `main`, one commit ahead of `origin/main` `98d2b82`, not pushed). Not merged to `main`. Do not push local `main`.
+- **What Claude had already done:** the worktree and branch existed. `ff611d1` flags `M_DC_Surface` for instanced meshes in `import_art.py` and makes `RebuildContent.bat` fail when the engine writes no log. Uncommitted on top of that: the kit scripts, compositions, imported modules and skins, Smugglers Cove barrels/bucket/crate (via `ImportPackAssets.ps1`, 4096 sources cut to 1024), `Lvl_KitGym` (untracked build product), and the review view file. This session did not recreate that work.
+- **What this session changed:** a fail-closed check that the three gym structures are compositionally distinct; the salvage-shed review line (crates, a barrel stack, and a bucket, which is what the composition places); the catalog, the usage report, provenance rows, and these notes. Then the verification below.
+- **Left untouched on purpose:** `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (on the main worktree, not this one). `Content/Maps/Lvl_KitGym.umap` is generated and not committed. No narrative, no Pointe Sombre population, no shoreline recipe, no save format, no new C++, no VS-06/07/08. VS-04 follow-ups (island timings, fence, terrain probe, 2 m collision) were not touched.
+- **Ownership exception already on the branch:** `import_art.py`, `RebuildContent.bat`, and the regenerated `Content/Environment/Materials/M_DC_Surface.uasset` are outside this handoff's owned list. Without the instanced-mesh flag, kit walls render as the engine checker. The script change is `ff611d1`. The `.uasset` is the regenerated master and is included with the kit commit so a checkout renders. Local `main` is also at `ff611d1` (one commit ahead of `origin/main` `98d2b82`) and was not pushed.
+- **Tests and verification (this session, logs written during the runs):**
+  - `import_kit_settlement`, `kit\build_kit_gym`, `kit\verify_kit`, `report_kit_usage`: exit 0, twice. Second usage file identical to the first (hash in `Design/Kits/kit_usage_report.md`). Verify: 7 compositions plan deterministically, 22 pieces exist, gym counts 59 / 22 / 39, footprints do not overlap, no default or grid material on kit components, compositional signatures differ.
+  - `Tools\RunTests.bat -build` from this worktree: **51 of 51**, 0 failures. Editor 34 (`RunTests.log`, 10:07), Boathouse 13 (`RunTests_Map.log`, 10:08), Sombre 4 (`RunTests_Map_Sombre.log`, 10:09). Target was up to date (no C++ change). The handoff's "46 of 46" is the VS-02 figure; this branch is on VS-04, so 51 is the right bar.
+  - `Tools\Maps.bat list`: production maps are `Lvl_Boathouse` and `Lvl_PointeSombre` only. `Lvl_KitGym` is not cooked.
+  - `git` shows no change under `Content/Maps/Lvl_Boathouse*`.
+- **Review captures:** `Saved/Review/2026-10-01_1005_Lvl_KitGym/` (`contact_sheet.png`, `manifest.json`, 10 views, 12 route frames). Log `Saved/Logs/ReviewCapture_Lvl_KitGym.log` (deleted before the run; success at 10:06). Manifest: every view captured; `default_or_grid_materials`, `missing_textures`, `warnings`, and `errors` empty on every view. The builder does not judge the pictures. They show a two-storey gabled store with porch and outside stair, an open corrugated lean-to shed, and a one-storey shingled cottage with chimney. The yard is `MI_DC_Mud` on a large cube and tiles; that is not the engine grid.
+- **Provenance:** rows appended to `Design/art_pipeline.md`. `source.json` for `WoodSiding011`, `WoodSiding005`, and `Planks012` is under `C:\FO5_AssetLibrary\CC0\ambientcg\`. License re-checked this session: ambientCG's license page says all assets are CC0 1.0 Universal, and the API lists all three. `WoodSiding011` tags include weathered wood shingles and has no roughness map (the skins sample `Planks012` roughness).
+- **Research assumptions:** grey weathered wood is ambientCG `WoodSiding011` (shingles), not the survey's `WoodSiding013` (white; not downloaded). The roof is that shingle darkened, not tar paper. There is still no verified CC0 tar-paper texture; tarred timber is `Planks012` tinted near black. `Bitumen` was not used (it does not exist). `RoofingTiles014` was not used (clay tile). `Aerial Asphalt 01` was not used. Driftwood and the mislabelled boat photos were not used as building references. Meshy spend: 0.
+- **Did any structure need a unique generated or hand-modelled building?** No.
+- **Remaining defects (not stop conditions):** the outside stair reads as a solid timber run from the pure side and as steps from the three-quarter view; the gym yard tiles; v1 attachments do not yet include drums, pallets, a ladder, shutters, nets, or electrical boxes (the pier pole is available as `Pole` and unused). The slice's "≥ 10 structures" and the gym's "8 pieces reused in all three" are reported as they are; the seven-composition projection already reuses 12 pieces in three or more structures.
+- **Done-when:** yes for VS-05 / WP-KIT. Three structures are composed from data only and are distinct in silhouette; the catalog lists every module with source and license; the kit-gym capture has no default material; `report_kit_usage.py` printed the counts; verification above is green.
+- **Exact next step:** the Integrator merges `vs/kit` into `main` (do not force-push; local `main` is already one commit ahead with `ff611d1` and must be reconciled, not pushed as-is), regenerates and commits `Lvl_KitGym.umap` if the merge should carry the build product, and does not start VS-06 until that merge is accepted. VS-06 is the shoreline recipe. This session stops here.
 - **Return to:** the Integrator (Claude)

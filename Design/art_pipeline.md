@@ -187,5 +187,11 @@ CC0 needs no credit. The trail stays here. Fab and Meshy assets, when they arriv
 | `Click_03_Cue`, `Flick_Switch_01_Cue` (pickup and inventory-open cues) | `Interface_And_Item_Sounds` pack, migrated to `/Game/Interface_And_Item_Sounds` | marketplace pack owned by Anthony | pack author |
 | `T_NameBoardLetters`, `M_DC_Letters` | authored in `import_art.py` (the `T_RN` letters are a texture, not Meshy text) | project | DEAD CURRENT |
 | `T_ChalkKeepOut`, `M_DC_Chalk` | authored in `import_art.py` | project | DEAD CURRENT |
+| `T_WoodSiding011_BC/N`, `MI_DC_Kit_GreyShingle`, `MI_DC_Kit_ShingleRoof` (VS-05) | `CC0/ambientcg/WoodSiding011` (2K JPG; color + DirectX normal; no roughness map, so the skins sample `Planks012` roughness). Grey weathered wood shingles, used as siding and, darkened, as a shingle roof. Not asphalt, not clay tile. | CC0 1.0 | ambientCG |
+| `T_WoodSiding005_BC/N/R`, `MI_DC_Kit_RedBoard` (VS-05) | `CC0/ambientcg/WoodSiding005` (2K JPG) | CC0 1.0 | ambientCG |
+| `T_Planks012_BC/N/R`, `MI_DC_Kit_BoardGrey`, `MI_DC_Kit_Tarred` (VS-05) | `CC0/ambientcg/Planks012` (2K JPG). Board grey is a light tint; tarred timber is a near-black tint. There is still no CC0 tar-paper texture. | CC0 1.0 | ambientCG |
+| `MI_DC_Kit_Corrugated`, `MI_DC_Kit_RustTrim`, `MI_DC_Kit_Whitewash`, `MI_DC_Kit_Concrete` (VS-05) | tinted children of `MI_DC_Steel`, `MI_DC_RustPaint`, `MI_DC_Plaster`, `MI_DC_Concrete` | as those rows | DEAD CURRENT |
+| `M_DC_Kit_Flat`, `MI_DC_Kit_Underside`, `MI_DC_Kit_Pane`, `SM_Kit_*` (VS-05) | authored in `import_kit_settlement.py` and `Tools/EditorScripts/kit/modules.py`. No Meshy. | project | DEAD CURRENT |
+| `SM_wooden_barrels_01_a`, `SM_wooden_barrels_01_b`, `SM_wooden_bucket_01`, `SM_wooden_crate_02` and their materials (VS-05) | `FO5_AssetLibrary/Content/Smugglers_cove`, migrated by `Tools\ImportPackAssets.ps1` (source textures 4096, committed textures 1024) | marketplace pack owned by Anthony (from the earlier project) | pack author |
 
 URLs are in each folder's `source.json` under `C:\FO5_AssetLibrary\CC0`. Unpacked sets also import an AO map, and the steel set imports a metalness map. Those maps are in `/Game/Art` and are not sampled yet: unpacked instances use roughness plus a metallic scalar (`MI_DC_Steel` is 0.35).

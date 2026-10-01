@@ -1,0 +1,31 @@
+{
+  "id": "kit_cable_hut",
+  "type": "utility hut",
+  "gym": false,
+  "about": "Authority cable hut: concrete walls, flat roof, a steel door (composition only; VS-13 builds the cell).",
+  "footprint": [
+    3,
+    3
+  ],
+  "storeys": 1,
+  "base": 0,
+  "skins": {
+    "walls": "Concrete",
+    "trim": "RustTrim",
+    "door": "Corrugated",
+    "roof": "Concrete",
+    "deck": "Concrete"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "door",
+        "at": 1
+      }
+    ]
+  },
+  "roof": {
+    "type": "flat",
+    "overhang": 15
+  }
+}
