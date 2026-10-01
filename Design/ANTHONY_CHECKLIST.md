@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries VS-05 (the settlement kit) on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`. This checklist commit is the tip. See the VS-05 Record.
+- `main` carries VS-05 (the settlement kit) on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
@@ -28,7 +28,7 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
 
 Things only you can judge, kept current as work lands (newest first):
 
-1. **VS-05, the kit gym.** `Tools\PlayTest.bat Lvl_KitGym` (a development map; it is not part of the slice). Three buildings from one vocabulary: a two-storey store, an open corrugated shed, a shingled cottage. Review frames: `Saved/Review/2026-10-01_1025_Lvl_KitGym/contact_sheet.png`.
+1. **VS-05, the kit gym — accepted.** Anthony playtested `Lvl_KitGym` (2026-10-01). The store, lean-to, and cottage read as distinct structures; the shared kit looks convincing and not obviously repetitive; the visual quality is good enough to accept the kit concept. The one defect, a crate floating in the lean-to, is fixed (it now sits on the crate below). Recapture: `Saved/Review/2026-10-01_1033_Lvl_KitGym/contact_sheet.png`. The map is still development-only and is not part of the slice.
 2. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
    - You start on a stub of the *Ida*'s deck, offshore in the storm.
    - The wheelhouse door ("Tell Varga about the light") fades you to the quay and sets `sombre.reef_struck`.
@@ -156,6 +156,8 @@ The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `e
 - `Tools\Maps.bat list` is still those two production maps. No Boathouse or Pointe Sombre map file changed.
 
 **Remaining visual limits, not blockers:** the gym yard is `MI_DC_Mud` and tiles; the outside stair reads as a solid run from the pure side and as steps from the three-quarter view; drums, pallets, ladders, shutters, and nets are not in v1.
+
+**Anthony's playtest (2026-10-01): the kit concept is accepted.** The three gym structures read as distinct, the shared modules do not feel obviously repetitive, and the visual quality is good enough. One defect before that could be final: a single crate floating in the lean-to. The stacked `Crate` in `salvage_shed.json` was placed at 0.75 m. `wooden_crate_01` at scale 1.3 is 0.42 m tall, so that height left a gap of about 0.31 m. Its bottom is now at 0.439 m, on the crate beneath. Nothing else in the kit changed. Rebuilt `Lvl_KitGym`; `kit\verify_kit` passed (store 59, shed 22, cottage 39). Recapture `Saved/Review/2026-10-01_1033_Lvl_KitGym`: 10 views and 12 route frames, and the manifest lists no default or grid materials, missing textures, warnings, or errors. The shed front shows the two crates stacked on the floor.
 
 **Next task:** VS-06, the rocky shoreline recipe. Not started.
 
