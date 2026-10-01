@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries VS-04 (the map architecture proof) on top of the VS-03 merge `f55b080`. See `git log -3`; pushed state is recorded in the latest record below.
+- `main` carries VS-05 (the settlement kit) on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`. This checklist commit is the tip. See the VS-05 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
@@ -19,8 +19,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | Kit research (Gemini) | **DONE and merged** (input, with the Integrator's corrections) |
 | **VS-03 Cell portal + scene cut** | **COMPLETE** (merged `2c1d2b6`) |
 | **VS-04 Map architecture proof** | **COMPLETE** (see the VS-04 Record) |
-| VS-05 Settlement kit (WP-KIT) | next, on `vs/kit` |
-| VS-06 Shoreline recipe, VS-07 Specs and ledger, VS-08 Greybox | after VS-05, in that order; VS-08 ends at **Checkpoint A** |
+| **VS-05 Settlement kit (WP-KIT)** | **COMPLETE** (merge `54aa7b5`; see the VS-05 Record) |
+| VS-06 Shoreline recipe, VS-07 Specs and ledger, VS-08 Greybox | VS-06 is next; then VS-07, then VS-08, which ends at **Checkpoint A** |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -28,14 +28,15 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
 
 Things only you can judge, kept current as work lands (newest first):
 
-1. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
+1. **VS-05, the kit gym.** `Tools\PlayTest.bat Lvl_KitGym` (a development map; it is not part of the slice). Three buildings from one vocabulary: a two-storey store, an open corrugated shed, a shingled cottage. Review frames: `Saved/Review/2026-10-01_1025_Lvl_KitGym/contact_sheet.png`.
+2. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
    - You start on a stub of the *Ida*'s deck, offshore in the storm.
    - The wheelhouse door ("Tell Varga about the light") fades you to the quay and sets `sombre.reef_struck`.
    - The island is a first terrain frame (VS-08 shapes it). The grey door marked TEST west of the quay is the architecture fixture, not content: it leads to a test room 2.5 km away and back.
    - What to look at: does the portal's fade feel right (0.35 s out, 0.15 s hold, 0.35 s in)? Is the storm look readable?
    - Review frames: `Saved/Review/2026-10-01_0910_Lvl_PointeSombre/contact_sheet.png` (the three atmospheres from the quay, the deck, the island, the test room).
    - Rendered portal proof: `Saved/Screenshots/WindowsEditor/SombreArch_*.png`.
-2. **One plan clarification I made in VS-04.** The atmosphere looks are switched by `sombre.hale_arrived` and `sombre.meeting_done`, with the storm as the default (no flag), not by `sombre.storm`. The slice doc says "`sombre.storm` is set on arrival", but nothing in the slice sets it at a new game yet. The dusk storm as the default look keeps a new game correct whatever VS-10 decides. `sombre.storm` still drives hazards and lightning content later.
+3. **One plan clarification I made in VS-04.** The atmosphere looks are switched by `sombre.hale_arrived` and `sombre.meeting_done`, with the storm as the default (no flag), not by `sombre.storm`. The slice doc says "`sombre.storm` is set on arrival", but nothing in the slice sets it at a new game yet. The dusk storm as the default look keeps a new game correct whatever VS-10 decides. `sombre.storm` still drives hazards and lightning content later.
 
 ## VS-01 Record: the Phase 6 Starting Point
 
@@ -135,6 +136,29 @@ You asked Claude to build this package instead of launching Grok. It was built e
 - `Tools\Package.bat`: Development Win64 cook of **both maps**, 0 errors and 0 warnings. Both smoke-load (Pointe Sombre in 0.08 s, all presence rules evaluated).
 - **Perf gate 0** (same session): Pointe Sombre views all at the 16.7 ms cap (60 FPS), route 21.3 ms. `Lvl_Boathouse` 36.6 ms the same session. Captures `Saved/Review/2026-10-01_0910_Lvl_PointeSombre` and `..._0909`. Watch item: draw-call peaks of 512–662 with few components visible (sky capture, parked sets).
 
+## VS-05 Record: the Settlement Kit (2026-10-01)
+
+**COMPLETE.** Merged `origin/vs/kit` into `main` as `54aa7b5` (no force-push, `vs/kit` left intact). The generated gym map is `6776cda`. No Meshy credits. No bespoke building mesh.
+
+**`ff611d1` verdict: kept.** It is already the parent of the kit branch, and it changes only two shared files:
+- `import_art.py` sets `used_with_instanced_static_meshes` on `M_DC_Surface`. Required: without it, instanced kit walls render as the engine checker. Generic: it is the shared triplanar master, and the shoreline recipe will instance it too. Non-instanced meshes keep the same shading.
+- `RebuildContent.bat` deletes the script log before each run and fails if the engine writes none. Generic fail-closed tooling, the same idea as the VS-04 test and package logs.
+
+The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `ensure_master()` deletes and rewrites that one asset, so the binary is the script's output plus the new flag. No other environment asset changed. A post-merge `import_kit_settlement` resaved the eleven kit material instances (unconditional save, LFS pointer only). Those were restored and not committed.
+
+**What landed:** 16 authored modules, 11 skins, 7 library attachments, `kit.compose()`, seven compositions, three of them on `Lvl_KitGym` (store 59 placements, shed 22, cottage 39). They differ in footprint, storeys, and roof, not only in colour. Catalog: `Design/Kits/great_lakes_settlement_kit.md`. Usage: `Design/Kits/kit_usage_report.md`. Grey wood is ambientCG `WoodSiding011` (CC0). The roof is that shingle darkened. There is still no tar-paper texture.
+
+**Verification on `main` after the merge** (logs from this run, not the branch):
+- `import_kit_settlement`, `kit\build_kit_gym`, `kit\verify_kit`, `report_kit_usage`: exit 0. Verify passed. Usage: 3 structures, 22 pieces, 8 reused in all three, 100% of 109 structural placements are kit pieces, 0 bespoke buildings. The seven-composition projection reuses 12 pieces.
+- `Tools\RunTests.bat -build`: **51 of 51** (34 editor, 13 Boathouse, 4 Sombre), 0 failures. No new C++ tests.
+- `Tools\ReviewCapture.bat Lvl_KitGym`: `Saved/Review/2026-10-01_1025_Lvl_KitGym`. 10 views and 12 route frames. Manifest checks for default or grid materials, missing textures, warnings, and errors were empty.
+- `Tools\Package.bat`: Development Win64 cook of `Lvl_Boathouse` and `Lvl_PointeSombre` only (`-Map=` lists those two; `Lvl_KitGym` does not appear in `Package.log`). Success, 0 errors, 0 warnings. Smoke-load: Boathouse 0.12 s, Pointe Sombre 0.09 s, no smoke errors.
+- `Tools\Maps.bat list` is still those two production maps. No Boathouse or Pointe Sombre map file changed.
+
+**Remaining visual limits, not blockers:** the gym yard is `MI_DC_Mud` and tiles; the outside stair reads as a solid run from the pure side and as steps from the three-quarter view; drums, pallets, ladders, shutters, and nets are not in v1.
+
+**Next task:** VS-06, the rocky shoreline recipe. Not started.
+
 ## Decisions
 
 Your approval settled all three pre-VS-01 decisions: the plan, the prologue staying out of Phase 6, and the agent roles (the plan's defaults). Nothing is open. The Meshy stop ceiling for Phase 6 is **350 credits** (balance 437); it is a limit, not a target.
@@ -172,18 +196,18 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **51 of 51** (34 editor, 13 Boathouse map, 4 Sombre map) after VS-04. Phase 6 expects about 70 by the end; that is an estimate, not a target.
-- Package: the Development Win64 cook of **both** production maps (0 errors, 0 warnings), and both smoke-load (VS-04).
+- Tests: **51 of 51** (34 editor, 13 Boathouse map, 4 Sombre map) after VS-05, same count as VS-04. Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Package: the Development Win64 cook of **both** production maps (0 errors, 0 warnings), and both smoke-load. Re-run after the VS-05 merge (2026-10-01). `Lvl_KitGym` is not cooked.
 - Frame time: about 54 FPS at low spec on the shore, deferred. Phase 6 uses same-session A/B gates only. Gate 0 is recorded in the VS-04 Record.
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0**.
 
 ## Next
 
-Continuing autonomously toward Checkpoint A, as you asked: VS-05 (the kit, on `vs/kit`), VS-06 (the shoreline recipe), VS-07 (specs and the id ledger), VS-08 (the greybox). Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started.
+Continuing autonomously toward Checkpoint A: **VS-06** (the shoreline recipe) is next, then VS-07 (specs and the id ledger), then VS-08 (the greybox). Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started. This integration does not start VS-06.
 
-## First Parallel Wave: Record (research merged; portal built by Claude and merged; kit not started)
+## First Parallel Wave: Record (research merged; portal merged; kit merged)
 
-As prepared: three packages, three agents, no overlapping files. The research and the portal are done (above); WP-KIT remains. The wave plan, ownership table, merge order, launch prompt, and worktree commands are in **`Design/POIs/handoffs/PHASE6_WAVE1.md`**.
+As prepared: three packages, three agents, no overlapping files. The research, the portal, and the kit are done (the kit is the VS-05 Record). The wave plan, ownership table, merge order, launch prompt, and worktree commands are in **`Design/POIs/handoffs/PHASE6_WAVE1.md`**.
 
 | Package | Plan task | Agent | Handoff |
 | --- | --- | --- | --- |
@@ -195,10 +219,10 @@ As prepared: three packages, three agents, no overlapping files. The research an
 - **Permissions:** temporary domain-scoped web reads and three read-only PowerShell cmdlets. Your `agy` settings were restored byte-identical afterwards, and `C:\FO5_AssetLibrary` was verified unchanged.
 - **Review:** the first draft claimed a CC0 "Bitumen" roofing texture was verified, but it does not exist. The revision fixed most review points, but its reference links are mislabelled (boats, not buildings) or 404.
 - **Verdict:** accepted as **input**. The Integrator's verification and corrections sit at the top of the survey.
-- **Still open for WP-KIT:**
-  - a weathered grey wood skin
-  - a tar-paper or shingle roofing source
-  - building reference photos
+- **Open at research time, answered by VS-05** (details in the VS-05 Record):
+  - a weathered grey wood skin: ambientCG `WoodSiding011`
+  - a tar-paper or shingle roofing source: the shingle is `WoodSiding011` darkened; there is still no tar-paper texture
+  - building reference photos: not collected; the kit did not depend on them
 
 Each handoff fixes: the role, the starting commit (`e833811`), allowed and forbidden files, dependencies, deliverables, tests (with exact counts), review artifacts, stop conditions, commit and push permissions (own branch `vs/<package>` only; never `main`), and the integration owner (Claude). Merge order: research, then the portal, then the kit.
 
