@@ -88,3 +88,9 @@ void UDCWorldStateSubsystem::NotifyRestored()
 	UE_LOG(LogDeadCurrent, Log, TEXT("[DCWORLD] state restored"));
 	OnRestored.Broadcast();
 }
+
+void UDCWorldStateSubsystem::NotifySceneCut()
+{
+	UE_LOG(LogDeadCurrent, Log, TEXT("[DCWORLD] scene cut"));
+	OnSceneCut.Broadcast();
+}

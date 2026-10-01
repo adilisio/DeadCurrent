@@ -386,6 +386,55 @@ Test: `DeadCurrent.World.ConditionalPresence` (default, first match, move with o
 
 Authoring from a map script: spawn the rule at the targets' authored pivot, set `targets` to the actor list and `states` to a list of `DCPresenceState`. One rule per group that changes together (the skiff and its cargo move as one).
 
+Presence also snaps on a **scene cut** (`OnSceneCut`, below): a cell portal moves the player while the screen is dark, so a change waiting for the player to look away applies then.
+
+## Cell portal (Phase 6)
+
+`ADCCellPortal` (`World/`, VS-03) moves the player between two places in the **same map**: an exterior and an interior cell built elsewhere in the level (a vault under a lighthouse, a loft over a store), or the bottom and top of a stair. Phase 6 keeps interiors in one map instead of using map travel because flags, quests, the registry, and the build are per-world and a save holds one map's actors (`VerticalSlicePhasePlan.txt` §5).
+
+| Property | Meaning |
+| --- | --- |
+| `Mesh` | what the interaction trace hits: the door, hatch, or stair |
+| `DisplayName` | the prompt's target (`[E] Unlock Vault hatch`) |
+| `Variants` | ordered `FDCPortalVariant { VariantId, Conditions, Verb, Consequences }`; the first whose conditions pass for the interactor is used, exactly like inspect variants. An unconditioned last variant is the open state. A variant whose conditions include a build check gets the usual `[Engineering 2]` label in its prompt. |
+| `LockedVerb`, `LockedText` | prompt verb (default "Try") and the message shown when no variant passes. Nothing else happens. This is how the slice does locked access: there is no separate locked-door class. |
+| `Destination` | an actor in the same level (usually an empty marker); the player arrives at its location, facing its yaw when `bUseDestinationYaw` (pitch levelled) |
+| `FadeOutSeconds`, `HoldSeconds`, `FadeInSeconds` | the transition (defaults 0.35 / 0.15 / 0.35). All three zero: **instant**, completing synchronously inside the use (tests and tools) |
+| `CardText`, `CardSeconds` | optional line shown while the screen is dark ("You climb the stair."), as a timed HUD message |
+
+A use (`Interact`, or `TryUse`, which returns `EDCPortalUse::Locked / Ignored / Passed` for tests and tools):
+
+1. A transition already running, or no `Destination` (an error is logged): ignored.
+2. No variant passes: `LockedText`, nothing else.
+3. Otherwise the screen fades out with movement and look input off. At black the portal:
+   - ends any conversation
+   - applies the chosen variant's consequences (through the shared rules, for the interacting player)
+   - moves the player to the destination at rest (velocity zeroed, control rotation set)
+   - broadcasts `UDCWorldStateSubsystem::NotifySceneCut()`
+   - shows `CardText`
+
+   Then it holds, fades back in, and gives input back. `CanInteract` is true whenever no transition is running, including while locked, so the player can read why.
+
+**The scene cut** (`OnSceneCut` / `NotifySceneCut()` on the world-state subsystem) means "the player was moved between scenes while the screen was dark". Conditional presence snaps on it (so the net loft can fill as the player climbs the stair, even though they arrive inside the attendees' 15 m bubble). It is **not** a restore: `OnRestored` means "state was replaced by a load; do not replay anything". Anything that must play once in ordinary play but never on a load (a one-shot sound, a light's one-time sequence) treats a scene cut as ordinary play and a restore as a snap.
+
+Authoring from a map script:
+- spawn the portal at the doorway with its mesh
+- set `variants` (list of `DCPortalVariant`), `destination`, `display_name`, and `locked_text`
+- one portal per direction: a hatch and its way back are two portals
+- when a portal and its destination belong to different owners (the hatch in the tower base, its landing inside the vault), both sides use the shared anchor actors the core map script creates (`Design/POIs/README.md`)
+
+**It saves nothing.** It has no persistent id and is not `IDCPersistent`. Its lasting effects are the flags its consequences set and the player's position, both already saved. Do not use it for anything that must be remembered on its own. Known edge: a save taken during the fade records the player's position at that instant (before or after the move) and whatever consequences have already run. Both are consistent states, and a load always ends any transition, because the map reopens.
+
+Test: `DeadCurrent.World.CellPortal` (editor context, no map). It covers:
+- locked text and prompt, and first-match variants and their prompts
+- consequences once per use, through the real rules
+- arrival at the destination's location and yaw, at rest
+- the scene cut snapping a deferred presence change (a plain flag change still defers)
+- `NotifySceneCut` and `NotifyRestored` never standing in for each other
+- the timed transition: nothing happens before black, uses are ignored while it runs, it is usable again after the fade in
+- no destination is refused
+- it has no persistent id and is not `IDCPersistent`
+
 ## Exploration
 
 **Locations.** `ADCLocationVolume` (`World/`) is a box with `LocationId` and `DisplayName`. It **polls player positions at 4 Hz instead of using collision**, for two reasons: the firearm traces WorldStatic/WorldDynamic/Pawn, so a trigger box would stop bullets, and overlap events fire during the load teleport. It stops ticking once its location is discovered. First discovery shows a `LOCATION DISCOVERED / <name>` banner on the HUD, and the Tab journal has a PLACES list. Display names live on the volume actors; a future map screen or multi-map setup will want a location data asset.

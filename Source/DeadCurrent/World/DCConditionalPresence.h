@@ -44,9 +44,9 @@ struct DEADCURRENT_API FDCPresenceState
  *
  *  It saves nothing and sets nothing. Its result is recomputed from existing state, so a save from before a rule
  *  existed shows whatever that save's flags imply. It snaps at level start and when the world state reports a
- *  restore (a load, a review setup). Any other change waits while the player is near the targets' current or new
- *  place, or while a target is on screen, so a character does not vanish mid-conversation or appear at the
- *  player's feet.
+ *  restore (a load, a review setup) or a scene cut (a cell portal moving the player while the screen is dark).
+ *  Any other change waits while the player is near the targets' current or new place, or while a target is on
+ *  screen, so a character does not vanish mid-conversation or appear at the player's feet.
  *
  *  Use it for presentation and placement that follow state already stored somewhere. Anything that must be
  *  remembered on its own (an object the player moved, a door left open) belongs in IDCPersistent instead.
@@ -147,4 +147,6 @@ private:
 	FDelegateHandle ChangedHandle;
 
 	FDelegateHandle RestoredHandle;
+
+	FDelegateHandle SceneCutHandle;
 };

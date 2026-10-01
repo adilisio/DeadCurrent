@@ -67,6 +67,16 @@ public:
 
 	FSimpleMulticastDelegate OnRestored;
 
+	/**
+	 *  Tell listeners that the player was just moved between scenes while the screen was dark (a cell portal's
+	 *  fade, Phase 6), so presentation that normally changes out of sight may change now, unseen. Conditional
+	 *  presence snaps on it. Not a restore: state was not replaced, and anything that must not replay on a load
+	 *  (a one-shot sound, a light's one-time sequence) is free to treat a scene cut as ordinary play.
+	 */
+	void NotifySceneCut();
+
+	FSimpleMulticastDelegate OnSceneCut;
+
 	/** A location was discovered for the first time (not fired on save restore). */
 	FDCLocationDiscovered OnLocationDiscovered;
 
