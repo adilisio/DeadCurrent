@@ -4,7 +4,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries VS-06 (the rocky-shoreline recipe) on VS-05 (the settlement kit). See the VS-06 Record. Earlier: `main` carried VS-05 on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
+- `main` carries VS-07 (the seven cell specs, the id ledger, the production report; docs only) on VS-06 (`ad50261`, the rocky-shoreline recipe). See the VS-07 and VS-06 Records. Earlier: `main` carried VS-05 on the VS-04 baseline. Integration commits: `ff611d1` (shared surface flag and rebuild log check), merge `54aa7b5`, generated gym `6776cda`, checklist `3c825b9`. Anthony playtested the gym and accepted the kit concept; the one defect, a crate floating in the lean-to, is seated on the crate below in this commit. See the VS-05 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
@@ -21,7 +21,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-04 Map architecture proof** | **COMPLETE** (see the VS-04 Record) |
 | **VS-05 Settlement kit (WP-KIT)** | **COMPLETE** (merge `54aa7b5`; see the VS-05 Record) |
 | **VS-06 Shoreline recipe (WP-BIOME)** | **COMPLETE** (see the VS-06 Record) |
-| VS-07 Specs and ledger, VS-08 Greybox | VS-07 is next; then VS-08, which ends at **Checkpoint A** |
+| **VS-07 Slice specs and the id ledger** | **COMPLETE** (docs only; see the VS-07 Record) |
+| VS-08 Greybox | next; it ends at **Checkpoint A** |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -162,6 +163,50 @@ The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `e
 
 **Next task:** VS-06, the rocky shoreline recipe. Not started.
 
+## VS-07 Record: the Slice Specs and the Id Ledger (2026-10-01)
+
+**COMPLETE (docs only: no Unreal, no C++, no actors).**
+
+**What exists now:**
+- seven cell specs in `Design/POIs/`, every field filled or `N/A — reason`, every open decision with its default: `sombre.crossing.md`, `sombre.harbor.md`, `sombre.settlement.md` (with the NPC appendix), `sombre.lighthouse.md` (integrated: the tower and the vault), `sombre.net_loft.md`, `sombre.cable_hut.md`, `sombre.headland.md` (with the *Ashland Grey*). There is no vault spec and no *Grey* spec.
+- the id ledger `Design/POIs/sombre_ids.md`
+- the production report `Design/POIs/SLICE_PRODUCTION_REPORT.md`, with what is already measured filled in and "not yet" elsewhere
+- handoffs: `sombre_WP-NARR.md` (written, not launched: VS-09 waits until you say so) and `sombre_WP-CELL-lighthouse.md`, plus a "not launched, serial" note for WP-VAULT
+
+Codex's VS-07 preflight was the audit. Its recommendations were re-checked against the landed VS-06 schema, and its discrepancy list is kept in the ledger (§15), not silently merged.
+
+**Decisions I made inside the plan** (each recorded in the ledger and the specs; all easy to change):
+
+1. **`sombre.storm` is gameplay state, not the atmosphere selector.**
+   - It means "a storm is on now". It drives the vault's live water, the false light, Dell at the post, and the bearing.
+   - **The crossing's wheelhouse door (the strike) sets it,** alongside `sombre.reef_struck`. `knows` clears it, and each ending sets it again.
+   - Why the strike: nothing in the existing grammar can set a flag at a new game without new C++ or a player action, and every new game passes through the strike. The preflight's "the core sets it at new game" has no mechanism.
+   - The only storm moment before the strike is the false light seen from the deck. It is its own light, conditioned on "not yet struck".
+   - The three atmosphere looks stay exactly as shipped: dusk storm, calm on `hale_arrived`, night on `meeting_done`. Nothing in VS-07 implements this; VS-10 adds the door's second consequence.
+2. **The lighthouse and the vault: serial.** The lighthouse (VS-12), the cable hut (VS-13), and the vault (VS-14) are built by Claude in that order. A parallel vault package for Grok runs only if you enable it, and you have not. The file and actor boundary was checked against the real scripts and is clean, so it is frozen in the lighthouse spec; enabling it at Checkpoint B costs no redesign.
+3. **People who move between cells stay one actor in one script.**
+   - Mara, Varga, and Hale belong to the harbor; the six islanders to the settlement.
+   - Placements in another cell's space go to Integrator anchors: loft seats, Mara's rail and porch, Dell's post, the *Ida*'s berth.
+   - The keeper you see on the gallery at night is a tower-owned silhouette, not Odette or Dell moved there.
+4. **The loft's way down is two portals at the stair head,** with one presence rule showing exactly one: "night" onto the night quay once after the meeting, otherwise "day" to the store. A shipped portal has a single destination, and a hidden portal cannot be focused (checked in the code).
+5. **The hatch and the lower door are portals,** not inspectables. That settles the dialogue doc's "the hatch is an inspectable" against the plan's portals.
+6. **Remy's marker and boat are held back** for VS-20's fresh-agent test:
+   - reserved: the ids, the anchor, an empty harbor exclusion `remy_holdback`, and the file names
+   - VS-08, VS-10, and VS-11 must not build or depend on them
+   - the harbor-mouth view expects clear rocks, not a boat
+7. **Zones:** exactly three cell zone files (harbor, cable hut, headland), in the landed VS-06 schema. Every other spec's keep-clear needs are requested by name in those files.
+
+**Recorded discrepancies kept visible (none blocks VS-08; ledger §15):**
+- the plan's two cell lists (§11 vs §8.4)
+- `sombre_pruitts` and `sombre_meeting` are aliases (split, and folded into Marthe)
+- `sombre_vault_key` was missing from the beat script's item list and is minted
+- plan §19's Settlement test vs VS-11 on Dell's confession
+- the art-sublevel count: eight from seven specs
+- "zero investment" means some way into the vault, not always Odette's key
+- the `knows` objective vs Marthe's call
+
+**Next:** VS-08, the greybox, then Checkpoint A.
+
 ## VS-06 Record: the Rocky-Shoreline Recipe (2026-10-01)
 
 **COMPLETE.** Tier C by recipe: a zone is data, and the recipe fills it. Details: `Design/technical_architecture.md`, "Shoreline recipe".
@@ -256,7 +301,7 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Next
 
-Continuing autonomously toward Checkpoint A: **VS-07** (specs and the id ledger) is next, then VS-08 (the greybox). Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started.
+Continuing autonomously toward Checkpoint A: **VS-08** (the exterior greybox) is next. Then I stop and hand you the Checkpoint A package. Nothing after Checkpoint A will be started.
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 
