@@ -1,0 +1,124 @@
+{
+  "id": "kit_store",
+  "type": "store",
+  "gym": true,
+  "about": "Two-storey board store with the net loft over it: the gable faces the street, an outside stair climbs the left side to the loft door, a porch shelters the front. The shape Marthe's store and loft take in VS-11 (the slice's own composition is the settlement cell's).",
+  "footprint": [
+    6,
+    8
+  ],
+  "storeys": 2,
+  "base": 40,
+  "skins": {
+    "walls": "RedBoard",
+    "trim": "Whitewash",
+    "door": "BoardGrey",
+    "roof": "ShingleRoof",
+    "porch_roof": "Corrugated",
+    "deck": "BoardGrey"
+  },
+  "side_skins": {
+    "back": "BoardGrey"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "window",
+        "at": 0
+      },
+      {
+        "type": "door",
+        "at": 2
+      },
+      {
+        "type": "window",
+        "at": 4
+      },
+      {
+        "type": "door",
+        "at": 2,
+        "storey": 2
+      }
+    ],
+    "left": [
+      {
+        "type": "window",
+        "at": 4
+      },
+      {
+        "type": "door",
+        "at": 2,
+        "storey": 2
+      }
+    ],
+    "right": [
+      {
+        "type": "window",
+        "at": 2
+      },
+      {
+        "type": "window",
+        "at": 5
+      },
+      {
+        "type": "window",
+        "at": 3,
+        "storey": 2
+      }
+    ],
+    "back": [
+      {
+        "type": "window",
+        "at": 2
+      }
+    ]
+  },
+  "roof": {
+    "type": "gable",
+    "ridge": "y",
+    "overhang": 40
+  },
+  "porch": {
+    "side": "front",
+    "depth": 2.0
+  },
+  "stair": {
+    "side": "left",
+    "to_storey": 2
+  },
+  "attachments": [
+    {
+      "piece": "Barrel",
+      "at": [
+        0.6,
+        -1.4,
+        0.4
+      ]
+    },
+    {
+      "piece": "CrateSlat",
+      "at": [
+        5.3,
+        -1.3,
+        0.4
+      ],
+      "yaw": 12
+    },
+    {
+      "piece": "BarrelStack",
+      "at": [
+        6.9,
+        7.0,
+        0.0
+      ]
+    },
+    {
+      "piece": "Lantern",
+      "at": [
+        3.0,
+        -0.35,
+        2.2
+      ]
+    }
+  ]
+}

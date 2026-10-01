@@ -1,0 +1,78 @@
+{
+  "id": "kit_salvage_shed",
+  "type": "open shed",
+  "gym": true,
+  "about": "Open-fronted salvage shed in corrugated sheet on rust-paint posts under a lean-to roof, full of crates and drums: the shape of the Pruitts' shed.",
+  "footprint": [
+    6,
+    4
+  ],
+  "storeys": 1,
+  "base": 0,
+  "open_sides": [
+    "front"
+  ],
+  "skins": {
+    "walls": "Corrugated",
+    "trim": "RustTrim",
+    "roof": "Corrugated",
+    "deck": "Concrete",
+    "piling": "RustTrim"
+  },
+  "openings": {
+    "right": [
+      {
+        "type": "window",
+        "at": 1
+      }
+    ]
+  },
+  "roof": {
+    "type": "lean_to",
+    "overhang": 40
+  },
+  "attachments": [
+    {
+      "piece": "Crate",
+      "at": [
+        1.0,
+        2.6,
+        0.02
+      ]
+    },
+    {
+      "piece": "Crate",
+      "at": [
+        1.2,
+        2.5,
+        0.75
+      ],
+      "yaw": 20
+    },
+    {
+      "piece": "BarrelStack",
+      "at": [
+        4.6,
+        2.8,
+        0.02
+      ]
+    },
+    {
+      "piece": "CrateSlat",
+      "at": [
+        3.0,
+        1.2,
+        0.02
+      ],
+      "yaw": -8
+    },
+    {
+      "piece": "Bucket",
+      "at": [
+        5.4,
+        0.8,
+        0.02
+      ]
+    }
+  ]
+}

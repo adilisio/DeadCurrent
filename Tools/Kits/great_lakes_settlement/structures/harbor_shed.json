@@ -1,0 +1,36 @@
+{
+  "id": "kit_harbor_shed",
+  "type": "harbor shed",
+  "gym": false,
+  "about": "Plain grey-board gear shed on the quay, gable to the water (composition only; VS-10 places two).",
+  "footprint": [
+    4,
+    6
+  ],
+  "storeys": 1,
+  "base": 0,
+  "skins": {
+    "walls": "BoardGrey",
+    "trim": "Tarred",
+    "roof": "Corrugated"
+  },
+  "openings": {
+    "front": [
+      {
+        "type": "door",
+        "at": 1
+      }
+    ],
+    "left": [
+      {
+        "type": "window",
+        "at": 2
+      }
+    ]
+  },
+  "roof": {
+    "type": "gable",
+    "ridge": "y",
+    "overhang": 30
+  }
+}
