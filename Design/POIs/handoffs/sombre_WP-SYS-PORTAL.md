@@ -142,11 +142,26 @@ Stop, write the reason at the top of Handoff Notes, and return control when any 
 
 Filled in by the receiving agent when it stops or finishes.
 
-- **Status:** not started
-- **Commits:**
+- **Status:** complete (2026-10-01). Built by Claude, because Anthony asked Claude to do this package rather than launch Grok. Branch `vs/sys-portal`, worktree `C:\DeadCurrent_wt\sys-portal`, from `5feabc3`.
+- **Commits:** the `VS-03:` commit on `vs/sys-portal` (see `git log vs/sys-portal`).
 - **What changed:**
-- **Tests run and results:**
+  - new `World/DCCellPortal.{h,cpp}` (`ADCCellPortal`, `FDCPortalVariant`, `EDCPortalUse`) and `World/DCCellPortalTest.cpp`
+  - `UDCWorldStateSubsystem::OnSceneCut` / `NotifySceneCut()`
+  - `ADCConditionalPresence` binds the scene cut to `Snap` (plus one comment sentence)
+  - the "Cell portal (Phase 6)" subsection of `Design/technical_architecture.md`
+  - nothing else
+- **Tests run and results:** `Tools\RunTests.bat -build` in the worktree: **47 of 47** (34 editor, 13 map), every baseline test unchanged and green. `DeadCurrent.World.CellPortal` passes.
 - **Decisions the contract left open:**
+  - The verbs: the default variant verb is "Go"; the locked prompt verb is "Try" (`LockedVerb`, editable); the default `LockedText` is "It won't open."
+  - Fade defaults are 0.35 / 0.15 / 0.35 s. `CardSeconds` defaults to 2.5 s.
+  - Arrival levels the pitch and sets the control rotation to the destination's yaw.
+  - **`TryUse` returning `EDCPortalUse`** was added, so tests and later map tests can tell locked from passed without a HUD; `Interact` calls it.
+  - A portal with no `Destination` refuses (`Ignored`) and logs an error, rather than applying consequences without a move.
+  - The chosen variant is fixed at the moment of use; the consequences run at black, before the move and the scene cut.
+  - A level ending mid-fade gives input back (`EndPlay`).
+  - Interaction tag: `Interaction.Use`, the same as doors.
 - **Open issues:**
-- **Exact next step:**
+  - One thing found while testing: a timer set during a frame starts counting at the next tick (engine behaviour), so a timed portal's fade-out lasts one frame longer than `FadeOutSeconds`. This doesn't matter in play. The test steps past it.
+  - Not verified in a rendered game yet. The camera fade and input lock are first exercised for real by VS-04's `Map.Sombre.Architecture`.
+- **Exact next step:** the Integrator merges into `main`, adds the test-table row, reruns the suite, packages, pushes.
 - **Return to:** the Integrator (Claude)

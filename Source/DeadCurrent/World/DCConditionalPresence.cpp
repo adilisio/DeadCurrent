@@ -51,6 +51,8 @@ void ADCConditionalPresence::BeginPlay()
 	{
 		ChangedHandle = WorldState->OnChanged.AddUObject(this, &ADCConditionalPresence::HandleWorldChanged);
 		RestoredHandle = WorldState->OnRestored.AddUObject(this, &ADCConditionalPresence::Snap);
+		// A cell portal moves the player while the screen is dark: nothing is observed, so a pending change applies now.
+		SceneCutHandle = WorldState->OnSceneCut.AddUObject(this, &ADCConditionalPresence::Snap);
 	}
 
 	SetActorTickInterval(CheckInterval);
@@ -63,6 +65,7 @@ void ADCConditionalPresence::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		WorldState->OnChanged.Remove(ChangedHandle);
 		WorldState->OnRestored.Remove(RestoredHandle);
+		WorldState->OnSceneCut.Remove(SceneCutHandle);
 	}
 	Super::EndPlay(EndPlayReason);
 }
