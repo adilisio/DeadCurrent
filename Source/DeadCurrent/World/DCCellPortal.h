@@ -14,7 +14,7 @@ enum class EDCPortalUse : uint8
 {
 	/** Nothing passed: LockedText was shown and nothing changed. */
 	Locked,
-	/** A transition is already running (or the portal has no destination): the use did nothing. */
+	/** A transition (this portal's or another's) is already running, or the portal has no destination: nothing. */
 	Ignored,
 	/** A variant passed and the transition started (a timed portal) or completed (an instant one). */
 	Passed
@@ -84,7 +84,10 @@ public:
 	/** Index into Variants of the first that passes for Interactor, or INDEX_NONE when the portal is locked to them. */
 	int32 FindVariant(AActor* Interactor) const;
 
-	/** True from a timed use until the fade back in has finished. Uses are ignored meanwhile. */
+	/** True while any cell portal in World is mid-transition. Every portal ignores uses meanwhile. */
+	static bool IsAnyTransitionRunning(const UWorld* World);
+
+	/** True from a timed use until the fade back in has finished. Uses of any portal are ignored meanwhile. */
 	UFUNCTION(BlueprintPure, Category="Portal")
 	bool IsTransitioning() const { return bTransitioning; }
 

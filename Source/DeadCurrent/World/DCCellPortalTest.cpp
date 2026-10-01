@@ -262,6 +262,26 @@ bool FDCCellPortalTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Still exactly one scene cut"), Cuts, 1);
 	}
 
+	// --- While one portal's transition runs, every portal refuses (VS-04: the way back out stands at the arrival) ---
+	{
+		FDCTestWorld World;
+		ACharacter* Walker = SpawnWalker(World);
+		ADCCellPortal* In = SpawnPortal(World, SpawnDestination(World), 0.3f, 0.2f, 0.3f);
+		ADCCellPortal* Back = SpawnPortal(World, SpawnDestination(World), 0.3f, 0.2f, 0.3f);
+
+		TestEqual(TEXT("The first portal starts"), In->TryUse(Walker), EDCPortalUse::Passed);
+		TestFalse(TEXT("Another portal offers no use while a transition runs"), IDCInteractable::Execute_CanInteract(Back, Walker));
+		TestEqual(TEXT("Another portal is ignored while fading out"), Back->TryUse(Walker), EDCPortalUse::Ignored);
+		Advance(World, 0.45f);
+		TestTrue(TEXT("Moved by the first portal"), Walker->GetActorLocation().Equals(Arrival, 1.0));
+		TestEqual(TEXT("Another portal is ignored while black and fading in"), Back->TryUse(Walker), EDCPortalUse::Ignored);
+		TestFalse(TEXT("The other portal never started"), Back->IsTransitioning());
+		Advance(World, 1.0f);
+		TestFalse(TEXT("The first transition is over"), In->IsTransitioning());
+		TestTrue(TEXT("The other portal is usable afterwards"), IDCInteractable::Execute_CanInteract(Back, Walker));
+		TestEqual(TEXT("And passes"), Back->TryUse(Walker), EDCPortalUse::Passed);
+	}
+
 	return true;
 }
 

@@ -1,6 +1,6 @@
 # DEAD CURRENT — Phase 6: Vertical Slice Plan ("The Wrong Characteristic" at Pointe Sombre)
 
-Status: **PLANNED, NOT STARTED, AWAITING ANTHONY'S APPROVAL** (VS-00, 2026-09-30). Nothing below is built. No Phase 6 code, map, asset, quest, item, or dialogue exists. Implementation begins at VS-01 only after Anthony approves or changes this plan.
+Status: **APPROVED and STARTED** (Anthony approved this plan on 2026-09-30, `24d3e0d` + `034cbc7`). Live task status is in `Design/ANTHONY_CHECKLIST.md`, not here. The plan text below is unchanged since approval, apart from this line. (Original VS-00 status line, kept as history: "PLANNED, NOT STARTED, AWAITING ANTHONY'S APPROVAL".)
 
 ## Mission
 

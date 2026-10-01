@@ -5,6 +5,7 @@
 #include "Core/DCGameplayRules.h"
 #include "Core/DCGameplayTags.h"
 #include "DeadCurrent.h"
+#include "EngineUtils.h"
 #include "Dialogue/DCDialogueComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -40,10 +41,23 @@ int32 ADCCellPortal::FindVariant(AActor* Interactor) const
 	});
 }
 
+bool ADCCellPortal::IsAnyTransitionRunning(const UWorld* World)
+{
+	for (TActorIterator<ADCCellPortal> It(World); It; ++It)
+	{
+		if (It->IsTransitioning())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 bool ADCCellPortal::CanInteract_Implementation(AActor* Interactor) const
 {
-	// Locked portals stay usable: using one is how the player reads why it is locked.
-	return !bTransitioning;
+	// Locked portals stay usable: using one is how the player reads why it is locked. While any portal's transition
+	// runs, none is: the way back out often stands right at the arrival point (VS-04).
+	return !IsAnyTransitionRunning(GetWorld());
 }
 
 FDCInteractionPrompt ADCCellPortal::GetInteractionPrompt_Implementation(AActor* Interactor) const
@@ -76,7 +90,7 @@ void ADCCellPortal::Interact_Implementation(AActor* Interactor)
 
 EDCPortalUse ADCCellPortal::TryUse(AActor* Interactor)
 {
-	if (bTransitioning || !Interactor)
+	if (!Interactor || IsAnyTransitionRunning(GetWorld()))
 	{
 		return EDCPortalUse::Ignored;
 	}

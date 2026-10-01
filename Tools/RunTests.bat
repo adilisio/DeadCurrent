@@ -44,6 +44,7 @@ if "%BUILD%"=="1" (
 )
 
 call "%TOOLS%Maps.bat" list
+if defined PRODUCTION_MISSING goto missingmap
 
 set "FAILED=0"
 set "F1="
@@ -73,6 +74,10 @@ if "%FAILED%"=="1" (
 )
 echo All tests passed.
 exit /b 0
+
+:missingmap
+echo Registered production map not built:%PRODUCTION_MISSING%. Run Tools\RebuildContent.bat first.
+exit /b 1
 
 rem Every production map that exists, each with its own group.
 :runall
@@ -110,7 +115,10 @@ exit /b 0
 :run
 set "LOG=%LOGDIR%\%~2"
 echo Running %~1 tests %~3...
+rem A fresh log every run: if the engine fails to start, an old log must not read as a new pass.
+if exist "%LOG%" del /q "%LOG%"
 "%UE_CMD%" "%PROJECT%" %~3 %COMMON% "-ExecCmds=Automation RunTests %~1; Quit" -TestExit="Automation Test Queue Empty" -abslog="%LOG%" >nul 2>&1
+if not exist "%LOG%" goto nolog
 findstr /C:"Test Completed. Result=" "%LOG%"
 findstr /C:"Test Completed. Result={Success" "%LOG%" >nul
 if errorlevel 1 (
@@ -124,4 +132,9 @@ if not errorlevel 1 (
 	findstr /C:"LogAutomationController: Error" "%LOG%"
 	set "FAILED=1"
 )
+exit /b 0
+
+:nolog
+echo The engine wrote no log: it did not start. %LOG%
+set "FAILED=1"
 exit /b 0

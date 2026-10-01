@@ -8,7 +8,8 @@ rem        MAP_GROUP   Boathouse                   the automation group: DeadCur
 rem        MAP_EXISTS  1 if the .umap exists, else 0 (a registered map that is not built yet)
 rem        MAP_OK      1 if the name was recognised, else 0
 rem   call "%~dp0Maps.bat" list                                  every registered map that exists. Sets PRODUCTION_MAPS
-rem        (space separated map names, registration order) and PRODUCTION_COUNT.
+rem        (space separated map names, registration order) and PRODUCTION_COUNT, and PRODUCTION_MISSING (registered
+rem        production maps with no .umap; RunTests and Package fail on any, so a lost map cannot pass by being skipped).
 rem
 rem Two kinds of map are registered:
 rem   production   Lvl_Boathouse, Lvl_PointeSombre. Listed by "list": cooked by Package.bat, tested by RunTests.bat.
@@ -48,12 +49,16 @@ exit /b 0
 
 :list
 set "PRODUCTION_MAPS="
+set "PRODUCTION_MISSING="
 set "PRODUCTION_COUNT=0"
 for %%R in (Lvl_Boathouse Lvl_PointeSombre) do call :add %%R
 exit /b 0
 
 :add
-if not exist "%~dp0..\Content\Maps\%1.umap" exit /b 0
+if not exist "%~dp0..\Content\Maps\%1.umap" (
+	set "PRODUCTION_MISSING=%PRODUCTION_MISSING% %1"
+	exit /b 0
+)
 set "PRODUCTION_MAPS=%PRODUCTION_MAPS% %1"
 set /a PRODUCTION_COUNT+=1
 exit /b 0

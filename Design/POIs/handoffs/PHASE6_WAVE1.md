@@ -1,6 +1,6 @@
 # Phase 6 — Wave 1: the first parallel work packages
 
-Status: **PREPARED, NOT LAUNCHED.** Nothing here has started. Anthony launches the agents; the Integrator (Claude) merges.
+Status (2026-10-01): **launched.** WP-KIT-RESEARCH done and merged; WP-SYS-PORTAL (VS-03) built by Claude at Anthony's request and merged; WP-KIT (VS-05) runs after VS-04, built by Claude on `vs/kit` from the VS-04 commit (not `e833811`: the kit's later integration on the island uses the VS-04 toolkit). Live status: `Design/ANTHONY_CHECKLIST.md`. The original status line was "PREPARED, NOT LAUNCHED".
 
 Source of truth: `VerticalSlicePhasePlan.txt` (approved at `24d3e0d` + `034cbc7`). If a handoff and the plan disagree, the plan wins and the Integrator is told (see "Plan clarifications" below for the only known differences).
 

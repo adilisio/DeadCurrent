@@ -25,6 +25,10 @@ if not exist "%UAT%" (
 )
 
 call "%TOOLS%Maps.bat" list
+if defined PRODUCTION_MISSING (
+	echo Registered production map not built:%PRODUCTION_MISSING%. Run Tools\RebuildContent.bat first.
+	exit /b 1
+)
 set "MAPARG="
 for %%M in (%PRODUCTION_MAPS%) do call :addmap %%M
 echo Production maps:%PRODUCTION_MAPS%
@@ -58,7 +62,13 @@ rem Launch the packaged game on one map with no rendering; -ExecCmds quits after
 :smoke
 set "SMOKE=%REPO%\Saved\Logs\PackageSmoke_%1.log"
 if /I "%1"=="Lvl_Boathouse" set "SMOKE=%REPO%\Saved\Logs\PackageSmoke.log"
+rem A fresh log every launch: a stale one must not pass for this run.
+if exist "%SMOKE%" del /q "%SMOKE%"
 "%EXE%" /Game/Maps/%1 -nullrhi -nosound -unattended -nosplash -log -abslog="%SMOKE%" "-ExecCmds=Automation SetMinimumLogVerbosity Log; stat none; Quit" > nul 2>&1
+if not exist "%SMOKE%" (
+	echo Smoke launch of %1 wrote no log: the game did not start. %SMOKE%
+	exit /b 1
+)
 findstr /C:"Error:" "%SMOKE%" | findstr /I /C:"%1" /C:"Failed to load" /C:"Fatal" >nul
 if not errorlevel 1 (
 	echo Smoke launch of %1 logged load errors. See %SMOKE%

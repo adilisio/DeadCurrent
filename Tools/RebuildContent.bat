@@ -1,6 +1,6 @@
 @echo off
 rem Regenerate every script-generated asset, in dependency order:
-rem items -> quests -> dialogue (references items) -> test gym -> boathouse map.
+rem items -> quests -> dialogue (references items) -> test gym -> boathouse map -> Pointe Sombre map.
 rem import_art brings in the CC0 surfaces the boathouse materials resolve; import_audio the CC0 sounds.
 rem   Tools\RebuildContent.bat              all of them
 rem   Tools\RebuildContent.bat create_quest run one script from Tools\EditorScripts
@@ -22,17 +22,20 @@ if not exist "%UE_CMD%" (
 	exit /b 1
 )
 
-if not "%~1"=="" (
-	call :run %~1
-	exit /b %errorlevel%
-)
+rem One script: resolved outside a parenthesised block, so %errorlevel% is read after the run (inside a block it
+rem expanded at parse time and a failed script exited 0; found in VS-04).
+if not "%~1"=="" goto :one
 
-for %%S in (import_art import_audio create_items create_quest create_dialogue build_test_gym build_boathouse) do (
+for %%S in (import_art import_audio create_items create_quest create_dialogue build_test_gym build_boathouse build_pointe_sombre) do (
 	call :run %%S
 	if errorlevel 1 exit /b 1
 )
 echo All content regenerated.
 exit /b 0
+
+:one
+call :run %~1
+exit /b %errorlevel%
 
 :run
 set "NAME=%~1"
@@ -41,7 +44,9 @@ set "LOGNAME=%NAME:\=_%"
 set "LOG=%~dp0..\Saved\Logs\RebuildContent_%LOGNAME%.log"
 echo Running %NAME%...
 "%UE_CMD%" "%PROJECT%" -run=pythonscript -script="%SCRIPTS%\%NAME%.py" -unattended -nullrhi -nosplash -log -abslog="%LOG%" >nul 2>&1
-findstr /C:"Traceback (most recent call last)" "%LOG%" >nul
+rem A runtime error prints a Traceback; a syntax error does not (VS-04 found one reported as success), so the
+rem commandlet's own "executed with errors" line counts too.
+findstr /C:"Traceback (most recent call last)" /C:"Python script executed with errors" "%LOG%" >nul
 if not errorlevel 1 (
 	echo %NAME% FAILED. See %LOG%
 	findstr /C:"LogPython: Error" "%LOG%"

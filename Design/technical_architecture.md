@@ -37,7 +37,7 @@ Tools\RunTests.bat -nomap       skip the in-map suite
 Tools\RunTests.bat -build       build DeadCurrentEditor first
 ```
 
-Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes a few minutes including editor start-up. Count is recorded in `Design/CLAUDE_SESSION_REPORT.md`.
+Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log` (`RunTests_Map_<Group>.log` for other maps). Each log is deleted before its run, and a run that writes none fails, so a failed engine start cannot read as an old pass. A registered production map that is not built fails `RunTests.bat` and `Package.bat` instead of being skipped (VS-04). The full run takes a few minutes including editor start-up. Count is recorded in `Design/CLAUDE_SESSION_REPORT.md`.
 
 | Group | Covers |
 | --- | --- |
@@ -54,7 +54,8 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log`. The full run takes 
 | `DeadCurrent.Map.Boathouse.*` | Game context, real `Lvl_Boathouse`: placed actors, real interactions and damage, real F9 loads that reopen the map (pre-quest, ready to turn in, complete, legacy save). `SurveyLaunch`: walk-in discovery, live-water damage, clues, partial loot, pull the leads, hidden kit, save, diverge, F9, no re-announce. `SurveyLaunchSaves`: the POI combined with Shore Watch accepted or complete. `BuildChecks`: the same actors change with Engineering, Survival, Fieldcraft, Persuasion, the three perks and the Sounder Chart, then a real F9 restores the build. `LandingStage` (Phase 5): the stage and Mara through both Shore Watch routes, deferral while the player is with Mara, save, diverge, F9 snaps back, the power cut, the tackle box, the dressing. `LandingStageSaves`: hand-written version-5 saves show the derived state, undiscovered. `LandingStagePlayerSave`: the player's own save, copied to a scratch slot. `CampCover`: three crate stacks outside the patrol square, one breaking his sight line to a crouched player near the coil. Scratch save slots |
 | `DeadCurrent.Map.Boathouse.TestHelpers` | (VS-02) The shared in-map harness on the real map: find by id and display name, talk and pick replies, teleport, F5, diverge, F9, and `QueueWaitUntil` |
 | `DeadCurrent.World.ConditionalPresence` | `ADCConditionalPresence`: default, first match, move with offsets, hide and re-show, deferral while observed, restore snaps, destroyed target, writes nothing |
-| `DeadCurrent.World.CellPortal` | (VS-03) `ADCCellPortal`: locked text and prompts, first-match variants, consequences once per use, arrival at the destination at rest, the scene cut snapping deferred presence (and never standing in for a restore), the timed transition, no destination refused, saves nothing |
+| `DeadCurrent.World.CellPortal` | (VS-03) `ADCCellPortal`: locked text and prompts, first-match variants, consequences once per use, arrival at the destination at rest, the scene cut snapping deferred presence (and never standing in for a restore), the timed transition, no destination refused, saves nothing; (VS-04) every portal refuses while any transition runs |
+| `DeadCurrent.Map.Sombre.*` | (VS-04) Game context, real `Lvl_PointeSombre`: `Architecture`, `CrossMapLoad`, `Respawn`, `Atmosphere`. See "Pointe Sombre: map architecture" |
 | `DeadCurrent.AI.ScavengerNotice` | The scavenger's notice rule: standing, the sight sense decides; crouched, only within 8 m and 45° |
 | `DeadCurrent.Map.Boathouse.ScavengerWarning` | Spotted from the path he warns, backing off returns him to his loop, he warns again, and coming within 3 m starts the chase |
 | `DeadCurrent.Presentation.ConditionalAudio` | `ADCConditionalAudio` follows a world flag (hum until cut, one-shot on the rising edge, silent when already set at start, re-arms after a silent restore) and writes no world state |
@@ -101,10 +102,11 @@ The folder is `Saved/Review/<yyyy-mm-dd_hhmm>/` (`<yyyy-mm-dd_hhmm>_<map>/` for 
 | `build_landing_stage.py` | The Landing Stage POI (Phase 5). Not run on its own: `build_boathouse.py` calls `build(<its helpers>)` near the end of `main()`. Owns only the actors in folder `LandingStage`. |
 | `dress_landing.py` | Places the Landing Stage's NoCollision dressing (tag `LandingDress`) in `Lvl_Boathouse_Art`. Not part of `RebuildContent.bat`; a content rebuild leaves them. |
 | `export_pack_textures.py`, `reimport_pack_textures.py` | Helpers for `Tools\ImportPackAssets.ps1` (generic pack migration with textures cut to 1K). |
+| `build_pointe_sombre.py` | (VS-04) Regenerates `/Game/Maps/Lvl_PointeSombre`: the core script, then one `build(tk)` hook per cell in `pointe_sombre/`. See "Pointe Sombre: map architecture". |
 | `dress_audio.py` | Places the always-on shore wind and lap beds (two 2D `ADCConditionalAudio`, tagged `ShoreAudio`) in `Lvl_Boathouse_Art`. Not part of `RebuildContent.bat`; a content rebuild leaves them. |
 | `inspect_template.py` | Read-only dump of player movement settings, input mappings and level actors. |
 
-`Tools\RebuildContent.bat` runs `import_art`, `import_audio`, `create_items`, `create_quest`, `create_dialogue`, `build_test_gym` and `build_boathouse` in that order (the pistol references the audio; dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one; a script in a subfolder of `Tools/EditorScripts` is named with its folder (`kit\build_kit_gym`). `Tools\ImportSurvivalCharacter.ps1` is a one-time pack migration, not part of the rebuild (see `art_pipeline.md`). `Tools\Package.bat` cooks a Development Win64 build to `Saved\Packaged` and smoke-launches every production map. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`.
+`Tools\RebuildContent.bat` runs `import_art`, `import_audio`, `create_items`, `create_quest`, `create_dialogue`, `build_test_gym`, `build_boathouse` and `build_pointe_sombre` in that order (the pistol references the audio; dialogue references items; maps reference everything). `Tools\RebuildContent.bat create_quest` runs one; a script in a subfolder of `Tools/EditorScripts` is named with its folder (`kit\build_kit_gym`). `Tools\ImportSurvivalCharacter.ps1` is a one-time pack migration, not part of the rebuild (see `art_pipeline.md`). `Tools\Package.bat` cooks a Development Win64 build to `Saved\Packaged` and smoke-launches every production map. Close the editor first and rebuild C++ before running it. Logs: `Saved/Logs/RebuildContent_<script>.log`. A script fails the run on a Traceback or on the commandlet's "Python script executed with errors" (a syntax error prints no Traceback), and a one-script run exits with its result (VS-04 fixed both: before, a syntax error and a failed one-script run both reported success).
 
 ## Content specs (Phase 6, VS-02)
 
@@ -195,6 +197,123 @@ The stage reads the Shore Watch outcome from existing flags only, through eight 
 
 `wreck.power_cut` turns the bulbs (`ADCFlickerLight`, `ActiveConditions`) and their hum (`ADCConditionalAudio`) off. Inspectables with variants: `Crate`, `Storm lantern`, `Card`, `Bulbs`, `Skiff`, `Cut line`. Discovery: `ADCLocationVolume` `shore.landing_stage` / "Landing Stage". Container: `landing.tackle` (6× 9mm, 1× Salvaged Wiring). No new flag, quest, item, dialogue, or save field. Tests: `DeadCurrent.Map.Boathouse.LandingStage`, `DeadCurrent.Map.Boathouse.LandingStageSaves`.
 
+## Pointe Sombre: map architecture (Phase 6, VS-04)
+
+`/Game/Maps/Lvl_PointeSombre` is the slice's map (`VerticalSlicePhasePlan.txt` §5). It is one always-loaded persistent map (not World Partition): an exterior island plus interior cells built far away in the same map, reached through cell portals. Like `Lvl_Boathouse` it is generated: hand edits are lost on the next `Tools\RebuildContent.bat build_pointe_sombre` (also part of a full rebuild). The generated `.umap`, the terrain tiles, and `Tools/PointeSombre/out/terrain_probe.json` are build products the Integrator commits.
+
+### The scripts and who owns them
+
+| File | Does | Owner |
+| --- | --- | --- |
+| `Tools/PointeSombre/island.json` | The map frame and terrain as data (metres): coast outline, shore steepness zones, hills, ridges, flattened pads, the reef causeway and reef, noise seed, the walkable outline, reference places | Integrator |
+| `Tools/EditorScripts/pointe_sombre/island.py` | Pure Python (no engine): the deterministic heightfield and outline tests. The map script, the route-timing report, and the biome tool all read the same island from it | Integrator |
+| `Tools/EditorScripts/pointe_sombre/terrain_mesh.py` | The terrain tiles (below) | Integrator |
+| `Tools/EditorScripts/pointe_sombre/toolkit.py` | The helpers every cell script gets as `tk`: ownership (`tk.own`), boxes and walls, `tk.portal` / `tk.portal_variant`, `tk.presence` / `tk.state` / `tk.placement`, `tk.anchor`, `tk.interior_origin`, `tk.make_interior`, `tk.marker`, `tk.ground_z`, lights, post-process boxes, location volumes, materials (`tk.surface`, `tk.tinted_surface`, `tk.flat`) | Integrator |
+| `Tools/EditorScripts/build_pointe_sombre.py` | The core: terrain, water, walls, nav bounds, the three atmospheres, the exterior ambience, anchors, the player start and its respawn rule, then one `build(tk)` hook per cell (`CELLS`), then the probe file | Integrator |
+| `Tools/EditorScripts/pointe_sombre/<cell>.py` | One cell: `build(tk)`, owning only actors tagged `Cell:<cell>` (outliner folder `Cells/<cell>`) | the cell's builder |
+| `pointe_sombre/arch_test.py` | The architecture fixture: a door marked TEST by the west end of the quay into an abstracted interior room. Not slice content; it carries `Map.Sombre.Architecture` until the real interior cells and their portals exist | Integrator |
+| `pointe_sombre/crossing.py` | VS-04 stub of the crossing: the *Ida*'s deck, rails, wheelhouse, and the one-way wheelhouse door to the quay (sets `sombre.reef_struck`) | Integrator now; the crossing's builder from VS-10 |
+
+A cell script never references another cell's actors. Where two owners meet (a portal and its landing), the core creates a named anchor (`Anchor_<Name>`, tag `Anchor:<Name>`, table `ANCHORS` in the core script) before any hook runs, and both sides use `tk.anchor(name)`. VS-04's anchors: `Anchor_NewGame_Deck`, `Anchor_CrossingExit_Quay`, `Anchor_Respawn_TowerBase`. The full list lives in the id ledger (`Design/POIs/sombre_ids.md`, VS-07).
+
+### The map frame
+
+- Units: cm in the engine, metres in `island.json`. **X is north, Y is east, Z is up** (Unreal's own axes, so the editor's top view shows north up). Sea level is Z = 0 (the water sheet's top).
+- The island: land from X −95 m (the quay) to +105 m, Y −240 m (the west headland's tip) to +196 m (the Pointe). The playable exterior with the reef and the *Ashland Grey*'s reef is about 435 m × 245 m (plan §5.5: 400–500 by 300–400). The crossing deck is offshore at (−330 m, −360 m), facing the island.
+- Reference places (VS-08 refines them; the route-timing report measures between them): quay arrival (−84, 10), store (−40, −5), tower base (22, 160) on the tower rock at 26.5 m, cable hut (80, 95), headland post (−18, −215), *Grey* stern (−118, −228).
+- The walkable outline (`bounds` in `island.json`) is fenced with hidden walls (`Edge_*`, tag `SombreEdge`): about 5 m into the shallows along the shore, at the quay edge, and around the reef causeway and the *Grey*'s reef.
+- Interior cell slots (`INTERIOR_SLOTS` in the core): `arch_test` (0, 2500 m, 400 m), `vault` (150 m, 2500 m, 400 m), `net_loft` (300 m, 2500 m, 400 m). That is outside the exterior's XY footprint and far above KillZ.
+
+### The cell placement rule (plan §5.2, decided with evidence in VS-04)
+
+An interior cell:
+1. sits in its slot: 2.5 km east of the island and 400 m up. That is beyond every exterior sightline, beyond the 4 km water sheet's edge, out of the lightning's 900 m radius, and high enough that the exterior height fog has thinned to nothing. Interiors stay in the **persistent level**, because presence rules and portals reference them.
+2. is enclosed (floor, walls, ceiling).
+3. passes every fixed part through `tk.make_interior`. That sets lighting channel 1 only (the exterior sun, fill, moon, and lightning are channel 0, and with shadows off at low spec a directional light would otherwise light a sealed room), and an `LDMaxDrawDistance` of 120 m, so the exterior never draws it. The cell's own lights take channels 0 and 1, so they also light the player's arms and anyone who walks in. Characters stay on channel 0 because presence moves them between the exterior and the cells. Known limit: the exterior sun also reaches the first-person arms and characters inside a cell (no shadows at low spec). This was accepted as it is in the boathouse.
+4. has its own bounded post-process volume (priority 10) for its exposure.
+5. needs no `AudioVolume`: the exterior ambience is not a 2D bed. It is an `ADCConditionalAudio` with an attenuated, non-spatialized sound (`SA_DC_SombreExterior`: full inside 550 m, silent by 950 m), so it fills the island and the deck and is silent in the slots. A 2D bed would play inside the vault.
+6. Ceilings and any downward face use `tk.flat` (a flat-colour material). `M_DC_Surface`'s triplanar top projection gives a downward face an upward normal, so a lamp below cannot light it. The fixture's ceiling rendered black until this was done.
+
+### Terrain: a generated mesh, chosen by a spike
+
+The plan's three candidates were judged on headless regeneration, traces, low-spec cost, and look (VS-04 spike, 2026-10-01):
+
+| Method | Result |
+| --- | --- |
+| Landscape from a versioned heightmap | **Rejected.** Spawning a `Landscape` from Python in the commandlet that `RebuildContent.bat` uses asserts (`!IsRunningCommandlet()`, the LandscapeEditor module reaches the editor mode manager) and kills the run. It cannot be regenerated headless. |
+| Composed library rock and cliff meshes | **Rejected.** The library's `Smugglers_cove` coast rocks and cliffs are Nanite scans of 12–160 MB per mesh, over the project's 12 MB migration ceiling (`ImportPackAssets.ps1`). Nanite does not run under the low-spec DX11 path. A walkable island would need dozens of them, plus hidden collision for paths. |
+| **Generated terrain mesh from the same heightfield** | **Chosen.** It regenerates headless from versioned data in about 25 s, or about 3 s when the island is unchanged. Traces and walking meet exactly the rendered surface: 160 probe points, worst error 0.1 cm. It is about 50k triangles over 32 tiles; gate 0 cost is below. |
+
+How the tiles are made (`terrain_mesh.py`):
+- the island is cut into 60 m tiles on a 2 m grid
+- triangles wholly below −1.2 m are dropped (the water is opaque)
+- each triangle takes one of four surfaces by slope and height: `MI_DC_Sombre_Turf`, `_Rock` (steeper than 38°), `_Shingle` (under 1.4 m), `_Seabed`. These are tinted children of the shore's surface instances.
+- each tile is written as an OBJ with the heightfield's own normals (`Saved/PointeSombreTerrain/`) and imported, with complex-as-simple collision
+- a tile whose stored hash (`DCIslandHash` metadata) matches the island data is skipped, so an unchanged island leaves the assets byte-identical
+- `FORMULA_VERSION` in `island.py` forces a rebuild when the method changes
+
+Lessons from the spike, kept in the code comments:
+- Building a static mesh in Python from a `StaticMeshDescription` gave tiles with no usable normals, whatever the build settings said. `M_DC_Surface` takes its triplanar weights from the vertex normal, so the island rendered black with a sky sheen. Cubes beside it with the same materials rendered correctly, which isolated the cause.
+- The OBJ import reads the file as Z-up and only mirrors Y: a point is written (X, −Y, Z).
+- Rebuilding a loaded tile in place asserted in a background worker, so a stale tile is deleted and imported fresh.
+- The two-sided surface material and the double-sided physics hid a reversed winding: traces reported up-facing normals while the render was wrong. Only a capture shows it.
+
+### Atmosphere: presence is enough (the §6 #8 spike)
+
+Three looks, exactly one active for any combination of flags:
+
+| Look | Active when |
+| --- | --- |
+| dusk storm | `sombre.hale_arrived` not set and `sombre.meeting_done` not set (a new game) |
+| calm evening | `sombre.hale_arrived` set, `sombre.meeting_done` not set |
+| night storm | `sombre.meeting_done` set |
+
+Each look is one `ADCConditionalPresence` rule (`Presence_Atmosphere_<look>`) over five actors tagged `Atmosphere:<look>`: its sun (atmosphere sun), a shadowless fill light opposite the sun (the boathouse's answer to no GI at low spec), its sky atmosphere, its height fog, and its post-process volume.
+- The active state leaves them as authored.
+- The other state hides them **and parks them** at (0, −4 km, −2 km). Hiding is enough for lights, sky, and fog. A post-process volume honours its bounds, not hidden, so the exterior grade is a **bounded** volume (the island, the reef, and the deck), and parking it is what switches it off.
+- The rules are not deferred: every change happens while the player is in an interior (the vault at `knows`, the loft at the meeting), and the way back out is a scene cut.
+- One shared sky light with real-time capture follows whichever sky is present.
+- Lightning is an `ADCFlickerLight` per storm look (tag `Lightning:<look>`), switched by its own world `ActiveConditions`.
+
+**No `ADCConditionalAtmosphere` is needed** (recorded per plan §17). Rain visuals (Niagara or streak cards) and rain or thunder audio are not in VS-04; they are presentation for the crossing (VS-10) and VS-21. `Map.Sombre.Atmosphere` covers every flag combination and a load. The review views `quay_storm`, `quay_calm`, and `quay_night` show the three looks from one camera.
+
+### Player start and respawn
+
+The single `PlayerStart` stands on the *Ida*'s deck (`Anchor_NewGame_Deck`) for a new game. A presence rule (`Presence_Respawn`, not deferred) moves it to the quay when `sombre.reef_struck` is set, and to the tower base when `sombre.vault_opened` is set. `ADCPlayerCharacter::Respawn` already uses the first `PlayerStart`'s current transform, so the existing system is enough and no C++ was added. Presence makes the start movable. `Map.Sombre.Respawn` kills the player in each state and checks where they come back, including after an F9.
+
+### Portal authoring rules (from the rendered VS-04 proof)
+
+- A portal puts the **capsule centre** on its destination marker, so markers stand at **standing capsule-centre height** (floor + 100 cm; the capsule half-height is 96), never floor-snapped. The player then settles about 2 cm onto the floor (`Map.Sombre.Architecture` checks: on the ground, within 3 cm, overlapping nothing).
+- A scene cut is global: **every** deferred presence rule in the map commits on it, not only the ones near the portal. Author deferred rules so that committing them at any portal use is acceptable, or keep them out of sight.
+- Portals and their markers live in the persistent level (presence and portals cannot reference another level).
+- While any portal's transition runs, every portal refuses (VS-04 fix, below), so the way back out may stand right at the arrival point.
+
+### Performance gate 0 (VS-04, 2026-10-01; plan §20)
+
+Taken in one session on this machine, through `Tools\ReviewCapture.bat` with the low-spec `PlayTest` cvars:
+
+| Capture | Views | Average view | Route frames | Peak draw calls | Peak RHI primitives |
+| --- | --- | --- | --- | --- | --- |
+| `Saved/Review/2026-10-01_0909` (`Lvl_Boathouse`, same session) | 36 | 36.6 ms | 24.3 ms | 492 | 1.74 M |
+| **`Saved/Review/2026-10-01_0910_Lvl_PointeSombre` (gate 0, the slice's baseline)** | 8 | **16.7 ms** (every view at the 60 FPS cap) | 21.3 ms | 512–662 | 0.38–0.45 M |
+
+Two consequences for later gates:
+- Because every gate-0 view is at the cap, frame time can only show a regression once a view goes over 16.7 ms. Gate 1 compares the cost columns as well.
+- The draw-call peaks are high for so few visible components (9 in the quay views). The suspects are the per-frame sky-light capture and the parked atmosphere sets. This is a watch item for gate 1, not a failure.
+
+### Tests
+
+`DeadCurrent.Map.Sombre.*` (`Source/DeadCurrent/Save/DCSombreArchitectureMapTest.cpp`, Integrator-owned; scratch slot `DeadCurrent_SombreArchTest`):
+
+| Test | Covers |
+| --- | --- |
+| `Architecture` | a new game on the deck in the storm; the interior lighting rule on the fixture's cell; terrain traces at 160 seeded grid vertices (`terrain_probe.json`): solid, facing up, at the heightfield's height within 2 cm; walking on the terrain up to the test door until the interaction trace focuses it; the prompt; E through the real interactor; the fade sampled each frame (starts clear, only darkens, partly dark, black at the move); movement and look input off; a deferred presence change snapping on the scene cut; arrival at rest, facing the marker's yaw, pitch levelled; the way back refused mid-transition; E and jump mid-transition change nothing; input back after the fade; standing cleanly on the floor; F5 inside the cell, diverge, F9 back into it; a locked portal's verb, refusal, text, and unlocked verb; the way back out |
+| `CrossMapLoad` | a shore save loaded from the slice opens the shore with its state; a slice save loaded from the shore opens the slice; a hand-written Phase 5 (version 5) save loads on the shore from the slice |
+| `Respawn` | the start on the deck, at the quay after the strike, at the tower base once the vault opens; a death in each state; F9 restores the start |
+| `Atmosphere` | exactly one look for each of four flag combinations; each storm's lightning on only in its look; a load restores the night |
+
+Run rendered (screenshots `Saved/Screenshots/WindowsEditor/SombreArch_*.png`): launch `UnrealEditor.exe` on the map with the `ReviewCapture.bat` cvars and `-ExecCmds="Automation RunTests DeadCurrent.Map.Sombre.Architecture; Quit"`. Screenshots land a frame or more after the request.
+
 ## Presentation layer
 
 Presentation Pass (2026-09-29) added art and sound to `Lvl_Boathouse` with no gameplay change. The shape it left behind:
@@ -219,7 +338,7 @@ Presentation Pass (2026-09-29) added art and sound to `Lvl_Boathouse` with no ga
 
 **A material that fails to compile renders as the engine default and says nothing.** `M_DC_Prop`, the master for every Meshy prop, failed to compile from PP-06 until playtest 1 (its roughness and metallic samplers were the wrong type for the default texture), so every Meshy prop rendered as a pale default material. The pack's eye master also fails; its instance is re-parented onto a plain material. `Tools\ReviewCapture.bat` now fails when the capture log contains `Failed to compile Material`.
 
-**Packaging.** `Tools\Package.bat` runs a Development Win64 `BuildCookRun` to `Saved\Packaged` and a null-RHI smoke launch of each production map. The production maps are the ones registered in `Tools/Maps.bat` (map name and test group; one line per map) that exist under `Content/Maps`: `Lvl_Boathouse` today, and `Lvl_PointeSombre` once it is built. They are cooked explicitly with `-map=` and each is smoke-loaded (`Saved/Logs/PackageSmoke.log` for `Lvl_Boathouse`, `PackageSmoke_<map>.log` for any other); a map missing from the package fails the run. The packaged game target compiles the review capture code, so it must not use editor-only API outside `#if WITH_EDITOR` (`GetActorLabel`).
+**Packaging.** `Tools\Package.bat` runs a Development Win64 `BuildCookRun` to `Saved\Packaged` and a null-RHI smoke launch of each production map. The production maps are the ones registered in `Tools/Maps.bat` (map name and test group; one line per map): `Lvl_Boathouse` and `Lvl_PointeSombre` (VS-04). A registered production map that is not built fails the run, and each smoke log is deleted before its launch, so a stale log cannot pass for a new one. VS-04: both maps cooked (0 errors, 0 warnings) and smoke-loaded. They are cooked explicitly with `-map=` and each is smoke-loaded (`Saved/Logs/PackageSmoke.log` for `Lvl_Boathouse`, `PackageSmoke_<map>.log` for any other); a map missing from the package fails the run. The packaged game target compiles the review capture code, so it must not use editor-only API outside `#if WITH_EDITOR` (`GetActorLabel`).
 
 ## Interaction
 
@@ -405,7 +524,7 @@ Presence also snaps on a **scene cut** (`OnSceneCut`, below): a cell portal move
 
 A use (`Interact`, or `TryUse`, which returns `EDCPortalUse::Locked / Ignored / Passed` for tests and tools):
 
-1. A transition already running, or no `Destination` (an error is logged): ignored.
+1. A transition already running on **any** portal in the world (VS-04: the way back out often stands at the arrival point; a second portal must not start mid-fade), or no `Destination` (an error is logged): ignored. `CanInteract` is false meanwhile, so no prompt shows.
 2. No variant passes: `LockedText`, nothing else.
 3. Otherwise the screen fades out with movement and look input off. At black the portal:
    - ends any conversation
@@ -414,7 +533,7 @@ A use (`Interact`, or `TryUse`, which returns `EDCPortalUse::Locked / Ignored / 
    - broadcasts `UDCWorldStateSubsystem::NotifySceneCut()`
    - shows `CardText`
 
-   Then it holds, fades back in, and gives input back. `CanInteract` is true whenever no transition is running, including while locked, so the player can read why.
+   Then it holds, fades back in, and gives input back. `CanInteract` is true whenever no portal's transition is running, including while locked, so the player can read why.
 
 **The scene cut** (`OnSceneCut` / `NotifySceneCut()` on the world-state subsystem) means "the player was moved between scenes while the screen was dark". Conditional presence snaps on it (so the net loft can fill as the player climbs the stair, even though they arrive inside the attendees' 15 m bubble). It is **not** a restore: `OnRestored` means "state was replaced by a load; do not replay anything". Anything that must play once in ordinary play but never on a load (a one-shot sound, a light's one-time sequence) treats a scene cut as ordinary play and a restore as a snap.
 
@@ -434,6 +553,7 @@ Test: `DeadCurrent.World.CellPortal` (editor context, no map). It covers:
 - `NotifySceneCut` and `NotifyRestored` never standing in for each other
 - the timed transition: nothing happens before black, uses are ignored while it runs, it is usable again after the fade in
 - no destination is refused
+- while one portal's transition runs, another portal offers no use and is ignored, and works again afterwards (VS-04)
 - it has no persistent id and is not `IDCPersistent`
 
 ## Exploration

@@ -1,0 +1,75 @@
+{
+  "about": "Pointe Sombre's map frame and terrain, as data. Read by Tools/EditorScripts/pointe_sombre/island.py (pure Python, no engine), which build_pointe_sombre.py turns into terrain mesh tiles. Integrator-owned (VerticalSlicePhasePlan.txt §13.2). Change the island here, not in the map. Units are metres; X is north, Y is east, Z is up (Unreal's own axes, so the editor's top view shows north up); sea level is Z = 0.",
+  "version": 1,
+  "grid": {
+    "x_min": -140.0, "x_max": 130.0,
+    "y_min": -262.0, "y_max": 218.0,
+    "step": 2.0,
+    "tile": 60.0,
+    "drop_below": -1.2
+  },
+  "base_height": 3.0,
+  "sea_floor": -8.0,
+  "shore": {"default_ramp": 14.0, "sea_width_per_ramp": 1.8, "sea_width_min": 4.0, "sea_width_max": 26.0},
+  "coast": [
+    [-88.0, -30.0], [-88.0, 45.0], [-80.0, 70.0], [-62.0, 105.0], [-40.0, 140.0], [-15.0, 172.0],
+    [12.0, 192.0], [38.0, 196.0], [58.0, 178.0], [72.0, 150.0], [86.0, 120.0], [94.0, 92.0],
+    [100.0, 55.0], [104.0, 15.0], [100.0, -30.0], [90.0, -75.0], [72.0, -120.0], [48.0, -160.0],
+    [22.0, -198.0], [2.0, -228.0], [-22.0, -240.0], [-42.0, -226.0], [-55.0, -195.0], [-66.0, -150.0],
+    [-80.0, -100.0], [-90.0, -60.0], [-90.0, -38.0]
+  ],
+  "ramp_zones": [
+    {"name": "quay wall", "center": [-88.0, 8.0], "radius": 42.0, "ramp": 1.0},
+    {"name": "Pointe sea cliff", "center": [28.0, 188.0], "radius": 42.0, "ramp": 2.5},
+    {"name": "tower north face", "center": [62.0, 160.0], "radius": 26.0, "ramp": 3.0}
+  ],
+  "hills": [
+    {"name": "tower rock", "center": [25.0, 165.0], "height": 24.0, "radius": 34.0},
+    {"name": "headland", "center": [-10.0, -212.0], "height": 9.0, "radius": 30.0}
+  ],
+  "ridges": [
+    {"name": "north ridge", "from": [18.0, -70.0], "to": [55.0, 55.0], "height": 12.0, "width": 34.0}
+  ],
+  "pads": [
+    {"name": "settlement terrace", "center": [-30.0, -15.0], "radius": 36.0, "height": 5.0, "blend": 18.0},
+    {"name": "quay apron", "center": [-78.0, 10.0], "radius": 20.0, "height": 1.8, "blend": 10.0},
+    {"name": "tower base", "center": [22.0, 160.0], "radius": 11.0, "height": 26.5, "blend": 7.0},
+    {"name": "cable hut", "center": [80.0, 95.0], "radius": 9.0, "height": 3.2, "blend": 9.0},
+    {"name": "headland post", "center": [-18.0, -215.0], "radius": 7.0, "height": 10.5, "blend": 6.0}
+  ],
+  "causeways": [
+    {"name": "reef causeway", "points": [[-46.0, -222.0], [-75.0, -225.0], [-108.0, -227.0]], "height": 0.6, "width": 7.0, "falloff": 4.0}
+  ],
+  "rock_pads": [
+    {"name": "Ashland Grey reef", "center": [-118.0, -228.0], "radius": 12.0, "height": 0.8, "falloff": 6.0}
+  ],
+  "reefs": [
+    {"name": "south reef west", "points": [[-125.0, -205.0], [-132.0, -120.0], [-133.0, -40.0], [-131.0, 12.0]], "height": 0.15, "width": 6.0, "falloff": 5.0},
+    {"name": "south reef east", "points": [[-128.0, 48.0], [-118.0, 72.0], [-104.0, 92.0]], "height": 0.25, "width": 6.0, "falloff": 5.0}
+  ],
+  "noise": {"seed": 1931, "amplitude": 0.6, "cell": 10.0},
+  "bounds": {
+    "about": "The walkable region. Hidden walls stand along this outline (core script). It follows the coast about 5 m out in shallow water, hugs the quay edge, and takes in the reef causeway and the Ashland Grey's reef.",
+    "height": 12.0,
+    "points": [
+      [-88.6, -30.0], [-88.6, 45.0], [-85.0, 72.0], [-66.0, 108.0], [-44.0, 144.0], [-18.0, 177.0],
+      [10.0, 197.0], [40.0, 201.0], [63.0, 180.0], [77.0, 152.0], [91.0, 121.0], [99.0, 92.0],
+      [105.0, 55.0], [109.0, 15.0], [105.0, -31.0], [95.0, -77.0], [76.0, -123.0], [52.0, -163.0],
+      [26.0, -201.0], [5.0, -232.0], [-23.0, -245.0], [-44.0, -232.5], [-75.0, -230.0], [-105.0, -232.0],
+      [-112.0, -241.0], [-124.0, -242.0], [-132.0, -232.0], [-131.0, -220.0], [-120.0, -214.0], [-108.0, -221.5],
+      [-75.0, -219.5], [-52.0, -216.0], [-60.0, -196.0], [-71.0, -151.0], [-85.0, -101.0], [-94.5, -60.0],
+      [-90.6, -38.0]
+    ]
+  },
+  "places": {
+    "about": "Reference points for anchors, respawn, and the route-timing report. VS-08 refines them; cell specs (VS-07) own what stands there.",
+    "quay_arrival": [-84.0, 10.0],
+    "store": [-40.0, -5.0],
+    "settlement": [-25.0, -15.0],
+    "tower_base": [22.0, 160.0],
+    "cable_hut": [80.0, 95.0],
+    "headland_post": [-18.0, -215.0],
+    "grey_stern": [-118.0, -228.0],
+    "crossing_deck": [-330.0, -360.0]
+  }
+}
