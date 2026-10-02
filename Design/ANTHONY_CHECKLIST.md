@@ -4,12 +4,12 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries **VS-08, the exterior greybox** (`3cdadb4`, pushed; this checklist line was recorded in the commit after it), on VS-07 (`7126435`) and VS-06 (`ad50261`). See the Checkpoint A section and the VS-08 Record.
+- `main` carries **VS-09, the slice's data** (`df251f8`, fast-forwarded from `vs/narr`), on Checkpoint A's records (`d50e59b`) and VS-08, the exterior greybox (`3cdadb4`). See the VS-09 Record.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
 
-**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. Nothing after it has been started; VS-09 waits for your go.
+**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. **VS-09 complete** (2026-10-02, on your go). Next: VS-10, the crossing and the harbor.
 
 | Task | State |
 | --- | --- |
@@ -24,6 +24,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-07 Slice specs and the id ledger** | **COMPLETE** (docs only; see the VS-07 Record) |
 | **VS-08 Exterior greybox** | **COMPLETE** (see the VS-08 Record) |
 | **Checkpoint A** | **ACCEPTED** (Anthony, 2026-10-02; see below) |
+| **VS-09 Slice data (WP-NARR)** | **COMPLETE** (`df251f8`; see the VS-09 Record) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -65,6 +66,13 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
 
 Things only you can judge, kept current as work lands (newest first):
 
+- **VS-09, the slice's words (optional read-aloud now; required at Checkpoint B).** Six lines differ from `SLICE_DIALOGUE.md`. They are listed under "Read aloud at Checkpoint B" in that file's change list (items 7–16):
+  - Dell's wet-boots line is now "Your boots are wet to the knee. Nobody wades the reef for fish."
+  - Marthe's call, "Call the island to the loft.", with her reply "I'll send round for them. Go on up."
+  - A forgiven Odette can be asked to keep the light after the meeting.
+  - Two stage directions became ellipses.
+- **One creative question (VS-09):** if you ask Odette to keep the light before the meeting, then expose her at the loft without Liv's note, does she still keep it? The data is as written (she does). The beat script says an exposed, unforgiven Odette "will not keep it". The default stands until you say otherwise.
+
 0. **Checkpoint A, the island's shape** (VS-08): **accepted** 2026-10-02 (the section above).
 1. **VS-05, the kit gym — accepted.** Anthony playtested `Lvl_KitGym` (2026-10-01). The store, lean-to, and cottage read as distinct structures; the shared kit looks convincing and not obviously repetitive; the visual quality is good enough to accept the kit concept. The one defect, a crate floating in the lean-to, is fixed (it now sits on the crate below). Recapture: `Saved/Review/2026-10-01_1033_Lvl_KitGym/contact_sheet.png`. The map is still development-only and is not part of the slice.
 2. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
@@ -75,6 +83,54 @@ Things only you can judge, kept current as work lands (newest first):
    - Review frames: `Saved/Review/2026-10-01_0910_Lvl_PointeSombre/contact_sheet.png` (the three atmospheres from the quay, the deck, the island, the test room).
    - Rendered portal proof: `Saved/Screenshots/WindowsEditor/SombreArch_*.png`.
 3. **One plan clarification I made in VS-04.** The atmosphere looks are switched by `sombre.hale_arrived` and `sombre.meeting_done`, with the storm as the default (no flag), not by `sombre.storm`. The slice doc says "`sombre.storm` is set on arrival", but nothing in the slice sets it at a new game yet. The dusk storm as the default look keeps a new game correct whatever VS-10 decides. `sombre.storm` still drives hazards and lightning content later.
+
+## VS-09 Record: the Slice's Data (2026-10-02)
+
+**COMPLETE.** Built by Claude on `vs/narr` exactly to `Design/POIs/handoffs/sombre_WP-NARR.md`, then fast-forwarded into `main` as `df251f8` by the Integrator.
+
+**Preflight:**
+- Tree clean apart from the two recorded leftovers; no editor running.
+- Baseline `Tools\RunTests.bat -build` on `d50e59b`: **53 of 53** (34 + 13 + 6). The handoff's "52" was stale by one (`Map.Sombre.Greybox`), so the target was at least 56.
+- `Tools\DumpContent.bat vs09_before` covered the 8 Shore assets.
+
+**What exists now** (ids exactly as the ledger, `Design/POIs/sombre_ids.md` §3–§6):
+- `Tools/ContentSpecs/items/sombre.py`: the ten slice items, all `Item.Quest`. They use existing meshes (primitives, the PolyHaven lantern and can, the Sounder Chart roll); no new art. Liv's note carries the approved text; the letter's description is the prologue doc's re-read line.
+- `quests/sombre_characteristic.py`: `arrived` → `lamp_room` → `vault` → `vault_inside` → `knows` → `done_line` / `done_hand` / `done_dark`.
+  - `knows` needs the panel and the note, in either order.
+  - On entering `knows` the storm clears and `sombre.hale_arrived` is set.
+  - Every `done_*` sets the storm again.
+  - The `knows` objective ends "...then tell the settlement at the net loft."
+- `quests/sombre_false_light.py`: `asked` → `found` → `named` (by the confession or the lantern in hand) → `done` (by Varga or the loft). `done` sets `sombre.false_light_taken`.
+- Nine `dialogue/sombre_*.py` files: Mara, Varga, Odette, Marthe (with the meeting), Tem, Dell, Sigrun, Hale, and Jonas. Entry lists are exactly the ledger's. Varga's `first` starts both quests, and no other conversation starts any.
+- `Source/DeadCurrent/Quest/DCSombreContentTest.cpp`: `Content.Sombre.Items`, `Content.Sombre.QuestGraph`, `Content.Sombre.Dialogue`.
+- 21 generated assets: `DA_Item_*` ×10, `DA_Quest_Sombre*` ×2, `DA_Dialogue_Sombre*` ×9.
+
+**Plan §8.2, applied** (the change list in `SLICE_DIALOGUE.md`):
+- #1: Dell's rain clause reworded (default; yours to replace)
+- #2 and #3: no catch-them-at-it path and no force path; False Light has two approaches
+- #4: Marthe's call sets `sombre.meeting_called`, and her `loft` entry needs it
+- #8: pickups are the cells' inspectables (data note)
+- #9: no Copper Buyer quest
+- #11: "Where next?" sets `sombre.slice_end` as the default trigger; VS-19 may move it
+
+**Found while building, and fixed (recorded as change #14):** a forgiven Odette could never be offered the keeper's post. The doc placed that choice only at `knows`, and the meeting that forgives her ends `knows`. The same choice is now also in her `after` node.
+
+**Verification** (on the committed tree):
+- `Tools\RunTests.bat -build`: **56 of 56** (37 editor, 13 Boathouse, 6 Sombre), 0 failures. `Content.Validate` now checks 3 quests and 10 dialogues.
+- `DumpContent` before and after: **the 8 Shore assets are identical**, 21 assets are new, and no tracked file under `Content/` changed (the Shore `.uasset`s are byte-identical).
+- **Mutation check** (are the tests real?): three deliberate breaks were each caught by the intended assertions, and nothing else failed:
+  - Odette's no-tie key line removed
+  - the loft's evidence left in the inventory
+  - `knows` on the panel alone
+
+  The specs were then restored and regenerated; the dump matched the tested one exactly, and `Content.*` passed again.
+- **Fidelity:** all 272 quoted strings of `SLICE_DIALOGUE.md` §1–§9 are verbatim in the data, except the three changed lines. All 12 objectives match the beat script §6.
+- `Tools\Package.bat` on `df251f8`: the Development Win64 cook succeeded, and both maps smoke-load. The only warnings are the two known VS-06 driftwood resave warnings. The cooked asset registry lists all 29 data assets (8 Shore, 21 new).
+
+**For the cell builders (carried forward):**
+- **VS-11/VS-18:** after Marthe's call, the attendees' loft states are deferred, so Marthe stays at her counter while you are near. Talking to her there opens the meeting at the counter. Decide in VS-11/VS-18 whether her counter placement should hide on the call.
+- **VS-17/VS-19:** the keeper silhouette and the open Odette question above.
+- **VS-10 adds** the strike's second consequence, `SetWorldFlag sombre.storm` (ledger §3.1). Until then, a new game has no storm flag, which only matters to the vault's live water and the bearing (VS-14).
 
 ## VS-01 Record: the Phase 6 Starting Point
 
@@ -455,14 +511,14 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **53 of 53** (34 editor, 13 Boathouse map, 6 Sombre map) after VS-08 (`Map.Sombre.Greybox` added). 52 after VS-06, 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
-- Package: the Development Win64 cook of **both** production maps, and both smoke-load (re-run after VS-08, 2026-10-01: 0 errors, 2 warnings, the VS-06 driftwood meshes asking to be resaved). `Lvl_KitGym` is not cooked.
+- Tests: **56 of 56** (37 editor, 13 Boathouse map, 6 Sombre map) after VS-09 (`Content.Sombre.Items`, `QuestGraph`, `Dialogue` added). 53 after VS-08, 52 after VS-06, 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Package: the Development Win64 cook of **both** production maps, and both smoke-load (re-run after VS-09, 2026-10-02: 0 errors, the same 2 driftwood resave warnings; the 21 new data assets are cooked). `Lvl_KitGym` is not cooked.
 - Frame time: about 54 FPS at low spec on the shore, deferred. Phase 6 uses same-session A/B gates only. Gate 0 is recorded in the VS-04 Record.
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0** (through VS-08).
 
 ## Next
 
-**Checkpoint A accepted (2026-10-02).** The layout and the cell footprints are frozen. VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) start when you say so. The Codex post-merge audit has landed and been read: GO, nothing to repair (VS-08 Record).
+**VS-09 complete (2026-10-02).** Next: **VS-10, the crossing and the harbor** (Claude, the Integrator), then VS-11 and VS-12 to Checkpoint B. WP-VAULT (Grok, optional) is being prepared; it launches only when its boundary is staged on `main` (see the WP-VAULT section once written).
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 
