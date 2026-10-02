@@ -214,6 +214,24 @@ The regenerated `M_DC_Surface.uasset` is in the kit commit, not in `ff611d1`. `e
 
 **The post-merge audit.** `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` did not exist at any point in this session; its scratch files stopped at 16:34. There was nothing to apply, so there were no repair commits. If it lands later, read it before VS-09.
 
+**Codex post-merge audit of VS-06 and VS-07 (arrived 2026-10-02, after Checkpoint A):** `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md`.
+
+- **Verdict: GO.** VS-06 and VS-07 are each "accepted with documented caveat", with **nothing to fix before VS-08**.
+- It independently re-planned the VS-06 manifest and got the committed hash. It also recomputed the biome gate (+0.18 and +0.28 ms) from the captures and said not to remeasure.
+- **Its "fix during VS-08" list was already done by VS-08:**
+  - `_test.json` is off the map
+  - the keep-clear shapes and `remy_holdback` are in the zone files
+  - containment is above the tower
+  - routes are measured on the terrain probe, not against the 21.3 ms route figure
+  - the short axis, the void flood, the tower traces, and the slivers are dealt with as terrain work
+- **Corrected from it, docs only:**
+  - The ledger and net-loft spec said one presence rule shows exactly one of the two loft down-portals. A rule applies one state to every target (checked in `DCConditionalPresence.cpp`), so it is two rules with inverse conditions and deferral off, or the night landing gets skipped. This matters in VS-18.
+  - This checklist and the architecture doc overstated the exclusion proof: pads are checked for emptiness, not proven to have held instances.
+- **Carried forward, nothing to do now:**
+  - put `verify_plan.py --manifest` on the automated path (the C++ test does not re-plan)
+  - the kit shells' keep-clear relies on `BiomeExclude` tags, which `Map.Sombre.BiomeExclusions` does not read, so a moved shell would need a re-scatter or a zone-file box (low risk with the layout frozen; the zone owners can add boxes in VS-10/VS-13)
+  - the fetch thresholds, if a later island moves the reef
+
 **What exists now:**
 - **Landmarks:** the tower (base room with a door, shaft, gallery with a rail, lamp room), the false-light post and its hide, the *Ashland Grey*'s tilted stern on its reef, the Authority mast, and the vault's iron door at the tower rock's foot.
 - **Kit shells**, all from the accepted VS-05 kit, seated on pilings over the real ground with nothing flattened: the store, Odette's cottage, a stand-in for the Leclair house (the cottage turned and re-skinned), the Pruitts' shed, the smokehouse, two harbor sheds, and the cable hut.
@@ -371,7 +389,7 @@ Codex's VS-07 preflight was the audit. Its recommendations were re-checked again
   - Codex's suggested coast-turn rule would have read the quay as exposed. The harbor is sheltered by the reef, not by a bay.
 - **Exclusions work, authored and automatic.**
   - Nothing lies inside the authored box, the pads, or the automatic radii.
-  - The tests also prove each exclusion would otherwise have held instances.
+  - The tests also prove the authored shapes and the automatic radii would otherwise have held instances (pads are checked for emptiness only; Codex's post-merge audit corrected this line).
   - The arch-test door stands inside the bight polygon and leaves its hole.
 - **Every Tier C component is NoCollision** and out of navigation, with no default material. No instance floats (the map test traces each one).
 - **Tests:** `Tools\RunTests.bat -build`: **52 of 52** (34 editor, 13 Boathouse, 5 Sombre).
@@ -444,7 +462,7 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Next
 
-**Checkpoint A accepted (2026-10-02).** The layout and the cell footprints are frozen. VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) start when you say so. If `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` lands meanwhile, it is read before any of that.
+**Checkpoint A accepted (2026-10-02).** The layout and the cell footprints are frozen. VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) start when you say so. The Codex post-merge audit has landed and been read: GO, nothing to repair (VS-08 Record).
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 
