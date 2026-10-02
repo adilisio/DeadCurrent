@@ -9,7 +9,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Milestone
 
-**PHASE 6: STARTED.** **Stopped at Checkpoint A** (the island's shape). Your playtest and decision come next; nothing after it has been started.
+**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. Nothing after it has been started; VS-09 waits for your go.
 
 | Task | State |
 | --- | --- |
@@ -23,11 +23,19 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-06 Shoreline recipe (WP-BIOME)** | **COMPLETE** (see the VS-06 Record) |
 | **VS-07 Slice specs and the id ledger** | **COMPLETE** (docs only; see the VS-07 Record) |
 | **VS-08 Exterior greybox** | **COMPLETE** (see the VS-08 Record) |
-| **Checkpoint A** | **waiting for you** (see below) |
+| **Checkpoint A** | **ACCEPTED** (Anthony, 2026-10-02; see below) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
-## CHECKPOINT A: the Island's Shape (stopped here for you)
+## CHECKPOINT A: the Island's Shape
+
+**ACCEPTED by Anthony (2026-10-02).** The island's layout and the cell footprints are now frozen. His notes from the playtest:
+- It feels like a place. It is not especially big, but not too small either: big enough to explore for 10–20 minutes. The 435 × 245 m frame stays.
+- The settlement is not too spread out. Gemini's "too spread out" finding is closed; the spec positions stand.
+- The walk to the west headland is not too long, but it is a bit empty. **Kept as built, and carried as a requirement:** the headland (VS-16) and the settlement's Pruitts' work area (VS-11) must give the quay → headland leg something to notice in its middle stretch (plan §5.5: no leg about 60 s without something to notice). Shorten nothing.
+- The *Ashland Grey* may be seen from far away or only up close; it stays as built (small from the quay, looming from the headland crest).
+- His overall read: "a big colorful rock with a big hill and a lighthouse, with some houses sprinkled around and some traveling points that connect to each other". That is what a greybox should be; the dressing comes with each cell.
+- Defects only Anthony found: none reported.
 
 **VS-08 is complete and I have stopped.** Nothing after Checkpoint A has been started: no VS-09, no narrative, no cell content. The island's layout and the cell footprints freeze when you accept it.
 
@@ -57,7 +65,7 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
 
 Things only you can judge, kept current as work lands (newest first):
 
-0. **Checkpoint A, the island's shape** (VS-08): the section above. `Tools\PlayTest.bat Lvl_PointeSombre`.
+0. **Checkpoint A, the island's shape** (VS-08): **accepted** 2026-10-02 (the section above).
 1. **VS-05, the kit gym — accepted.** Anthony playtested `Lvl_KitGym` (2026-10-01). The store, lean-to, and cottage read as distinct structures; the shared kit looks convincing and not obviously repetitive; the visual quality is good enough to accept the kit concept. The one defect, a crate floating in the lean-to, is fixed (it now sits on the crate below). Recapture: `Saved/Review/2026-10-01_1033_Lvl_KitGym/contact_sheet.png`. The map is still development-only and is not part of the slice.
 2. **VS-04, the new map.** `Tools\PlayTest.bat Lvl_PointeSombre`.
    - You start on a stub of the *Ida*'s deck, offshore in the storm.
@@ -436,7 +444,7 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Next
 
-**Stopped at Checkpoint A.** Waiting for your playtest and decision on the island's shape. After you accept it (with or without changes), the layout and the cell footprints freeze, and VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) can start when you say so. If `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` lands meanwhile, it is read before any of that.
+**Checkpoint A accepted (2026-10-02).** The layout and the cell footprints are frozen. VS-09 (slice data, WP-NARR) and the cells (VS-10 onward) start when you say so. If `C:\DeadCurrent_reviews\CODEX_VS06_VS07_POSTMERGE.md` lands meanwhile, it is read before any of that.
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 

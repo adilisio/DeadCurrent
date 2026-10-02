@@ -19,7 +19,7 @@ The phase's production metrics (`VerticalSlicePhasePlan.txt` §14). **Created in
 | Tier C share | recipe manifest instances vs tagged hand placements; target ≥ 80% from the recipe | after the cell zones exist; final in VS-24 | VS-06 test zone: 262 recipe instances. VS-08, the three cell zones: 328 recipe instances, 0 hand-placed Tier C (100%); the three greybox outcrops are Tier B occluders |
 | Library reuse | provenance rows by source (`art_pipeline.md`) | with each asset | VS-06: 8 meshes from three owned packs, 0 generated. VS-08: the kit, one library rock scan for the outcrops, 0 generated |
 | Critic findings | count by severity, `Design/POIs/reviews/sombre_<scope>_<critic>.md` | critic passes | Gemini VS-05 kit critic (advisory, no blockers). Gemini VS-08 greybox (`sombre_greybox_gemini.md`): round 1, 3 blockers (2 confirmed and fixed, 1 left for Anthony) and 2 misread views; round 2, 1 blocker (a misreading), 0 open |
-| Defects only Anthony found | checkpoint notes; defects no critic filed | each checkpoint | VS-05 gym: 1 (a floating crate) |
+| Defects only Anthony found | checkpoint notes; defects no critic filed | each checkpoint | VS-05 gym: 1 (a floating crate). Checkpoint A: none reported |
 | Test growth | count added per task (reported, not targeted) | each task | 45 at VS-01 → 46 (VS-02) → 47 (VS-03) → 51 (VS-04) → 51 (VS-05) → 52 (VS-06) → **53** (VS-08, `Map.Sombre.Greybox`). VS-07 added none (docs) |
 | Grammar reach | how much of VS-04..VS-16 was built with the portal as the only new capability (the sequence arrives VS-17, the card VS-19) | VS-24 | not yet |
 | Performance gates | same-session A/B (plan §20) | the task that owns the gate | gate 0 (VS-04): views at the 60 FPS cap, draw calls 512–662 (its route figure is invalid: the old route probe started inside the tower rock). Biome on/off (VS-06): **+0.18 and +0.28 ms**, in-run ABBA toggle. Gate 1 (VS-08): greybox + recipe **+0.59 ms** median over 23 exterior views (controls +0.18 / +0.77 ms), in-run ABBA toggle; whole map 8–13 ms per view uncapped (slow clock state), route mean 10.4 ms |
@@ -59,7 +59,7 @@ The cable hut is the baseline. The headland should be cheaper, or a recorded rea
 
 | Checkpoint | Date | Accepted | Anthony-only defects | Notes |
 | --- | --- | --- | --- | --- |
-| A — Shape (after VS-08) | handed over 2026-10-01 | not yet (waiting for Anthony) | not yet | VS-08 package in `ANTHONY_CHECKLIST.md`; critic `reviews/sombre_greybox_gemini.md` |
+| A — Shape (after VS-08) | 2026-10-02 | **yes**, as built | none reported | VS-08 package in `ANTHONY_CHECKLIST.md`; critic `reviews/sombre_greybox_gemini.md` |
 | B — People and the first clue (VS-12) | not yet | not yet | not yet | not yet |
 | C — The dungeon (VS-15) | not yet | not yet | not yet | not yet |
 | D — The decision (VS-19) | not yet | not yet | not yet | not yet |

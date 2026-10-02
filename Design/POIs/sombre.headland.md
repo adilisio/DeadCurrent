@@ -24,6 +24,7 @@ Copied from `TEMPLATE.md`. Contract: standard (`VerticalSlicePhasePlan.txt` §11
 
 - **What draws attention:** the false-light post seen across the harbor from the quay (and from the crossing); during the storm the lantern burning in its hide. The *Grey*'s hull is a **staged reveal**: it comes into full view from the headland and the causeway, not as another always-visible landmark (Gemini VS-08 brief; plan §5.5's overlap from the quay is judged by VS-08's capture).
 - **Intended approach:** quay → west headland, 45–60 s, past the Pruitts' shed; headland → *Grey* stern, 20–30 s, over the reef causeway at low water.
+- **From Checkpoint A (Anthony, 2026-10-02):** the walk to the headland is not too long, but a bit empty. The layout is frozen as built, so this cell (with the settlement's Pruitts' work area) must give the leg's middle stretch something to notice (plan §5.5), by dressing and sightlines, not by moving or lengthening anything. The *Grey* may stay visible small from the quay.
 - **Marked / unmarked:** unmarked.
 - **Discovery behavior:** `sombre.headland` volume at the post and hide; `sombre.ashland_grey` volume on the stern deck. Banners once; silent on load.
 
