@@ -2,7 +2,7 @@
 
 Copied from `AGENT_HANDOFF_TEMPLATE.md`. A contract between people and agents. Read first: `CLAUDE.md`, `Design/POIs/README.md`, `Design/POIs/sombre_ids.md` (the ledger), `Design/Narrative/SLICE_WRONG_CHARACTERISTIC.md`, `Design/Narrative/SLICE_DIALOGUE.md`, `VerticalSlicePhasePlan.txt` §8.2, §13.3 (WP-NARR), §19.
 
-**Launch status:** written in VS-07 (2026-10-01), **not launched.** Anthony's instruction for this run is to stop at Checkpoint A and not begin VS-09. It launches when Anthony says so.
+**Launch status:** written in VS-07 (2026-10-01). Launched by Anthony after Checkpoint A (2026-10-02) and built by Claude on `vs/narr`. **Complete and merged** (see Handoff Notes).
 
 ---
 
@@ -40,7 +40,7 @@ Narrative Builder (Claude by default, plan §13.1).
 
 - **Specs:** the ledger and the seven cell specs (`Design/POIs/sombre.*.md`) at the VS-07 commit (the commit that adds this file).
 - **Upstream:** `SLICE_DIALOGUE.md` (full text), the beat script §4–§6, plan §8.2.
-- **Baseline:** `main` after VS-06, `ad50261` plus the VS-07 docs commit; **52 tests** (34 editor, 13 Boathouse, 5 Sombre).
+- **Baseline:** `main` after VS-06, `ad50261` plus the VS-07 docs commit; **52 tests** (34 editor, 13 Boathouse, 5 Sombre). *Reconciled at launch (2026-10-02): the real baseline was `d50e59b` after VS-08 and Checkpoint A, with **53 tests** (34 editor, 13 Boathouse, 6 Sombre; `Map.Sombre.Greybox` added). The target was therefore at least 56.*
 - **Approved decisions from Anthony (2026-09-30):**
   - the slice opens in the crossing
   - Marthe chairs the meeting
@@ -100,11 +100,32 @@ Narrative Builder (Claude by default, plan §13.1).
 
 ## Handoff Notes
 
-- **Status:** not started (not launched; held until after Checkpoint A).
-- **Commits:** none.
-- **What changed:** nothing yet.
-- **Findings (critics):** none yet.
-- **Tests run and results:** none yet.
-- **Open issues:** Dell's rain-clause wording (default proposed in this package; Anthony may replace it at Checkpoint B).
-- **Exact next step:** on Anthony's go-ahead, branch `vs/narr` from `main`, write `items/sombre.py` first, then the quests, then the dialogues in the ledger's order.
-- **Return to:** Integrator (Claude), then Anthony at Checkpoint B.
+- **Status:** complete (2026-10-02). Merged into `main`; the commit is recorded in `Design/ANTHONY_CHECKLIST.md` (VS-09 Record).
+- **Preflight:** the tree was clean apart from the two recorded leftovers; no editor was running. `Tools\RunTests.bat -build` on `d50e59b` gave 53 of 53 (34 + 13 + 6). `Tools\DumpContent.bat vs09_before` covered the 8 Shore assets.
+- **What changed:**
+  - `items/sombre.py`: the 10 ledger items, all `Item.Quest`, using existing meshes (no new art)
+  - `quests/sombre_characteristic.py` (8 stages) and `quests/sombre_false_light.py` (4 stages), exactly per the ledger §5
+  - the nine `dialogue/sombre_*.py` files, entry lists exactly per the ledger §6
+  - `Source/DeadCurrent/Quest/DCSombreContentTest.cpp`
+  - the change-list section of `SLICE_DIALOGUE.md`
+  - 21 generated assets
+  - the Integrator's `technical_architecture.md` lines (the tests table, the content specs, one stale "add a quest" sentence)
+- **§8.2 applied:**
+  - #1: Dell's line is now "...Nobody wades the reef for fish."
+  - #2 and #3: no catch-them-at-it path and no force path
+  - #4: the call, with Marthe's reply "I'll send round for them. Go on up.", and the `loft` entry gated on `meeting_called`
+  - #8 and #11: data notes; "Where next?" sets `slice_end` as the default
+  - #9: no Copper Buyer quest
+- **Beyond §8.2 (recorded, change list #14):** a forgiven Odette's keeper choice was unreachable as written (it lived only in `knows`, which the meeting ends). The same choice is now also in her `after` node.
+- **Open question for Anthony:** whether exposing Odette at the loft revokes an earlier "yes" to keeping the light. The data is as written: she stays keeper.
+- **Tests run and results:**
+  - `Tools\RunTests.bat -build`: **56 of 56** (37 editor, 13 Boathouse, 6 Sombre)
+  - `Content.Validate` covers 3 quests and 10 dialogues
+  - `DumpContent` before and after: the 8 Shore assets are identical, 21 assets are new, and no tracked `.uasset` changed
+  - mutation check: three deliberate breaks (a missing NO_TIE partner, evidence not removed, `knows` on the panel alone) each failed the intended assertions; the specs were then restored, and the regenerated dump matched the tested one exactly
+  - a fidelity script found all 272 quoted strings of `SLICE_DIALOGUE.md` §1–§9 verbatim in the data, except the three changed lines
+- **Notes for the cell builders:**
+  - **(VS-11/VS-18)** After "Call the island to the loft." the attendees' loft states are deferred, so Marthe stays at her counter while the player is near. Talking to her there opens the meeting at the counter. The settlement and loft owners decide whether that is acceptable or whether her counter placement hides on the call.
+  - **(VS-17/VS-19)** The keeper silhouette reads `keeper_*` with `meeting_done` (see the open question above).
+- **Exact next step:** VS-10 (the crossing and the harbor) by the Integrator.
+- **Return to:** Integrator (Claude), then Anthony at Checkpoint B (read-aloud list in the change list).

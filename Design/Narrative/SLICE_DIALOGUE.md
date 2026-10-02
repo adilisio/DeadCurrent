@@ -20,6 +20,31 @@ Status: **PROPOSAL, 2026-09-30. A document only.** No dialogue asset is created.
 5. **In the standalone demo, Mara asks the tie question on the crossing**, not Varga. Varga already knows the player and Liv; Mara doesn't.
 6. **Varga starts both quests.** Her first conversation's choices carry `StartQuest sombre.characteristic` and `StartQuest sombre.false_light`. Quests that start with their objectives already met chain forward on their own (existing behavior).
 
+### Applied in VS-09 (2026-10-02): plan §8.2 and what building the data found
+
+The conversations below are now data (`Tools/ContentSpecs/dialogue/sombre_*.py`, `quests/sombre_*.py`, `items/sombre.py`). They were built as written, except for these changes. The ids are the ledger's (`Design/POIs/sombre_ids.md`). Change 4 above is superseded there: the hatch is a portal, not an inspectable (ledger §8).
+
+7. **Dell's wet boots (§8.2 #1).** In `first`, the `[Survival 2]` line "Your boots are wet to the knee. It hasn't rained since the storm." becomes **"Your boots are wet to the knee. Nobody wades the reef for fish."** The check, the confession, and `sombre.dell_confessed` are unchanged. This is the default; Anthony may replace it. Why not the plan's example ("Nobody walks the reef in this for fish."): "in this" needs the storm, and after `knows` the weather is calm.
+8. **"Catch them at it" (§8.2 #2).** No line or stage was added for it. Meeting Dell at the post in the first storm is the same `sombre_dell` conversation and the same confession. False Light has two approaches: the lantern (evidence) and Dell's confession.
+9. **"Force" (§8.2 #3).** No line was added for it. Tem is never hostile.
+10. **The call to the loft (§8.2 #4).** Marthe's `store` gains **"Call the island to the loft."** It is shown only at stage `knows`, until used, and sets `sombre.meeting_called`. Her reply is a new node, `call`: **Marthe: "I'll send round for them. Go on up."** (new wording, PROVISIONAL). Her `loft` entry now needs `sombre.meeting_called` as well as the stage.
+11. **Pickups that set flags (§8.2 #8).** Data note only. `false_lantern` and `liv_note` are given by their cells' inspectables, which also set `sombre.false_light_taken` / `sombre.liv_note_found` and hide the prop through presence. No conversation gives them.
+12. **Copper Buyer (§8.2 #9).** No quest asset and no `sombre.copper_buyer` id. Sigrun's conversation and flags carry the whole story.
+13. **The end card's trigger (§8.2 #11).** Data note. Varga's "Where next?" sets `sombre.slice_end`, the ledger's default. Nothing reads the flag until VS-19's story card. VS-19 may move the trigger to a "Watch the light" interaction instead.
+14. **A forgiven Odette can keep the light** (a wiring fix found while building; not a §8.2 item). §3 offered "Will you keep it? By hand." to a forgiven Odette only in `knows`. Forgiveness happens at the meeting, and the meeting ends `knows`, so that choice could never show. The beat script says a forgiven Odette can still keep the light (§5, and §4's "Choose a keeper" row). The same choice, with the same conditions, is now also offered in her `after` node, which a forgiven Odette reaches after the meeting. It stays in `knows`, where it is harmless.
+15. **Stage directions.** Lines carry spoken text only. Mara's "(a long look at the chalk rows)" in `ticks` is the line's opening "..."; Odette's "(a pause)" in `keeps` becomes "...Yes."
+16. **Speakers.** In the meeting, the reaction lines are spoken by Tem (`r_pruitts`), Odette (`r_odette`, `r_tie`), Hale (`r_sigrun`), and Sigrun (`r_sigrun_reply`), inside Marthe's asset. Speaker names are first names or surnames as written here: Mara, Varga, Odette, Marthe, Tem, Dell, Sigrun, Hale, Jonas.
+
+**Read aloud at Checkpoint B** (each line that differs from this document's text):
+- Dell (player): "Your boots are wet to the knee. Nobody wades the reef for fish." (#7)
+- Marthe (player choice): "Call the island to the loft." (#10)
+- Marthe: "I'll send round for them. Go on up." (#10)
+- Odette, after the meeting, if forgiven (player choice): "Will you keep it? By hand." (#14; same words as `knows`)
+- Odette: "Every four hours. Remy used to wind it with me. ...Yes. Tell whoever lights it I'll take the first watch." (#15)
+- Mara: "...Write it down." (#15)
+
+**Open for Anthony (not changed):** if the player asks Odette to keep the light at `knows` and later exposes her at the loft without the note, she stays keeper. Her `after_keeper` entry comes before `after_disgraced`, and the keeper silhouette reads `keeper_odette` alone. The beat script says an exposed, unforgiven Odette "will not keep it". Whether exposure revokes an earlier yes is a creative call. The default is to keep the data as written.
+
 ---
 
 ## 1. `sombre_mara` — Mara (placed, not following)

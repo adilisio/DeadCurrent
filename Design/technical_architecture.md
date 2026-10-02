@@ -47,6 +47,7 @@ Logs go to `Saved/Logs/RunTests.log` and `RunTests_Map.log` (`RunTests_Map_<Grou
 | `DeadCurrent.Dialogue.*` | Graph walking, conditional entries, hidden choices, choice consequences (quest, items, flags) |
 | `DeadCurrent.Content.Validate` | Every quest and dialogue asset: graph checks and references to real quests, stages and items; Asset Manager registration |
 | `DeadCurrent.Content.ShoreWatch.*` | The shipped quest and dialogue assets through both routes, pre-quest shortcuts, the clue line and epilogues, with save/restore at each stage |
+| `DeadCurrent.Content.Sombre.*` (VS-09) | The slice's data without the map. `Items`: the ten slice items resolve as `Item.Quest`, and the shipped loot is reused, not reminted. `QuestGraph`: the ledger's stage ids; `knows` needs both the panel and the note; the storm cleared at `knows` and set again by every `done_*`; every outcome reachable, untouched included; chaining from flags set before Varga; False Light by both approaches. `Dialogue`: the nine assets' entry lists against the ledger; an unconditional choice on every node; only ledger flags; no tie leak; evidence needs and removes its item; exclusive keepers; Varga's `first` starts both quests; Marthe's call; Dell's §8.2 wording; a zero-investment run |
 | `DeadCurrent.Exploration.Discovery` | Once-only location discovery, rotated volume, announce count, save round-trip, silent restore, pre-Phase-3 save |
 | `DeadCurrent.Exploration.Container` | Prompt text, partial and full looting, slot round-trip into a fresh world, a container newer than the save |
 | `DeadCurrent.Exploration.WorldConditions` | Damage volume and flicker light switched by a world flag, including silent restore |
@@ -112,6 +113,13 @@ The folder is `Saved/Review/<yyyy-mm-dd_hhmm>/` (`<yyyy-mm-dd_hhmm>_<map>/` for 
 ## Content specs (Phase 6, VS-02)
 
 Items, quests, and dialogue are data in **one file per owner** under `Tools/ContentSpecs/{items,quests,dialogue}/`. The three `create_*.py` generators hold no content: they load every spec file in their folder (file-name order; `_`-prefixed files are skipped), check that asset names and ids are unique across files (a clash stops the run and names both files), and write the Data Assets. A spec file defines one list (`ITEMS`, `QUESTS`, or `DIALOGUES`) and is run with `cond`, `cons`, `COND`, `CONS`, and `unreal` already defined (`content_specs.py`); `cons("GIVE_ITEM", id=...)` resolves the asset reference from the item's own spec, so a dialogue can give an item defined in another file. The accepted Shore content lives in `items/shore.py`, `quests/shore_watch.py`, and `dialogue/mara_intro.py`, moved unchanged: `Tools\DumpContent.bat` before and after the move gave byte-identical dumps, and regeneration left every `.uasset` byte-identical. The contract, the rules, and how to change a generator safely are in `Tools/ContentSpecs/README.md`.
+
+**The Pointe Sombre slice's data (VS-09, WP-NARR)** is in the same folders, with ids from the ledger `Design/POIs/sombre_ids.md`:
+- `items/sombre.py`: ten `Item.Quest` items (`DA_Item_LivLetter` … `DA_Item_SombreVaultKey`)
+- `quests/sombre_characteristic.py` and `quests/sombre_false_light.py` (`DA_Quest_SombreCharacteristic`, `DA_Quest_SombreFalseLight`)
+- nine `dialogue/sombre_<name>.py` files (`DA_Dialogue_Sombre<Name>`)
+
+A node's `speaker` key names who says the line; the meeting's reactions are spoken inside Marthe's asset. The cells place the assets: their NPCs, inspectables, and portals set the flags these specs read. The changes from the dialogue document are listed in `Design/Narrative/SLICE_DIALOGUE.md` ("Applied in VS-09"). Adding the slice left every Shore asset byte-identical (`DumpContent` before and after).
 
 ## Player controls
 
@@ -640,7 +648,7 @@ Dialogue usually hands out rewards and moves return stages to outcomes; `OnEnter
 
 The HUD shows `<Quest>: <objective>` for the tracked quest at the top of the screen, and the Tab panel has a QUESTS journal (status, objective or outcome). The player shows a message when a quest changes stage or completes.
 
-To add a quest: add a spec to `create_quest.py` (stages, transitions, OnEnter), add dialogue to `create_dialogue.py`, place any actors or inspectable variants in the map script, run `Tools\RebuildContent.bat`, then `Tools\RunTests.bat` (Content.Validate catches broken references).
+To add a quest: add a spec file to `Tools/ContentSpecs/quests/` (stages, transitions, OnEnter) and its dialogue to `Tools/ContentSpecs/dialogue/` (see "Content specs"), place any actors or inspectable variants in the map script, run `Tools\RebuildContent.bat`, then `Tools\RunTests.bat` (Content.Validate catches broken references).
 
 ## Inventory
 
