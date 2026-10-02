@@ -12,7 +12,7 @@ Copied from `TEMPLATE.md`. Contract: standard (`VerticalSlicePhasePlan.txt` §11
 - **Working name:** the crossing (the *Ida*'s deck). No display name.
 - **Region:** Pointe Sombre, offshore south-west, in the storm fog.
 - **Biome:** `N/A — an offshore deck; no shore, no recipe zone.`
-- **Content status:** `SPEC`. A VS-04 stub exists (`pointe_sombre/crossing.py`: deck, rails, wheelhouse, the one-way wheelhouse door). VS-10 builds the scene.
+- **Content status:** `BUILT` (VS-10, 2026-10-02): playable and tested (`Map.Sombre.Crossing`); critics and Anthony at Checkpoint B. Not yet: the storm's new sounds (rain, surf, creak, the strike's hit; they need a Freesound authorization) and the `ida_deck` kit composition (the rails are greybox stanchions).
 - **Lore status:** `PROVISIONAL`. Claims listed under Environmental Story. Nothing explains the Current; Mara's backstory is not decided here.
 - **Owner:** Claude, VS-10 (with the harbor). Script `pointe_sombre/crossing.py` (grows the stub); dressing `dress_sombre_crossing.py` → `Lvl_PointeSombre_Art_Crossing`; content `Content/World/PointeSombre/Crossing/`; review `Tools/Review/Lvl_PointeSombre/crossing.json`; test `Source/DeadCurrent/Save/DCSombreCrossingMapTest.cpp`.
 
@@ -134,10 +134,11 @@ None. The portal (VS-03) is shipped; everything else is data and layout.
 
 ## Open Creative Decisions
 
-- **Strike card text.** Default: the VS-04 stub's line until VS-10 writes the final from B0's "Sees" sentence; Anthony may replace it at Checkpoint B.
+- **Strike card text.** Default: the VS-04 stub's line until VS-10 writes the final from B0's "Sees" sentence; Anthony may replace it at Checkpoint B. **VS-10:** kept as the final default (it is B0's own sentence): "The *Ida* turns for the burning light, then shudders on stone."
+- **The recap chart's words** (VS-10, PROVISIONAL): "Varga's chart of the run, pinned in the lee of the wheelhouse. Her pencil line runs from the Authority Shore, east through the Narrows, to Pointe Sombre. She has circled the light on the Pointe." Only the run's places; it explains nothing.
 - **Crossing fallback** (a story card over a fixed view, plan §5.4). Default: not used; the deck is played. The fallback needs Anthony's sign-off.
 - **Where the letter sits.** Default: the hatch cover in the lee of the wheelhouse.
 
 ## Pilot Record
 
-- Spec committed: VS-07. First green map test: `Map.Sombre.Crossing` (VS-10). Existing classes only; new C++ 0; Meshy 0; kit composition `ida_deck` (new, from existing modules); zone `N/A`; views `crossing_bow`, `crossing_rail_mara`; critic files `Design/POIs/reviews/sombre_crossing_<critic>.md` at Checkpoint B.
+- Spec committed: VS-07. First green map test: `Map.Sombre.Crossing` (VS-10, 2026-10-02, first run). Built in VS-10 by Claude; found while building: Mara's crossing entries leaked onto the quay (fixed in the data, change list #17); the false light was invisible from the deck (`Lantern_Crossing` built for distance); the solid rails read as water (now stanchions); the hidden rail blocks would have blocked the interaction trace at the berth (`InvisibleWall`; the test walks to Varga). Captures `Saved/Review/2026-10-02_1005_Lvl_PointeSombre_vs10_final`. Existing classes only; new C++ 0; Meshy 0; kit composition `ida_deck` (new, from existing modules); zone `N/A`; views `crossing_bow`, `crossing_rail_mara`; critic files `Design/POIs/reviews/sombre_crossing_<critic>.md` at Checkpoint B.

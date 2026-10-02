@@ -3,6 +3,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Interaction/DCInteractorComponent.h"
 #include "World/DCCellPortal.h"
 #include "World/DCConditionalPresence.h"
 #include "World/DCFlickerLight.h"
@@ -129,6 +130,29 @@ namespace DCSombreCrossingTest
 		}, TEXT("the strike's arrival on the quay"), 8.0);
 	}
 
+	/** Faces Target and walks toward it until the interaction trace focuses it, as a player would (10 s at most). */
+	inline void QueueWalkToFocus(FAutomationTestBase* Test, TFunction<AActor*()> Target, const TCHAR* What, double AimUp = 0.0)
+	{
+		QueueWaitUntil(Test, [Target, AimUp]()
+		{
+			ADCPlayerCharacter* P = Player();
+			AActor* T = Target();
+			if (!P || !T || !PC())
+			{
+				return false;
+			}
+			const FRotator Look = (T->GetActorLocation() + FVector(0.0, 0.0, AimUp) - P->GetPawnViewLocation()).Rotation();
+			PC()->SetControlRotation(Look);
+			if (P->GetInteractorComponent()->GetFocusedActor() == T)
+			{
+				return true;
+			}
+			const FVector Ahead = FVector(Look.Vector().X, Look.Vector().Y, 0.0).GetSafeNormal();
+			P->AddMovementInput(Ahead, 1.0f);
+			return false;
+		}, What, 10.0);
+	}
+
 	/** After the strike: the arrival, the people, and the world state the crossing hands to the harbor. */
 	inline void CheckArrival(FAutomationTestBase* Test)
 	{
@@ -213,13 +237,19 @@ bool FDCSombreCrossingTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("Varga is at the wheel"), StateOf(TEXT("Presence_Varga")), FName(TEXT("at_the_wheel")));
 		const AActor* Varga = Find(TEXT("sombre.varga"));
 		TestTrue(TEXT("Varga is not on deck"), Varga && Varga->IsHidden());
-
+		return true;
+	}));
+	// The letter is reached as in play: walk to the hatch cover until the interaction trace finds the letter on it.
+	QueueWalkToFocus(this, []() { return Cast<AActor>(Inspectable(TEXT("Liv's letter"))); },
+		TEXT("walking to the hatch cover until the trace focuses the letter"));
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
 		// Liv's letter: the first read gives it, once.
 		ADCInspectableActor* Letter = Inspectable(TEXT("Liv's letter"));
 		if (TestNotNull(TEXT("Liv's letter"), Letter))
 		{
 			TestEqual(TEXT("The letter's verb"), IDCInteractable::Execute_GetInteractionPrompt(Letter, Player()).Action.ToString(), FString(TEXT("Read")));
-			Use(Letter);
+			TestTrue(TEXT("Read by the interaction trace, as in play"), Player()->GetInteractorComponent()->TryInteract());
 			TestEqual(TEXT("Reading gives liv_letter"), Count(TEXT("liv_letter")), 1);
 			TestTrue(TEXT("Reading sets watch.mara_travelling"), WorldState()->HasFlag(LetterRead));
 			TestTrue(TEXT("The letter's text"), Message().StartsWith(TEXT("Posted from the old Authority landing")));
@@ -288,7 +318,14 @@ bool FDCSombreCrossingTest::RunTest(const FString& Parameters)
 	{
 		TestFalse(TEXT("The harbor is discovered once"), WorldState()->DiscoverLocation(Harbor));
 		TestEqual(TEXT("No quest before Varga"), Stage(Characteristic), NAME_None);
-		TestEqual(TEXT("Varga's first conversation"), TalkTo(TEXT("sombre.varga")), FName(TEXT("first")));
+		return true;
+	}));
+	// Varga is reached from the quay as in play: walk to her until the interaction trace finds her over the rail.
+	QueueWalkToFocus(this, []() { return Find(TEXT("sombre.varga")); }, TEXT("walking to Varga until the trace focuses her"), 40.0);
+	ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this]()
+	{
+		TestTrue(TEXT("Talking to Varga from the quay"), Player()->GetInteractorComponent()->TryInteract());
+		TestEqual(TEXT("Varga's first conversation"), Player()->GetDialogueComponent()->GetCurrentNodeId(), FName(TEXT("first")));
 		TestTrue(TEXT("Ask what she needs"), Say(TEXT("What do you need?")));
 		TestEqual(TEXT("The Wrong Characteristic starts"), Stage(Characteristic), FName(TEXT("arrived")));
 		TestEqual(TEXT("False Light starts"), Stage(FalseLight), FName(TEXT("asked")));

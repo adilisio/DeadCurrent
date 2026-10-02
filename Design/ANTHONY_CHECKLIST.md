@@ -4,12 +4,12 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Head
 
-- `main` carries **VS-09, the slice's data** (`df251f8`, fast-forwarded from `vs/narr`), on Checkpoint A's records (`d50e59b`) and VS-08, the exterior greybox (`3cdadb4`). See the VS-09 Record.
+- `main` carries **VS-10, the crossing and the harbor** (`1d6bce2` playable, then the dressing and the WP-VAULT staging in the commit after it), on **VS-09, the slice's data** (`df251f8`). See the VS-10 and VS-09 Records.
 - Left untracked on purpose: `Content/Variant_Shooter/`, `Tools/EditorScripts/inspect_assets.py` (earlier leftovers, not ours to commit).
 
 ## Current Milestone
 
-**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. **VS-09 complete** (2026-10-02, on your go). **VS-10 (the crossing and the harbor) in progress:** B0 and B1 are playable and tested; the quay's dressing and the new sounds remain (see the VS-10 Record).
+**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. **VS-09 complete** (2026-10-02, on your go). **VS-10 complete** (2026-10-02): the crossing and the harbor arrival are playable and tested. Its new storm sounds wait on you (a Freesound authorization). **WP-VAULT is staged** and ready for you to relay to Grok. Next: VS-11, the settlement.
 
 | Task | State |
 | --- | --- |
@@ -25,7 +25,8 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-08 Exterior greybox** | **COMPLETE** (see the VS-08 Record) |
 | **Checkpoint A** | **ACCEPTED** (Anthony, 2026-10-02; see below) |
 | **VS-09 Slice data (WP-NARR)** | **COMPLETE** (`df251f8`; see the VS-09 Record) |
-| **VS-10 Crossing and harbor** | **IN PROGRESS**: B0–B1 playable, `Map.Sombre.Crossing` green (see the VS-10 Record) |
+| **VS-10 Crossing and harbor** | **COMPLETE** (see the VS-10 Record; its new sounds wait on a Freesound authorization) |
+| WP-VAULT (Grok, parallel VS-14) | **STAGED, ready to launch** when you relay the prompt (see WP-VAULT below) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -67,6 +68,13 @@ Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchan
 
 Things only you can judge, kept current as work lands (newest first):
 
+- **VS-10, the first ten minutes** (`Tools\PlayTest.bat Lvl_PointeSombre`; the Checkpoint B questions are in `sombre.crossing.md` and `sombre.harbor.md`):
+  - On the deck: read the letter, look at the chart, answer Mara, look ahead. Is the false light the wrong light, and does the dark tower read beyond it? Does the deck read as a vessel in a storm, with its stanchion rails, toe board, and wheelhouse windows (greybox)?
+  - Then "Tell Varga about the light". Do you notice the *Ida* and the tower first on the quay, with Mara waiting? Then talk to Varga (mustard oilskin) from the quay.
+  - Three new wordings to read aloud: Varga's chart ("…She has circled the light on the Pointe."); the strike card, kept as B0's own sentence; Varga's and Mara's placeholder bodies (Quinn, in their own colours; the body spike is VS-11's, at Checkpoint B).
+- **Sounds you can unblock:** the deck has only the shipped wind and the lightning. The *Ida*'s pump, the strike's hit, rain, surf, and creak need full-quality Freesound originals, and the download needs a fresh OAuth code from your browser (`C:\FO5_AssetLibrary\Audio\download_freesound.ps1`, its header has the authorization URL). The CC0 candidates are listed in the VS-10 Record, unheard.
+- **WP-VAULT for Grok:** ready. See "WP-VAULT: Ready to Launch" below.
+
 - **VS-09, the slice's words (optional read-aloud now; required at Checkpoint B).** Six lines differ from `SLICE_DIALOGUE.md`. They are listed under "Read aloud at Checkpoint B" in that file's change list (items 7–16):
   - Dell's wet-boots line is now "Your boots are wet to the knee. Nobody wades the reef for fish."
   - Marthe's call, "Call the island to the loft.", with her reply "I'll send round for them. Go on up."
@@ -85,47 +93,83 @@ Things only you can judge, kept current as work lands (newest first):
    - Rendered portal proof: `Saved/Screenshots/WindowsEditor/SombreArch_*.png`.
 3. **One plan clarification I made in VS-04.** The atmosphere looks are switched by `sombre.hale_arrived` and `sombre.meeting_done`, with the storm as the default (no flag), not by `sombre.storm`. The slice doc says "`sombre.storm` is set on arrival", but nothing in the slice sets it at a new game yet. The dusk storm as the default look keeps a new game correct whatever VS-10 decides. `sombre.storm` still drives hazards and lightning content later.
 
-## VS-10 Record: the Crossing and the Harbor (in progress, 2026-10-02)
+## WP-VAULT: Ready to Launch (Grok, the vault interior, parallel VS-14)
+
+You asked for this to be prepared once the VS-09 data was real. It is. The boundary in `sombre.lighthouse.md` (frozen in VS-07) is now staged on `main`, so Grok edits only its own files:
+- the core hooks a placeholder `pointe_sombre/vault.py`
+- greybox stand-ins retire by declaration (`GREYBOX_RETIRE_GROUPS = ("vault",)`)
+- the toolkit has every interior and story helper the vault needs (inspectables, portals, presence, damage volume, container, flicker lights, audio, location volume)
+- `art.py` makes its art sublevel
+- `Map.Sombre.Greybox` finds the vault's real return portals by their ledger labels once the stub retires
+
+One id was missing and is minted: `sombre.signin_board_taken` (the board's take-and-hide; ledger §3.2 and §15 #14). Handoff: `Design/POIs/handoffs/sombre_WP-VAULT.md` (scope, owned and forbidden files, every actor and text, the fixed landings, tests at least 58, stop conditions, the commit rules).
+
+**To launch** (only if you want the vault built in parallel; otherwise it stays my serial VS-14):
+
+```
+git fetch origin
+git worktree add C:\DeadCurrent_wt\vault -b vs/vault origin/main
+```
+
+Then give Grok (Cursor) the prompt in the handoff's "Launching" section. I merge it after VS-12 and VS-13, as plan §13.4 orders, and write `Map.Sombre.VaultRoutes` then. Gemini critiques Grok's vault (gameplay and visual); Grok critiques the cells I build.
+
+## VS-10 Record: the Crossing and the Harbor (2026-10-02)
+
+**COMPLETE.** Built by Claude on `main`: the playable commit is `1d6bce2`, and the dressing, the Varga fixes, and the WP-VAULT staging are in the commit after it. Done-when, all met and tested by `Map.Sombre.Crossing`:
+- a new game starts on the deck in the storm
+- the letter gives `liv_letter` once
+- the tie question sets exactly one tie flag or none
+- the strike moves the player to the quay with Mara already there
+- Varga's first reply starts both quests
+- the harbor is discovered once
 
 **Playable now** (`Tools\PlayTest.bat Lvl_PointeSombre`): a new game on the *Ida*'s deck in the dusk storm.
 - **The deck:**
   - Liv's letter lies on a hatch cover in the lee of the wheelhouse. "Read" gives `liv_letter` and sets `watch.mara_travelling` (the prologue's P1 text); later reads give its re-read line.
-  - Varga's chart is pinned on the wheelhouse front (new wording, PROVISIONAL: the run from the Authority Shore through the Narrows to Pointe Sombre, the light circled).
+  - Varga's chart is pinned on the wheelhouse front (new wording, PROVISIONAL).
   - Mara is at the port rail with her tie question and the watch reveal.
   - Ahead, the false light burns on the west head (a warm pool and a lamp), and the dark tower stands beyond it to the right.
-- **The strike:** "Tell Varga about the light" sets `sombre.reef_struck` **and `sombre.storm`** (ledger §3.1), and the card reads "The *Ida* turns for the burning light, then shudders on stone." You arrive on the quay facing up the island.
+  - The rails are a rusted toe board, stanchions, and a dark top rail, and the wheelhouse has two windows.
+- **The strike:** "Tell Varga about the light" sets `sombre.reef_struck` **and `sombre.storm`** (ledger §3.1), and the card reads "The *Ida* turns for the burning light, then shudders on stone."
+- **The quay:** you arrive facing up the island.
   - Mara is already 3.8 m away.
-  - The *Ida* lies at her berth with Varga aboard.
+  - The *Ida* lies at her berth with Varga aboard by the quay-side rail. You reach her by walking up; the test proves it through the real interaction trace.
   - The door is gone, and the false light is out.
   - The harbor is discovered once. Varga's first reply starts both quests.
+  - The quay has timber piles along the berth and three small groups of barrels, crates, and a bucket, off the trails.
 - **Mara's placements** (one actor, one rule in `harbor.py`): the rail, then the quay after the strike, then the store porch once the tower has been found. The porch keys on `LocationDiscovered sombre.light`, because presence follows world facts, not quest stages.
 
 **Found and fixed while building (recorded):**
-- **Mara's crossing lines leaked onto the quay.** The dialogue doc used "quest not started" for "still at sea", and the quest now starts with Varga. Her two crossing entries also need `!sombre.reef_struck` (change #17 in `SLICE_DIALOGUE.md`; `Content.Sombre.Dialogue` asserts it). A player who skips her on the deck keeps NO_TIE.
-- **The false light could not be seen from the deck.** A 45 cm lamp at 345 m is under a pixel, and a hotter one saturates to a white dot. `Lantern_Crossing` (headland, only before the strike, so only ever seen from the deck) is built for distance: a 1.2 m warm glow and a 6000 cd light that throws a pool on the hide.
-- **The rails read as a band of water** (a solid steel wall). They are now a rusted toe board, stanchions every 2 m, and a dark top rail. The wheelhouse has two windows.
-- **`Map.Sombre.Greybox`'s anchor check** traced on the Pawn channel and hit Mara standing on her rail anchor. It now ignores pawns (an anchor needs a floor, not a person).
+- **Mara's crossing lines leaked onto the quay.** The dialogue doc used "quest not started" for "still at sea", and the quest now starts with Varga. Her two crossing entries also need `!sombre.reef_struck` (change #17 in `SLICE_DIALOGUE.md`; `Content.Sombre.Dialogue` asserts it).
+- **The false light could not be seen from the deck.** A 45 cm lamp at 345 m is under a pixel, and a hotter one saturates to a white dot. `Lantern_Crossing` is built for distance: it is only ever seen from the deck, before the strike.
+- **The solid rails read as a band of water.** They are now stanchions.
+- **The hidden rail blocks would have blocked the interaction trace** between the quay and Varga (BlockAll on the Visibility channel). They are `InvisibleWall` now, like the island's fence. The test walks to Varga and to the letter until the trace focuses them, then uses the real interactor. `TalkTo` and `Use` had hidden this.
+- **Varga wore the male pack body**, but the spec writes her as "her". She is the accepted Quinn placeholder (Mara's since Phase 5) in a mustard oilskin and navy, so the two never read as one person. The body spike is VS-11's, at Checkpoint B.
+- **`Map.Sombre.Greybox`'s anchor check** traced on the Pawn channel and hit Mara on her rail anchor. It now ignores pawns.
 
-**Integrator changes made for it** (shared, generic):
-- `toolkit.py` gains `inspectable`/`variant`, `npc` (pack body with costume tints, or Quinn with paints), `costume`, `flicker_light`, `conditional_audio`, `glow`, and `set_persistent_id`. `tk.cons` sets the item reference for `GIVE_ITEM`/`REMOVE_ITEM` from the content specs.
-- The core can now retire greybox stand-ins: a cell declares `GREYBOX_RETIRE` (labels) or `GREYBOX_RETIRE_GROUPS` (a `Greybox:<cell>` group), and the core removes them after every cell has built; an unknown label stops the build. This is also what lets a vault package take over its stub without touching Integrator files.
-- `CELLS` is now crossing, harbor, headland, greybox, arch_test.
+**Integrator changes made for it** (shared, generic; recorded in `technical_architecture.md`):
+- `toolkit.py` gains story actors (`inspectable`/`variant`, `npc`, `costume`, `flicker_light`, `conditional_audio`, `glow`, `damage_volume`, `loot_container`, `set_persistent_id`), and `tk.cons` sets item references.
+- **Greybox retirement by declaration** (`GREYBOX_RETIRE`, `GREYBOX_RETIRE_GROUPS`; an unknown label stops the build).
+- **The first art sublevel:** `pointe_sombre/art.py` (link once, clear, place NoCollision props, save) and `dress_sombre_harbor.py` → `Lvl_PointeSombre_Art_Harbor`. It is idempotent: a second run leaves the persistent map byte-identical, and a core rebuild keeps the link. It is in the full `RebuildContent.bat` after the biome, and it cooks.
+- `CELLS`: crossing, harbor, headland, vault (placeholder), greybox, arch_test.
+- `Map.Sombre.Greybox` accepts a cell's real portal by its ledger label once the stub retires.
 
-**Verification (this stage):**
-- `Tools\RunTests.bat -build`: **57 of 57** (37 editor, 13 Boathouse, 7 Sombre: `Map.Sombre.Crossing` added).
-- Captures `Saved/Review/2026-10-02_0943_Lvl_PointeSombre_vs10_c` (lightning hidden). The new views are `crossing_bow`, `crossing_rail_mara`, `arrival_quay`, `harbor_overview`, and `harbor_mouth_remy` (clear rocks, no boat).
-- Biome rescattered for the new actors: 328 instances, the same family counts as VS-08, manifest hash `8cb4ce7a…`. `Map.Sombre.BiomeExclusions` is green.
+**Verification:**
+- `Tools\RunTests.bat -build`: **57 of 57** (37 editor, 13 Boathouse, 7 Sombre) on the dressed map. The final staged tree is re-run before its commit; the result is in that commit's message.
+- `Tools\Package.bat`: cooked, both maps smoke-load. The only warnings are the two known driftwood ones. The cooked registry has `Lvl_PointeSombre_Art_Harbor`.
+- Captures: `Saved/Review/2026-10-02_1005_Lvl_PointeSombre_vs10_final` (lightning hidden). The new views are `crossing_bow`, `crossing_rail_mara`, `arrival_quay`, `harbor_overview`, and `harbor_mouth_remy` (clear rocks, no boat). `greybox_ida_berth` shows the moored *Ida* with Varga and Mara.
+- Biome rescattered for the new actors: 328 instances, the same counts as VS-08, manifest `8cb4ce7a…`. `Map.Sombre.BiomeExclusions` is green.
+- Meshy spend: 0. New C++: one test file (plus two Integrator test edits).
 
-**Still to do in VS-10:**
-- The quay's dressing in the first art sublevel (`dress_sombre_harbor.py` → `Lvl_PointeSombre_Art_Harbor`).
-- **Sounds (needs you):** the bilge pump, the strike's hull-on-stone, rain, surf, and creak. Downloading Freesound originals needs a fresh OAuth code from your browser (`C:\FO5_AssetLibrary\Audio\download_freesound.ps1`). A read-only CC0 search found candidates, **not yet heard**:
+**Not done, and why:**
+- **Sounds** (the pump, the strike's hit, rain, surf, creak): they need your Freesound authorization (above). A read-only CC0 search found candidates, **not yet heard**:
   - pump: 406893 or 538593
-  - strike: 438292 (craigsmith, "Titanic Hits Iceberg")
+  - strike: 438292 (craigsmith)
   - rain: 768870 or 827141
   - surf: 867645
-  - rope and hull creak: 145721 or 843241
-
-  Until then, the deck carries the shipped wind bed and the lightning.
+  - creak: 145721 or 843241
+- The `ida_deck` kit composition and a built quay wall are presentation (VS-21).
+- The lightning-whitened storm look is VS-19/VS-21.
 
 ## VS-09 Record: the Slice's Data (2026-10-02)
 
@@ -561,7 +605,7 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 
 ## Next
 
-**VS-09 complete (2026-10-02).** Next: **VS-10, the crossing and the harbor** (Claude, the Integrator), then VS-11 and VS-12 to Checkpoint B. WP-VAULT (Grok, optional) is being prepared; it launches only when its boundary is staged on `main` (see the WP-VAULT section once written).
+**VS-10 complete (2026-10-02).** Next: **VS-11, the settlement and its people** (Claude), then VS-12, the lighthouse, to **Checkpoint B**. The Gemini visual critic and Grok's gameplay critic run at Checkpoint B. WP-VAULT is ready for you to relay to Grok (section above).
 
 ## First Parallel Wave: Record (research merged; portal merged; kit merged)
 

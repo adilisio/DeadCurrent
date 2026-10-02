@@ -39,7 +39,7 @@ Every id the slice uses: who owns it, who may set or create it, where it came fr
 | `sombre.remy` | Remy's marker and boat at the harbor mouth | none until VS-20 | none now (VS-20's spec decides) | **held** (§13) |
 | `arch_test` | VS-04 architecture fixture, not content | none | none | shipped (fixture) |
 
-Cell-script tags: `Cell:<cell>` on every actor a cell script makes (`tk.own`); outliner folder `Cells/<cell>`. Script names: `pointe_sombre/<cell>.py` with `<cell>` in `crossing`, `harbor`, `settlement`, `lighthouse`, `vault`, `net_loft`, `cable_hut`, `headland`, and `remy` (held). The vault has its own script because §13.3 splits implementation, not because it is an eighth spec.
+Cell-script tags: `Cell:<cell>` on every actor a cell script makes (`tk.own`); outliner folder `Cells/<cell>`. Script names: `pointe_sombre/<cell>.py` with `<cell>` in `crossing`, `harbor`, `settlement`, `lighthouse`, `vault`, `net_loft`, `cable_hut`, `headland`, and `remy` (held). Hooked in the core's `CELLS` as of VS-10: `crossing`, `harbor`, `headland`, `vault` (a placeholder until WP-VAULT or VS-14), then `greybox` and `arch_test`; each later cell's hook is added by the Integrator before its builder starts. The vault has its own script because §13.3 splits implementation, not because it is an eighth spec.
 
 **§11 vs §8.4.** §8.4's cell sentence lists the *Ashland Grey*'s stern as a cell and omits the net loft; §11 (the list VS-07 follows) folds the *Grey* into the headland and gives the loft its own spec. Recorded, not "fixed" by adding or dropping a spec.
 
@@ -82,6 +82,7 @@ Source codes: **B** the beat script's id list, **D** `SLICE_DIALOGUE.md` §11, *
 | `sombre.mara_panel` | Mara has spoken about the panel | `sombre_mara` `panel` | — | `sombre_mara` | D | reserved |
 | `sombre.bearing_taken` | the DF bearing was taken | vault DF loop | — | chart table variant | B | reserved |
 | `sombre.liv_note_found` | Liv's note was taken | vault chart table / note (inspectable + presence, §8.2 #8) | — | quest `knows` gate | B | reserved |
+| `sombre.signin_board_taken` | the sign-in board was taken (it gives `vault_access_log` once, then hides) | vault sign-in board (inspectable + presence, §8.2 #8) | — | the board's presence and its take variant | L | reserved (minted 2026-10-02, §15 #14) |
 | `sombre.vault_floor_isolated` | the lower gallery's floor grid is isolated at the breaker | vault breaker (Engineering 2) | — | live-water `ActiveConditions` | P | reserved |
 | `sombre.hale_arrived` | the storm has passed; Hale's cutter is in | quest `knows` on enter | — | atmosphere (core), Hale presence, cutter presence | B | **shipped** (core reads it) |
 | `sombre.hale_met` | the player has spoken to Hale | `sombre_hale` | — | `sombre_hale` `offer` | D | reserved |
@@ -358,3 +359,4 @@ One art sublevel per owner: `Lvl_PointeSombre_Art_<Cell>` for Crossing, Harbor, 
     - "Zero investment" therefore means "some way in", not "Odette always gives the key". The lighthouse spec says so.
 12. **`knows` objective text and the call.** The objective tells the player to decide and then tell the settlement. Marthe's call (§8.2 #4) is what gathers them. Both the lighthouse spec (quest note) and the settlement spec (Marthe) say so.
 13. **The night look and `sombre.storm`.** `done_*` sets `sombre.storm` while the night look follows `meeting_done`. That is coherent only as written in §3.1. A builder who keys the night picture to `sombre.storm` alone would fight `Map.Sombre.Atmosphere`.
+14. **The sign-in board had no flag** (found writing WP-VAULT's handoff, 2026-10-02). The board gives `vault_access_log` by the inspectable-plus-presence pattern (§8.2 #8), which needs a flag to hide the prop and to stop a second gift after the loft has taken the item. Minted `sombre.signin_board_taken` (§3.2). No other evidence lacks one: the note has `liv_note_found`, the lantern `false_light_taken`, the cable end `cable_cut_found`.

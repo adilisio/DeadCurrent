@@ -370,19 +370,30 @@ bool FDCSombreGreyboxTest::RunTest(const FString& Parameters)
 	};
 	for (const FStub& Stub : Stubs)
 	{
-		const FString PortalLabel = Stub.Portal;
+		// Once a cell retires its stub (GREYBOX_RETIRE), its real portal carries the ledger's label (the stub's label
+		// without "Greybox_") and must still pass from the default state. A real portal locked by design (the hatch,
+		// the lower door) changes this row when its cell lands (VS-12), not silently.
+		const FString StubLabel = Stub.Portal;
 		const FString AnchorName = Stub.Anchor;
-		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, PortalLabel]()
+		TSharedRef<FString> Used = MakeShared<FString>(StubLabel);
+		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, StubLabel, Used]()
 		{
+			const FString RealLabel = StubLabel.RightChop(FString(TEXT("Greybox_")).Len());
 			ADCCellPortal* Portal = nullptr;
 			for (TActorIterator<ADCCellPortal> It(GameWorld()); It; ++It)
 			{
-				if (It->GetActorNameOrLabel() == PortalLabel)
+				if (It->GetActorNameOrLabel() == RealLabel)
+				{
+					Portal = *It;
+					*Used = RealLabel;
+				}
+				else if (!Portal && It->GetActorNameOrLabel() == StubLabel)
 				{
 					Portal = *It;
 				}
 			}
-			if (!TestNotNull(*FString::Printf(TEXT("%s exists"), *PortalLabel), Portal))
+			const FString PortalLabel = *Used;
+			if (!TestNotNull(*FString::Printf(TEXT("%s (or %s) exists"), *StubLabel, *RealLabel), Portal))
 			{
 				return true;
 			}
@@ -400,12 +411,12 @@ bool FDCSombreGreyboxTest::RunTest(const FString& Parameters)
 			}
 			return true;
 		}, TEXT("the portal's transition ends"), 5.0);
-		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, PortalLabel, AnchorName]()
+		ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Used, AnchorName]()
 		{
 			const AActor* Anchor = Tagged(TEXT("Anchor:") + AnchorName);
 			if (TestNotNull(*AnchorName, Anchor) && Player())
 			{
-				TestTrue(*FString::Printf(TEXT("%s lands at %s"), *PortalLabel, *AnchorName),
+				TestTrue(*FString::Printf(TEXT("%s lands at %s"), **Used, *AnchorName),
 					FVector::Dist(Player()->GetActorLocation(), Anchor->GetActorLocation()) < 150.0);
 			}
 			return true;

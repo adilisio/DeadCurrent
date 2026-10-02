@@ -10,7 +10,7 @@ Copied from `TEMPLATE.md`. Contract: **integrated** (`VerticalSlicePhasePlan.txt
 
 ## Implementation boundary (VS-07 decision)
 
-**Decision: serial by default — lighthouse (VS-12), then cable hut (VS-13), then the vault (VS-14), one owner (Claude).** WP-VAULT (a parallel vault package for Grok) runs only if Anthony enables it (plan §13.1), and he has not; the plan's own fallback applies.
+**Decision: serial by default — lighthouse (VS-12), then cable hut (VS-13), then the vault (VS-14), one owner (Claude).** WP-VAULT (a parallel vault package for Grok) runs only if Anthony enables it (plan §13.1). **Update (2026-10-02):** Anthony asked for WP-VAULT to be prepared for Grok once the VS-09 data was real. The Integrator staged the boundary on `main` in VS-10: the `vault` hook with a placeholder `vault.py`, greybox retirement by declaration, the toolkit's damage-volume and container helpers, `art.py`, and the greybox test's ledger labels. The full handoff is `handoffs/sombre_WP-VAULT.md`. It launches when Anthony relays its prompt; until then the serial default stands.
 
 **The boundary below is nevertheless checked against the real scripts and frozen here**, so that if Anthony enables WP-VAULT (at Checkpoint B, before VS-14), the vault can be built in parallel without a redesign. It is clean because:
 - one `build(tk)` per script

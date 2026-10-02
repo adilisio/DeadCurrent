@@ -15,6 +15,8 @@ Called by build_pointe_sombre.py as build(tk). Owns only actors tagged Cell:cros
 """
 import math
 
+import unreal
+
 CELL = "crossing"
 REEF_STRUCK = "sombre.reef_struck"
 STORM = "sombre.storm"
@@ -72,12 +74,18 @@ def build(tk):
             tk.box(f"Ida{tag}_WheelhouseBlock", CELL, at((house_back + house_front) / 2, 0.0, deck_top + 150.0),
                    (house_front - house_back, 520.0, 300.0), rot=rot, hidden=True),
         ]
+        # The rail blocks stop the player, not sight or the interaction trace (InvisibleWall ignores Visibility, as
+        # the island's fence does): at the berth they stand between the quay and Varga (VS-10).
+        rails = []
         for side, sign in (("Port", -1.0), ("Starboard", 1.0)):
-            parts.append(tk.box(f"Ida{tag}_RailBlock_{side}", CELL, at(0.0, sign * (BEAM / 2 - 10.0), deck_top + 100.0),
+            rails.append(tk.box(f"Ida{tag}_RailBlock_{side}", CELL, at(0.0, sign * (BEAM / 2 - 10.0), deck_top + 100.0),
                                 (LENGTH, 30.0, 200.0), rot=rot, hidden=True))
         for end, f in (("Bow", LENGTH / 2 - 10.0), ("Stern", -LENGTH / 2 + 10.0)):
-            parts.append(tk.box(f"Ida{tag}_RailBlock_{end}", CELL, at(f, 0.0, deck_top + 100.0), (30.0, BEAM, 200.0),
+            rails.append(tk.box(f"Ida{tag}_RailBlock_{end}", CELL, at(f, 0.0, deck_top + 100.0), (30.0, BEAM, 200.0),
                                 rot=rot, hidden=True))
+        for rail in rails:
+            rail.get_component_by_class(unreal.StaticMeshComponent).set_collision_profile_name("InvisibleWall")
+        parts += rails
         parts.append(tk.box(f"Ida{tag}_HatchBlock", CELL, at(HATCH[0], HATCH[1], deck_top + HATCH_SIZE[2] / 2.0),
                             HATCH_SIZE, rot=rot, hidden=True))
         return parts

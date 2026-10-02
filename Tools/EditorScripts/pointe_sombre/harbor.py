@@ -26,11 +26,14 @@ MARA_PAINTS = ("MI_DC_MaraBody", "MI_DC_MaraTrim")
 # she is in view as the fade lifts without standing on the trails up the island.
 MARA_QUAY_OFFSET = (320.0, -210.0)
 # Varga stands on the Ida's deck this far from the berth's centreline, toward the quay (the Ida's beam is 720 cm).
-VARGA_FROM_CENTRE = 260.0
+VARGA_FROM_CENTRE = 300.0      # by the quay-side rail: within the interaction range from the quay edge
 VARGA_ALONG = 300.0              # and this far toward the bow from midships
 IDA_HEADING_AT_SEA = 25.0        # crossing.HEADING: the Ida's heading on the crossing, before the berth's turn
-VARGA_JACKET = (1.1, 1.3, 2.4)   # a faded navy oilskin
-VARGA_JEANS = (1.2, 1.1, 1.0)
+# Varga is "her" in the spec. Until Checkpoint B's body spike she wears the accepted placeholder (the one-piece Quinn
+# mannequin, Mara's since Phase 5) in her own flat colours, so the two never read as one person: a faded mustard
+# oilskin and dark navy, against Mara's teal and charcoal. A costume, not a decision about how she looks.
+VARGA_PAINTS = (("MI_DC_Sombre_VargaOilskin", (0.16, 0.11, 0.025, 1.0)),
+                ("MI_DC_Sombre_VargaTrim", (0.012, 0.016, 0.03, 1.0)))
 
 
 def _yaw_to(a, b):
@@ -69,8 +72,7 @@ def build(tk):
     vx = b.x + beam[0] * side * VARGA_FROM_CENTRE + ahead[0] * VARGA_ALONG
     vy = b.y + beam[1] * side * VARGA_FROM_CENTRE + ahead[1] * VARGA_ALONG
     varga = tk.npc("Varga", CELL, (vx, vy, b.z + tk.NPC_HALF_HEIGHT), math.degrees(math.atan2(beam[1] * side, beam[0] * side)),
-                   "sombre.varga", "Captain Varga", "DA_Dialogue_SombreVarga",
-                   jacket=tk.costume("MI_DC_Sombre_VargaJacket", "Jacket", VARGA_JACKET),
-                   jeans=tk.costume("MI_DC_Sombre_VargaJeans", "Jeans", VARGA_JEANS))
+                   "sombre.varga", "Captain Varga", "DA_Dialogue_SombreVarga", body="quinn",
+                   paints=[tk.flat(name, rgba, roughness=0.8) for name, rgba in VARGA_PAINTS])
     tk.presence("Varga", CELL, [varga], [tk.state("at_the_wheel", [tk.flag(REEF_STRUCK, negate=True)], present=False)])
     tk.log(f"harbor: Mara at the rail, quay {tuple(round(v) for v in on_quay)}; Varga on the Ida at {round(vx)}, {round(vy)}")

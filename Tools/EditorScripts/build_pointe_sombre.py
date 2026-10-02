@@ -42,8 +42,9 @@ CORE = "Core"   # the outliner folder (Cells/Core) and tag (Cell:Core) of everyt
 # Cell scripts, called in this order with the toolkit. Each owns only its own actors (Cells/<cell>, Cell:<cell>).
 # arch_test is the Integrator's architecture fixture (VS-04); greybox is the Integrator's exterior greybox (VS-08,
 # Checkpoint A), which each cell replaces piece by piece (see retire_greybox). VS-10: crossing (the deck), harbor (the
-# quay's people), headland (so far only the false light seen from the deck).
-CELLS = ["crossing", "harbor", "headland", "greybox", "arch_test"]
+# quay's people), headland (so far only the false light seen from the deck), and vault (a placeholder, staged so the
+# vault package edits only its own file).
+CELLS = ["crossing", "harbor", "headland", "vault", "greybox", "arch_test"]
 
 # Interior cells are built far from the island (2.5 km east, 400 m up), 150 m apart: out of every exterior sightline,
 # out of the exterior fog, ambience, and lightning, and drawn only from inside (toolkit.make_interior).

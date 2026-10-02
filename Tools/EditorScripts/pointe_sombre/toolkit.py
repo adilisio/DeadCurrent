@@ -572,3 +572,37 @@ def conditional_audio(label, cell, location, sound_path, volume, conditions=(), 
     if conditions:
         actor.set_editor_property("conditions", list(conditions))
     return own(actor, cell, "ConditionalAudio")
+
+
+def damage_volume(label, cell, center, size, display_name, damage_per_second, conditions=(), material=None,
+                  rot=(0.0, 0.0, 0.0)):
+    """An ADCDamageVolume (a hazard such as live water): hurts whoever stands in it while its conditions pass. The
+    box is its visible surface; pass material=None for an invisible one over dressing that shows the hazard."""
+    actor = box(label, cell, center, size, rot=rot, material=material or blockout(), actor_class=unreal.DCDamageVolume,
+                hidden=material is None)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
+    actor.set_editor_property("damage_per_second", damage_per_second)
+    if conditions:
+        actor.set_editor_property("active_conditions", list(conditions))
+    return own(actor, cell, "Hazard")
+
+
+def loot_container(label, cell, center, size, display_name, persistent_id, contents, material=None,
+                   rot=(0.0, 0.0, 0.0)):
+    """An ADCLootContainer with the ledger's persistent id and its starting stacks: contents [(item_id, quantity)],
+    item ids from Tools/ContentSpecs/items (the slice's loot reuses ammo_9mm, field_dressing, salvage_wiring)."""
+    actor = box(label, cell, center, size, rot=rot, material=material or interactable_material(),
+                actor_class=unreal.DCLootContainer)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
+    stacks = []
+    for item_id, quantity in contents:
+        path = _item_paths().get(item_id)
+        if not path:
+            raise RuntimeError(f"No item '{item_id}' in Tools/ContentSpecs/items")
+        stack = unreal.DCItemStack()
+        stack.set_editor_property("item", unreal.load_asset(path))
+        stack.set_editor_property("quantity", quantity)
+        stacks.append(stack)
+    actor.get_component_by_class(unreal.DCInventoryComponent).set_editor_property("stacks", stacks)
+    set_persistent_id(actor, persistent_id)
+    return own(actor, cell, "Container")

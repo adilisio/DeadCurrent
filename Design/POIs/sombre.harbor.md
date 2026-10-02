@@ -12,7 +12,7 @@ Copied from `TEMPLATE.md`. Contract: standard (`VerticalSlicePhasePlan.txt` §11
 - **Working name:** Pointe Sombre Harbor (discovery banner text; Anthony may rename the display text).
 - **Region:** the island's south shore: the quay, the sheltered water behind the south reef, the harbor mouth.
 - **Biome:** `great_lakes_rocky_shore`, zone file `Tools/Biomes/zones/harbor.json` (one of the three required zones).
-- **Content status:** `SPEC`.
+- **Content status:** B1 `BUILT` (VS-10, 2026-10-02): Varga aboard the moored *Ida*, Mara's first placements, the discovery, the quay's first dressing (`Lvl_PointeSombre_Art_Harbor`: piles and working clutter). B5 is VS-15's, B9 VS-19's. Not yet: the pump's sound (it needs a Freesound authorization) and the built quay wall.
 - **Lore status:** `PROVISIONAL`. Claims under Environmental Story.
 - **Owner:** Claude. VS-10 builds B1 (with the crossing); VS-15 adds Hale and the cutter (B5); VS-19 the night quay picture and the end-card trigger (B9). Files: `pointe_sombre/harbor.py`, `dress_sombre_harbor.py` → `Lvl_PointeSombre_Art_Harbor`, `Content/World/PointeSombre/Harbor/`, `Tools/Review/Lvl_PointeSombre/harbor.json`, `Tools/Biomes/zones/harbor.json`. Tests live in other files (see Tests).
 
@@ -152,10 +152,11 @@ None in the harbor. The night-quay pattern prelude uses the light sequence (buil
 ## Open Creative Decisions
 
 - **End-card trigger (§8.2 #11).** Default: **Varga's "Where next?" sets `sombre.slice_end`.** Alternative kept: a "Watch the light" interact at the quay's end. Chosen in VS-19, judged at Checkpoint D.
-- **When Mara moves to the store porch.** Default: quest stage `lamp_room`.
+- **When Mara moves to the store porch.** Default: quest stage `lamp_room`. **VS-10:** `sombre.reef_struck` and `LocationDiscovered sombre.light`, the world fact that moves the quest from `arrived` to `lamp_room` (presence re-evaluates on world-state changes, not on quest stages).
+- **Varga's placeholder body** (VS-10): the accepted Quinn placeholder (Mara's since Phase 5) in a mustard oilskin and navy, not the male pack body, because the spec writes Varga as "her". Checkpoint B's body spike decides every named NPC's body.
 - **Loss Book page on the gangway `[P]`.** Default: cut.
 - **The *Grey* from the quay** (plan §5.5 vs Gemini's reveal preference). Default: VS-08 judges by capture; a small, partly occluded silhouette at most.
 
 ## Pilot Record
 
-- Spec committed: VS-07. First green map test: `Map.Sombre.Crossing` (VS-10). Existing classes only; new C++ 0 (the sequence and card are approved capabilities owned elsewhere); Meshy 0; kit `kit_harbor_shed` ×2, `cutter_deck` (new composition, existing modules); zone `harbor`; views as above; critic files at Checkpoints B, C, D.
+- Spec committed: VS-07. First green map test: `Map.Sombre.Crossing` (VS-10, 2026-10-02). Built in VS-10 by Claude with the crossing. Dressing: the first art sublevel, `Lvl_PointeSombre_Art_Harbor` (`dress_sombre_harbor.py`, 18 NoCollision props: 11 piles from the Smugglers Cove pier poles, 7 barrels, crates, and a bucket), through the shared `pointe_sombre/art.py`. Meshy 0; new C++ 0 (one test file). Existing classes only; new C++ 0 (the sequence and card are approved capabilities owned elsewhere); Meshy 0; kit `kit_harbor_shed` ×2, `cutter_deck` (new composition, existing modules); zone `harbor`; views as above; critic files at Checkpoints B, C, D.
