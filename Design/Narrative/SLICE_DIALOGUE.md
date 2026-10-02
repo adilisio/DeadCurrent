@@ -35,6 +35,8 @@ The conversations below are now data (`Tools/ContentSpecs/dialogue/sombre_*.py`,
 15. **Stage directions.** Lines carry spoken text only. Mara's "(a long look at the chalk rows)" in `ticks` is the line's opening "..."; Odette's "(a pause)" in `keeps` becomes "...Yes."
 16. **Speakers.** In the meeting, the reaction lines are spoken by Tem (`r_pruitts`), Odette (`r_odette`, `r_tie`), Hale (`r_sigrun`), and Sigrun (`r_sigrun_reply`), inside Marthe's asset. Speaker names are first names or surnames as written here: Mara, Varga, Odette, Marthe, Tem, Dell, Sigrun, Hale, Jonas.
 
+17. **Mara's crossing lines stay on the crossing** (found in VS-10). Her `crossing_tie` and `crossing` entries used `notstarted sombre.characteristic` to mean "still at sea", but the quest now starts with Varga on the quay (change 6). A player who skipped Mara on the deck would have heard "Before we get there." on the quay. Both entries now also need `!sombre.reef_struck`. After the strike she opens with `town`, and a player who never answered her keeps NO_TIE.
+
 **Read aloud at Checkpoint B** (each line that differs from this document's text):
 - Dell (player): "Your boots are wet to the knee. Nobody wades the reef for fish." (#7)
 - Marthe (player choice): "Call the island to the loft." (#10)

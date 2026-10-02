@@ -209,7 +209,7 @@
   "scrub": 26,
   "talus": 71
  },
- "hash": "aaa46ba886719288d8121f0ab6bb849cbb31a608",
+ "hash": "8cb4ce7a2b7aa9eb16dab643451b39cf519386b1",
  "inputs": {
   "automatic": [
    {
@@ -482,6 +482,54 @@
      ],
      "shape": "box",
      "yaw_cdeg": 0
+    }
+   },
+   {
+    "id": "Ida_Chart",
+    "kind": "interactable",
+    "shape": {
+     "center_cm": [
+      -33638,
+      -36143
+     ],
+     "radius_cm": 0,
+     "shape": "circle"
+    }
+   },
+   {
+    "id": "Ida_Letter",
+    "kind": "interactable",
+    "shape": {
+     "center_cm": [
+      -33306,
+      -36332
+     ],
+     "radius_cm": 0,
+     "shape": "circle"
+    }
+   },
+   {
+    "id": "Mara",
+    "kind": "interactable",
+    "shape": {
+     "center_cm": [
+      -32709,
+      -36151
+     ],
+     "radius_cm": 0,
+     "shape": "circle"
+    }
+   },
+   {
+    "id": "Varga",
+    "kind": "interactable",
+    "shape": {
+     "center_cm": [
+      -8940,
+      1500
+     ],
+     "radius_cm": 0,
+     "shape": "circle"
     }
    },
    {

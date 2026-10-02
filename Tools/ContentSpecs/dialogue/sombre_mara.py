@@ -1,7 +1,7 @@
 """Mara at Pointe Sombre (sombre_mara): placed, not following. A different asset from the shore's `mara_intro`.
 
 Text: `Design/Narrative/SLICE_DIALOGUE.md` §1, built as written. Ids: `Design/POIs/sombre_ids.md` §3, §6.
-- In the standalone slice Mara asks the tie question on the crossing (`crossing_tie`). Each tie answer sets exactly one
+- In the standalone slice Mara asks the tie question on the crossing (`crossing_tie`), before the strike only. Each tie answer sets exactly one
   `player.tie.*` flag; "Does it matter?" sets none. All four set `sombre.mara_tie_asked`, so she asks once.
 - Tie variant lines (`promise_*`) each have a NO_TIE partner (`promise_neutral`); the tie flags exclude each other, so
   each tie shows exactly one.
@@ -21,6 +21,7 @@ def set_flag(name):
 SISTER, PARTNER, TOOK_IN = "player.tie.sister", "player.tie.partner", "player.tie.took_in"
 NO_TIE = [flag(SISTER, True), flag(PARTNER, True), flag(TOOK_IN, True)]
 QUEST = "sombre.characteristic"
+STRUCK = "sombre.reef_struck"
 TIE_ASKED = "sombre.mara_tie_asked"
 PROMISE_TOLD = "shore.promise_told"
 
@@ -33,9 +34,11 @@ SOMBRE_MARA = dict(
     entry="town",
     # First match wins; the last is unconditional.
     entries=[
-        dict(id="crossing_tie", conditions=[cond("QUEST_NOT_STARTED", id=QUEST), *NO_TIE,
+        # On the crossing only: the doc used "quest not started" for "still at sea", but Varga now starts the quest on
+        # the quay, so the strike is the boundary too (VS-10 finding, change list #17).
+        dict(id="crossing_tie", conditions=[cond("QUEST_NOT_STARTED", id=QUEST), flag(STRUCK, True), *NO_TIE,
                                             flag("shore.liv_asked", True), flag(TIE_ASKED, True)]),
-        dict(id="crossing", conditions=[cond("QUEST_NOT_STARTED", id=QUEST)]),
+        dict(id="crossing", conditions=[cond("QUEST_NOT_STARTED", id=QUEST), flag(STRUCK, True)]),
         dict(id="promise", conditions=[flag("sombre.player_named_tie"), flag(PROMISE_TOLD, True)]),
         dict(id="after_line", conditions=[flag("sombre.meeting_done"), flag("sombre.light_line")]),
         dict(id="after", conditions=[flag("sombre.meeting_done")]),

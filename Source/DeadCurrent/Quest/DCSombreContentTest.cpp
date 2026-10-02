@@ -543,6 +543,13 @@ bool FDCSombreDialogueTest::RunTest(const FString& Parameters)
 		TestEqual(FString::Printf(TEXT("%s: not asked again"), Answer.Text), S.Talk(TEXT("DA_Dialogue_SombreMara")), FName(TEXT("crossing")));
 	}
 
+	// Her crossing lines stay on the crossing: after the strike, before Varga, she has her island line (change #17).
+	{
+		FSombre S;
+		S.Set(TEXT("sombre.reef_struck"));
+		TestEqual(TEXT("After the strike, before Varga: Mara's island line"), S.Talk(TEXT("DA_Dialogue_SombreMara")), FName(TEXT("town")));
+	}
+
 	// No tie leak: under each tie, and under none, each keystone node shows exactly one tie line, and the right one.
 	struct FTieCase { const TCHAR* Label; FName Flag; const TCHAR* OdetteLine; const TCHAR* LoftLine; FName PromiseNode; };
 	const TArray<FTieCase> Ties = {

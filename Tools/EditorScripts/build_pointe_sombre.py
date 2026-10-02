@@ -40,9 +40,10 @@ PROBE_FILE = os.path.normpath(os.path.join(SCRIPTS, "..", "PointeSombre", "out",
 CORE = "Core"   # the outliner folder (Cells/Core) and tag (Cell:Core) of everything this script makes itself
 
 # Cell scripts, called in this order with the toolkit. Each owns only its own actors (Cells/<cell>, Cell:<cell>).
-# arch_test is the Integrator's architecture fixture (VS-04); crossing is the deck stub that VS-10 grows; greybox is the
-# Integrator's exterior greybox (VS-08, Checkpoint A), which each cell's builder replaces piece by piece.
-CELLS = ["crossing", "greybox", "arch_test"]
+# arch_test is the Integrator's architecture fixture (VS-04); greybox is the Integrator's exterior greybox (VS-08,
+# Checkpoint A), which each cell replaces piece by piece (see retire_greybox). VS-10: crossing (the deck), harbor (the
+# quay's people), headland (so far only the false light seen from the deck).
+CELLS = ["crossing", "harbor", "headland", "greybox", "arch_test"]
 
 # Interior cells are built far from the island (2.5 km east, 400 m up), 150 m apart: out of every exterior sightline,
 # out of the exterior fog, ambience, and lightning, and drawn only from inside (toolkit.make_interior).
@@ -433,11 +434,41 @@ def write_probe():
 
 
 def run_cells():
+    modules = []
     for cell in CELLS:
         module = importlib.import_module(cell)
         importlib.reload(module)
         module.build(tk)
         tk.log(f"cell {cell} built")
+        modules.append(module)
+    retire_greybox(modules)
+
+
+def retire_greybox(modules):
+    """A cell takes over its greybox stand-ins without editing greybox.py (Integrator-owned) by declaring them:
+    GREYBOX_RETIRE (actor labels, e.g. "FalseLight_Lantern") and GREYBOX_RETIRE_GROUPS (a whole Greybox:<cell> group,
+    e.g. "vault"). They are removed after every cell has built. A label that matches nothing stops the build, so a
+    renamed stand-in is never silently left in place."""
+    labels, groups = set(), set()
+    for module in modules:
+        labels.update(getattr(module, "GREYBOX_RETIRE", ()))
+        groups.update(getattr(module, "GREYBOX_RETIRE_GROUPS", ()))
+    if not labels and not groups:
+        return
+    doomed, found = [], set()
+    for actor in tk.actors.get_all_level_actors():
+        tags = [str(t) for t in actor.get_editor_property("tags")]
+        if "Cell:greybox" not in tags:
+            continue
+        label = actor.get_actor_label()
+        if label in labels or any(f"Greybox:{g}" in tags for g in groups):
+            doomed.append(actor)
+            found.add(label)
+    missing = labels - found
+    if missing:
+        raise RuntimeError(f"GREYBOX_RETIRE names greybox actors that do not exist: {sorted(missing)}")
+    tk.actors.destroy_actors(doomed)
+    tk.log(f"greybox: retired {len(doomed)} stand-ins ({sorted(labels)}; groups {sorted(groups)})")
 
 
 def main():

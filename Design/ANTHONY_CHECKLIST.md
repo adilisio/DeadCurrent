@@ -9,7 +9,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 
 ## Current Milestone
 
-**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. **VS-09 complete** (2026-10-02, on your go). Next: VS-10, the crossing and the harbor.
+**PHASE 6: STARTED.** **Checkpoint A accepted** (2026-10-02): the island's layout and cell footprints are frozen. **VS-09 complete** (2026-10-02, on your go). **VS-10 (the crossing and the harbor) in progress:** B0 and B1 are playable and tested; the quay's dressing and the new sounds remain (see the VS-10 Record).
 
 | Task | State |
 | --- | --- |
@@ -25,6 +25,7 @@ Live handoff file. Updated after every coherent milestone. If this session ends 
 | **VS-08 Exterior greybox** | **COMPLETE** (see the VS-08 Record) |
 | **Checkpoint A** | **ACCEPTED** (Anthony, 2026-10-02; see below) |
 | **VS-09 Slice data (WP-NARR)** | **COMPLETE** (`df251f8`; see the VS-09 Record) |
+| **VS-10 Crossing and harbor** | **IN PROGRESS**: B0–B1 playable, `Map.Sombre.Crossing` green (see the VS-10 Record) |
 
 Plan: `VerticalSlicePhasePlan.txt`. Phase 5 (World State) is accepted and unchanged.
 
@@ -83,6 +84,48 @@ Things only you can judge, kept current as work lands (newest first):
    - Review frames: `Saved/Review/2026-10-01_0910_Lvl_PointeSombre/contact_sheet.png` (the three atmospheres from the quay, the deck, the island, the test room).
    - Rendered portal proof: `Saved/Screenshots/WindowsEditor/SombreArch_*.png`.
 3. **One plan clarification I made in VS-04.** The atmosphere looks are switched by `sombre.hale_arrived` and `sombre.meeting_done`, with the storm as the default (no flag), not by `sombre.storm`. The slice doc says "`sombre.storm` is set on arrival", but nothing in the slice sets it at a new game yet. The dusk storm as the default look keeps a new game correct whatever VS-10 decides. `sombre.storm` still drives hazards and lightning content later.
+
+## VS-10 Record: the Crossing and the Harbor (in progress, 2026-10-02)
+
+**Playable now** (`Tools\PlayTest.bat Lvl_PointeSombre`): a new game on the *Ida*'s deck in the dusk storm.
+- **The deck:**
+  - Liv's letter lies on a hatch cover in the lee of the wheelhouse. "Read" gives `liv_letter` and sets `watch.mara_travelling` (the prologue's P1 text); later reads give its re-read line.
+  - Varga's chart is pinned on the wheelhouse front (new wording, PROVISIONAL: the run from the Authority Shore through the Narrows to Pointe Sombre, the light circled).
+  - Mara is at the port rail with her tie question and the watch reveal.
+  - Ahead, the false light burns on the west head (a warm pool and a lamp), and the dark tower stands beyond it to the right.
+- **The strike:** "Tell Varga about the light" sets `sombre.reef_struck` **and `sombre.storm`** (ledger §3.1), and the card reads "The *Ida* turns for the burning light, then shudders on stone." You arrive on the quay facing up the island.
+  - Mara is already 3.8 m away.
+  - The *Ida* lies at her berth with Varga aboard.
+  - The door is gone, and the false light is out.
+  - The harbor is discovered once. Varga's first reply starts both quests.
+- **Mara's placements** (one actor, one rule in `harbor.py`): the rail, then the quay after the strike, then the store porch once the tower has been found. The porch keys on `LocationDiscovered sombre.light`, because presence follows world facts, not quest stages.
+
+**Found and fixed while building (recorded):**
+- **Mara's crossing lines leaked onto the quay.** The dialogue doc used "quest not started" for "still at sea", and the quest now starts with Varga. Her two crossing entries also need `!sombre.reef_struck` (change #17 in `SLICE_DIALOGUE.md`; `Content.Sombre.Dialogue` asserts it). A player who skips her on the deck keeps NO_TIE.
+- **The false light could not be seen from the deck.** A 45 cm lamp at 345 m is under a pixel, and a hotter one saturates to a white dot. `Lantern_Crossing` (headland, only before the strike, so only ever seen from the deck) is built for distance: a 1.2 m warm glow and a 6000 cd light that throws a pool on the hide.
+- **The rails read as a band of water** (a solid steel wall). They are now a rusted toe board, stanchions every 2 m, and a dark top rail. The wheelhouse has two windows.
+- **`Map.Sombre.Greybox`'s anchor check** traced on the Pawn channel and hit Mara standing on her rail anchor. It now ignores pawns (an anchor needs a floor, not a person).
+
+**Integrator changes made for it** (shared, generic):
+- `toolkit.py` gains `inspectable`/`variant`, `npc` (pack body with costume tints, or Quinn with paints), `costume`, `flicker_light`, `conditional_audio`, `glow`, and `set_persistent_id`. `tk.cons` sets the item reference for `GIVE_ITEM`/`REMOVE_ITEM` from the content specs.
+- The core can now retire greybox stand-ins: a cell declares `GREYBOX_RETIRE` (labels) or `GREYBOX_RETIRE_GROUPS` (a `Greybox:<cell>` group), and the core removes them after every cell has built; an unknown label stops the build. This is also what lets a vault package take over its stub without touching Integrator files.
+- `CELLS` is now crossing, harbor, headland, greybox, arch_test.
+
+**Verification (this stage):**
+- `Tools\RunTests.bat -build`: **57 of 57** (37 editor, 13 Boathouse, 7 Sombre: `Map.Sombre.Crossing` added).
+- Captures `Saved/Review/2026-10-02_0943_Lvl_PointeSombre_vs10_c` (lightning hidden). The new views are `crossing_bow`, `crossing_rail_mara`, `arrival_quay`, `harbor_overview`, and `harbor_mouth_remy` (clear rocks, no boat).
+- Biome rescattered for the new actors: 328 instances, the same family counts as VS-08, manifest hash `8cb4ce7a…`. `Map.Sombre.BiomeExclusions` is green.
+
+**Still to do in VS-10:**
+- The quay's dressing in the first art sublevel (`dress_sombre_harbor.py` → `Lvl_PointeSombre_Art_Harbor`).
+- **Sounds (needs you):** the bilge pump, the strike's hull-on-stone, rain, surf, and creak. Downloading Freesound originals needs a fresh OAuth code from your browser (`C:\FO5_AssetLibrary\Audio\download_freesound.ps1`). A read-only CC0 search found candidates, **not yet heard**:
+  - pump: 406893 or 538593
+  - strike: 438292 (craigsmith, "Titanic Hits Iceberg")
+  - rain: 768870 or 827141
+  - surf: 867645
+  - rope and hull creak: 145721 or 843241
+
+  Until then, the deck carries the shipped wind bed and the lightning.
 
 ## VS-09 Record: the Slice's Data (2026-10-02)
 
@@ -511,7 +554,7 @@ Your approval settled all three pre-VS-01 decisions: the plan, the prologue stay
 ## Automated Baseline
 
 - Build: `DeadCurrentEditor` builds.
-- Tests: **56 of 56** (37 editor, 13 Boathouse map, 6 Sombre map) after VS-09 (`Content.Sombre.Items`, `QuestGraph`, `Dialogue` added). 53 after VS-08, 52 after VS-06, 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
+- Tests: **57 of 57** (37 editor, 13 Boathouse map, 7 Sombre map) during VS-10 (`Map.Sombre.Crossing` added). 56 after VS-09 (`Content.Sombre.Items`, `QuestGraph`, `Dialogue` added). 53 after VS-08, 52 after VS-06, 51 after VS-05. Phase 6 expects about 70 by the end; that is an estimate, not a target.
 - Package: the Development Win64 cook of **both** production maps, and both smoke-load (re-run after VS-09, 2026-10-02: 0 errors, the same 2 driftwood resave warnings; the 21 new data assets are cooked). `Lvl_KitGym` is not cooked.
 - Frame time: about 54 FPS at low spec on the shore, deferred. Phase 6 uses same-session A/B gates only. Gate 0 is recorded in the VS-04 Record.
 - Meshy: 460 of the earlier 500 spent; balance 437. Phase 6 stop ceiling: 350. Phase 6 spend so far: **0** (through VS-08).

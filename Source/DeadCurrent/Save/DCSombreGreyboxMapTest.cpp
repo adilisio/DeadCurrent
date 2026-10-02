@@ -59,7 +59,12 @@ namespace DCSombreGreyboxTest
 	/** First thing that stops a pawn straight below Where (the player ignored), or false. */
 	bool Below(const FVector& Where, double Depth, FHitResult& Hit)
 	{
+		// The floor under a point, not a person standing on it (VS-10: Mara stands on her rail anchor).
 		FCollisionQueryParams Params(SCENE_QUERY_STAT(SombreGreyboxBelow), true, Player());
+		for (TActorIterator<APawn> It(GameWorld()); It; ++It)
+		{
+			Params.AddIgnoredActor(*It);
+		}
 		return GameWorld()->LineTraceSingleByChannel(Hit, Where, Where - FVector(0.0, 0.0, Depth), ECC_Pawn, Params);
 	}
 

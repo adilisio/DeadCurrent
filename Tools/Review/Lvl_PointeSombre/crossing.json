@@ -1,0 +1,26 @@
+{
+  "map": "/Game/Maps/Lvl_PointeSombre",
+  "units": "cm",
+  "rotation_order": "pitch, yaw, roll",
+  "about": "The crossing's views (VS-10, owner: the crossing cell; Design/POIs/sombre.crossing.md). A new game, before the strike: no setup. Views only: the core file owns the route and art_sentinels.",
+  "viewpoints": [
+    {
+      "id": "crossing_bow",
+      "location": [-32010, -35530, 470],
+      "rotation": [3.0, 40.0, 0],
+      "expectation": "From the Ida's bow in the dusk storm: the false light burning low on the west headland ahead, and beyond it, to its right, the dark tower on its rock, readable against the storm sky. The island low on the horizon, not a clear postcard.",
+      "source": "Design/POIs/sombre.crossing.md (Review Views); VerticalSlicePhasePlan.txt §5.4",
+      "landmarks": [
+        {"id": "tower_site", "subject": "Tower_Shaft"},
+        {"id": "false_light_post", "subject": "FalseLight_Post"}
+      ]
+    },
+    {
+      "id": "crossing_rail_mara",
+      "location": [-33613, -36010, 470],
+      "rotation": [-9.0, -21.0, 0],
+      "expectation": "On the deck, forward of the wheelhouse: Liv's letter on the hatch cover in the lee, and Mara at the port rail ahead, looking toward the island. A vessel in a storm, not a box on water.",
+      "source": "Design/POIs/sombre.crossing.md (Review Views)"
+    }
+  ]
+}

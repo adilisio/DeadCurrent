@@ -151,6 +151,30 @@ def tinted_surface(name, parent_name, tint, tile_cm=None):
 
 _flat_made = {}
 
+GLOW_MASTER = f"{ENV}/M_DC_Glow"   # the shore's unlit, translucent glow: emissive = Color.rgb, opacity = Color.a
+
+
+def glow(name, rgba):
+    """A Pointe Sombre instance of M_DC_Glow (lamps, lanterns, windows). Values above 1 bloom; distance needs more."""
+    if name in _flat_made:
+        return _flat_made[name]
+    path = f"{SOMBRE_MATERIALS}/{name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        mi = unreal.load_asset(path)
+    else:
+        mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            name, SOMBRE_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        if not mi:
+            raise RuntimeError(f"Could not create {path}")
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(mi, unreal.load_asset(GLOW_MASTER))
+    mel.set_material_instance_vector_parameter_value(mi, "Color", unreal.LinearColor(*rgba))
+    mel.update_material_instance(mi)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    _flat_made[name] = mi
+    return mi
+
 
 # --- Geometry
 
@@ -252,11 +276,36 @@ def flag(id, negate=False):
     return cond("WORLD_FLAG", id=id, negate=negate)
 
 
-def cons(type_name, id=None):
+def cons(type_name, id=None, quantity=1):
+    """A consequence. GIVE_ITEM / REMOVE_ITEM of an item defined in Tools/ContentSpecs/items also set the asset
+    reference (as the content specs do), so the map holds a hard reference and the item is always loaded with it."""
     c = unreal.DCGameplayConsequence()
     c.set_editor_property("type", getattr(unreal.DCConsequenceType, type_name))
     c.set_editor_property("id", unreal.Name(id) if id else unreal.Name())
+    c.set_editor_property("quantity", quantity)
+    if type_name in ("GIVE_ITEM", "REMOVE_ITEM"):
+        path = _item_paths().get(id)
+        if not path:
+            raise RuntimeError(f"No item '{id}' in Tools/ContentSpecs/items (ask the Integrator for a ledger id)")
+        c.set_editor_property("item", unreal.load_asset(path))
     return c
+
+
+_items = None
+
+
+def _item_paths():
+    """{item_id: asset path} from the content specs (the same loader the item generator uses)."""
+    global _items
+    if _items is None:
+        import os
+        import sys
+        scripts = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+        import content_specs
+        _items = content_specs.item_paths()
+    return _items
 
 
 # --- Portals
@@ -361,3 +410,165 @@ def location_volume(label, cell, location_id, display_name, center, extent):
     volume.set_editor_property("display_name", unreal.Text(display_name))
     volume.get_editor_property("bounds").set_box_extent(unreal.Vector(*extent))
     return own(volume, cell)
+
+
+# --- Story actors (VS-10): inspectables, people, lights and sounds that follow the rules. The same setup as the
+# accepted shore scripts (build_boathouse.py), so a cell builder never sets engine properties directly.
+
+def _vec(v):
+    return v if isinstance(v, unreal.Vector) else unreal.Vector(*v)
+
+
+def set_persistent_id(actor, persistent_id):
+    """Saved actors (NPCs, doors, containers, pickups) carry the ledger's persistent id (Design/POIs/sombre_ids.md §7)."""
+    comp = actor.get_component_by_class(unreal.DCPersistentIdComponent)
+    if not comp:
+        raise RuntimeError(f"{actor.get_actor_label()} has no persistent id component")
+    comp.set_editor_property("persistent_id", persistent_id)
+    return actor
+
+
+def variant(description, conditions=(), consequences=(), action=None):
+    """One inspect variant (first match wins; the actor's own description is the fallback)."""
+    v = unreal.DCInspectVariant()
+    v.set_editor_property("description", unreal.Text(description))
+    v.set_editor_property("conditions", list(conditions))
+    v.set_editor_property("consequences", list(consequences))
+    if action:
+        v.set_editor_property("action", unreal.Text(action))
+    return v
+
+
+def inspectable(label, cell, center, size, display_name, description, variants=(), action=None, duration=None,
+                material=None, rot=(0.0, 0.0, 0.0), hidden=False):
+    """An inspectable whose mesh is a box (or, hidden=True, an invisible box around the dressing that shows it)."""
+    actor = box(label, cell, center, size, rot=rot, material=material or interactable_material(),
+                actor_class=unreal.DCInspectableActor, hidden=hidden)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
+    actor.set_editor_property("description", unreal.Text(description))
+    if variants:
+        actor.set_editor_property("variants", list(variants))
+    if action:
+        actor.set_editor_property("action", unreal.Text(action))
+    if duration:
+        actor.set_editor_property("description_duration", duration)
+    return own(actor, cell, "Inspectable")
+
+
+SURVIVAL = "/Game/Survival_Character"
+SURVIVAL_MESH = SURVIVAL + "/Meshes/SK_Survival_Character"
+QUINN_MESH = "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple"
+ANIM_BLUEPRINTS = ("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+                   "/Game/Characters/Mannequins/Anims/Manny/ABP_Manny")
+SURVIVAL_JACKET_SLOT, SURVIVAL_JEANS_SLOT, SURVIVAL_EYE_SLOT = 7, 8, 3
+NPC_HALF_HEIGHT = 96.0   # a standing character's capsule centre above the ground (as placed on the shore)
+
+
+def costume(name, part, tint):
+    """A Pointe Sombre tint of the Survival_Character pack's jacket or jeans (part "Jacket" or "Jeans"), made the way
+    import_art.py makes the shore's costumes. A costume, not a decision about anyone's face or history."""
+    path = f"{SOMBRE_MATERIALS}/{name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        mi = unreal.load_asset(path)
+    else:
+        mi = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            name, SOMBRE_MATERIALS, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        if not mi:
+            raise RuntimeError(f"Could not create {path}")
+    mel = unreal.MaterialEditingLibrary
+    mel.set_material_instance_parent(mi, unreal.load_asset(f"{SURVIVAL}/Materials/MI_Survival_Character_{part}"))
+    mel.set_material_instance_vector_parameter_value(mi, "Tint", unreal.LinearColor(tint[0], tint[1], tint[2], 1.0))
+    mel.update_material_instance(mi)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(mi, only_if_is_dirty=False):
+        raise RuntimeError(f"Could not save {path}")
+    return mi
+
+
+def npc(label, cell, location, yaw, persistent_id, display_name, dialogue, body="survival", jacket=None, jeans=None,
+        paints=None, greeting=None, notice_range=None):
+    """A friendly NPC whose capsule centre stands at location (cm: ground + NPC_HALF_HEIGHT), with its dialogue (a
+    /Game/Dialogue asset name) and the ledger's persistent id.
+    body "survival": the Survival_Character pack body, with jacket and jeans tints (tk.costume).
+    body "quinn": the one-piece Quinn mannequin with a flat paint per slot (Mara's accepted placeholder, Phase 5)."""
+    actor = actors.spawn_actor_from_class(unreal.DCFriendlyNPC, _vec(location),
+                                          unreal.Rotator(pitch=0.0, yaw=yaw, roll=0.0))
+    actor.set_actor_label(label)
+    actor.set_editor_property("display_name", unreal.Text(display_name))
+    asset = unreal.load_asset(f"/Game/Dialogue/{dialogue}")
+    if not asset:
+        raise RuntimeError(f"Missing /Game/Dialogue/{dialogue}. Run create_dialogue.py first.")
+    actor.set_editor_property("dialogue", asset)
+    if greeting:
+        actor.set_editor_property("greeting", unreal.Text(greeting))
+    if notice_range is not None:
+        actor.set_editor_property("notice_range", notice_range)
+    mesh_comp = actor.get_editor_property("mesh")
+    mesh_path = SURVIVAL_MESH if body == "survival" else QUINN_MESH
+    mesh_asset = unreal.load_asset(mesh_path)
+    if not mesh_asset:
+        raise RuntimeError(f"Missing {mesh_path}")
+    mesh_comp.set_skeletal_mesh_asset(mesh_asset)
+    if body == "survival":
+        if jacket:
+            mesh_comp.set_material(SURVIVAL_JACKET_SLOT, jacket)
+        if jeans:
+            mesh_comp.set_material(SURVIVAL_JEANS_SLOT, jeans)
+        mesh_comp.set_material(SURVIVAL_EYE_SLOT, surface("MI_DC_Eye"))
+    for slot, paint in enumerate(paints or ()):
+        mesh_comp.set_material(slot, paint)
+    for path in ANIM_BLUEPRINTS:
+        if unreal.EditorAssetLibrary.does_asset_exist(path):
+            mesh_comp.set_animation_mode(unreal.AnimationMode.ANIMATION_BLUEPRINT)
+            mesh_comp.set_anim_class(unreal.EditorAssetLibrary.load_blueprint_class(path))
+            break
+    set_persistent_id(actor, persistent_id)
+    return own(actor, cell, "NPC", f"NPC:{persistent_id}")
+
+
+def flicker_light(label, cell, location, color, candelas, radius, conditions=(), glow_cm=0.0, glow_material=None,
+                  min_brightness=0.25, dropout=0.12, interval=(0.05, 0.6)):
+    """An ADCFlickerLight: a point light (and an optional glowing cube) that burns while its conditions pass."""
+    actor = actors.spawn_actor_from_class(unreal.DCFlickerLight, _vec(location), unreal.Rotator(0.0, 0.0, 0.0))
+    actor.set_actor_label(label)
+    light = actor.get_editor_property("light")
+    light.set_editor_property("intensity_units", unreal.LightUnits.CANDELAS)
+    light.set_editor_property("intensity", candelas)
+    light.set_editor_property("light_color", unreal.Color(r=color[0], g=color[1], b=color[2], a=255))
+    light.set_editor_property("attenuation_radius", radius)
+    if glow_cm > 0.0:
+        glow = actor.get_editor_property("glow")
+        scale = unreal.Vector(glow_cm / CUBE_SIZE.x, glow_cm / CUBE_SIZE.y, glow_cm / CUBE_SIZE.z)
+        glow.set_static_mesh(cube_mesh)
+        glow.set_material(0, glow_material or surface("MI_DC_GlowLantern"))
+        glow.set_editor_property("relative_scale3d", scale)
+        glow.set_editor_property("relative_location", unreal.Vector(
+            -CUBE_CENTER.x * scale.x, -CUBE_CENTER.y * scale.y, -CUBE_CENTER.z * scale.z))
+    actor.set_editor_property("min_brightness", min_brightness)
+    actor.set_editor_property("dropout_chance", dropout)
+    actor.set_editor_property("min_interval", interval[0])
+    actor.set_editor_property("max_interval", interval[1])
+    if conditions:
+        actor.set_editor_property("active_conditions", list(conditions))
+    return own(actor, cell, "FlickerLight")
+
+
+def conditional_audio(label, cell, location, sound_path, volume, conditions=(), attenuation=None, once=False):
+    """An ADCConditionalAudio: a sound that plays while (or once when) its conditions pass. It sets no flag.
+    attenuation None is a 2D sound; otherwise the name of an attenuation asset in /Game/Audio."""
+    actor = actors.spawn_actor_from_class(unreal.DCConditionalAudio, _vec(location), unreal.Rotator(0.0, 0.0, 0.0))
+    actor.set_actor_label(label)
+    sound = unreal.load_asset(sound_path)
+    if not sound:
+        raise RuntimeError(f"Missing {sound_path}. Run import_audio.py first.")
+    actor.set_editor_property("sound", sound)
+    if attenuation:
+        att = unreal.load_asset(f"/Game/Audio/{attenuation}")
+        if not att:
+            raise RuntimeError(f"Missing /Game/Audio/{attenuation}. Run import_audio.py first.")
+        actor.set_editor_property("attenuation", att)
+    actor.set_editor_property("volume_multiplier", volume)
+    actor.set_editor_property("mode", unreal.DCConditionalAudioMode.ONCE_WHEN_TRUE if once
+                              else unreal.DCConditionalAudioMode.WHILE_TRUE)
+    if conditions:
+        actor.set_editor_property("conditions", list(conditions))
+    return own(actor, cell, "ConditionalAudio")

@@ -1,0 +1,34 @@
+{
+  "map": "/Game/Maps/Lvl_PointeSombre",
+  "units": "cm",
+  "rotation_order": "pitch, yaw, roll",
+  "about": "The harbor's views (VS-10, owner: the harbor cell; Design/POIs/sombre.harbor.md). VS-15 adds hale_arrival, VS-19 the night_quay_* views. The core's quay_storm/quay_calm/quay_night stay the core's. Views only: the core file owns the route and art_sentinels.",
+  "viewpoints": [
+    {
+      "id": "arrival_quay",
+      "location": [-7900, -400, 420],
+      "rotation": [2.0, 92.0, 0],
+      "setup": {"flags": ["sombre.reef_struck", "sombre.storm"]},
+      "expectation": "Just after the strike, from the west end of the quay: the Ida at her berth with Varga aboard, Mara waiting on the quay, and the dark tower above the town to the north-east.",
+      "source": "Design/POIs/sombre.harbor.md (Review Views, arrival_quay)",
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
+    },
+    {
+      "id": "harbor_overview",
+      "location": [-9000, -2000, 900],
+      "rotation": [-4.0, 40.0, 0],
+      "setup": {"flags": ["sombre.reef_struck", "sombre.storm"], "quest": "sombre.characteristic", "stage": "arrived"},
+      "expectation": "Over the harbor water: the tower to the north-east and the false-light post to the west in one frame; the Grey a small far silhouette or not at all.",
+      "source": "Design/POIs/sombre.harbor.md (Review Views, harbor_overview)",
+      "landmarks": [{"id": "tower_site", "subject": "Tower_Shaft"}]
+    },
+    {
+      "id": "harbor_mouth_remy",
+      "location": [-7600, 5000, 450],
+      "rotation": [-6.0, 200.0, 0],
+      "setup": {"flags": ["sombre.reef_struck", "sombre.storm"]},
+      "expectation": "The harbor mouth: clear rocks where Remy's boat will be, not a boat (held for VS-20).",
+      "source": "Design/POIs/sombre.harbor.md (Review Views); Design/POIs/sombre_ids.md §13"
+    }
+  ]
+}
